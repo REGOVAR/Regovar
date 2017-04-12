@@ -16,7 +16,7 @@ CREATE TABLE public.user
     location text COLLATE pg_catalog.C,
     last_activity timestamp without time zone,
     settings text COLLATE pg_catalog.C,
-    authorization text COLLATE pg_catalog.C,
+    auth text COLLATE pg_catalog.C,
     CONSTRAINT user_pkey PRIMARY KEY (id),
     CONSTRAINT user_ukey1 UNIQUE (login),
     CONSTRAINT user_ukey2 UNIQUE (email)
