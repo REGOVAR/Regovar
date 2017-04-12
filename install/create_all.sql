@@ -21,5 +21,5 @@ CREATE TABLE public.user
     CONSTRAINT user_ukey1 UNIQUE (login),
     CONSTRAINT user_ukey2 UNIQUE (email)
 );
-ALTER TABLE public.template OWNER TO regovar;
+ALTER TABLE public.user OWNER TO regovar;
 
