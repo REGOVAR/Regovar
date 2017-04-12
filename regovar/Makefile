@@ -1,5 +1,5 @@
 install:
-	cp ../install config.default ./config.py
+	cp ../install/config.default ./config.py
 	echo "Please, edit the $PWD/config.py file before starting the server with the command 'make app'"
 
 app:
