@@ -7,7 +7,7 @@
 CREATE TABLE public.user
 (
     id serial NOT NULL,
-    login character varying(255) COLLATE pg_catalog."C",
+    login character varying(255) COLLATE pg_catalog."C" NOT NULL,
     password character varying(255) COLLATE pg_catalog."C",
     email character varying(255) COLLATE pg_catalog."C",
     firstname character varying(255) COLLATE pg_catalog."C",
@@ -23,3 +23,7 @@ CREATE TABLE public.user
 );
 ALTER TABLE public.user OWNER TO regovar;
 
+
+
+INSERT INTO user (login, role) VALUES
+  ('admin', '{"Administration": "Write"}');
