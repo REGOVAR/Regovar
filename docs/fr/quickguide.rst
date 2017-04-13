@@ -21,6 +21,7 @@ Prérequis :
  * ordinateur linux avec accès internet
 
 Installtion :
+
 Optional, to create a lxd container:
     $ lxc-create -n regovar -t download -- -d ubuntu -r xenial -a amd64
     $ lxc-start -n regovar
