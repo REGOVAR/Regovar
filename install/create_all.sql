@@ -25,5 +25,5 @@ ALTER TABLE public.user OWNER TO regovar;
 
 
 
-INSERT INTO user (login, role) VALUES
+INSERT INTO "user" (login, role) VALUES
   ('admin', '{"Administration": "Write"}');
