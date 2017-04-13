@@ -16,9 +16,12 @@ HOSTNAME = "{}:{}".format(HOST, PORT)  # This is the internal host on which aioH
 HOST_P = "dev.regovar.org"  # THIS url must be change if the annso server is reach via a public namespace that user
 
 
+SESSION_MAX_DURATION = 86400
 RANGE_DEFAULT = 100
 RANGE_MAX = 1000
 
+# SECURITY
+PRIVATE_KEY32 = "723c88d556b150effbafca7c1d1b2f9f" # 32bits server secret key, default generated with $ date | md5sum
 
 # DB
 DATABASE_HOST = "localhost"
@@ -43,7 +46,7 @@ REPORTS_MODULES = []
 
 # AUTOCOMPUTED VALUES
 REGOVAR_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE_DIR = os.path.join(ANNSO_DIR, "api_rest/templates/")
+TEMPLATE_DIR = os.path.join(REGOVAR_DIR, "web/templates/")
 ERROR_ROOT_URL = "{}/errorcode/".format(HOST_P)
 
 

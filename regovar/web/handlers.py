@@ -10,6 +10,10 @@ import aiohttp_jinja2
 import datetime
 import time
 
+import aiohttp_security
+from aiohttp_session import get_session
+from aiohttp_security import remember, forget, authorized_userid, permits
+
 
 from aiohttp import web, MultiDict
 from urllib.parse import parse_qsl
@@ -63,6 +67,20 @@ def rest_error(message:str="Unknow", code:str="0", error_id:str=""):
     return web.json_response(results)
 
 
+
+
+def user_role(role):
+    '''
+        Decorator that checks if a user has been authenticated and have the good authorisation.
+    '''
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            request = args[1]
+            if not await permits(request, role):
+                raise web.HTTPForbidden()
+            return await func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 
@@ -164,24 +182,61 @@ async def on_shutdown(app):
 # USER HANDLER
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 class UserHandler:
+    '''
+        This handler manage all queries about user management and authentication
+    '''
+
     def __init__(self):
         pass
+    
 
 
     def all(self, request):
-        return rest_success("all")
+        ''' 
+            Public method that return the list of regovar's users (only public details).
+        '''
+        return rest_success([
+            {"id": 1, "firstname": "Olivier", "lastname": "Gueudelot", "login": "o.gueudelot"},
+            {"id": 2, "firstname": "Sacha", "lastname": "Schutz", "login": "s.schutz"},
+            {"id": 3, "firstname": "Anne-Sophie", "lastname": "Denommé", "login": "as.denomme"},
+            {"id": 4, "firstname": "Jérémie", "lastname": "Roquet", "login": "j.roquet"}])
 
-    def add(self, request):
+
+    @user_role('authenticated')
+    async def add(self, request):
+        '''
+            Add a new user in database
+        '''
         return rest_success("add")
 
+
+    @user_role('authenticated')
     def get(self, request):
         return rest_success("get")
 
+
+    @user_role('authenticated')
     def edit(self, request):
         return rest_success("edit")
 
-    def login(self, request):
-        return rest_success("login")
 
-    def logout(self, request):
-        return rest_success("logout")
+    async def login(self, request):
+        params = await request.post()
+        ipdb.set_trace()
+        login = params.get('login', None)
+        pwd = params.get('password', None)
+        print ("{} {}".format(login, pwd))
+        user = regovar.user_authentication(login, pwd)
+        if user:
+            # Ok, user's credential are correct, remember user for the session
+            await remember(request, None, user.id)
+            return rest_success(user.to_json())
+        raise web.HTTPForbidden()
+
+    @user_role('authenticated')
+    async def logout(self, request):
+        await forget(request, None)
+        return rest_success("Your are disconnected")
+
+
+

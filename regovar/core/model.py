@@ -13,6 +13,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import ClauseElement
 from sqlalchemy.orm import sessionmaker
+from passlib.hash import pbkdf2_sha256
 
 
 import config as C
@@ -197,4 +198,62 @@ def cancel(async_job_id):
 # =====================================================================================================================
 # MODEL DEFINITION - Build from the database (see sql scripts used to generate the database)
 # =====================================================================================================================
+
+
+
+
+# =====================================================================================================================
+# User Model
+# =====================================================================================================================
+def user_from_id(analysis_id):
+    """
+        Retrieve user with the provided id in the database
+    """
+    return __db_session.query(User).filter_by(id=analysis_id).first()
+
+
+def user_from_credential(login, pwd):
+    """
+        Retrieve File with the provided login+pwd in the database
+    """
+    user = __db_session.query(User).filter_by(login=login).first()
+    if user and user.password is None:
+        # Can occur if user created without password
+        return user
+    if user and pbkdf2_sha256.verify(pwd, user.password):
+        return user
+    return None
+
+
+def user_to_json(self, fields=None):
+    """
+        Export the user into json format with only requested fields
+    """
+    result = {}
+    if fields is None:
+        fields = Analysis.public_fields
+    for f in fields:
+        if f == "creation_date" or f == "update_date":
+            result.update({f: eval("self." + f + ".ctime()")})
+        else:
+            result.update({f: eval("self." + f)})
+    return result
+
+
+def user_set_password(self, old, new):
+    """
+        This method must be used to set the password of a user
+        Return True if the password have be changed, False otherwise
+    """
+    if (old == None and user.password == None) or pbkdf2_sha256.verify(old, user.password):
+        self.password = pbkdf2_sha256.encrypt(new, rounds=200000, salt_size=16)
+    return False
+
+
+
 User = Base.classes.user
+User.public_fields = ["id", "firstname", "lastname", "login", "email", "function", "location", "last_activity", "settings", "roles"]
+User.from_id = user_from_id
+User.from_credential = user_from_credential
+User.to_json = user_to_json
+User.set_password = user_set_password

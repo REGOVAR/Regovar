@@ -30,6 +30,10 @@ class Core:
     def notify_all(self, msg):
         print (msg)
 
+    def user_authentication(self, login, pwd):
+        return Model.User.from_credential(login, pwd);
+
+
 
 
 
