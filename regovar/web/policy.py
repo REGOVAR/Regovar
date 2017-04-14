@@ -2,6 +2,7 @@
 # coding: utf-8
 import ipdb; 
 from aiohttp_security.abc import AbstractAuthorizationPolicy
+import asyncio
 
 
 
@@ -11,14 +12,12 @@ class RegovarAuthorizationPolicy(AbstractAuthorizationPolicy):
         pass
 
 
-    def authorized_userid(self, identity):
-        user = regovar.user.from_id(identity)
-        if user is not None:
-            return True
-        return False
+    async def authorized_userid(self, identity):
+        await asyncio.sleep(0)
+        return identity
 
 
-    def permits(self, identity, permission, context=None):
-        ipdb.set_trace()
+    async def permits(self, identity, permission, context=None):
+        await asyncio.sleep(0)
         return True
 

@@ -231,7 +231,7 @@ def user_to_json(self, fields=None):
     """
     result = {}
     if fields is None:
-        fields = Analysis.public_fields
+        fields = User.public_fields
     for f in fields:
         if f == "creation_date" or f == "update_date":
             result.update({f: eval("self." + f + ".ctime()")})

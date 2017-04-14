@@ -14,7 +14,8 @@ import aiohttp_security
 from aiohttp_session import get_session
 from aiohttp_security import remember, forget, authorized_userid, permits
 
-
+import asyncio
+import functools
 from aiohttp import web, MultiDict
 from urllib.parse import parse_qsl
 
@@ -69,19 +70,21 @@ def rest_error(message:str="Unknow", code:str="0", error_id:str=""):
 
 
 
+
 def user_role(role):
     '''
         Decorator that checks if a user has been authenticated and have the good authorisation.
     '''
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
-            request = args[1]
-            if not await permits(request, role):
-                raise web.HTTPForbidden()
-            return await func(*args, **kwargs)
-        return wrapper
-    return decorator
-
+    def wrapper(f):
+        @functools.wraps(f)
+        async def wrapped(self, request):
+            has_perm = await permits(request, role)
+            if not has_perm:
+                message = 'User has no role {}'.format(role)
+                raise web.HTTPForbidden(body=message.encode())
+            return f(self, request)
+        return wrapped
+    return wrapper
 
 
 
@@ -195,6 +198,7 @@ class UserHandler:
         ''' 
             Public method that return the list of regovar's users (only public details).
         '''
+        # FIXME : retrieve true data from database
         return rest_success([
             {"id": 1, "firstname": "Olivier", "lastname": "Gueudelot", "login": "o.gueudelot"},
             {"id": 2, "firstname": "Sacha", "lastname": "Schutz", "login": "s.schutz"},
@@ -207,36 +211,43 @@ class UserHandler:
         '''
             Add a new user in database
         '''
+        # FIXME : implement method
         return rest_success("add")
 
 
     @user_role('authenticated')
     def get(self, request):
+        # FIXME : implement method
         return rest_success("get")
 
 
     @user_role('authenticated')
     def edit(self, request):
+        # FIXME : implement method
         return rest_success("edit")
 
 
     async def login(self, request):
         params = await request.post()
-        ipdb.set_trace()
         login = params.get('login', None)
         pwd = params.get('password', None)
         print ("{} {}".format(login, pwd))
-        user = regovar.user_authentication(login, pwd)
+        user = regovar.user_authentication("admin", "")
         if user:
+            # response = rest_success(user.to_json())
+            response = web.HTTPFound('/')
             # Ok, user's credential are correct, remember user for the session
-            await remember(request, None, user.id)
-            return rest_success(user.to_json())
+            await remember(request, response, str(user.id))
+            return response
         raise web.HTTPForbidden()
+
 
     @user_role('authenticated')
     async def logout(self, request):
-        await forget(request, None)
-        return rest_success("Your are disconnected")
+        # response = rest_success("Your are disconnected")
+        response = web.Response(body=b'You have been logged out')
+        await  forget(request, response)
+        return response
 
 
 
