@@ -16,11 +16,13 @@ from aiohttp_security import remember, forget, authorized_userid, permits
 
 import asyncio
 import functools
+import inspect
 from aiohttp import web, MultiDict
 from urllib.parse import parse_qsl
 
 from config import *
-from core import *
+import core.model as Model
+from core.core import regovar
 # from web.tus import *
 
 
@@ -82,7 +84,10 @@ def user_role(role):
             if not has_perm:
                 message = 'User has no role {}'.format(role)
                 raise web.HTTPForbidden(body=message.encode())
-            return f(self, request)
+            if inspect.iscoroutinefunction(f):
+                return await f(self, request)
+            else:
+                return f(self, request)
         return wrapped
     return wrapper
 
@@ -212,6 +217,7 @@ class UserHandler:
             Add a new user in database
         '''
         # FIXME : implement method
+        print("add success !")
         return rest_success("add")
 
 
@@ -222,17 +228,38 @@ class UserHandler:
 
 
     @user_role('authenticated')
-    def edit(self, request):
-        # FIXME : implement method
-        return rest_success("edit")
+    async def edit(self, request):
+        user_id = request.match_info.get('user_id', -1)
+        user = Model.User.from_id(user_id)
+        if user:
+            params = await request.post()
+            login = params.get('login', None)
+            firstname = params.get('firstname', None)
+            lastname = params.get('lastname', None)
+            email = params.get('email', None)
+            function = params.get('function', None)
+            location = params.get('location', None)
+            
+            if login : user.login = login
+            if firstname : user.firstname = firstname
+            if lastname : user.lastname = lastname
+            if email : user.email = email
+            if function : user.function = function
+            if location : user.location = location
+
+            Model.session().add(user)
+            Model.session().commit()
+            
+            return rest_success(user.to_json())
+        return rest_error("Unable to edit user, bad user id.")
 
 
     async def login(self, request):
         params = await request.post()
         login = params.get('login', None)
-        pwd = params.get('password', None)
+        pwd = params.get('password', "")
         print ("{} {}".format(login, pwd))
-        user = regovar.user_authentication("admin", "")
+        user = regovar.user_authentication(login, pwd)
         if user:
             # response = rest_success(user.to_json())
             response = web.HTTPFound('/')
