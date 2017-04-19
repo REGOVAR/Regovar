@@ -204,11 +204,8 @@ class UserHandler:
             Public method that return the list of regovar's users (only public details).
         '''
         # FIXME : retrieve true data from database
-        return rest_success([
-            {"id": 1, "firstname": "Olivier", "lastname": "Gueudelot", "login": "o.gueudelot"},
-            {"id": 2, "firstname": "Sacha", "lastname": "Schutz", "login": "s.schutz"},
-            {"id": 3, "firstname": "Anne-Sophie", "lastname": "Denommé", "login": "as.denomme"},
-            {"id": 4, "firstname": "Jérémie", "lastname": "Roquet", "login": "j.roquet"}])
+        
+        return rest_success(regovar.users.get())
 
 
     @user_role('authenticated')

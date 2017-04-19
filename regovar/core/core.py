@@ -25,13 +25,69 @@ from core.framework import log, err, array_merge, RegovarException, Timer, run_u
 
 class Core:
     def __init__(self):
-        self.user = "toto"
+        self.users = UserManager()
 
     def notify_all(self, msg):
         print (msg)
 
     def user_authentication(self, login, pwd):
         return Model.User.from_credential(login, pwd);
+
+
+
+
+# =====================================================================================================================
+# Users MANAGER
+# =====================================================================================================================
+
+
+class UserManager:
+    def __init__(self):
+        pass
+
+
+
+
+    def get(self, fields=None, query=None, order=None, offset=None, limit=None):
+        """
+            Generic method to get users data according to provided filtering options
+        """
+        if fields is None:
+            fields = Model.User.public_fields
+        if query is None:
+            query = {}
+        if order is None:
+            order = ['lastname', "firstname"]
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = offset + C.RANGE_MAX
+
+        result = []
+        sql = "SELECT " + ','.join(fields) + " FROM \"user\""
+        for s in Model.execute(sql):
+            entry = {}
+            for f in fields:
+                entry.update({f: eval("s." + f)})
+            result.append(entry)
+        return result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

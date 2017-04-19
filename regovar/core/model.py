@@ -205,11 +205,11 @@ def cancel(async_job_id):
 # =====================================================================================================================
 # User Model
 # =====================================================================================================================
-def user_from_id(analysis_id):
+def user_from_id(user_id):
     """
         Retrieve user with the provided id in the database
     """
-    return __db_session.query(User).filter_by(id=analysis_id).first()
+    return __db_session.query(User).filter_by(id=user_id).first()
 
 
 def user_from_credential(login, pwd):

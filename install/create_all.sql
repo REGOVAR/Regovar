@@ -1,7 +1,7 @@
 -- 
 -- CREATE ALL - V1.0.0
 --
-
+CREATE TYPE event_type AS ENUM ('info', 'warning', 'error');
 
 
 CREATE TABLE public.user
@@ -17,6 +17,7 @@ CREATE TABLE public.user
     last_activity timestamp without time zone,
     settings text COLLATE pg_catalog."C",
     roles text COLLATE pg_catalog."C",
+    is_activated boolean DEFAULT True,
     CONSTRAINT user_pkey PRIMARY KEY (id),
     CONSTRAINT user_ukey1 UNIQUE (login),
     CONSTRAINT user_ukey2 UNIQUE (email)
@@ -24,6 +25,57 @@ CREATE TABLE public.user
 ALTER TABLE public.user OWNER TO regovar;
 
 
+CREATE TABLE public.event
+(
+    id bigserial NOT NULL,
+    "date" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    user_id integer,
+    message text COLLATE pg_catalog."C",
+    type event_type,
 
-INSERT INTO "user" (login, roles) VALUES
-  ('admin', '{"Administration": "Write"}');
+    project_id integer,
+    analysis_id integer,
+    file_id integer,
+    subject_id integer,
+    job_id integer,
+    pipeline_id integer,
+    CONSTRAINT event_pkey PRIMARY KEY (id)
+);
+ALTER TABLE public.event OWNER TO regovar;
+
+
+CREATE TABLE public.project
+(
+    id serial NOT NULL,
+    name character varying(255) COLLATE pg_catalog."C" NOT NULL,
+    comment text,
+    parent_id integer,
+    is_folder boolean,
+    CONSTRAINT project_pkey PRIMARY KEY (id)
+);
+ALTER TABLE public.project OWNER TO regovar;
+
+
+CREATE TABLE public.user_project_sharing
+(
+    project_id integer NOT NULL,
+    user_id integer NOT NULL,
+    write_authorisation boolean,
+    CONSTRAINT ups_pkey PRIMARY KEY (project_id, user_id)
+);
+ALTER TABLE public.user_project_sharing OWNER TO regovar;
+
+
+
+
+
+
+INSERT INTO "user" (login, firstname, lastname, roles) VALUES
+  ('admin', NULL, NULL, '{"Administration": "Write"}'),
+  ('o.gueudelot', 'Olivier', 'Gueudelot', '{"Administration": "Write"}'),
+  ('as.denomme', 'Anne-Sophie', 'Denommé', '{}'),
+  ('s.schutz', 'Sacha', 'Schutz', '{}'),
+  ('j.roquet', 'Jérémie', 'Roquet', '{}');
+
+INSERT INTO "event" (message, type) VALUES
+  ('Regovar database creation', 'info');
