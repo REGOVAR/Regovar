@@ -259,7 +259,7 @@ class UserHandler:
         user = regovar.user_authentication(login, pwd)
         if user:
             # response = rest_success(user.to_json())
-            response = web.HTTPFound('/')
+            response = rest_success(user.to_json()) # web.HTTPFound('/')
             # Ok, user's credential are correct, remember user for the session
             await remember(request, response, str(user.id))
             return response
