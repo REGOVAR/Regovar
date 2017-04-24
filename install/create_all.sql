@@ -71,7 +71,7 @@ ALTER TABLE public.user_project_sharing OWNER TO regovar;
 
 
 INSERT INTO "user" (login, firstname, lastname, roles) VALUES
-  ('admin', NULL, NULL, '{"Administration": "Write"}'),
+  ('admin', "Root", "Administrator", '{"Administration": "Write"}'),
   ('o.gueudelot', 'Olivier', 'Gueudelot', '{"Administration": "Write"}'),
   ('as.denomme', 'Anne-Sophie', 'Denommé', '{}'),
   ('s.schutz', 'Sacha', 'Schutz', '{}'),

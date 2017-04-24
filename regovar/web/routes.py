@@ -51,7 +51,7 @@ app.router.add_route('GET',    "/users/{user_id}", userHandler.get)             
 app.router.add_route('PUT',    "/users/{user_id}", userHandler.edit)                                              # Edit user with provided data
 app.router.add_route('POST',   "/users/login", userHandler.login)                                                 # Start user's session if provided credentials are correct
 app.router.add_route('GET',    "/users/logout", userHandler.logout)                                               # Kill user's session
-
+app.router.add_route('DELETE', "/users/{user_id}", userHandler.delete)                                            # Delete a user
 
 
 

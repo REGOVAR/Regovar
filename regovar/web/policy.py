@@ -6,6 +6,8 @@ import asyncio
 
 
 
+import core.model as Model
+
 
 class RegovarAuthorizationPolicy(AbstractAuthorizationPolicy):
     def __init__(self):
@@ -14,10 +16,20 @@ class RegovarAuthorizationPolicy(AbstractAuthorizationPolicy):
 
     async def authorized_userid(self, identity):
         await asyncio.sleep(0)
+
         return identity
 
 
     async def permits(self, identity, permission, context=None):
+        # TODO : check user authorisation 
         await asyncio.sleep(0)
-        return True
+        user = Model.User.from_id(identity)
+        if user:
+            if permission == 'Authenticated':
+                return True
+
+            role, access = permission.split(':')
+            if user.roles.contains(role) and user.roles[role] == access:
+                return True
+        return False
 

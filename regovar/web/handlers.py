@@ -208,7 +208,7 @@ class UserHandler:
         return rest_success(regovar.users.get())
 
 
-    @user_role('authenticated')
+    @user_role('Authenticated')
     async def add(self, request):
         '''
             Add a new user in database
@@ -218,13 +218,13 @@ class UserHandler:
         return rest_success("add")
 
 
-    @user_role('authenticated')
+    @user_role('Authenticated')
     def get(self, request):
         # FIXME : implement method
         return rest_success("get")
 
 
-    @user_role('authenticated')
+    @user_role('Authenticated')
     async def edit(self, request):
         user_id = request.match_info.get('user_id', -1)
         user = Model.User.from_id(user_id)
@@ -266,12 +266,31 @@ class UserHandler:
         raise web.HTTPForbidden()
 
 
-    @user_role('authenticated')
+    @user_role('Authenticated')
     async def logout(self, request):
         # response = rest_success("Your are disconnected")
         response = web.Response(body=b'You have been logged out')
         await  forget(request, response)
         return response
 
+
+    @user_role('Administration:Write')
+    async def delete(self, request):
+        # Check that user is admin, and is not deleting himself (to ensure that there is always at least one admin)
+        session = await get_session(request)
+        ruser_id = session['regovar_session']
+        ruser = Model.User.from_id(ruser_id)
+        if ruser:
+            user_id = request.match_info.get('user_id', -1)
+            if user_id == ruser_id:
+                return rest_error("You cannot delete yourself.")
+            
+            user = Model.User.from_id(user_id)
+            if user:
+                Model.execute("DELETE FROM user WHERE id={}".format(user.id))
+                regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
+                return rest_success("get")
+            return rest_error("User doesn't exists.")
+        raise web.HTTPForbidden()
 
 
