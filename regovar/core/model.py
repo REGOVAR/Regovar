@@ -6,6 +6,7 @@ import uuid
 import sqlalchemy
 import asyncio
 import multiprocessing as mp
+import json
 
 
 from sqlalchemy.ext.automap import automap_base
@@ -209,7 +210,10 @@ def user_from_id(user_id):
     """
         Retrieve user with the provided id in the database
     """
-    return __db_session.query(User).filter_by(id=user_id).first()
+    user = __db_session.query(User).filter_by(id=user_id).first()
+    if user:
+        user.roles_dic = json.loads(user.roles)
+    return user
 
 
 def user_from_credential(login, pwd):
@@ -217,6 +221,8 @@ def user_from_credential(login, pwd):
         Retrieve File with the provided login+pwd in the database
     """
     user = __db_session.query(User).filter_by(login=login).first()
+    if user:
+        user.roles_dic = json.loads(user.roles)
     if user and user.password is None:
         # Can occur if user created without password
         return user

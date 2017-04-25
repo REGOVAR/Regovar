@@ -29,7 +29,8 @@ class RegovarAuthorizationPolicy(AbstractAuthorizationPolicy):
                 return True
 
             role, access = permission.split(':')
-            if user.roles.contains(role) and user.roles[role] == access:
+            print ("Check authent [{}+{}] for {} ({})".format(role, access, user.login, user.roles_dic))
+            if role in user.roles_dic.keys() and user.roles_dic[role] == access:
                 return True
         return False
 

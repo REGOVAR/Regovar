@@ -194,6 +194,7 @@ class UserHandler:
         This handler manage all queries about user management and authentication
     '''
 
+
     def __init__(self):
         pass
     
@@ -260,6 +261,7 @@ class UserHandler:
         if user:
             # response = rest_success(user.to_json())
             response = rest_success(user.to_json()) # web.HTTPFound('/')
+
             # Ok, user's credential are correct, remember user for the session
             await remember(request, response, str(user.id))
             return response
@@ -277,20 +279,12 @@ class UserHandler:
     @user_role('Administration:Write')
     async def delete(self, request):
         # Check that user is admin, and is not deleting himself (to ensure that there is always at least one admin)
-        session = await get_session(request)
-        ruser_id = session['regovar_session']
-        ruser = Model.User.from_id(ruser_id)
-        if ruser:
-            user_id = request.match_info.get('user_id', -1)
-            if user_id == ruser_id:
-                return rest_error("You cannot delete yourself.")
-            
-            user = Model.User.from_id(user_id)
-            if user:
-                Model.execute("DELETE FROM user WHERE id={}".format(user.id))
-                regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
-                return rest_success("get")
-            return rest_error("User doesn't exists.")
-        raise web.HTTPForbidden()
+        remote_user_id = await authorized_userid(request)
+        user_to_delete_id = request.match_info.get('user_id', -1)
+        try:
+            regovar.users.delete(user_to_delete_id, remote_user_id)
+        except Exception as err:
+            return rest_error(err)
+        return rest_success()
 
 
