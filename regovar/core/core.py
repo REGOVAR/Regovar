@@ -91,10 +91,39 @@ class UserManager:
         if user is None:
             raise RegovarException("User to delete doesn't exits")
         if admin_id == user_to_delete_id:
-            raise RegovarException("Enable to delete yourself. This action must be done by another admin.")
+            raise RegovarException("Unable to delete yourself. This action must be done by another admin.")
             
         Model.execute("DELETE FROM \"user\" WHERE id={}".format(user_to_delete_id))
         # regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
+
+
+    def create_or_update(self, user_data, remote_user_id):
+        """
+            Create or update an user with provided data.
+            Creation can be done only by administrator user.
+            Admin can edit all user, normal users can only edit themself
+        """
+        remote_user = Model.User.from_id(remote_user_id)
+        if remote_user is None or not isinstance(user_data, dict):
+            raise RegovarException("Unable to create/update user. Wrong data provided")
+        user_id = None
+        if "id" in user_data.keys():
+            user_id = user_data["id"]
+        if remote_user.is_admin() or user_id == remote_user.id:
+            user = Model.User.from_id(user_id) or Model.User()
+            if "login" in user_data.keys() : user.login = user_data["login"]
+            if "firstname" in user_data.keys() : user.firstname = user_data["firstname"]
+            if "lastname" in user_data.keys() : user.lastname = user_data["lastname"]
+            if "email" in user_data.keys() : user.email = user_data["email"]
+            if "function" in user_data.keys() : user.function = user_data["function"]
+            if "location" in user_data.keys() : user.location = user_data["location"]
+            # Todo : save file in statics assets directory (remove old avatar if necessary), and store new url into db
+            #if "avatar" in user_data.keys() : user.avatar = user_data["avatar"]
+            if "password" in user_data.keys() : user.erase_password(user_data["password"])
+            user.save()
+            return user
+        return None
+
 
 
 

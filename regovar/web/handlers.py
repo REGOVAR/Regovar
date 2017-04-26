@@ -193,63 +193,51 @@ class UserHandler:
     '''
         This handler manage all queries about user management and authentication
     '''
-
-
     def __init__(self):
         pass
     
-
 
     def all(self, request):
         ''' 
             Public method that return the list of regovar's users (only public details).
         '''
-        # FIXME : retrieve true data from database
-        
         return rest_success(regovar.users.get())
 
 
-    @user_role('Authenticated')
-    async def add(self, request):
-        '''
-            Add a new user in database
-        '''
-        # FIXME : implement method
-        print("add success !")
-        return rest_success("add")
-
-
-    @user_role('Authenticated')
     def get(self, request):
         # FIXME : implement method
         return rest_success("get")
 
 
+    @user_role('Administration:Write')
+    async def add(self, request):
+        '''
+            Add a new user in database. 
+            Only available for administrator
+        '''
+        remote_user_id = await authorized_userid(request)
+        user_data = await self.get_user_data_from_request(request)
+        try:
+            user = regovar.users.create_or_update(user_data, remote_user_id)
+        except Exception as err:
+            return rest_error(err)
+        return rest_success(user.to_json())
+
+
     @user_role('Authenticated')
     async def edit(self, request):
-        user_id = request.match_info.get('user_id', -1)
-        user = Model.User.from_id(user_id)
-        if user:
-            params = await request.post()
-            login = params.get('login', None)
-            firstname = params.get('firstname', None)
-            lastname = params.get('lastname', None)
-            email = params.get('email', None)
-            function = params.get('function', None)
-            location = params.get('location', None)
-            
-            if login : user.login = login
-            if firstname : user.firstname = firstname
-            if lastname : user.lastname = lastname
-            if email : user.email = email
-            if function : user.function = function
-            if location : user.location = location
-
-            Model.session().add(user)
-            Model.session().commit()
-            
-            return rest_success(user.to_json())
-        return rest_error("Unable to edit user, bad user id.")
+        '''
+            Edit a user data
+            Only available the user on himself, and administrator on all user
+        '''
+        remote_user_id = await authorized_userid(request)
+        user_data = await self.get_user_data_from_request(request)
+        user = None
+        try:
+            user = regovar.users.create_or_update(user_data, remote_user_id)
+        except Exception as err:
+            return rest_error(err)
+        return rest_success(user.to_json())
 
 
     async def login(self, request):
@@ -261,7 +249,6 @@ class UserHandler:
         if user:
             # response = rest_success(user.to_json())
             response = rest_success(user.to_json()) # web.HTTPFound('/')
-
             # Ok, user's credential are correct, remember user for the session
             await remember(request, response, str(user.id))
             return response
@@ -288,3 +275,30 @@ class UserHandler:
         return rest_success()
 
 
+    async def get_user_data_from_request(self, request):
+        """
+            Tool for this manager to retrieve data from put/post request 
+            and build json 
+        """
+        params = await request.post()
+        user_id = request.match_info.get('user_id', 0)
+        login = params.get('login', None)
+        password = params.get('password', None)
+        firstname = params.get('firstname', None)
+        lastname = params.get('lastname', None)
+        email = params.get('email', None)
+        function = params.get('function', None)
+        location = params.get('location', None)
+        avatar = params.get('avatar', None)
+
+        user = { "id" : user_id }
+        if login : user.update({"login" : login})
+        if firstname : user.update({"firstname" : firstname})
+        if lastname : user.update({"lastname" : lastname})
+        if email : user.update({"email" : email})
+        if function : user.update({"function" : function})
+        if location : user.update({"location" : location})
+        if password : user.update({"password" : password})
+        if avatar : user.update({"avatar" : avatar})
+
+        return user

@@ -144,7 +144,7 @@ def execute(query):
     try:
         result = __db_session.execute(query)
         __db_session.commit()
-        __db_session.commit() # Need a second commit to force session to commit :/ ... strange behavior when we execute(raw_sql) instead of using sqlalchemy's objects as query
+        __db_session.commit() # FIXME : Need a second commit to force session to commit :/ ... strange behavior when we execute(raw_sql) instead of using sqlalchemy's objects as query
     except Exception as err:
         ipdb.set_trace()
         err(err)
@@ -163,6 +163,17 @@ def execute_bw(query, callback=None):
     __async_jobs[__async_job_id] = {"task" : t, "callback": callback, "query" : query, "start": datetime.datetime.now}
     return __async_job_id
         
+
+def generic_save(obj):
+    try:
+        s = Session.object_session(obj)
+        if not s :
+            s = Session()
+            s.add(obj)
+        s.commit()
+    except Exception as err:
+        ipdb.set_trace()
+        err(err)
 
 
 async def execute_aio(query):
@@ -206,13 +217,18 @@ def cancel(async_job_id):
 # =====================================================================================================================
 # User Model
 # =====================================================================================================================
+def user_init(self):
+    try:
+        self.roles_dic = json.loads(self.roles)
+    except:
+        self.roles_dic = {}
+
 def user_from_id(user_id):
     """
         Retrieve user with the provided id in the database
     """
     user = __db_session.query(User).filter_by(id=user_id).first()
-    if user:
-        user.roles_dic = json.loads(user.roles)
+    user.init()
     return user
 
 
@@ -221,8 +237,7 @@ def user_from_credential(login, pwd):
         Retrieve File with the provided login+pwd in the database
     """
     user = __db_session.query(User).filter_by(login=login).first()
-    if user:
-        user.roles_dic = json.loads(user.roles)
+    user.init()
     if user and user.password is None:
         # Can occur if user created without password
         return user
@@ -253,8 +268,25 @@ def user_set_password(self, old, new):
     """
     if (old == None and user.password == None) or pbkdf2_sha256.verify(old, user.password):
         self.password = pbkdf2_sha256.encrypt(new, rounds=200000, salt_size=16)
+        self.save()
+        return True
     return False
 
+
+def user_erase_password(self, new):
+    """
+        Method that erase password with a new one when we forgot the former one.
+    """
+    self.password = pbkdf2_sha256.encrypt(new, rounds=200000, salt_size=16)
+    self.save()
+    return True
+
+
+def user_is_admin(self):
+    """
+        Return True if user have administration rights; False otherwise
+    """
+    return isinstance(self, User) and isinstance(self.roles_dic, dict) and "Administration" in self.roles_dic.keys() and self.roles_dic["Administration"] == "Write"
 
 
 User = Base.classes.user
@@ -263,3 +295,7 @@ User.from_id = user_from_id
 User.from_credential = user_from_credential
 User.to_json = user_to_json
 User.set_password = user_set_password
+User.erase_password = user_erase_password
+User.is_admin = user_is_admin
+User.save = generic_save
+User.init = user_init
