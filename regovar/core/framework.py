@@ -74,9 +74,15 @@ def war(msg):
     rlog.warning(msg)
 
 
-def err(msg):
+def err(msg, exception=None):
     global rlog
     rlog.error(msg)
+    if exception and not isinstance(exception, RegovarException):
+        # To avoid to log multiple time the same exception when chaining try/catch
+        rlog.exception(exception)
+
+
+
 
 
 # =====================================================================================================================
@@ -86,24 +92,29 @@ def err(msg):
 
 class RegovarException(Exception):
     """
-        Todo : doc
+        Regovar exception
     """
     msg = "Unknow error :/"
-    code = 0
-    id = None
-    date = None
+    code = "E000000"
 
-    def __init__(self, msg: str, code: int=0, logger=None):
-        self.code = RegovarException.code
-        self.msg = RegovarException.msg
+    def __init__(self, msg: str, code: str=None, exception: Exception=None, logger: logging.Logger=None):
+        self.code = code or RegovarException.code
+        self.msg = msg or RegovarException.msg
         self.id = str(uuid.uuid4())
         self.date = datetime.datetime.utcnow().timestamp()
+        self.log = "ERROR {} [{}] {}".format(self.code, self.id, self.msg)
 
-        if logger is not None:
-            logger.err(msg)
+        if logger:
+            logger.error(self.log)
+            if exception and not isinstance(exception, RegovarException):
+                # To avoid to log multiple time the same exception when chaining try/catch
+                logger.exception(exception)
+        else:
+            err(self.log, exception)
+
 
     def __str__(self):
-        return "[ERROR:{:05}] {} : {}".format(self.code, self.id, self.msg)
+        return self.log
 
 
 # =====================================================================================================================
