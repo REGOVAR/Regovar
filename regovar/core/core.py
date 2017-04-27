@@ -20,9 +20,6 @@ from core.framework import log, err, array_merge, RegovarException, Timer, run_u
 
 
 
-
-
-
 class Core:
     def __init__(self):
         self.users = UserManager()
@@ -32,6 +29,48 @@ class Core:
 
     def user_authentication(self, login, pwd):
         return Model.User.from_credential(login, pwd);
+
+
+
+
+
+# =====================================================================================================================
+# TOOLS
+# =====================================================================================================================
+
+def check_generic_query_parameter(allowed_fields, default_sort, fields, query, sort, offset, limit):
+    """
+        Generic method used by the core to check that generic fields/query/sort/offset/limit paramters à good
+        fields : list of fields for lazy loading
+        query  : dic with for each fields (keys) the list of value
+        sort   : list of field on which to sort (prefix by "-" to sort field DESC)
+        offset : start offset
+        limit  : max number of result to return
+    """
+    # TODO check param and raise error if wrong parameter : E200001, E200002, E200003, E200004
+    if fields is None:
+        fields = Model.User.public_fields
+    if query is None:
+        query = {}
+    if sort is None:
+        sort = default_sort
+    if offset is None:
+        offset = 0
+    if limit is None:
+        limit = C.RANGE_DEFAULT
+    return fields, query, sort, offset, limit
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -47,25 +86,22 @@ class UserManager:
 
 
 
-
-    def get(self, fields=None, query=None, order=None, offset=None, limit=None):
+    def get(self, fields=None, query=None, sort=None, offset=None, limit=None):
         """
             Generic method to get users data according to provided filtering options
         """
-        if fields is None:
-            fields = Model.User.public_fields
-        if query is None:
-            query = {}
-        if order is None:
-            order = ['lastname', "firstname"]
-        if offset is None:
-            offset = 0
-        if limit is None:
-            limit = offset + C.RANGE_MAX
+        # Check parameters
+        fields, query, sort, offset, limit = check_generic_query_parameter(Model.User.public_fields, ['lastname', "firstname"], fields, query, sort, offset, limit)
 
+        # Build query
         result = []
         sql = "SELECT " + ','.join(fields) + " FROM \"user\""
-        for s in Model.execute(sql):
+
+        # Get result
+        rsql = Model.execute(sql)
+
+        # Get and return result
+        for s in rsql:
             entry = {}
             for f in fields:
                 if f == "roles" or f == "settings":
@@ -82,16 +118,18 @@ class UserManager:
 
 
     def delete(self, user_to_delete_id, admin_id):
-        # retrieve users
+        """ 
+            Retrieve users
+        """
         admin = Model.User.from_id(admin_id)
         user = Model.User.from_id(user_to_delete_id)
 
         if admin is None or "Administration" not in admin.roles_dic.keys() or admin.roles_dic["Administration"] != "Write" :
-            raise RegovarException("User deletion need to be done by an admin")
+            raise RegovarException(ERR.E101003, "E101003")
         if user is None:
-            raise RegovarException("User to delete doesn't exits")
+            raise RegovarException(ERR.E101004, "E101004")
         if admin_id == user_to_delete_id:
-            raise RegovarException("Unable to delete yourself. This action must be done by another admin.")
+            raise RegovarException(ERR.E101005, "E101005")
             
         Model.execute("DELETE FROM \"user\" WHERE id={}".format(user_to_delete_id))
         # regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
@@ -105,7 +143,7 @@ class UserManager:
         """
         remote_user = Model.User.from_id(remote_user_id)
         if remote_user is None or not isinstance(user_data, dict):
-            raise RegovarException("Unable to create/update user. Wrong data provided")
+            raise RegovarException(ERR.E101002, "E101002")
         user_id = None
         if "id" in user_data.keys():
             user_id = user_data["id"]
