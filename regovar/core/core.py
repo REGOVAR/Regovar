@@ -127,9 +127,9 @@ class UserManager:
         if admin is None or "Administration" not in admin.roles_dic.keys() or admin.roles_dic["Administration"] != "Write" :
             raise RegovarException(ERR.E101003, "E101003")
         if user is None:
-            raise RegovarException(ERR.E101004, "E101004")
+            raise RegovarException(ERR.E101001, "E101001")
         if admin_id == user_to_delete_id:
-            raise RegovarException(ERR.E101005, "E101005")
+            raise RegovarException(ERR.E101004, "E101004")
             
         Model.execute("DELETE FROM \"user\" WHERE id={}".format(user_to_delete_id))
         # regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")

@@ -9,6 +9,7 @@ import aiohttp
 import aiohttp_jinja2
 import datetime
 import time
+import uuid
 
 import aiohttp_security
 from aiohttp_session import get_session
@@ -23,6 +24,7 @@ from urllib.parse import parse_qsl
 from config import *
 import core.model as Model
 from core.core import regovar
+from core.framework import *
 # from web.tus import *
 
 
@@ -52,7 +54,7 @@ def rest_success(response_data=None, pagination_data=None):
 
 
 
-def rest_error(message:str="Unknow", code:str="0", error_id:str=""):
+def rest_error(message:str="Unknow error", code:str="", error_id:str=""):
     """ 
         Build the REST error response
         :param message:         The short "friendly user" error message
@@ -69,6 +71,17 @@ def rest_error(message:str="Unknow", code:str="0", error_id:str=""):
     }
     return web.json_response(results)
 
+
+def rest_exception(exception):
+    """ 
+        Build the REST error response from a RegovarException
+    """
+    if isinstance(exception, RegovarException):
+        return rest_error(exception.msg, exception.code, exception.id)
+    else:
+        uid = str(uuid.uuid4())
+        err("ERROR [{}] {}".format(uid, exception.arg))
+        return rest_error("Not managed exception : {}".format(exception.arg), "", uid) 
 
 
 
@@ -206,7 +219,7 @@ class UserHandler:
 
     def get(self, request):
         # FIXME : implement method
-        return rest_success("get")
+        return rest_success("todo get")
 
 
     @user_role('Administration:Write')
@@ -220,7 +233,7 @@ class UserHandler:
         try:
             user = regovar.users.create_or_update(user_data, remote_user_id)
         except Exception as err:
-            return rest_error(err)
+            return rest_exception(err)
         return rest_success(user.to_json())
 
 
@@ -236,7 +249,7 @@ class UserHandler:
         try:
             user = regovar.users.create_or_update(user_data, remote_user_id)
         except Exception as err:
-            return rest_error(err)
+            return rest_exception(err)
         return rest_success(user.to_json())
 
 
@@ -271,7 +284,7 @@ class UserHandler:
         try:
             regovar.users.delete(user_to_delete_id, remote_user_id)
         except Exception as err:
-            return rest_error(err)
+            return rest_exception(err)
         return rest_success()
 
 
