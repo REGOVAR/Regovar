@@ -30,10 +30,10 @@ CREATE TABLE public.event
 (
     id bigserial NOT NULL,
     "date" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    user_id integer,
     message text COLLATE pg_catalog."C",
     type event_type,
 
+    user_id integer,
     project_id integer,
     analysis_id integer,
     file_id integer,

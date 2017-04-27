@@ -7,7 +7,7 @@ import os
 
 # Annso package
 from config import *
-from core.framework import RegovarException
+from core.framework import RegovarException, err
 
 # Some check before starting the web application
 if not os.path.exists(TEMPLATE_DIR):
@@ -27,4 +27,7 @@ from web import *
 
 # Start the pirus server
 if __name__ == '__main__':
-    web.run_app(app, host=HOST, port=PORT)
+    try:
+        web.run_app(app, host=HOST, port=PORT)
+    except Exception as err:
+        err("Uncatched exception", err)

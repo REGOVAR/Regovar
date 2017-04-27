@@ -214,11 +214,18 @@ class UserHandler:
         ''' 
             Public method that return the list of regovar's users (only public details).
         '''
+        # TODO : manage query parameters for fields, range, sort, ...
         return rest_success(regovar.users.get())
 
 
+    @user_role('Authenticated')
     def get(self, request):
-        # FIXME : implement method
+        # TODO : manage query parameters for fields
+        user_id = request.match_info.get('user_id', 0)
+        try:
+            user = regovar.users.get(user_id)
+        except Exception as err:
+            return rest_exception(err)
         return rest_success("todo get")
 
 
