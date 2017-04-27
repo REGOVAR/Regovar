@@ -46,6 +46,7 @@ REPORTS_MODULES = []
 
 # AUTOCOMPUTED VALUES
 REGOVAR_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_DIR = REGOVAR_DIR
 TEMPLATE_DIR = os.path.join(REGOVAR_DIR, "web/templates/")
 ERROR_ROOT_URL = "{}/errorcode/".format(HOST_P)
 
