@@ -2,6 +2,7 @@
 -- CREATE ALL - V1.0.0
 --
 CREATE TYPE event_type AS ENUM ('info', 'warning', 'error');
+CREATE TYPE project_status AS ENUM ('open', 'closed');
 
 
 CREATE TABLE public.user
@@ -50,7 +51,9 @@ CREATE TABLE public.project
     name character varying(255) COLLATE pg_catalog."C" NOT NULL,
     comment text,
     parent_id integer,
+    status project_status,
     is_folder boolean,
+    last_activity timestamp without time zone,
     CONSTRAINT project_pkey PRIMARY KEY (id)
 );
 ALTER TABLE public.project OWNER TO regovar;
