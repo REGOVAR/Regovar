@@ -1,37 +1,35 @@
-Quick guide
-###########
+# Quick guide
 
-Regovar est un logiciel libre pour l’analyse de données de séquençage haut débit pour les maladies génétiques rares (mais pas que). Son rôle est de permettre le suivit, l'analyse et la gestion des données issues des séquenceurs dans le but de faire de la recherche ou du diagnostiques, et ce que l'on soit un bioinformaticien, un biologiste ou bien un clinitien. 
+Regovar est un logiciel libre pour l’analyse de données de séquençage haut débit pour les maladies génétiques rares (mais pas que). Son rôle est de permettre l'analyse et la gestion des données issues des séquenceurs dans le but de faire de la recherche ou du diagnostic, et ce, que l'on soit bioinformaticien, biologiste ou bien clinicien. 
 
-Quelques liens:
+## Quelques liens :
  * Site officiel : http://regovar.org
- * Source du server : https://github.com/REGOVAR/Regovar
+ * Sources du serveur : https://github.com/REGOVAR/Regovar
 
-Attention:
-| Ce guide vous explique comment installer le server afin de le tester directement via son interface web. 
+Attention :
+| Ce guide explique comment installer le serveur afin de le tester directement via son interface web. 
 | Il s'agit d'une installation rapide dans un container afin de ne pas polluer votre machine avec les dépendances. 
-| Il ne s'agit du guide d'installation pour un serveur dans le but d'une utilsation en production.
+| Il ne s'agit pas du guide d'installation pour un serveur dans le but d'une utilsation en production.
 
+## Installation
 
+### Prérequis :
+ * ordinateur sous Linux avec accès Internet
 
-Installation
-============
-
-Prérequis :
- * ordinateur linux avec accès internet
-
-Installtion :
-
+### Installation :
 Optional, to create a lxd container:
+
     $ lxc-create -n regovar -t download -- -d ubuntu -r xenial -a amd64
     $ lxc-start -n regovar
-    $ lxc-attach -n regovar
-or (with ubuntu)
-   $ lxc launch images:ubuntu/xenial regovar
-   $ lxc exec regovar -- /bin/bash
+    $ lxc-attach -n regovar`
     
-    
-Installation script for annso on a fresh Ubuntu Xenial:
+or (with Ubuntu)
+
+    $ lxc launch images:ubuntu/xenial regovar
+    $ lxc exec regovar -- /bin/bash
+
+Installation script for Annso on a fresh Ubuntu Xenial:
+
     # apt update && apt upgrade
     # apt install git ca-certificates nginx uwsgi postgresql postgresql-contrib postgresql-server-dev-9.5 build-essential libssl-dev libffi-dev python3-dev virtualenv libpq-dev libmagickwand-dev nano
     # useradd regovar --create-home
@@ -84,9 +82,7 @@ Installation script for annso on a fresh Ubuntu Xenial:
     # /etc/init.d/nginx restart
     # exit
     
-    
-Optional, if annso wrapped into a lxd container:
+Optional, if Annso wrapped into a lxd container:
+
     $ IP=$(lxc-info -n regovar_annso | grep IP | sed 's/.* //')
     $ firefox $IP
-
-
