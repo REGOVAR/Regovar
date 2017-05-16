@@ -3,26 +3,25 @@
 import ipdb
 import json
 import core.model as Model
-from core.errlst import ERR
-from core.framework import RegovarException, check_generic_query_parameter, log, err, war
+from core.framework.common import *
+from core.framework.erreurs_list import ERR
 
 
 
 
 
-class UserManager:
+class ProjectManager:
 
     def __init__(self):
         pass
 
 
-
     def get(self, fields=None, query=None, sort=None, offset=None, limit=None):
         """
-            Generic method to get users data according to provided filtering options
+            Generic method to get projects data according to provided filtering options
         """
         # Check parameters
-        fields, query, sort, offset, limit = check_generic_query_parameter(Model.User.public_fields, ['lastname', "firstname"], fields, query, sort, offset, limit)
+        fields, query, sort, offset, limit = check_generic_query_parameter(Model.User.public_fields, ['name'], fields, query, sort, offset, limit)
 
         # Build query
         result = []

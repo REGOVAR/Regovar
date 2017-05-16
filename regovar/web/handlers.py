@@ -22,10 +22,9 @@ from aiohttp import web, MultiDict
 from urllib.parse import parse_qsl
 
 from config import *
+from core.framework.common import *
 import core.model as Model
-from core.core import regovar
-from core.framework import *
-# from web.tus import *
+from core.core import core
 
 
 
@@ -80,8 +79,9 @@ def rest_exception(exception):
         return rest_error(exception.msg, exception.code, exception.id)
     else:
         uid = str(uuid.uuid4())
-        err("ERROR [{}] {}".format(uid, exception.arg))
-        return rest_error("Not managed exception : {}".format(exception.arg), "", uid) 
+        err("ERROR [{}] {}".format(uid, exception.args))
+        raise exception
+        return rest_error("Not managed exception : {}".format(exception.args), "", uid) 
 
 
 
@@ -115,7 +115,7 @@ def notify_all(data):
         ws[0].send_str(msg)
 
 # Give to the core the delegate to call to notify all users via websockets
-regovar.notify_all = notify_all
+core.notify_all = notify_all
 
 
 
@@ -135,7 +135,7 @@ class ApiHandler:
             "title": "Regovar Service API",
             "version": "alpha",
             "format_supported": ["json"],
-            "website" : "regovar.org"
+            "website" : "core.org"
         })
 
 
@@ -215,7 +215,7 @@ class UserHandler:
             Public method that return the list of regovar's users (only public details).
         '''
         # TODO : manage query parameters for fields, range, sort, ...
-        return rest_success(regovar.users.get())
+        return rest_success(core.users.get())
 
 
     @user_role('Authenticated')
@@ -223,9 +223,9 @@ class UserHandler:
         # TODO : manage query parameters for fields
         user_id = request.match_info.get('user_id', 0)
         try:
-            user = regovar.users.get(user_id)
-        except Exception as err:
-            return rest_exception(err)
+            user = core.users.get(user_id)
+        except Exception as ex:
+            return rest_exception(ex)
         return rest_success("todo get")
 
 
@@ -238,9 +238,9 @@ class UserHandler:
         remote_user_id = await authorized_userid(request)
         user_data = await self.get_user_data_from_request(request)
         try:
-            user = regovar.users.create_or_update(user_data, remote_user_id)
-        except Exception as err:
-            return rest_exception(err)
+            user = core.users.create_or_update(user_data, remote_user_id)
+        except Exception as ex:
+            return rest_exception(ex)
         return rest_success(user.to_json())
 
 
@@ -254,9 +254,9 @@ class UserHandler:
         user_data = await self.get_user_data_from_request(request)
         user = None
         try:
-            user = regovar.users.create_or_update(user_data, remote_user_id)
-        except Exception as err:
-            return rest_exception(err)
+            user = core.users.create_or_update(user_data, remote_user_id)
+        except Exception as ex:
+            return rest_exception(ex)
         return rest_success(user.to_json())
 
 
@@ -265,7 +265,7 @@ class UserHandler:
         login = params.get('login', None)
         pwd = params.get('password', "")
         print ("{} {}".format(login, pwd))
-        user = regovar.user_authentication(login, pwd)
+        user = core.user_authentication(login, pwd)
         if user:
             # response = rest_success(user.to_json())
             response = rest_success(user.to_json()) # web.HTTPFound('/')
@@ -289,7 +289,7 @@ class UserHandler:
         remote_user_id = await authorized_userid(request)
         user_to_delete_id = request.match_info.get('user_id', -1)
         try:
-            regovar.users.delete(user_to_delete_id, remote_user_id)
+            core.users.delete(user_to_delete_id, remote_user_id)
         except Exception as err:
             return rest_exception(err)
         return rest_success()

@@ -3,24 +3,26 @@
 import ipdb
 import json
 import core.model as Model
-from core.framework import RegovarException, check_generic_query_parameter
+from core.framework.common import *
+from core.framework.erreurs_list import ERR
 
 
 
 
 
-class ProjectManager:
+class UserManager:
 
     def __init__(self):
         pass
 
 
+
     def get(self, fields=None, query=None, sort=None, offset=None, limit=None):
         """
-            Generic method to get projects data according to provided filtering options
+            Generic method to get users data according to provided filtering options
         """
         # Check parameters
-        fields, query, sort, offset, limit = check_generic_query_parameter(Model.User.public_fields, ['name'], fields, query, sort, offset, limit)
+        fields, query, sort, offset, limit = check_generic_query_parameter(Model.User.public_fields, ['lastname', "firstname"], fields, query, sort, offset, limit)
 
         # Build query
         result = []
@@ -62,7 +64,7 @@ class ProjectManager:
             raise RegovarException(ERR.E101004, "E101004")
             
         Model.execute("DELETE FROM \"user\" WHERE id={}".format(user_to_delete_id))
-        # regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
+        # core.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
 
 
 

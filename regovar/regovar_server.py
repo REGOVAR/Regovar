@@ -7,7 +7,7 @@ import os
 
 # Annso package
 from config import *
-from core.framework import RegovarException, err
+from core.framework.common import RegovarException, err
 
 # Some check before starting the web application
 if not os.path.exists(TEMPLATE_DIR):

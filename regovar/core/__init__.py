@@ -1,7 +1,7 @@
 #!env/python3
 # coding: utf-8
 
-from core.errlst import *
-from core.framework import *
+from core.framework.common import *
+from core.framework.erreurs_list import *
 from core.model import *
-from core.core import regovar
+from core.core import core

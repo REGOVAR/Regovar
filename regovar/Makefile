@@ -5,11 +5,15 @@ install:
 app:
 	python regovar_server.py
 
-drop:
-	psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'regovar'"
-	psql -U postgres -c "DROP DATABASE regovar"
-	psql -U postgres -c "CREATE DATABASE regovar OWNER regovar"
+clear:
+	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'pirus'"
+	sudo -u postgres psql -c "DROP DATABASE regovar"
+	sudo -u postgres psql -c "CREATE DATABASE regovar OWNER regovar"
 	psql -U regovar -d regovar -f ../install/create_all.sql
+	rm -rf /var/regovar/regovar/files/*
+	rm -rf /var/regovar/regovar/downloads/*
+	rm -rf /var/regovar/regovar/pipelines/*
+	rm -rf /var/regovar/regovar/jobs/*
 	
 
 list_db:
