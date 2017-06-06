@@ -6,8 +6,9 @@ Codes d'erreur et documentation
 Les erreurs gérés par Regovar sont identifiées et documentées afin de permettre un support efficace autant pour les développeurs qui tomberait dessus pour la première fois que pour les utilisateur finaux qui pourront alors se référer à la documentation en ligne concernant l'erreur.
 
 Le code erreur est un identifiant à 7 caractères qui suit la nomenclature suivante :
+
 | `E` | `0` | `00` | `000` |
-|-----|-----|------|-------|
+| --- | --- | ---- | ----- |
 || Code module| code sous-module |Code de l'erreur|
 
 
