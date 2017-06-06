@@ -24,6 +24,7 @@ Le code erreur est un identifiant à 7 caractères qui suit la nomenclature suiv
 
 
 **List des Sous-modules**
+
 | Code module | Code sous-Module | Description |
 |-------------|------------------|-------------|
 |`0`| `-` | *pas de sous niveau* |
@@ -48,6 +49,7 @@ Log
 Comme tout server qui se respecte, Regovar log tout se qu'il fait. L'endroit où sont écrit les log est configurable dans le fichier de conf. mais à terme, les logs seront stocké dans systemd ou autre.
 
 **3 niveau de log prévu :**
+
 | Niveau de log | Description |
 |------|-------------|
 |info| Pour du debug ou pour horodater des événements utiles à l'analyse des logs|
