@@ -1,0 +1,16 @@
+site_name: Regovar
+pages:
+- 'Présentation': 'index.md'
+- 'Installation' : 'user/installation_guide.md'
+- 'Guide utilisateur' : 'user/welcom.md'
+- 'Guide développeur' :  'dev/welcom.md'
+- 'Tutoriels': 'tutos/welcom.md'
+theme: readthedocs
+markdown_extensions:
+ - extra
+ - nl2br
+ - sane_lists
+ - abbr
+ - attr_list
+ - def_list
+ - tables 
