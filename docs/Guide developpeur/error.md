@@ -13,6 +13,7 @@ Le code erreur est un identifiant à 7 caractères qui suit la nomenclature suiv
 
 
 **List des Modules**
+
 | Code module | Description |
 |------|-------------|
 |`0`| "Setup". Erreur concernant l'installation ou la configuration du server|
