@@ -1,92 +1,14 @@
 
 -- 
--- PIRUS part - v 0.2.0
+-- CREATE ALL - V0.2.0
 --
-CREATE TYPE file_status AS ENUM ('uploading', 'uploaded', 'checked', 'error');
-CREATE TYPE pipe_status AS ENUM ('initializing', 'installing', 'ready', 'error');
-CREATE TYPE job_status AS ENUM ('waiting', 'initializing', 'running', 'pause', 'finalizing', 'done', 'canceled', 'error');
 
 
-
-
-
-
-
-
-CREATE TABLE public.file
-(
-    id serial NOT NULL,
-    name character varying(255) COLLATE pg_catalog."C",
-    type character varying(50) COLLATE pg_catalog."C",
-    "path" text COLLATE pg_catalog."C",
-    size bigint DEFAULT 0,
-    upload_offset bigint DEFAULT 0,
-    status file_status,
-    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    tags text COLLATE pg_catalog."C",
-    md5sum character varying(32) COLLATE pg_catalog."C",
-    job_source_id int,
-    CONSTRAINT file_pkey PRIMARY KEY (id),
-    CONSTRAINT file_ukey UNIQUE ("path")
-);
-ALTER TABLE public.file OWNER TO regovar;
-
-
-CREATE TABLE public.pipeline
-(
-    id serial NOT NULL,
-    name character varying(255) COLLATE pg_catalog."C",
-    type character varying(50) COLLATE pg_catalog."C",
-    status pipe_status,
-    description text COLLATE pg_catalog."C",
-    license character varying(255) COLLATE pg_catalog."C",
-    developers text COLLATE pg_catalog."C",
-    installation_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    version character varying(50) COLLATE pg_catalog."C",
-    pirus_api character varying(50) COLLATE pg_catalog."C",
-
-    image_file_id int,
-    root_path character varying(500) COLLATE pg_catalog."C",
-    vm_settings text COLLATE pg_catalog."C",
-    ui_form text COLLATE pg_catalog."C",
-    ui_icon character varying(255) COLLATE pg_catalog."C",
-
-    CONSTRAINT pipe_pkey PRIMARY KEY (id),
-    CONSTRAINT pipe_ukey UNIQUE (name, version)
-);
-ALTER TABLE public.pipeline OWNER TO regovar;
-
-
-CREATE TABLE public.job
-(
-    id serial NOT NULL,
-    pipeline_id int,
-    name character varying(255) COLLATE pg_catalog."C",
-    priority int,
-
-    config text COLLATE pg_catalog."C",
-    start_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    status job_status,
-
-    root_path character varying(500) COLLATE pg_catalog."C",
-    progress_value real,
-    progress_label character varying(255) COLLATE pg_catalog."C",
-
-    CONSTRAINT job_pkey PRIMARY KEY (id)
-);
-ALTER TABLE public.job OWNER TO regovar;
-
-CREATE TABLE public.job_file
-(
-    job_id int NOT NULL,
-    file_id int NOT NULL,
-    as_input boolean,
-    CONSTRAINT job_file_pkey PRIMARY KEY (job_id, file_id)
-);
-ALTER TABLE public.job_file OWNER TO regovar;
+--
+-- Assuming that Regovar is based on Pirus and Annso models
+--
+ALTER TABLE public.analysis ADD COLUMN owner_id integer;
+ALTER TABLE public.analysis ADD COLUMN project_id integer;
 
 
 
@@ -103,7 +25,7 @@ ALTER TABLE public.job_file OWNER TO regovar;
 
 
 CREATE TYPE event_type AS ENUM ('info', 'warning', 'error');
-CREATE TYPE project_status AS ENUM ('open', 'closed');
+
 
 
 CREATE TABLE public.user
@@ -120,11 +42,11 @@ CREATE TABLE public.user
     settings text COLLATE pg_catalog."C",
     roles text COLLATE pg_catalog."C",
     is_activated boolean DEFAULT True,
+    sandbox_id integer,
     CONSTRAINT user_pkey PRIMARY KEY (id),
     CONSTRAINT user_ukey1 UNIQUE (login),
     CONSTRAINT user_ukey2 UNIQUE (email)
 );
-ALTER TABLE public.user OWNER TO regovar;
 
 
 CREATE TABLE public.event
@@ -143,21 +65,18 @@ CREATE TABLE public.event
     pipeline_id integer,
     CONSTRAINT event_pkey PRIMARY KEY (id)
 );
-ALTER TABLE public.event OWNER TO regovar;
 
 
 CREATE TABLE public.project
 (
     id serial NOT NULL,
-    name character varying(255) COLLATE pg_catalog."C" NOT NULL,
+    name character varying(255) COLLATE pg_catalog."C",
     comment text,
     parent_id integer,
-    status project_status,
     is_folder boolean,
     last_activity timestamp without time zone,
     CONSTRAINT project_pkey PRIMARY KEY (id)
 );
-ALTER TABLE public.project OWNER TO regovar;
 
 
 CREATE TABLE public.user_project_sharing
@@ -167,7 +86,24 @@ CREATE TABLE public.user_project_sharing
     write_authorisation boolean,
     CONSTRAINT ups_pkey PRIMARY KEY (project_id, user_id)
 );
-ALTER TABLE public.user_project_sharing OWNER TO regovar;
+
+CREATE TABLE public.user_subject_sharing
+(
+    subject_id integer NOT NULL,
+    user_id integer NOT NULL,
+    write_authorisation boolean,
+    CONSTRAINT uss_pkey PRIMARY KEY (subject_id, user_id)
+);
+
+CREATE TABLE public.project_file
+(
+    project_id integer NOT NULL,
+    file_id integer NOT NULL,
+    CONSTRAINT pf_pkey PRIMARY KEY (project_id, file_id)
+);
+
+
+
 
 
 
@@ -175,13 +111,20 @@ ALTER TABLE public.user_project_sharing OWNER TO regovar;
 
 
 --
--- Init with data
+-- INIT DATA
 --
 
 
+INSERT INTO "project" (comment) VALUES
+  ('My sandbox');
+INSERT INTO "user" (login, firstname, lastname, roles, sandbox_id) VALUES
+  ('admin', 'Root', 'Administrator', '{"Administration": "Write"}', 1);
 
-INSERT INTO "user" (login, firstname, lastname, roles) VALUES
-  ('admin', 'Root', 'Administrator', '{"Administration": "Write"}');
+
+
+
+
 
 INSERT INTO "event" (message, type) VALUES
-  ('Regovar database creation', 'info');
+  ('Regovar database creation', 'info'),
+  ('Default root admin user created', 'info');

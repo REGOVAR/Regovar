@@ -1,0 +1,181 @@
+#!env/python3
+# coding: utf-8
+
+import aiohttp_jinja2
+import jinja2
+import base64
+
+from aiohttp import web
+from aiohttp_session import setup as setup_session
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
+from aiohttp_security import setup as setup_security
+from aiohttp_security import SessionIdentityPolicy
+
+from config import *
+from api_rest.policy import RegovarAuthorizationPolicy
+from api_rest.rest import *
+from api_rest.handlers import *
+
+
+# Handlers instances
+apiHandler = ApiHandler()
+userHandler = UserHandler()
+projHandler = ProjectHandler()
+eventHandler = EventHandler()
+websocket = WebsocketHandler()
+
+fileHdl = FileHandler()
+jobHdl = JobHandler()
+pipeHdl = PipelineHandler()
+dbHdl = DatabaseHandler()
+
+dbHandler = AnnotationDBHandler()
+analysisHandler = AnalysisHandler()
+sampleHandler = SampleHandler()
+variantHandler = VariantHandler()
+
+
+# Create a auth ticket mechanism that expires after SESSION_MAX_DURATION seconds (default is 86400s = 24h), and has a randomly generated secret. 
+# Also includes the optional inclusion of the users IP address in the hash
+key = base64.b64encode(PRIVATE_KEY32.encode()).decode()
+
+
+# Create server app
+app = web.Application()
+setup_session(app, EncryptedCookieStorage(key, max_age=SESSION_MAX_DURATION))
+setup_security(app, SessionIdentityPolicy(session_key='regovar_session_token'), RegovarAuthorizationPolicy())
+app['websockets'] = []
+aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(TEMPLATE_DIR)) 
+
+# On shutdown, close all websockets
+app.on_shutdown.append(on_shutdown)
+
+
+
+
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# ROUTES
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+app.router.add_route('GET',    "/",       apiHandler.welcom)                                                      # Get "welcom page of the rest API"
+app.router.add_route('GET',    "/config", apiHandler.config)
+app.router.add_route('GET',    "/ws",     websocket.get)
+
+app.router.add_route('GET',    "/users", userHandler.list)                                                        # Get list of all users (allow search parameters)
+app.router.add_route('POST',   "/users", userHandler.add)                                                         # Create new users with provided data
+app.router.add_route('GET',    "/users/{user_id}", userHandler.get)                                               # Get details about one user
+app.router.add_route('PUT',    "/users/{user_id}", userHandler.edit)                                              # Edit user with provided data
+app.router.add_route('POST',   "/users/login", userHandler.login)                                                 # Start user's session if provided credentials are correct
+app.router.add_route('GET',    "/users/logout", userHandler.logout)                                               # Kill user's session
+app.router.add_route('DELETE', "/users/{user_id}", userHandler.delete)                                            # Delete a user
+
+app.router.add_route('GET',    "/project",                    projHandler.list)                                   # Get list of all projects (allow search parameters)
+app.router.add_route('POST',   "/project",                    projHandler.new)                                    # Create new project with provided data
+app.router.add_route('GET',    "/project/{proj_id}",          projHandler.get)                                    # Get details about the project
+app.router.add_route('PUT',    "/project/{proj_id}",          projHandler.edit)                                   # Edit project meta data
+app.router.add_route('DELETE', "/project/{proj_id}",          projHandler.delete)                                 # Delete the project
+app.router.add_route('GET',    "/project/{proj_id}/events",   projHandler.events)                                 # Get list of events of the project (allow search parameters)
+app.router.add_route('GET',    "/project/{proj_id}/subjects", projHandler.subjects)                               # Get list of subjects of the project (allow search parameters)
+app.router.add_route('GET',    "/project/{proj_id}/tasks",    projHandler.tasks)                                  # Get list of tasks (jobs and analyses) of the project (allow search parameters)
+app.router.add_route('GET',    "/project/{proj_id}/files",    projHandler.files)                                  # Get list of files (samples and attachments) of the project (allow search parameters)
+
+app.router.add_route('POST',   "/event",            eventHandler.new)                                             # Create a new event
+app.router.add_route('GET',    "/event/{event_id}", eventHandler.get)                                             # Get details about an event
+app.router.add_route('PUT',    "/event/{event_id}", eventHandler.edit)                                            # Edit event's data
+app.router.add_route('DELETE', "/event/{event_id}", eventHandler.delete)                                          # Delete an event
+
+# app.router.add_route('POST',   "/subject",              subjectHandler.add)                                       # Create a sample
+# app.router.add_route('GET',    "/subject/{subject_id}", subjectHandler.get)                                       # Get details about a subject
+# app.router.add_route('PUT',    "/subject/{subject_id}", subjectHandler.edit)                                      # Edit subject's data
+# app.router.add_route('DELETE', "/subject/{subject_id}", subjectHandler.delete)                                    # Delete a subject
+
+
+
+
+# app.router.add_route('GET',    "/file", fileHdl.list)                                                             # Get list of all file (allow search parameters)
+app.router.add_route('GET',    "/file/{file_id}",        fileHdl.get)                                             # Get details about a file
+app.router.add_route('PUT',    "/file/{file_id}",        fileHdl.edit)                                            # Edit file's details
+app.router.add_route('DELETE', "/file/{file_id}",        fileHdl.delete)                                          # Delete the file
+app.router.add_route('POST',   "/file/upload",           fileHdl.tus_upload_init)
+app.router.add_route('OPTIONS',"/file/upload",           fileHdl.tus_config)
+app.router.add_route('HEAD',   "/file/upload/{file_id}", fileHdl.tus_upload_resume)
+app.router.add_route('PATCH',  "/file/upload/{file_id}", fileHdl.tus_upload_chunk)
+app.router.add_route('DELETE', "/file/upload/{file_id}", fileHdl.tus_upload_delete)
+
+# app.router.add_route('GET',    "/pipeline",                                    pipeHdl.get)
+# app.router.add_route('GET',    "/pipeline/{pipe_id}",                          pipeHdl.get_details)
+# app.router.add_route('DELETE', "/pipeline/{pipe_id}",                          pipeHdl.delete)
+# app.router.add_route('GET',    "/pipeline/install/{file_id}/{container_type}", pipeHdl.install)
+# app.router.add_route('POST',   "/pipeline/install",                            pipeHdl.install_json)
+
+# app.router.add_route('GET',    "/job",                     jobHdl.list)
+app.router.add_route('POST',   "/job",                     jobHdl.new)
+app.router.add_route('GET',    "/job/{job_id}",            jobHdl.get)
+app.router.add_route('GET',    "/job/{job_id}/pause",      jobHdl.pause)
+app.router.add_route('GET',    "/job/{job_id}/start",      jobHdl.start)
+app.router.add_route('GET',    "/job/{job_id}/cancel",     jobHdl.cancel)
+app.router.add_route('GET',    "/job/{job_id}/monitoring", jobHdl.monitoring)
+app.router.add_route('GET',    "/job/{job_id}/finalize",   jobHdl.finalize)
+
+app.router.add_route('GET',    "/db",     dbHdl.get_db)
+app.router.add_route('GET',    "/db/{ref}", dbHdl.get_db)
+
+
+
+
+app.router.add_route('GET',    "/ref", dbHandler.get_referencials)                                                # Get list of genom's referencials supported
+app.router.add_route('GET',    "/ref/{ref_id}", dbHandler.get_ref_db)                                             # Get list of all annotation's databases and for each the list of availables versions and the list of their fields for the latest version
+app.router.add_route('GET',    "/db/{db_id}", dbHandler.get_database)                                             # Get the database details and the list of all its fields
+
+app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}", variantHandler.get_variant)                      # Get all available information about the given variant
+app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}/{analysis_id}", variantHandler.get_variant)        # Get all available information about the given variant + data in the context of the analysis
+
+app.router.add_route('GET',    "/sample", sampleHandler.get_samples)                                              # Get list of all samples in database
+app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get_sample)                                   # Get specific sample's data
+
+app.router.add_route('GET',    "/analysis",                                  analysisHandler.list_analyses)       # List analyses
+app.router.add_route('POST',   "/analysis",                                  analysisHandler.create_analysis)     # Create new analysis
+app.router.add_route('GET',    "/analysis/{analysis_id}",                    analysisHandler.get_analysis)        # Get analysis metadata
+app.router.add_route('PUT',    "/analysis/{analysis_id}",                    analysisHandler.set_analysis)        # Save analysis metadata
+app.router.add_route('POST',   "/analysis/{analysis_id}/ped",                analysisHandler.load_ped)            # Load ped file and update sample attributes accordingly
+app.router.add_route('GET',    "/analysis/{analysis_id}/setting",            analysisHandler.get_setting)         # TODO : Get analysis setting (NEED ??)
+app.router.add_route('GET',    "/analysis/{analysis_id}/filter",             analysisHandler.get_filters)         # Get list of available filter for the provided analysis
+app.router.add_route('POST',   "/analysis/{analysis_id}/filter",             analysisHandler.new_filter)          # Create a new filter for the analisis
+app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.set_filter)          # TODO : Update filter
+app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.delete_filter)       # TODO : Delete a filter
+app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",          analysisHandler.filtering)           # Get result (variants) of the provided filter
+app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/count",    analysisHandler.filtering_count)     # Get total count of result of the provided filter
+app.router.add_route('GET',    "/analysis/{analysis_id}/selection",          analysisHandler.get_selection)       # Get variants data for the provided selection
+app.router.add_route('POST',   "/analysis/{analysis_id}/export/{pipe_id}",   analysisHandler.get_export)          # Export selection of the provided analysis into the requested format
+app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   analysisHandler.get_report)          # Generate report html for the provided analysis+report id
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Websockets / realtime notification
+app.router.add_route('POST',   "/job/{job_id}/notify", jobHdl.update_status)
+
+
+# Statics root for direct download
+# FIXME - Routes that should be manages directly by NginX
+app.router.add_static('/assets', TEMPLATE_DIR)
+app.router.add_static('/dl/db/', DATABASES_DIR)
+app.router.add_static('/dl/pipe/', PIPELINES_DIR)
+app.router.add_static('/dl/file/', FILES_DIR)
+app.router.add_static('/dl/job/', JOBS_DIR)
+
+

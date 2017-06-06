@@ -1,0 +1,16 @@
+#!env/python3
+# coding: utf-8
+
+from core.managers.container_managers import *
+from core.managers.analysis_manager import AnalysisManager
+from core.managers.annotation_manager import AnnotationManager
+from core.managers.file_manager import FileManager
+from core.managers.filter_manager import FilterEngine
+from core.managers.job_manager import JobManager
+from core.managers.pipeline_manager import PipelineManager
+from core.managers.project_manager import ProjectManager
+from core.managers.sample_manager import SampleManager
+from core.managers.user_manager import UserManager
+from core.managers.variant_manager import VariantManager
+from core.managers.event_manager import EventManager
+from core.managers.subject_manager import SubjectManager

@@ -1,6 +1,8 @@
 #!env/python3
 # coding: utf-8
+import ipdb
 import os
+import json
 
 
 from core.framework.common import *
@@ -79,7 +81,7 @@ def pipeline_to_json(self, fields=None):
     """
     result = {}
     if fields is None:
-        fields = ["id", "name", "type", "status", "description", "license", "developers", "installation_date", "version", "pirus_api", "image_file_id", "vm_settings", "ui_form", "ui_icon"]
+        fields = ["id", "name", "type", "status", "description", "developers", "installation_date", "version", "pirus_api", "image_file_id", "manifest", "documents"]
     for f in fields:
         if f == "installation_date":
             result.update({f: eval("self." + f + ".ctime()")})
@@ -88,10 +90,10 @@ def pipeline_to_json(self, fields=None):
                 result.update({"jobs" : [j.to_json() for j in self.jobs]})
             else:
                 result.update({"jobs" : self.jobs})
-        elif f == "ui_form" and isinstance(self.ui_form, dict):
-            result.update({"ui_form" : json.loads(self.ui_form)})
-        elif f == "vm_settings" and isinstance(self.vm_settings, dict):
-            result.update({"vm_settings" : json.loads(self.vm_settings)})
+        elif f == "manifest" and self.manifest:
+            result.update({"manifest" : json.loads(self.manifest)})
+        elif f == "documents" and self.documents:
+            result.update({"documents" : json.loads(self.documents)})
         elif f == "image_file" and self.image_file:
             result.update({f: self.image_file.to_json()})
         else:
@@ -106,16 +108,14 @@ def pipeline_load(self, data):
         if "type" in data.keys(): self.type = data["type"]
         if "status" in data.keys(): self.status = data["status"]
         if "description" in data.keys(): self.description = data["description"]
-        if "license" in data.keys(): self.license = data["license"]
         if "developers" in data.keys(): self.developers = data["developers"]
         if "installation_date" in data.keys(): self.installation_date = data["installation_date"]
         if "version" in data.keys(): self.version = data['version']
         if "pirus_api" in data.keys(): self.pirus_api = data["pirus_api"]
         if "image_file_id" in data.keys(): self.image_file_id = data["image_file_id"]
-        if "ui_icon" in data.keys(): self.ui_icon = data['ui_icon']
-        if "vm_settings" in data.keys(): self.vm_settings = data['vm_settings']
-        if "ui_form" in data.keys(): self.ui_form = data['ui_form']
-        if "root_path" in data.keys(): self.root_path = data['root_path']
+        if "manifest" in data.keys(): self.manifest = data['manifest']
+        if "documents" in data.keys(): self.documents = data['documents']
+        if "path" in data.keys(): self.path = data['path']
         # check to reload dynamics properties
         if self.loading_depth > 0:
             self.load_depth(self.loading_depth)
@@ -133,7 +133,6 @@ def pipeline_delete(pipeline_id):
         session().query(Pipeline).filter_by(id=pipeline_id).delete(synchronize_session=False)
         session().commit()
     except Exception as ex:
-        ipdb.set_trace()
         err("Unable to remove pipe from database", ex)
 
 
@@ -155,7 +154,7 @@ def pipeline_count():
 
 
 Pipeline = Base.classes.pipeline
-Pipeline.public_fields = ["id", "name", "type", "status", "description", "license", "developers", "installation_date", "version", "pirus_api", "image_file_id", "image_file", "vm_settings", "ui_form", "ui_icon", "root_path", "jobs_ids", "jobs"]
+Pipeline.public_fields = ["id", "name", "type", "status", "description", "developers", "installation_date", "version", "pirus_api", "image_file_id", "image_file", "manifest", "documents", "path", "jobs_ids", "jobs"]
 Pipeline.init = pipeline_init
 Pipeline.load_depth = pipeline_load_depth
 Pipeline.from_id = pipeline_from_id

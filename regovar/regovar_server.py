@@ -21,7 +21,7 @@ if not os.path.exists(FILES_DIR):
 
 # Load rest of pirus application shall be done after celery init
 from aiohttp import web
-from web import *
+from api_rest import *
 
 
 
@@ -29,5 +29,5 @@ from web import *
 if __name__ == '__main__':
     try:
         web.run_app(app, host=HOST, port=PORT)
-    except Exception as err:
-        err("Uncatched exception", err)
+    except Exception as ex:
+        err("Uncatched exception", ex)

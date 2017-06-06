@@ -1,5 +1,6 @@
 #!env/python3
 # coding: utf-8
+import ipdb
 import os
 import datetime
 import logging
@@ -7,11 +8,25 @@ import uuid
 import time
 import asyncio
 import subprocess
+import re
 
 
-from config import LOG_DIR, RANGE_DEFAULT
+from config import LOG_DIR
 
 
+
+#
+# As Pirus is a subproject of Regovar, thanks to keep framework complient
+# TODO : find a way to manage it properly with github (subproject ?)
+#
+
+
+class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 
 
 
@@ -39,7 +54,7 @@ def exec_cmd(cmd, asynch=False):
     """
     if asynch:
         print("execute command async : {}".format(" ".join(cmd)))
-        subprocess.Popen(cmd)
+        subprocess.Popen(cmd, stdout=open(os.devnull, 'w'), stderr=open(os.devnull, 'w'))
         return True, None, None
 
     out_tmp = '/tmp/regovar_exec_cmd_out'
@@ -51,35 +66,9 @@ def exec_cmd(cmd, asynch=False):
     return res, out, err
 
 
-
-
-
-
-# =====================================================================================================================
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # TOOLS
-# =====================================================================================================================
-
-def check_generic_query_parameter(allowed_fields, default_sort, fields, query, sort, offset, limit):
-    """
-        Generic method used by the core to check that generic fields/query/sort/offset/limit paramters à good
-        fields : list of fields for lazy loading
-        query  : dic with for each fields (keys) the list of value
-        sort   : list of field on which to sort (prefix by "-" to sort field DESC)
-        offset : start offset
-        limit  : max number of result to return
-    """
-    # TODO check param and raise error if wrong parameter : E200001, E200002, E200003, E200004
-    if fields is None:
-        fields = allowed_fields
-    if query is None:
-        query = {}
-    if sort is None:
-        sort = default_sort
-    if offset is None:
-        offset = 0
-    if limit is None:
-        limit = RANGE_DEFAULT
-    return fields, query, sort, offset, limit
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
     
 
@@ -97,13 +86,11 @@ def get_pipeline_forlder_name(name:str):
 
 
 
-
-# def plugin_running_task(task_id):
-#     """
-#         Todo : doc
-#     """
-#     result = execute_plugin.AsyncResult(task_id)
-#     return result.get()
+def clean_filename(filename):
+    # TODO : clean filename by removing special characters, trimming white spaces, and replacing white space by _
+    rx = re.compile('\W+')
+    res = rx.sub('.', filename).strip('.')
+    return res
 
 
 
@@ -138,6 +125,53 @@ def md5(file_path):
 
 
 
+def array_diff(array1, array2):
+    """
+        Return the list of element in array2 that are not in array1
+    """
+    return [f for f in array2 if f not in array1]
+
+
+def array_merge(array1, array2):
+    """
+        Merge the two arrays in one (by removing duplicates)
+    """
+    result = []
+    for f in array1:
+        if f not in result:
+            result.append(f)
+    for f in array2:
+        if f not in result:
+            result.append(f)
+    return result
+
+
+
+
+
+
+
+# =====================================================================================================================
+# DATA MODEL TOOLS
+# =====================================================================================================================
+CHR_DB_MAP = {1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "10", 11: "11", 12: "12", 13: "13", 14: "14", 15: "15", 16: "16", 17: "17", 18: "18", 19: "19", 20: "20", 21: "21", 22: "22", 23: "X", 24: "Y", 25: "M"}
+CHR_DB_RMAP = {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "11": 11, "12": 12, "13": 13, "14": 14, "15": 15, "16": 16, "17": 17, "18": 18, "19": 19, "20": 20, "21": 21, "22": 22, "X": 23, "Y": 24, "M": 25}
+
+
+def chr_from_db(chr_value):
+    if chr_value in CHR_DB_MAP.keys():
+        return CHR_DB_MAP[chr_value]
+    return None
+
+
+def chr_to_db(chr_value):
+    if chr_value in CHR_DB_RMAP.keys():
+        return CHR_DB_RMAP[chr_value]
+    return None
+
+
+
+    
 
 
 
@@ -185,9 +219,9 @@ def err(msg, exception=None):
 
 
 
-# =====================================================================================================================
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # ERROR MANAGEMENT
-# =====================================================================================================================
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 
 
@@ -238,6 +272,7 @@ def log_snippet(longmsg, exception: RegovarException=None):
 
 
 
+
 # =====================================================================================================================
 # TIMER
 # =====================================================================================================================
@@ -278,10 +313,9 @@ class Timer(object):
 
 
 
-
-# =====================================================================================================================
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # INIT OBJECTS
-# ===================================================================================================================== 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 # Create logger
 setup_logger('regovar', os.path.join(LOG_DIR, "regovar.log"))

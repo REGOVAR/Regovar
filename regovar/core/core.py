@@ -6,10 +6,7 @@ import ipdb
 import config as C
 from core.framework.common import *
 from core.model import *
-
-# import managers
-from core.pirus import *
-from core.regovar import *
+from core.managers import *
 
 
 
@@ -32,18 +29,22 @@ def notify_all_print(msg):
 
 class Core:
     def __init__(self):
-        # Pirus Part
+        # Pirus part (Pipeline and job management)
         self.files = FileManager()
         self.pipelines = PipelineManager()
         self.jobs = JobManager()
         self.container_managers = {}
-        # Load Container managers
         self.container_managers["lxd"] = LxdManager()
-
-        # Regovar Part
+        # Annso part (Annotations and variant management)
+        self.analyses = AnalysisManager()
+        self.samples = SampleManager()
+        self.variants = VariantManager()
+        self.annotations = AnnotationManager()
+        # Regovar Part (User, project, SLI management)
         self.users = UserManager()
         self.projects = ProjectManager()
-
+        self.events = EventManager()
+        self.subjects = SubjectManager()
 
 
         # method handler to notify all
@@ -56,7 +57,7 @@ class Core:
 
     def user_authentication(self, login, pwd):
         """
-            FIXME : why directly in the core ?
+            Return the User if credential match.
         """
         return User.from_credential(login, pwd);
 
@@ -74,3 +75,4 @@ class Core:
 
 core = Core()
 log('Regovar core initialised. Server ready !')
+

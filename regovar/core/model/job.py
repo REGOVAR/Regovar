@@ -88,7 +88,7 @@ def job_init(self, loading_depth=0):
         self.loading_depth = min(2, loading_depth)
 
     files = session().query(JobFile).filter_by(job_id=self.id).all()
-    job_logs_path = os.path.join(str(self.root_path), "logs")
+    job_logs_path = os.path.join(str(self.path), "logs")
     if os.path.exists(job_logs_path) :
         self.logs = [MonitoringLog(os.path.join(job_logs_path, logname)) for logname in os.listdir(job_logs_path) if os.path.isfile(os.path.join(job_logs_path, logname))]
     for f in files:
@@ -97,11 +97,7 @@ def job_init(self, loading_depth=0):
         else:
             self.outputs_ids.append(f.file_id)
     self.load_depth(loading_depth)
-            
 
-
-def job_container_name(self):
-    "{}{}-{}".format(LXD_CONTAINER_PREFIX, job.pipeline_id, job.id)
 
 def job_load_depth(self, loading_depth):
     from core.model.file import File
@@ -124,6 +120,11 @@ def job_load_depth(self, loading_depth):
                     self.outputs.append(f)
         except Exception as err:
             raise RegovarException("File data corrupted (id={}).".format(self.id), "", err)
+            
+
+
+def job_container_name(self):
+    "{}{}-{}".format(LXD_CONTAINER_PREFIX, job.pipeline_id, job.id)
 
 
 
@@ -157,23 +158,32 @@ def job_to_json(self, fields=None):
     """
     result = {}
     if fields is None:
-        fields = ["id", "pipeline_id", "config", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids"]
+        fields = ["id", "name", "pipeline_id", "config", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids"]
     for f in fields:
         if f == "start_date" or f == "update_date" :
             result.update({f: eval("self." + f + ".ctime()")})
         elif f == "inputs":
-            if self.loading_depth == 0:
+            if self.loading_depth > 0:
                 result.update({"inputs" : [i.to_json() for i in self.inputs]})
             else:
                 result.update({"inputs" : self.inputs})
-        elif f == "inputs":
-            if self.loading_depth == 0:
+        elif f == "outputs":
+            if self.loading_depth > 0:
                 result.update({"outputs" : [o.to_json() for o in self.outputs]})
             else:
                 result.update({"outputs" : self.outputs})
+        elif f == "pipeline":
+            if self.loading_depth > 0:
+                result.update({"pipeline" : self.pipeline.to_json()})
+        elif f == "logs":
+            logs = []
+            for l in self.logs:
+                logs.append(l.path)
+            result.update({"logs" : logs})
         elif f == "config" and self.config:
             result.update({f: json.loads(self.config)})
-        else:
+        # else
+        elif f in Job.public_fields:
             result.update({f: eval("self." + f)})
     return result
 
@@ -191,6 +201,7 @@ def job_load(self, data):
         if "progress_label" in data.keys(): self.progress_label = data['progress_label']
         if "inputs_ids" in data.keys(): self.inputs_ids = data["inputs_ids"]
         if "outputs_ids" in data.keys(): self.outputs_ids = data["outputs_ids"]
+        if "path" in data.keys(): self.path = data["path"]
         self.save()
 
         # delete old file/job links
@@ -247,7 +258,7 @@ def job_count():
 
 
 Job = Base.classes.job
-Job.public_fields = ["id", "pipeline_id", "config", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs"]
+Job.public_fields = ["id", "pipeline_id", "pipeline", "config", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs", "path", "logs", "name"]
 Job.init = job_init
 Job.load_depth = job_load_depth
 Job.from_id = job_from_id
@@ -347,7 +358,7 @@ def jobfile_get_outputs_ids(job_id):
     return result
 
 
-def jobfile_new(job_id, file_id, as_input):
+def jobfile_new(job_id, file_id, as_input=False):
     """
         Create a new job-file association and save it in the database
     """

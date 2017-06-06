@@ -14,10 +14,7 @@ from sqlalchemy.sql.expression import ClauseElement
 from sqlalchemy.orm import sessionmaker
 
 from core.framework.common import *
-from core.framework.erreurs_list import ERR
 import config as C
-
-
 
 
 
@@ -31,8 +28,8 @@ def init_pg(user, password, host, port, db):
     try:
         url = 'postgresql://{}:{}@{}:{}/{}'.format(user, password, host, port, db)
         con = sqlalchemy.create_engine(url, client_encoding='utf8')
-    except Exception as ex:
-        raise RegovarException(ERR.E000001, "E000001", ex)
+    except Exception as err:
+        raise RegovarException("Unable to connect to database", "", err)
     return con
     
 
@@ -43,8 +40,8 @@ try:
     Base.prepare(__db_engine, reflect=True)
     Base.metadata.create_all(__db_engine)
     Session = sessionmaker(bind=__db_engine)
-except Exception as ex:
-    raise RegovarException(ERR.E000002, "E000002", ex)
+except Exception as err:
+    raise RegovarException("Error occured when initialising database", "", err)
 
 __db_session = Session()
 __db_pool = mp.Pool()
@@ -66,9 +63,9 @@ def __execute_async(async_job_id, query):
         session.commit()
         session.commit() # Need a second commit to force session to commit :/ ... strange behavior when we execute(raw_sql) instead of using sqlalchemy's objects as query
         session.close()
-    except Exception as ex:
+    except Exception as err:
         session.close()
-        r = RegovarException(ERR.E100001, "E100001", ex)
+        r = RegovarException(ERR.E100001, "E100001", err)
         log_snippet(query, r)
         return (async_job_id, r)
     return (async_job_id, result)
@@ -146,8 +143,8 @@ def generic_save(obj):
             s.add(obj)
         obj.update_date = datetime.datetime.now()
         s.commit()
-    except Exception as ex:
-        raise RegovarException(ERR.E100002.format(type(obj), "E100002", ex))
+    except Exception as err:
+        raise RegovarException("Unable to save object in the database", "", err)
 
 
 def generic_count(obj):
@@ -178,8 +175,8 @@ def execute(query):
         result = __db_session.execute(query)
         __db_session.commit()
         __db_session.commit() # FIXME : Need a second commit to force session to commit :/ ... strange behavior when we execute(raw_sql) instead of using sqlalchemy's objects as query
-    except Exception as ex:
-        r = RegovarException(ERR.E100001, "E100001", ex)
+    except Exception as err:
+        r = RegovarException(ERR.E100001, "E100001", err)
         log_snippet(query, r)
         raise r
     return result
