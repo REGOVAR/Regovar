@@ -18,7 +18,7 @@ from api_rest.rest import *
 
 class DatabaseHandler:
 
-    def get_db(self, request):
+    def get(self, request):
         ref = request.match_info.get('ref', None)
         
         if not ref:

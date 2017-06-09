@@ -23,6 +23,7 @@ from urllib.parse import parse_qsl
 
 from config import *
 from core.framework.common import *
+from core.model import *
 from core.core import core
 from api_rest.rest import *
  
@@ -51,10 +52,17 @@ class ApiHandler:
 
     def config(self, request):
         return rest_success({
-            "host": HOST_P,
+            "version" : VERSION,
+            "host" : HOST_P,
             "pagination_default_range": RANGE_DEFAULT,
-            "pagination_max_range": RANGE_MAX,
-            "export_modules": annso.export_modules, 
-            "import_modules": annso.import_modules,
-            "report_modules": annso.report_modules
+            "pagination_max_range": RANGE_MAX
             })
+    
+    
+    @aiohttp_jinja2.template('api_test.html')
+    def api(self, request):
+        return {
+            "version" : VERSION,
+            "hostname" : HOST_P,
+            "file_public_fields" : ", ".join(File.public_fields)
+            }

@@ -124,15 +124,11 @@ def project_load(self, data):
     try:
         # Required fields
         if "name" in data.keys(): self.name = data['name']
-        if "pipeline_id" in data.keys(): self.pipeline_id = data['pipeline_id']
-        if "config" in data.keys(): self.config = data["config"]
-        if "start_date" in data.keys(): self.start_date = int(data["start_date"])
-        if "update_date" in data.keys(): self.update_date = int(data["update_date"])
-        if "status" in data.keys(): self.status = data["status"]
-        if "progress_value" in data.keys(): self.progress_value = data["progress_value"]
-        if "progress_label" in data.keys(): self.progress_label = data['progress_label']
-        if "inputs_ids" in data.keys(): self.inputs_ids = data["inputs_ids"]
-        if "outputs_ids" in data.keys(): self.outputs_ids = data["outputs_ids"]
+        if "comment" in data.keys(): self.comment = data['comment']
+        if "parent_id" in data.keys(): self.parent_id = data['parent_id']
+        if "is_folder" in data.keys(): self.is_folder = data['is_folder']
+        if "last_activity" in data.keys(): self.last_activity = data['last_activity']
+        if "is_sandbox" in data.keys(): self.is_sandbox = data['is_sandbox']
         self.save()
 
         # delete old file/project links
@@ -175,28 +171,28 @@ def project_new():
     """
         Create a new project and init/synchronise it with the database
     """
-    j = Job()
-    j.save()
-    j.init()
-    return j
+    p = Project()
+    p.save()
+    p.init()
+    return p
 
 
 def project_count():
     """
         Return total of Job entries in database
     """
-    return generic_count(Job)
+    return generic_count(Project)
 
 
-Job = Base.classes.project
-Job.public_fields = ["id", "pipeline_id", "config", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs"]
-Job.init = project_init
-Job.load_depth = project_load_depth
-Job.from_id = project_from_id
-Job.from_ids = project_from_ids
-Job.to_json = project_to_json
-Job.load = project_load
-Job.save = project_save
-Job.new = project_new
-Job.delete = project_delete
-Job.count = project_count
+Project = Base.classes.project
+Project.public_fields = ["id", "name", "comment", "parent_id", "is_folder", "last_activity", "jobs_ids", "files_ids", "events_ids", "analyses_ids", "sharing", "is_sandbox"]
+Project.init = project_init
+Project.load_depth = project_load_depth
+Project.from_id = project_from_id
+Project.from_ids = project_from_ids
+Project.to_json = project_to_json
+Project.load = project_load
+Project.save = project_save
+Project.new = project_new
+Project.delete = project_delete
+Project.count = project_count

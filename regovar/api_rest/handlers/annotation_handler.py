@@ -29,14 +29,14 @@ from api_rest.rest import *
 # ANNOTATION DATABASES HANDLER
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 class AnnotationDBHandler:
-    def get_referencials(self, request):
+    def list(self, request):
         """ 
             Return list of genom's referencials supported
         """
         return rest_success(core.annotations.ref_list)
 
 
-    def get_ref_db(self, request):
+    def get(self, request):
         """ 
             Return list of all annotation's databases and, for each, the list of availables versions and the list of their fields for the latest version
         """
@@ -61,10 +61,21 @@ class AnnotationDBHandler:
 
     def get_database(self, request):
         """
-            Return the database description and the list of available versions
+            Return the annotation database description and the list of available versions
         """
         db_id = request.match_info.get('db_id', -1)
-        return rest_success(core.annotations.db_map[db_id])
+        result = {}
+        result.update(core.annotations.db_map[db_id])
+        result["update"] = result["update"].ctime()
+        return rest_success(result)
+
+
+    def get_field(self, request):
+        """
+            Return the annotation field details
+        """
+        field_id = request.match_info.get('field_id', -1)
+        return rest_success(core.annotations.fields_map[field_id])
 
 
 

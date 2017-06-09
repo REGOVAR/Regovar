@@ -34,18 +34,27 @@ class AnalysisHandler:
 
 
 
-    def list_analyses(self, request):
+    def list(self, request):
         """
             Return all data about the analysis with the provided id (analysis metadata: name, settings, template data, samples used, filters, ... )
         """
-        analyses = core.analyses.get()
-        if not analyses:
-            return rest_error("Unable to find the analysis")
-        return rest_success(analyses)
+        # Generic processing of the get query
+        fields, query, order, offset, limit = process_generic_get(request.query_string, Analysis.public_fields)
+        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        # Get range meta data
+        range_data = {
+            "range_offset" : offset,
+            "range_limit"  : limit,
+            "range_total"  : Analysis.count(),
+            "range_max"    : RANGE_MAX,
+        }
+        # Return result of the query for PirusFile 
+        analyses = core.analyses.get(fields, query, order, offset, limit, depth)
+        return rest_success([a.to_json() for a in analyses], range_data)
 
 
 
-    def get_analysis(self, request):
+    def get(self, request):
         """
             Return all data about the analysis with the provided id (analysis metadata: name, settings, template data, samples used, filters, ... )
         """
@@ -57,20 +66,25 @@ class AnalysisHandler:
 
 
 
-    async def create_analysis(self, request):
+    async def new(self, request):
         """
             Creae 
         """
         # 1- Retrieve data from request
         data = await request.json()
+        try:
+            data = json.loads(data)
+        except Exception as ex:
+            return rest_error("Unable to create new analysis. Provided data corrupted. " + str(ex))
         name = data["name"]
         ref_id = data["ref_id"]
-        template_id = data["template_id"]
-        # Create the project 
-        analysis, success = core.analyses.create(name, ref_id, template_id)
-        if not success or analysis is None:
+        template_id = data["template_id"] if "template_id" in data.keys() else None
+        # Create the analysis 
+        analysis = core.analyses.create(name, ref_id, template_id)
+        if not analysis:
             return rest_error("Unable to create an analsis with provided information.")
         return rest_success(analysis)
+
 
 
     def get_setting(self, request):
@@ -85,7 +99,7 @@ class AnalysisHandler:
         return rest_success(settings)
 
 
-    async def set_analysis(self, request):
+    async def update(self, request):
         # 1- Retrieve data from request
         analysis_id = request.match_info.get('analysis_id', -1)
         data = await request.json()
@@ -163,24 +177,30 @@ class AnalysisHandler:
         return rest_success(result)
 
 
-    async def load_ped(self, request):
-        ped = await request.content.read()
-        analysis_id = request.match_info.get('analysis_id', -1)
-        # write ped file in temporary cache directory
-        file_path = os.path.join(DOWNLOAD_DIR, "tpm_{}.ped".format(analysis_id))
-        with open(file_path, "w") as f:
-            f.write(ped)
-        # update model
-        try:
-            core.analyses.load_ped(file_path)
-        except Exception as err:
-            os.remove(file_path)
-            return rest_error("Error occured ! Wrong Ped file: " + str(err))
-        os.remove(file_path)
-        return rest_success(result)
+    #async def load_ped(self, request):
+        #ped = await request.content.read()
+        #analysis_id = request.match_info.get('analysis_id', -1)
+        ## write ped file in temporary cache directory
+        #file_path = os.path.join(DOWNLOAD_DIR, "tpm_{}.ped".format(analysis_id))
+        #with open(file_path, "w") as f:
+            #f.write(ped)
+        ## update model
+        #try:
+            #core.analyses.load_ped(file_path)
+        #except Exception as err:
+            #os.remove(file_path)
+            #return rest_error("Error occured ! Wrong Ped file: " + str(err))
+        #os.remove(file_path)
+        #return rest_success(result)
         
-
-
+    async def load_file(self, request):
+        analysis_id = request.match_info.get('analysis_id', -1)
+        file_id = request.match_info.get('file_id', -1)
+        try:
+            await core.analyses.load_file(analysis_id, file_id)
+        except Exception as ex:
+            return rest_error("Error occured ! Wrong file: " + str(ex))
+        return rest_success()
 
 
 

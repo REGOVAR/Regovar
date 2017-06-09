@@ -102,7 +102,7 @@ class FileHandler:
     def list(self, request):
         # Generic processing of the get query
         fields, query, order, offset, limit = process_generic_get(request.query_string, File.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('sublvl', 0))
+        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
         # Get range meta data
         range_data = {
             "range_offset" : offset,

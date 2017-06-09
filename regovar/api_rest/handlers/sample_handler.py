@@ -34,7 +34,7 @@ from api_rest.rest import *
 
 
 class SampleHandler:
-    def get_samples(self, request):
+    def list(self, request):
         # Generic processing of the get query
         fields, query, order, offset, limit = process_generic_get(request.query_string, Sample.public_fields)
         # Get range meta data
@@ -48,7 +48,7 @@ class SampleHandler:
         return rest_success(core.samples.get(fields, query, order, offset, limit), range_data)
 
 
-    def get_sample(self, request):
+    def get(self, request):
         sid = request.match_info.get('sample_id', None)
         if sid is None:
             return rest_error("No valid sample id provided")
@@ -58,27 +58,17 @@ class SampleHandler:
         return rest_success(sample.to_json())
 
 
-    def get_details(self, request):
-        db_name = request.match_info.get('db_name', None)
-        if db_name is None:
-            return rest_error("No database name provided")
-
-        return rest_success({"database": db_name})
 
 
-    # # Resumable download implement the TUS.IO protocol.
-    # def tus_config(self, request):
-    #     return tus_manager.options(request)
+    async def new(self, request):
+        
+        data = await request.json()
+        try:
+            if "samples" in data.keys():
+                samples = []
+                for s in data["samples"]:
+                    samples.append(core.samples.new(s["name"], s["file_id"]))
+        except Exception as ex:
+            return rest_error("unable to import samples.".format(ex))
 
-    # async def tus_upload_init(self, request):
-    #     return tus_manager.creation(request)
-
-    # def tus_upload_resume(self, request):
-    #     return tus_manager.resume(request)
-
-    # async def tus_upload_chunk(self, request):
-    #     result = await tus_manager.patch(request)
-    #     return result
-
-    # def tus_upload_delete(self, request):
-    #     return tus_manager.delete_file(request) 
+        return rest_success([s.to_json() for s in samples])

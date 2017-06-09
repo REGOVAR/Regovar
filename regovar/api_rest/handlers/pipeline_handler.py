@@ -29,6 +29,25 @@ from api_rest.rest import *
 
 
 
+def format_pipeline_json(pipe_json):
+    if "image_file" in pipe_json.keys():
+        pipe_json["image_file"] = format_file_json(pipe_json["image_file"] )
+    if "documents" in pipe_json.keys():
+        docs = []
+        for doc in pipe_json["documents"]:
+            docs.append("http://{}/dl/pipe/{}/{}".format(HOST_P, pipe_json["id"], os.path.basename(doc)))
+        pipe_json["documents"] = docs
+    if "jobs" in pipe_json.keys():
+        jobs = []
+        for job in pipe_json["jobs"]:
+            jobs.append(format_job_json(job))
+        pipe_json["jobs"] = jobs
+    if "path" in pipe_json.keys():
+        pipe_json.pop("path")
+    return pipe_json
+
+
+
 class PipelineHandler:
     def __init__(self):
         pass
@@ -49,7 +68,7 @@ class PipelineHandler:
 
     def get(self, request):
         pipe_id = request.match_info.get('pipe_id', -1)
-        pipe = Pipeline.from_id(pipe_id, 2)
+        pipe = Pipeline.from_id(pipe_id, -1)
         if not pipe:
             return rest_error("No pipeline with id ".format(pipe_id))
 

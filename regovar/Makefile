@@ -25,6 +25,7 @@ list_db:
 init:
 	cp ../install/config.default ./config.py
 	echo "Please, edit the $PWD/config.py file before proceed to the installation with the command 'make install'"
+	
 install:
 	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
 	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$${database_name}'" ; \
@@ -36,7 +37,21 @@ install:
 
 
 
-
+test:
+	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
+	test -n "$${database_name}" && \
+	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $${database_name}_test" && \
+	sudo -u postgres psql -c "CREATE DATABASE $${database_name}_test OWNER regovar" && \
+	psql -U regovar -d $${database_name}_test -f ../install/create_all-pirus.sql ; \
+	psql -U regovar -d $${database_name}_test -f ../install/create_all-annso.sql ; \
+	psql -U regovar -d $${database_name}_test -f ../install/create_all.sql && \
+	psql -U regovar -d $${database_name}_test -f tests/init_fake_data.sql && \
+	sed -i.bak 's/^\(\s*DATABASE_NAME\s*=\s*"[^"]\+\)\(".*\)/\1_test\2/' config.py && \
+	python tests.py && \
+	mv config.py config.test && \
+	mv config.py.bak config.py && \
+	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $${database_name}_test"
+	
 
 
 .PHONY: install app clear 

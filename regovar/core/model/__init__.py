@@ -8,5 +8,16 @@ from core.model.file import File
 from core.model.pipeline import Pipeline
 from core.model.job import Job, MonitoringLog, JobFile
 
+# Annso import
+from core.model.analysis import Analysis, AnalysisSample
+from core.model.annotation import AnnotationDatabase, AnnotationField
+from core.model.attribute import Attribute
+from core.model.filter import Filter
+from core.model.sample import Sample, SampleFile, SampleVariant
+from core.model.template import Template
+from core.model.variant import Variant
+
+
+
 # Regovar import
 from core.model.user import User

@@ -30,7 +30,7 @@ from api_rest.rest import *
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 class VariantHandler:
 
-    def get_variant(self, request):
+    def get(self, request):
         """
             Return all data available for the requested variant in the context of the analysis
         """
@@ -45,4 +45,17 @@ class VariantHandler:
 
 
 
+    async def new(self, request):
+        
+        data = await request.json()
+        try:
+            if "variants" in data.keys():
+                count = 0
+                for v in data["variants"]:
+                    core.variants.new(v)
+                    count += 1
+        except Exception as ex:
+            return rest_error("unable to import variants.".format(ex))
+
+        return rest_success(count)
  

@@ -46,6 +46,17 @@ class Core:
         self.events = EventManager()
         self.subjects = SubjectManager()
 
+        # TODO : import module as Pirus pipeline ?
+        self.import_modules = {}
+        for name in C.IMPORTS_MODULES:
+            try:
+                m = __import__('imports.{0}'.format(name))
+                self.import_modules[name] = {
+                    "info": eval('m.{0}.metadata'.format(name)),
+                    "do": eval('m.{0}.import_data'.format(name))}
+                self.import_modules[name].update({'id': name})
+            except:
+                err("Unable to load imports.{0} module".format(name))
 
         # method handler to notify all
         # according to api that will be pluged on the core, this method should be overriden 
@@ -60,8 +71,6 @@ class Core:
             Return the User if credential match.
         """
         return User.from_credential(login, pwd);
-
-
 
 
 

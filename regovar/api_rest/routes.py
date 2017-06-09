@@ -29,7 +29,7 @@ jobHdl = JobHandler()
 pipeHdl = PipelineHandler()
 dbHdl = DatabaseHandler()
 
-dbHandler = AnnotationDBHandler()
+annotationHandler = AnnotationDBHandler()
 analysisHandler = AnalysisHandler()
 sampleHandler = SampleHandler()
 variantHandler = VariantHandler()
@@ -60,7 +60,9 @@ app.on_shutdown.append(on_shutdown)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 app.router.add_route('GET',    "/",       apiHandler.welcom)                                                      # Get "welcom page of the rest API"
 app.router.add_route('GET',    "/config", apiHandler.config)
+app.router.add_route('GET',    "/api", apiHandler.api)
 app.router.add_route('GET',    "/ws",     websocket.get)
+
 
 app.router.add_route('GET',    "/users", userHandler.list)                                                        # Get list of all users (allow search parameters)
 app.router.add_route('POST',   "/users", userHandler.add)                                                         # Create new users with provided data
@@ -93,7 +95,7 @@ app.router.add_route('DELETE', "/event/{event_id}", eventHandler.delete)        
 
 
 
-# app.router.add_route('GET',    "/file", fileHdl.list)                                                             # Get list of all file (allow search parameters)
+app.router.add_route('GET',    "/file",                  fileHdl.list)                                            # Get list of all file (allow search parameters)
 app.router.add_route('GET',    "/file/{file_id}",        fileHdl.get)                                             # Get details about a file
 app.router.add_route('PUT',    "/file/{file_id}",        fileHdl.edit)                                            # Edit file's details
 app.router.add_route('DELETE', "/file/{file_id}",        fileHdl.delete)                                          # Delete the file
@@ -103,13 +105,13 @@ app.router.add_route('HEAD',   "/file/upload/{file_id}", fileHdl.tus_upload_resu
 app.router.add_route('PATCH',  "/file/upload/{file_id}", fileHdl.tus_upload_chunk)
 app.router.add_route('DELETE', "/file/upload/{file_id}", fileHdl.tus_upload_delete)
 
-# app.router.add_route('GET',    "/pipeline",                                    pipeHdl.get)
-# app.router.add_route('GET',    "/pipeline/{pipe_id}",                          pipeHdl.get_details)
-# app.router.add_route('DELETE', "/pipeline/{pipe_id}",                          pipeHdl.delete)
-# app.router.add_route('GET',    "/pipeline/install/{file_id}/{container_type}", pipeHdl.install)
-# app.router.add_route('POST',   "/pipeline/install",                            pipeHdl.install_json)
+app.router.add_route('GET',    "/pipeline",                                    pipeHdl.list)
+app.router.add_route('GET',    "/pipeline/{pipe_id}",                          pipeHdl.get)
+app.router.add_route('DELETE', "/pipeline/{pipe_id}",                          pipeHdl.delete)
+app.router.add_route('GET',    "/pipeline/install/{file_id}/{container_type}", pipeHdl.install)
+app.router.add_route('POST',   "/pipeline/install",                            pipeHdl.install_json)
 
-# app.router.add_route('GET',    "/job",                     jobHdl.list)
+app.router.add_route('GET',    "/job",                     jobHdl.list)
 app.router.add_route('POST',   "/job",                     jobHdl.new)
 app.router.add_route('GET',    "/job/{job_id}",            jobHdl.get)
 app.router.add_route('GET',    "/job/{job_id}/pause",      jobHdl.pause)
@@ -118,27 +120,31 @@ app.router.add_route('GET',    "/job/{job_id}/cancel",     jobHdl.cancel)
 app.router.add_route('GET',    "/job/{job_id}/monitoring", jobHdl.monitoring)
 app.router.add_route('GET',    "/job/{job_id}/finalize",   jobHdl.finalize)
 
-app.router.add_route('GET',    "/db",     dbHdl.get_db)
-app.router.add_route('GET',    "/db/{ref}", dbHdl.get_db)
+app.router.add_route('GET',    "/db",     dbHdl.get)
+app.router.add_route('GET',    "/db/{ref}", dbHdl.get)
 
 
 
 
-app.router.add_route('GET',    "/ref", dbHandler.get_referencials)                                                # Get list of genom's referencials supported
-app.router.add_route('GET',    "/ref/{ref_id}", dbHandler.get_ref_db)                                             # Get list of all annotation's databases and for each the list of availables versions and the list of their fields for the latest version
-app.router.add_route('GET',    "/db/{db_id}", dbHandler.get_database)                                             # Get the database details and the list of all its fields
+app.router.add_route('GET',    "/annotation", annotationHandler.list)                                             # Get list of genom's referencials supported
+app.router.add_route('GET',    "/annotation/{ref_id}", annotationHandler.get)                                     # Get list of all annotation's databases and for each the list of availables versions and the list of their fields for the latest version
+app.router.add_route('GET',    "/annotation/db/{db_id}", annotationHandler.get_database)                          # Get the database details and the list of all its fields
+app.router.add_route('GET',    "/annotation/field/{field_id}", annotationHandler.get_field)                       # Get the database details and the list of all its fields
 
-app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}", variantHandler.get_variant)                      # Get all available information about the given variant
-app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}/{analysis_id}", variantHandler.get_variant)        # Get all available information about the given variant + data in the context of the analysis
+app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}", variantHandler.get)                              # Get all available information about the given variant
+app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}/{analysis_id}", variantHandler.get)                # Get all available information about the given variant + data in the context of the analysis
+app.router.add_route('POST',   "/variant", variantHandler.new)                                                    # Import all variant and their annotations provided as json in the POST body into the annso database
 
-app.router.add_route('GET',    "/sample", sampleHandler.get_samples)                                              # Get list of all samples in database
-app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get_sample)                                   # Get specific sample's data
+app.router.add_route('GET',    "/sample", sampleHandler.list)                                              # Get list of all samples in database
+app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)                                   # Get specific sample's data
+app.router.add_route('POST',   "/sample", sampleHandler.new)
 
-app.router.add_route('GET',    "/analysis",                                  analysisHandler.list_analyses)       # List analyses
-app.router.add_route('POST',   "/analysis",                                  analysisHandler.create_analysis)     # Create new analysis
-app.router.add_route('GET',    "/analysis/{analysis_id}",                    analysisHandler.get_analysis)        # Get analysis metadata
-app.router.add_route('PUT',    "/analysis/{analysis_id}",                    analysisHandler.set_analysis)        # Save analysis metadata
-app.router.add_route('POST',   "/analysis/{analysis_id}/ped",                analysisHandler.load_ped)            # Load ped file and update sample attributes accordingly
+app.router.add_route('GET',    "/analysis",                                  analysisHandler.list)                # List analyses
+app.router.add_route('POST',   "/analysis",                                  analysisHandler.new)                 # Create new analysis
+app.router.add_route('GET',    "/analysis/{analysis_id}",                    analysisHandler.get)                 # Get analysis metadata
+app.router.add_route('PUT',    "/analysis/{analysis_id}",                    analysisHandler.update)              # Save analysis metadata
+#app.router.add_route('POST',   "/analysis/{analysis_id}/ped",                analysisHandler.load_ped)            # Load ped file and update sample attributes accordingly
+app.router.add_route('POST',   "/analysis/{analysis_id}/import/{file_id}",   analysisHandler.load_file)           # Load a file (vcf and ped supported) to setup the analysis data (variant/annotations/samples)
 app.router.add_route('GET',    "/analysis/{analysis_id}/setting",            analysisHandler.get_setting)         # TODO : Get analysis setting (NEED ??)
 app.router.add_route('GET',    "/analysis/{analysis_id}/filter",             analysisHandler.get_filters)         # Get list of available filter for the provided analysis
 app.router.add_route('POST',   "/analysis/{analysis_id}/filter",             analysisHandler.new_filter)          # Create a new filter for the analisis

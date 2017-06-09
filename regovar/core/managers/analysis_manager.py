@@ -30,30 +30,32 @@ class AnalysisManager:
         pass
 
 
-    def get(self, fields=None, query=None, order=None, offset=None, limit=None, sublvl=0):
+    def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """
             Generic method to get analysis metadata according to provided filtering options.
         """
-        if fields is None:
-            fields = Analysis.public_fields
+        if not isinstance(fields, dict):
+            fields = None
         if query is None:
             query = {}
         if order is None:
-            order = ['-create_date', "name"]
+            order = "name"
         if offset is None:
             offset = 0
         if limit is None:
-            limit = offset + RANGE_MAX
-        return session().query(Analysis).filter_by(**query).offset(offset).limit(limit).all()
+            limit = RANGE_MAX
+        s = session()
+        analyses = s.query(Analysis).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
+        for a in analyses: a.init(depth)
+        return analyses
+    
 
 
     def create(self, name, ref_id, template_id=None):
         """
             Create a new analysis in the database.
         """
-        from core.core import core
-        instance = None
-        session().begin(nested=True)
+        from core.core import core        
         try:
             if ref_id not in core.annotations.ref_list.keys():
                 ref_id = DEFAULT_REFERENCIAL_ID
@@ -61,14 +63,17 @@ class AnalysisManager:
             db_uid = core.annotations.db_list[ref_id]['db']['Variant']['versions']['']
             for f in core.annotations.db_map[db_uid]["fields"][1:]:
                 settings["fields"].append(f)
-            instance = Analysis(name=name, creation_date=datetime.datetime.now(), update_date=datetime.datetime.now(), reference_id=ref_id, settings=json.dumps(settings))
-            session().add(instance)
-            session().commit()  # commit the save point into the session (opened by the .begin() before the try:)
-            session().commit()  # commit into the database.
-            return instance.to_json(), True
-        except IntegrityError as e:
-            session().rollback()
-        return None, False
+            analysis = Analysis.new()
+            analysis.name = name
+            analysis.reference_id = ref_id
+            analysis.template = template_id
+            analysis.settings = json.dumps(settings)
+            analysis.save()
+            log('Core.AnalysisManager.create : New analysis \"{}\" created with the id {}.'.format(name, analysis.id))
+            return analysis
+        except Exception as ex:
+            raise RegovarException("Unable to create new analysis with provided data", "", ex)
+        return None
 
 
     def load(self, analysis_id):
@@ -209,33 +214,25 @@ class AnalysisManager:
 
 
 
-    def load_ped(self, analysis_id, file_path):
-        # parse ped file
-        if os.path.exists(file_path):
-            # extension = os.path.splitext(file_path)[1][1:]
-            parser = ped_parser.FamilyParser(open(file_path), "ped")
-        else:
-            # no ped file -_-
-            return False
-        # retrieve analysis samples
-        samples = {}
-        for row in execute("SELECT a_s.sample_id, a_s.nickname, s.name FROM analysis_sample a_s INNER JOIN sample s ON a_s.sample_id=s.id WHERE analysis_id={0}".format(analysis_id)):
-            samples[row.name] = row.sample_id
-            if row.nickname is not '' and row.nickname is not None:
-                samples[row.nickname] = row.sample_id
-        # drop all old "ped" attributes to avoid conflict
-        ped_attributes = ['FamilyId', 'SampleId', 'FatherId', 'MotherId', 'Sex', 'Phenotype']
-        execute("DELETE FROM attribute WHERE analysis_id={0} AND name IN ('{1}')".format(analysis_id, ''','''.join(ped_attributes)))
-        # Insert new attribute's values according to the ped data
-        sql = "INSERT INTO attribute (analysis_id, sample_id, name, value) VALUES "
-        for sample in parser.individuals:
-            if sample.individual_id in samples.keys():
-                sql += "({}, {}, '{}', '{}'),".format(analysis_id, samples[sample.individual_id], 'FamilyId', sample.family)
-                sql += "({}, {}, '{}', '{}'),".format(analysis_id, samples[sample.individual_id], 'FatherId', sample.father)
-                sql += "({}, {}, '{}', '{}'),".format(analysis_id, samples[sample.individual_id], 'MotherId', sample.mother)
-                sql += "({}, {}, '{}', '{}'),".format(analysis_id, samples[sample.individual_id], 'Sex', sample.sex)
-                sql += "({}, {}, '{}', '{}'),".format(analysis_id, samples[sample.individual_id], 'Phenotype', sample.phenotype)
-        execute(sql[:-1])
+    #def load_ped(self, analysis_id, file_path):
+    async def load_file(self, analysis_id, file_id):
+        pfile = File.from_id(file_id)
+        if pfile == None:
+            raise RegovarException("Unable to retrieve the file with the provided id : " + file_id)
+        
+        # Importing to the database according to the type (if an import module can manage it)
+        log('Looking for available module to import file data into database.')
+        for m in self.import_modules.values():
+            if pfile.type in m['info']['input']:
+                log('Start import of the file (id={0}) with the module {1} ({2})'.format(file_id, m['info']['name'], m['info']['description']))
+                await m['do'](pfile.id, pfile.path, core)
+                # Reload annotation's databases/fields metadata as some new annot db/fields may have been created during the import
+                await self.annotation_db.load_annotation_metadata()
+                await self.filter.load_annotation_metadata()
+                break
+        
+        
+        
 
 
     def save_filter(self, analysis_id, name, filter_json):
