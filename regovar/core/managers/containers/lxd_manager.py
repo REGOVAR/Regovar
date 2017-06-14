@@ -12,13 +12,13 @@ import shutil
 from config import *
 from core.framework.common import *
 
-from core.managers.container_managers.pirus_container_manager import PirusContainerManager
+from core.managers.containers.abstract_container_manager import AbstractContainerManager
 from core.model import *
 
 
 
 
-class LxdManager(PirusContainerManager):
+class LxdManager(AbstractContainerManager):
     """
         Pirus manager to run pipeline from LXD container
     """

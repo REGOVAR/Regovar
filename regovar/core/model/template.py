@@ -21,5 +21,5 @@ def template_from_id(template_id):
 
 
 Template = Base.classes.template
-Template.public_fields = ["id", "name", "author", "description", "version", "creation_date", "update_date"]
+Template.public_fields = ["id", "name", "author", "description", "version", "create_date", "update_date"]
 Template.from_id = template_from_id

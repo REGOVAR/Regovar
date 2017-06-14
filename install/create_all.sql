@@ -7,9 +7,10 @@
 --
 -- Assuming that Regovar is based on Pirus and Annso models
 --
-ALTER TABLE public.analysis ADD COLUMN owner_id integer;
-ALTER TABLE public.analysis ADD COLUMN project_id integer;
-ALTER TABLE public.pipeline ADD COLUMN starred boolean;
+ALTER TABLE analysis ADD COLUMN owner_id integer;
+ALTER TABLE analysis ADD COLUMN project_id integer;
+ALTER TABLE job ADD COLUMN project_id integer;
+ALTER TABLE pipeline ADD COLUMN starred boolean;
 ALTER TABLE sample ADD COLUMN subject_id integer;
 
 
@@ -38,7 +39,7 @@ CREATE TABLE public.user
     lastname text COLLATE pg_catalog."C",
     function text COLLATE pg_catalog."C",
     location text COLLATE pg_catalog."C",
-    last_activity timestamp without time zone,
+    last_activity timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     settings text COLLATE pg_catalog."C",
     roles text COLLATE pg_catalog."C",
     is_activated boolean DEFAULT True,
@@ -74,10 +75,32 @@ CREATE TABLE public.project
     comment text COLLATE pg_catalog."C",
     parent_id integer,
     is_folder boolean,
-    last_activity timestamp without time zone,
+    last_activity timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     is_sandbox boolean DEFAULT False,
     CONSTRAINT project_pkey PRIMARY KEY (id)
 );
+
+
+
+CREATE TABLE subject
+(
+    id serial NOT NULL,
+    name character varying(255) COLLATE pg_catalog."C",
+    comment text COLLATE pg_catalog."C",
+    last_activity timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT subject_pkey PRIMARY KEY (id)
+);
+
+
+
+
+CREATE TABLE public.project_subject
+(
+    project_id integer NOT NULL,
+    subject_id integer NOT NULL,
+    CONSTRAINT ps_pkey PRIMARY KEY (project_id, subject_id)
+);
+
 
 
 CREATE TABLE public.user_project_sharing

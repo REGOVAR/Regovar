@@ -1,7 +1,8 @@
 #!env/python3
 # coding: utf-8
 
-from core.managers.container_managers import *
+from core.managers.containers import *
+from core.managers.imports import *
 from core.managers.analysis_manager import AnalysisManager
 from core.managers.annotation_manager import AnnotationManager
 from core.managers.file_manager import FileManager

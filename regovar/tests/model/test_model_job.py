@@ -24,7 +24,7 @@ TU_PIRUS_JOB_PUBLIC_FIELDS = ["id", "pipeline_id", "pipeline", "config", "start_
 
 
 class TestModelJob(unittest.TestCase):
-    """ Test case for pirus model Job's features. """
+    """ MODEL Unit Tests : Job """
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     # PREPARATION
@@ -49,15 +49,14 @@ class TestModelJob(unittest.TestCase):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def test_public_fields(self):
-        """ 
-            Check that public fileds describes in the model are same that in TU.
-            If you broke this test, you probably have to update TU, documentation and wiki...
-        """
+        """ public_fields """
+        # Check that public fields describes in the model are same that in TU.
+        # If you broke this test, you probably have to update TU, documentation and wiki...
         self.assertEqual(Job.public_fields, TU_PIRUS_JOB_PUBLIC_FIELDS)
 
 
     def test_from_id(self):
-        """ Check that requesting from id is working as expected """
+        """ from_id """
         self.assertEqual(Job.from_id(0), None)
         j = Job.from_id(2)
         self.assertIsInstance(j, Job)
@@ -65,7 +64,7 @@ class TestModelJob(unittest.TestCase):
 
 
     def test_from_ids(self):
-        """ Check that requesting from list of id is working as expected """
+        """ from_ids """
         self.assertEqual(Job.from_ids([]), [])
         j = Job.from_ids([2,15415, 1])
         self.assertIsInstance(j, list)
@@ -77,7 +76,7 @@ class TestModelJob(unittest.TestCase):
 
 
     def test_load_depth(self):
-        """ Test that initialisation of Job object with depth loading is working """
+        """ init & load_depth """
         j = Job.from_id(1, 1)
         self.assertIsInstance(j.inputs, list)
         self.assertIsInstance(j.outputs, list)
@@ -90,7 +89,7 @@ class TestModelJob(unittest.TestCase):
 
 
     def test_to_json(self):
-        """ Test export to json """
+        """ to_json """
         # Test export with default fields
         f = Job.from_id(1, 1)
         j = f.to_json()
@@ -111,7 +110,7 @@ class TestModelJob(unittest.TestCase):
 
 
     def test_CRUD(self):
-        """ Test creation of a new file object, update, read and delete """
+        """ CRUD """
         # CREATE
         total = Job.count()
         j1 = Job.new()

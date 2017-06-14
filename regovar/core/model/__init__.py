@@ -17,7 +17,9 @@ from core.model.sample import Sample, SampleFile, SampleVariant
 from core.model.template import Template
 from core.model.variant import Variant
 
-
-
 # Regovar import
 from core.model.user import User
+from core.model.project import Project, ProjectIndicator, UserProjectSharing
+from core.model.event import Event
+from core.model.indicator import Indicator
+from core.model.subject import Subject

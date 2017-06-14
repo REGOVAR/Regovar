@@ -15,57 +15,46 @@ def project_init(self, loading_depth=0):
     """
         If loading_depth is > 0, children objects will be loaded. Max depth level is 2.
         Children objects of a project are :
-            - "inputs" property set with inputs files (file id are in inputs_ids property). 
-            - "outputs" property set with outputs files (file id are in outputs_ids property). 
+            - indicators : project's custom indicators
+            - jobs_ids
+            - analyses_ids
+            - files_ids
+            - users_ids
 
         If loading_depth == 0, children objects are not loaded, so source will be set with the id of the project if exists
     """
-    self.inputs_ids = []
-    self.outputs_ids = []
-    self.logs = []
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     if hasattr(self, "loading_depth"):
         self.loading_depth = max(self.loading_depth, min(2, loading_depth))
     else:
         self.loading_depth = min(2, loading_depth)
-
-    files = session().query(JobFile).filter_by(project_id=self.id).all()
-    project_logs_path = os.path.join(str(self.root_path), "logs")
-    if os.path.exists(project_logs_path) :
-        self.logs = [MonitoringLog(os.path.join(project_logs_path, logname)) for logname in os.listdir(project_logs_path) if os.path.isfile(os.path.join(project_logs_path, logname))]
-    for f in files:
-        if f.as_input:
-            self.inputs_ids.append(f.file_id)
-        else:
-            self.outputs_ids.append(f.file_id)
-    self.load_depth(loading_depth)
+    try:
+        self.indicators=[]
+        self.subjects_ids = []
+        self.jobs_ids = [j.id for j in self.get_jobs()]
+        self.analyses_ids = [a.id for a in self.get_analyses()]
+        self.files_ids = [f.id for f in self.get_files()]
+        self.users = self.get_users()
+    except Exception as ex:
+        raise RegovarException("Project data corrupted (id={}).".format(self.id), "", ex)
+    
+    self.load_depth()
             
 
 
-def project_container_name(self):
-    "{}{}-{}".format(LXD_CONTAINER_PREFIX, project.pipeline_id, project.id)
 
-def project_load_depth(self, loading_depth):
-    from core.model.file import File
-    from core.model.pipeline import Pipeline
-    if loading_depth > 0:
+
+def project_load_depth(self):
+    self.jobs = None
+    self.analyses = None
+    self.files = None
+    if self.loading_depth > 0:
         try:
-            self.inputs = []
-            self.outputs = []
-            self.pipeline = None
-            self.pipeline = Pipeline.from_id(self.pipeline_id, loading_depth-1)
-            if len(self.inputs_ids) > 0:
-                files = session().query(File).filter(File.id.in_(self.inputs_ids)).all()
-                for f in files:
-                    f.init(loading_depth-1)
-                    self.inputs.append(f)
-            if len(self.outputs_ids) > 0:
-                files = session().query(File).filter(File.id.in_(self.outputs_ids)).all()
-                for f in files:
-                    f.init(loading_depth-1)
-                    self.outputs.append(f)
-        except Exception as err:
-            raise RegovarException("File data corrupted (id={}).".format(self.id), "", err)
+            self.jobs = self.get_jobs(self.loading_depth-1)
+            self.analyses = self.get_analyses(self.loading_depth-1)
+            self.files = self.get_files(self.loading_depth-1)
+        except Exception as ex:
+            raise RegovarException("Project data corrupted (id={}).".format(self.id), "", ex)
 
 
 
@@ -75,7 +64,7 @@ def project_from_id(project_id, loading_depth=0):
     """
         Retrieve project with the provided id in the database
     """
-    project = session().query(Job).filter_by(id=project_id).first()
+    project = session().query(Project).filter_by(id=project_id).first()
     if project:
         project.init(loading_depth)
     return project
@@ -87,7 +76,7 @@ def project_from_ids(project_ids, loading_depth=0):
     """
     projects = []
     if project_ids and len(project_ids) > 0:
-        projects = session().query(Job).filter(Job.id.in_(project_ids)).all()
+        projects = session().query(Project).filter(Project.id.in_(project_ids)).all()
         for f in projects:
             f.init(loading_depth)
     return projects
@@ -99,22 +88,10 @@ def project_to_json(self, fields=None):
     """
     result = {}
     if fields is None:
-        fields = ["id", "pipeline_id", "config", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids"]
+        fields = ["id", "name", "comment", "parent_id", "is_folder", "last_activity", "jobs_ids", "files_ids", "analyses_ids", "indicators", "users", "is_sandbox"]
     for f in fields:
-        if f == "start_date" or f == "update_date" :
+        if f == "last_activity" :
             result.update({f: eval("self." + f + ".ctime()")})
-        elif f == "inputs":
-            if self.loading_depth == 0:
-                result.update({"inputs" : [i.to_json() for i in self.inputs]})
-            else:
-                result.update({"inputs" : self.inputs})
-        elif f == "inputs":
-            if self.loading_depth == 0:
-                result.update({"outputs" : [o.to_json() for o in self.outputs]})
-            else:
-                result.update({"outputs" : self.outputs})
-        elif f == "config" and self.config:
-            result.update({f: json.loads(self.config)})
         else:
             result.update({f: eval("self." + f)})
     return result
@@ -130,12 +107,30 @@ def project_load(self, data):
         if "last_activity" in data.keys(): self.last_activity = data['last_activity']
         if "is_sandbox" in data.keys(): self.is_sandbox = data['is_sandbox']
         self.save()
-
-        # delete old file/project links
-        session().query(JobFile).filter_by(project_id=self.id).delete(synchronize_session=False)
-        # create new links
-        for fid in self.inputs_ids: JobFile.new(self.id, fid, True)
-        for fid in self.outputs_ids: JobFile.new(self.id, fid, False)
+        
+        # TODO : update indicators
+        # Update user sharing
+        if "users" in data.keys():
+            # Delete all associations
+            session().query(UserProjectSharing).filter_by(project_id=self.id).delete(synchronize_session=False)
+            # Create new associations
+            self.users = data["users"]
+            for u in data["users"]:
+                if isinstance(u, dict) and "id" in u.keys() and "write_authorisation" in u.keys():
+                    UserProjectSharing.new(self.id, u["id"], u["write_authorisation"])
+                else:
+                    err("")
+        
+        # update files linkeds
+        if "files_ids" in data.keys():
+            # Delete all associations
+            session().query(ProjectFile).filter_by(project_id=self.id).delete(synchronize_session=False)
+            # Create new associations
+            self.files_ids = data["files_ids"]
+            for fid in data["files_ids"]:
+                ProjectFile.new(self.id, fid)
+        
+        # TODO : update 
 
         # check to reload dynamics properties
         if self.loading_depth > 0:
@@ -148,23 +143,13 @@ def project_load(self, data):
 def project_save(self):
     generic_save(self)
 
-    # Todo : save project/files associations
-    if hasattr(self, 'inputs') and self.inputs: 
-        # clear all associations
-        # save new associations
-        pass
-    if hasattr(self, 'outputs') and self.outputs: 
-        # clear all associations
-        # save new associations
-        pass
-
 
 def project_delete(project_id):
     """
         Delete the project with the provided id in the database
     """
-    session().query(Job).filter_by(id=project_id).delete(synchronize_session=False)
-    session().query(JobFile).filter_by(project_id=project_id).delete(synchronize_session=False)
+    session().query(ProjectIndicator).filter_by(project_id=project_id).delete(synchronize_session=False)
+    session().query(UserProjectSharing).filter_by(project_id=project_id).delete(synchronize_session=False)
 
 
 def project_new():
@@ -184,8 +169,70 @@ def project_count():
     return generic_count(Project)
 
 
+
+def projects_get_jobs(self, loading_depth=0):
+    """
+        Return the list of jobs linked to the project
+    """
+    from core.model.job import Job
+    return session().query(Job).filter_by(project_id=self.id).all()
+
+
+
+def projects_get_indicators(self, loading_depth=0):
+    """
+        Return the list of indicators for the project
+    """
+    from core.model.indicator import Indicator
+    indicators = session().query(ProjectIndicator).filter_by(project_id=self.id).all()
+    return indicators
+
+
+
+def projects_get_analyses(self, loading_depth=0):
+    """
+        Return the list of analyses linked to the project
+    """
+    from core.model.analysis import Analysis
+    return session().query(Analysis).filter_by(project_id=self.id).all()
+
+
+
+def projects_get_files(self, loading_depth=0):
+    """
+        Return the list of files linked to the project
+    """
+    from core.model.file import File
+    files_ids = [pf.file_id for pf in session().query(ProjectFile).filter_by(project_id=self.id).all()]
+    if len(files_ids) > 0:
+        return session().query(File).filter(File.id.in_(files_ids)).all()
+    return []
+
+
+
+def projects_get_users(self):
+    """
+        Return the list of users that have access to the project
+    """
+    from core.model.user import User
+    upsl = session().query(UserProjectSharing).filter_by(project_id=self.id).all()
+    users_ids = [u.user_id for u in upsl]
+    result = []
+    for ups in upsl:
+        u = session().query(User).filter_by(id=ups.user_id).first()
+        if u:
+            result.append({"id": u.id, "firstname": u.firstname, "lastname": u.lastname, "write_authorisation": ups.write_authorisation})
+        else:
+            war("User's id ({}) linked to the project ({}), but user doesn't exists.".format(u.id, self.id))
+    return result
+
+
+
+
+
+
 Project = Base.classes.project
-Project.public_fields = ["id", "name", "comment", "parent_id", "is_folder", "last_activity", "jobs_ids", "files_ids", "events_ids", "analyses_ids", "sharing", "is_sandbox"]
+Project.public_fields = ["id", "name", "comment", "parent_id", "is_folder", "last_activity", "jobs_ids", "files_ids", "analyses_ids", "indicators", "users", "is_sandbox"]
 Project.init = project_init
 Project.load_depth = project_load_depth
 Project.from_id = project_from_id
@@ -196,3 +243,71 @@ Project.save = project_save
 Project.new = project_new
 Project.delete = project_delete
 Project.count = project_count
+Project.get_jobs = projects_get_jobs
+Project.get_indicators = projects_get_indicators
+Project.get_analyses = projects_get_analyses
+Project.get_files = projects_get_files
+Project.get_users = projects_get_users
+
+
+
+
+
+
+
+# =====================================================================================================================
+# PROJECT INDICATOR associations
+# =====================================================================================================================
+ProjectIndicator = Base.classes.project_indicator
+
+
+
+
+# =====================================================================================================================
+# PROJECT FILES associations
+# =====================================================================================================================
+def pf_new(project_id, file_id):
+    pf = ProjectFile(project_id=project_id, file_id=file_id)
+    pf.save()
+    return pf
+
+
+def pf_save(self):
+    generic_save(self)
+
+
+ProjectFile = Base.classes.project_file
+ProjectFile.new = pf_new
+ProjectFile.save = pf_save
+
+
+
+# =====================================================================================================================
+# PROJECT USERS associations
+# =====================================================================================================================
+def ups_get_auth(project_id, user_id):
+    ups = session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).first()
+    if ups : 
+        return ups.write_authorisation
+    return None
+
+
+def ups_new(project_id, user_id, write_authorisation):
+    ups = UserProjectSharing(project_id=project_id, file_id=file_id, write_authorisation=write_authorisation)
+    ups.save()
+    return ups
+
+
+def ups_save(self):
+    generic_save(self)
+
+
+UserProjectSharing = Base.classes.user_project_sharing
+UserProjectSharing.get_auth = ups_get_auth
+UserProjectSharing.new = ups_new
+UserProjectSharing.save = ups_save
+
+
+
+
+

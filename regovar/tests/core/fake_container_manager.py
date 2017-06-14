@@ -4,10 +4,10 @@
 
 import os
 from config import JOBS_DIR
-from core.managers.container_managers.pirus_container_manager import PirusContainerManager
+from core.managers.container_managers.container_manager import AbstractContainerManager
 
 
-class FakeContainerManager4Test(PirusContainerManager):
+class FakeContainerManager4Test(AbstractContainerManager):
     """
         This test will check that workflow between core, container manager and celery are working as expected.
         This test will not check container managers.

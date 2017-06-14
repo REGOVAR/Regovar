@@ -24,7 +24,7 @@ TU_PIRUS_PIPELINE_PUBLIC_FIELDS = ["id", "name", "type", "status", "description"
 
 
 class TestModelPipeline(unittest.TestCase):
-    """ Test case for pirus model Pipeline's features. """
+    """ MODEL Unit Tests : Pipeline """
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     # PREPARATION
@@ -49,15 +49,14 @@ class TestModelPipeline(unittest.TestCase):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def test_public_fields(self):
-        """ 
-            Check that public fileds describes in the model are same that in TU.
-            If you broke this test, you probably have to update TU, documentation and wiki...
-        """
+        """ public_fields """
+        # Check that public fields describes in the model are same that in TU.
+        # If you broke this test, you probably have to update TU, documentation and wiki...
         self.assertEqual(Pipeline.public_fields, TU_PIRUS_PIPELINE_PUBLIC_FIELDS)
 
 
     def test_from_id(self):
-        """ Check that requesting from id is working as expected """
+        """ from_id """
         self.assertEqual(Pipeline.from_id(0), None)
         p = Pipeline.from_id(1)
         self.assertIsInstance(p, Pipeline)
@@ -65,7 +64,7 @@ class TestModelPipeline(unittest.TestCase):
 
 
     def test_from_ids(self):
-        """ Check that requesting from list of id is working as expected """
+        """ from_ids """
         self.assertEqual(Pipeline.from_ids([]), [])
         p = Pipeline.from_ids([2,15415, 1])
         self.assertIsInstance(p, list)
@@ -77,14 +76,14 @@ class TestModelPipeline(unittest.TestCase):
 
 
     def test_load_depth(self):
-        """ Test that initialisation of Pipeline object with depth loading is working """
+        """ init & load_depth """
         p = Pipeline.from_id(1, 1)
         self.assertIsInstance(p.image_file, File)
         self.assertEqual(p.image_file.id, 1)
 
 
     def test_to_json(self):
-        """ Test export to json """
+        """ to_json """
         # Test export with default fields
         p = Pipeline.from_id(1, 1)
         j = p.to_json()
@@ -105,7 +104,7 @@ class TestModelPipeline(unittest.TestCase):
 
 
     def test_CRUD(self):
-        """ Test creation of a new file object, update, read and delete """
+        """ CRUD """
         # CREATE
         total = Pipeline.count()
         p1 = Pipeline.new()

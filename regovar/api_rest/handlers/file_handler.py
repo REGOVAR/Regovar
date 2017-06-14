@@ -117,8 +117,10 @@ class FileHandler:
 
 
 
-    def edit(self, request):
+    async def edit(self, request):
         # TODO : implement PUT to edit file metadata (and remove the obsolete  "simple post" replaced by TUS upload )
+        file_id = request.match_info.get('file_id', "")
+        params = await request.json()
         return rest_error("Not yet implemented")
         
 
@@ -164,43 +166,43 @@ class FileHandler:
 
 
 
-    async def dl_file(self, request):        
-        # 1- Retrieve request parameters
-        file_id = request.match_info.get('file_id', -1)
-        pfile = File.from_id(file_id)
-        if not pfile:
-            return rest_error("File with id {} doesn't exits.".format(file_id))
-        file = None
-        if os.path.isfile(pfile.path):
-            with open(pfile.path, 'br') as content_file:
-                file = content_file.read()
-        return web.Response(
-            headers=MultiDict({'Content-Disposition': 'Attachment; filename='+pfile.name}),
-            body=file
-        )
+    #async def dl_file(self, request):        
+        ## 1- Retrieve request parameters
+        #file_id = request.match_info.get('file_id', -1)
+        #pfile = File.from_id(file_id)
+        #if not pfile:
+            #return rest_error("File with id {} doesn't exits.".format(file_id))
+        #file = None
+        #if os.path.isfile(pfile.path):
+            #with open(pfile.path, 'br') as content_file:
+                #file = content_file.read()
+        #return web.Response(
+            #headers=MultiDict({'Content-Disposition': 'Attachment; filename='+pfile.name}),
+            #body=file
+        #)
 
 
-    async def dl_pipe_file(self, request):
-        # 1- Retrieve request parameters
-        pipe_id = request.match_info.get('pipe_id', -1)
-        filename = request.match_info.get('filename', None)
-        pipeline = Pipeline.from_id(pipe_id, 1)
-        if pipeline == None:
-            return rest_error("No pipeline with id {}".format(pipe_id))
-        if filename == None:
-            return rest_error("No filename provided")
-        path = os.path.join(pipeline.root_path, filename)
-        file = None
-        if os.path.isfile(path):
-            with open(path, 'br') as content_file:
-                file = content_file.read()
-        return web.Response(
-            headers=MultiDict({'Content-Disposition': 'Attachment; filename='+ filename}),
-            body=file
-        )
+    #async def dl_pipe_file(self, request):
+        ## 1- Retrieve request parameters
+        #pipe_id = request.match_info.get('pipe_id', -1)
+        #filename = request.match_info.get('filename', None)
+        #pipeline = Pipeline.from_id(pipe_id, 1)
+        #if pipeline == None:
+            #return rest_error("No pipeline with id {}".format(pipe_id))
+        #if filename == None:
+            #return rest_error("No filename provided")
+        #path = os.path.join(pipeline.root_path, filename)
+        #file = None
+        #if os.path.isfile(path):
+            #with open(path, 'br') as content_file:
+                #file = content_file.read()
+        #return web.Response(
+            #headers=MultiDict({'Content-Disposition': 'Attachment; filename='+ filename}),
+            #body=file
+        #)
 
-    async def dl_run_file(self, request):
-        return rest_success({})
+    #async def dl_run_file(self, request):
+        #return rest_success({})
 
 
 

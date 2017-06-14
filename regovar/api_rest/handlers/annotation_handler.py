@@ -16,7 +16,6 @@ from urllib.parse import parse_qsl
 
 from config import *
 from core.framework.common import *
-from core.framework.rest import *
 from core.framework.tus import *
 from core.model import *
 from core.core import core

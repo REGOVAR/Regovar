@@ -3,10 +3,10 @@
 
 
 # =====================================================================================================================
-# PIRUS CORE - Container Manager Abstracts
+# Container Manager Abstracts
 # =====================================================================================================================
 
-class PirusContainerManager():
+class AbstractContainerManager():
     """
         This abstract method shall be overrided by all pirus managers.
         Pirus managers clain to manage virtualisation of job with a specific technologie.

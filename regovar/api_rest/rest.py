@@ -147,7 +147,7 @@ def process_generic_get(query_string, allowed_fields):
                 query["$or"].append({k : {'$regex': r_filter}})
 
         # 4- Order
-        order = "name"
+        order = None
         # if r_sort is not None and r_order is not None:
         #     r_sort = r_sort.split(',')
         #     r_order = r_order.split(',')

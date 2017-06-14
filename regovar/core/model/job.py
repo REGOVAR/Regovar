@@ -161,7 +161,7 @@ def job_to_json(self, fields=None):
         fields = ["id", "name", "pipeline_id", "config", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids"]
     for f in fields:
         if f == "start_date" or f == "update_date" :
-            result.update({f: eval("self." + f + ".ctime()")})
+            result.update({f: eval("self." + f + ".isoformat()")})
         elif f == "inputs":
             if self.loading_depth > 0:
                 result.update({"inputs" : [i.to_json() for i in self.inputs]})

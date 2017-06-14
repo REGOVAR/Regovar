@@ -5,6 +5,7 @@ import unittest
 import os
 
 
+
 # Pirus part tests
 from tests.model.test_model_file import *
 from tests.model.test_model_job import *
@@ -18,48 +19,62 @@ from tests.core.test_core_lxdmanager import *
 # Regovar part tests
 
 
+from tests.pretty_print import ColourTextTestRunner
 
 
 
-# /!\ For a weird raison, unittest.main() doesn't work (no UT loaded) when we import the pirus.core object. So we run the tests manually
+# /!\ For a weird raison, unittest.main() doesn't work (no UT loaded) when we import the core object. So we run the tests manually
 
 # Run tests
 if __name__ == '__main__':
-    suite = unittest.TestSuite()
 
+    print("=====\nTEST MODEL :")
+    suiteModel = unittest.TestSuite()
+    
 
-    print("=====\nLoading tests :")
+    print("-----\nLoading tests :")
 
 
     # Load test to execute
     for test in [m for m in TestModelFile.__dict__.keys() if str.startswith(m, "test_")]:
-        suite.addTest(TestModelFile(test))
+        suiteModel.addTest(TestModelFile(test))
 
     for test in [m for m in TestModelJob.__dict__.keys() if str.startswith(m, "test_")]:
-        suite.addTest(TestModelJob(test))
+        suiteModel.addTest(TestModelJob(test))
 
     for test in [m for m in TestModelPipeline.__dict__.keys() if str.startswith(m, "test_")]:
-        suite.addTest(TestModelPipeline(test))
+        suiteModel.addTest(TestModelPipeline(test))
 
+    print("Done\n-----\nRunning tests :")
+    runner = ColourTextTestRunner(verbosity=2)
+    runner.run(suiteModel)
+    
+    
+    
+    print("=====\nTEST CORE :")
+    suiteCore = unittest.TestSuite()
+    
+
+    print("-----\nLoading tests :")
     for test in [m for m in TestCoreFileManager.__dict__.keys() if str.startswith(m, "test_")]:
-        suite.addTest(TestCoreFileManager(test))
+        suiteCore.addTest(TestCoreFileManager(test))
 
     for test in [m for m in TestCorePipelineManager.__dict__.keys() if str.startswith(m, "test_")]:
-        suite.addTest(TestCorePipelineManager(test))
+        suiteCore.addTest(TestCorePipelineManager(test))
 
     for test in [m for m in TestCoreJobManager.__dict__.keys() if str.startswith(m, "test_")]:
-        suite.addTest(TestCoreJobManager(test))
+        suiteCore.addTest(TestCoreJobManager(test))
 
     # Need Lxd image on the server to work.
     if os.path.exists(TestCoreLxdManager.IMAGE_FILE_PATH):
         tests = [m for m in TestCoreLxdManager.__dict__.keys() if str.startswith(m, "test_")]
         tests.sort()
         for test in tests: 
-            suite.addTest(TestCoreLxdManager(test))
+            suiteCore.addTest(TestCoreLxdManager(test))
     else:
         print("WARNING : LXD Manager TU disabled. (because lxd image \"{}\" not available)".format(TestCoreLxdManager.IMAGE_FILE_PATH))
 
     print("Done\n=====\nRunning tests :")
-
-    runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(suite)
+    runner = ColourTextTestRunner(verbosity=2)
+    runner.run(suiteCore)
+    

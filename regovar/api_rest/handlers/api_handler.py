@@ -43,8 +43,7 @@ class ApiHandler:
         return rest_success({
             "api_url": HOST_P,
             "title": "Regovar Service API",
-            "version": "alpha",
-            "format_supported": ["json"],
+            "version": VERSION,
             "website" : "core.org"
         })
 

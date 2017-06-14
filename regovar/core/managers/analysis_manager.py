@@ -55,19 +55,20 @@ class AnalysisManager:
         """
             Create a new analysis in the database.
         """
-        from core.core import core        
+        from core.core import core
         try:
             if ref_id not in core.annotations.ref_list.keys():
                 ref_id = DEFAULT_REFERENCIAL_ID
-            settings = {"fields": [], "filter": ['AND', []]}
-            db_uid = core.annotations.db_list[ref_id]['db']['Variant']['versions']['']
-            for f in core.annotations.db_map[db_uid]["fields"][1:]:
-                settings["fields"].append(f)
             analysis = Analysis.new()
             analysis.name = name
             analysis.reference_id = ref_id
             analysis.template = template_id
-            analysis.settings = json.dumps(settings)
+            # Set fields with default Variant's fields
+            fields = []
+            db_uid = core.annotations.db_list[ref_id]['db']['Variant']['versions']['']
+            for f in core.annotations.db_map[db_uid]["fields"][1:]:
+                fields.append(f)
+            analysis.fields = json.dumps(fields)
             analysis.save()
             log('Core.AnalysisManager.create : New analysis \"{}\" created with the id {}.'.format(name, analysis.id))
             return analysis
@@ -80,65 +81,71 @@ class AnalysisManager:
         """
             Load all data about the analysis with the provided id and return result as JSON object.
         """
-        analysis = execute("SELECT a.id, a.name, a.update_date, a.creation_date, a.settings, t.name AS t_name, t.id AS t_id FROM analysis a LEFT JOIN template t ON a.template_id = t.id WHERE a.id = {0}".format(analysis_id)).first()
-        result = {
-            "id": analysis.id,
-            "name": analysis.name,
-            "update_date": analysis.update_date.ctime() if analysis.update_date is not None else datetime.datetime.now().ctime(),
-            "creation_date": analysis.creation_date.ctime() if analysis.creation_date is not None else datetime.datetime.now().ctime(),
-            "template_id": analysis.t_id,
-            "template_name": analysis.t_name,
-            "samples": [],
-            "attributes": [],
-            "reference_id": 2,  # TODO: reference_id shall be associated to the analysis and retrieved in the database
-            "filters": {}}
-        if analysis.settings is not None and analysis.settings.strip() is not "":
-            result["settings"] = json.loads(analysis.settings)
-        else:
-            result["settings"] = '{"fields": [1,3,4,5,6,7,8], "filter":["AND", []]}'
+        analysis = Analysis.from_id(analysis_id, 1)
+        
+        # Check filter and create default if not set
+        #if not analysis.settings:
+            #analysis.settings = '{"fields": [1,3,4,5,6,7,8], "filter":["AND", []]}'
+        
+        #analysis = execute("SELECT a.id, a.name, a.update_date, a.creation_date, a.settings, t.name AS t_name, t.id AS t_id FROM analysis a LEFT JOIN template t ON a.template_id = t.id WHERE a.id = {0}".format(analysis_id)).first()
+        #result = {
+            #"id": analysis.id,
+            #"name": analysis.name,
+            #"update_date": analysis.update_date.ctime() if analysis.update_date is not None else datetime.datetime.now().ctime(),
+            #"creation_date": analysis.creation_date.ctime() if analysis.creation_date is not None else datetime.datetime.now().ctime(),
+            #"template_id": analysis.t_id,
+            #"template_name": analysis.t_name,
+            #"samples": [],
+            #"attributes": [],
+            #"reference_id": 2,  # TODO: reference_id shall be associated to the analysis and retrieved in the database
+            #"filters": {}}
+        #if analysis.settings is not None and analysis.settings.strip() is not "":
+            #result["settings"] = json.loads(analysis.settings)
+        #else:
+            #result["settings"] = '{"fields": [1,3,4,5,6,7,8], "filter":["AND", []]}'
 
-        # Get predefined filters set for this analysis
-        query = "SELECT * FROM filter WHERE analysis_id = {0} ORDER BY name ASC;"
-        for f in execute(query.format(analysis_id)):
-            result["filters"][f.id] = {"name": f.name, "description": f.description, "filter": json.loads(f.filter)}
+        ## Get predefined filters set for this analysis
+        #query = "SELECT * FROM filter WHERE analysis_id = {0} ORDER BY name ASC;"
+        #for f in execute(query.format(analysis_id)):
+            #result["filters"][f.id] = {"name": f.name, "description": f.description, "filter": json.loads(f.filter)}
 
-        # Get attributes used for this analysis
-        query = "SELECT a.sample_id, a.name, a.value \
-            FROM attribute a \
-            WHERE a.analysis_id = {0}\
-            ORDER BY a.name ASC, a.sample_id ASC"
+        ## Get attributes used for this analysis
+        #query = "SELECT a.sample_id, a.name, a.value \
+            #FROM attribute a \
+            #WHERE a.analysis_id = {0}\
+            #ORDER BY a.name ASC, a.sample_id ASC"
 
-        current_attribute = None
-        for r in execute(query.format(analysis_id)):
-            if current_attribute is None or current_attribute != r.name:
-                current_attribute = r.name
-                result["attributes"].append({"name": r.name, "samples_value": {r.sample_id: r.value}})
-            else:
-                result["attributes"][-1]["samples_value"][r.sample_id] = r.value
+        #current_attribute = None
+        #for r in execute(query.format(analysis_id)):
+            #if current_attribute is None or current_attribute != r.name:
+                #current_attribute = r.name
+                #result["attributes"].append({"name": r.name, "samples_value": {r.sample_id: r.value}})
+            #else:
+                #result["attributes"][-1]["samples_value"][r.sample_id] = r.value
 
-        # Get Samples used for this analysis
-        query = "SELECT s.id, s.name, s.comments, s.is_mosaic, asp.nickname, f.id as f_id, f.name as fname, f.create_date \
-            FROM analysis_sample asp \
-            LEFT JOIN sample s ON asp.sample_id = s.id \
-            LEFT JOIN sample_file sf ON s.id = sf.sample_id \
-            LEFT JOIN file f ON f.id = sf.file_id \
-            WHERE asp.analysis_id = {0}"
-        for r in execute(query.format(analysis_id)):
-            result["samples"].append({
-                "id": r.id,
-                "name": r.name,
-                "comments": r.comments,
-                "is_mosaic": r.is_mosaic,
-                "nickname": r.nickname,
-                "file_id": r.f_id,
-                "file_name": r.fname,
-                "create_date": r.create_date.ctime() if r.create_date is not None else datetime.datetime.now().ctime(),
-                "attributes": {}})
-            for a in result["attributes"]:
-                if r.id in a["samples_value"].keys():
-                    result["samples"][-1]["attributes"][a['name']] = a["samples_value"][r.id]
-                else:
-                    result["samples"][-1]["attributes"][a['name']] = ""
+        ## Get Samples used for this analysis
+        #query = "SELECT s.id, s.name, s.comments, s.is_mosaic, asp.nickname, f.id as f_id, f.name as fname, f.create_date \
+            #FROM analysis_sample asp \
+            #LEFT JOIN sample s ON asp.sample_id = s.id \
+            #LEFT JOIN sample_file sf ON s.id = sf.sample_id \
+            #LEFT JOIN file f ON f.id = sf.file_id \
+            #WHERE asp.analysis_id = {0}"
+        #for r in execute(query.format(analysis_id)):
+            #result["samples"].append({
+                #"id": r.id,
+                #"name": r.name,
+                #"comments": r.comments,
+                #"is_mosaic": r.is_mosaic,
+                #"nickname": r.nickname,
+                #"file_id": r.f_id,
+                #"file_name": r.fname,
+                #"create_date": r.create_date.ctime() if r.create_date is not None else datetime.datetime.now().ctime(),
+                #"attributes": {}})
+            #for a in result["attributes"]:
+                #if r.id in a["samples_value"].keys():
+                    #result["samples"][-1]["attributes"][a['name']] = a["samples_value"][r.id]
+                #else:
+                    #result["samples"][-1]["attributes"][a['name']] = ""
 
         return result
 
@@ -149,24 +156,13 @@ class AnalysisManager:
         """
             Update analysis with provided data. Data that are not provided are not updated (ignored).
         """
-        # BASICS SETTINGS (current filter and displayed fields)
-        if "fields" in data.keys() or "filter" in data.keys() or "selection" in data.keys():
-            # retrieved current settings from database
-            settings = {}
-            try:
-                settings = json.loads(execute("SELECT settings FROM analysis WHERE id={}".format(analysis_id)).first().settings)
-            except:
-                # TODO: log error
-                settings = {}
-            if "fields" in data.keys():
-                settings["fields"] = data["fields"]
-            if "filter" in data.keys():
-                settings["filter"] = data["filter"]
-            if "selection" in data.keys():
-                settings["selection"] = data["selection"]
-            # update database
-            main_query = "settings='{0}', ".format(json.dumps(settings))
-
+        analysis = Analysis.from_id(analysis_id)
+        if not analysis:
+            raise RegovarException("Unable to fin analysis with the provided id {}".format(analysis_id))
+        
+        # Update analysis's simple properties
+        analysis.load(data)
+        
         # saved filters
         if "filters" in data.keys():
             # delete old filters
@@ -205,12 +201,9 @@ class AnalysisManager:
                 # TODO: log error
                 pass
 
-        # analysis name, ...
-        if "name" in data.keys():
-            main_query += "name='{0}', ".format(data["name"])
-
-        # update analysis
-        execute("UPDATE analysis SET {0}update_date=CURRENT_TIMESTAMP WHERE id={1}".format(main_query, analysis_id))
+        # return reloaded analysis
+        return Analysis.from_id(analysis_id, 1)
+        
 
 
 

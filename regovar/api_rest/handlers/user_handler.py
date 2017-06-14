@@ -23,7 +23,7 @@ from urllib.parse import parse_qsl
 
 from config import *
 from core.framework.common import *
-import core.model as Model
+from core.model import *
 from core.core import core
 from api_rest.rest import *
 
@@ -55,8 +55,19 @@ class UserHandler:
         ''' 
             Public method that return the list of regovar's users (only public details).
         '''
-        # TODO : manage query parameters for fields, range, sort, ...
-        return rest_success(core.users.get())
+        # Generic processing of the get query
+        fields, query, order, offset, limit = process_generic_get(request.query_string, User.public_fields)
+        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        # Get range meta data
+        range_data = {
+            "range_offset" : offset,
+            "range_limit"  : limit,
+            "range_total"  : User.count(),
+            "range_max"    : RANGE_MAX,
+        }
+        # Return result of the query 
+        users = core.users.get(fields, query, order, offset, limit, depth)
+        return rest_success([u.to_json() for u in users], range_data)
 
 
     @user_role('Authenticated')
@@ -71,7 +82,7 @@ class UserHandler:
 
 
     @user_role('Administration:Write')
-    async def add(self, request):
+    async def new(self, request):
         '''
             Add a new user in database. 
             Only available for administrator

@@ -20,3 +20,24 @@ INSERT INTO job (pipeline_id, name, config, status, progress_value, progress_lab
 INSERT INTO job_file (job_id, file_id, as_input) VALUES
     (1, 3, TRUE),
     (1, 4, FALSE);
+    
+    
+    
+
+INSERT INTO "project" (comment, is_sandbox) VALUES
+  ('My sandbox', True),
+  ('My sandbox', True),
+  ('Project Tester1', False),
+  ('Project Tester2', False),
+  ('Project Testers', False);
+INSERT INTO "user" (login, firstname, roles, sandbox_id) VALUES
+  ('tester1', 'Tester 1', '{}', 2),
+  ('tester2', 'Tester 2', '{}', 3);
+  
+INSERT INTO "user_project_sharing" (project_id, user_id, write_authorisation) VALUES
+  (4, 2, True),
+  (5, 2, False),
+  (5, 3, True),
+  (6, 2, True),
+  (6, 3, True);
+  

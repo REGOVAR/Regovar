@@ -16,8 +16,6 @@ from urllib.parse import parse_qsl
 
 from config import *
 from core.framework.common import *
-from core.framework.rest import *
-from core.framework.tus import *
 from core.model import *
 from core.core import core
 from api_rest.rest import *
@@ -48,7 +46,7 @@ class AnalysisHandler:
             "range_total"  : Analysis.count(),
             "range_max"    : RANGE_MAX,
         }
-        # Return result of the query for PirusFile 
+        # Return result of the query.
         analyses = core.analyses.get(fields, query, order, offset, limit, depth)
         return rest_success([a.to_json() for a in analyses], range_data)
 
@@ -59,10 +57,10 @@ class AnalysisHandler:
             Return all data about the analysis with the provided id (analysis metadata: name, settings, template data, samples used, filters, ... )
         """
         analysis_id = request.match_info.get('analysis_id', -1)
-        analysis = core.analyses.load(analysis_id)
-        if analysis is None:
+        analysis = Analysis.from_id(analysis_id)
+        if not analysis:
             return rest_error("Unable to find the analysis with id=" + str(analysis_id))
-        return rest_success(analysis)
+        return rest_success(analysis.to_json())
 
 
 
@@ -77,26 +75,15 @@ class AnalysisHandler:
         except Exception as ex:
             return rest_error("Unable to create new analysis. Provided data corrupted. " + str(ex))
         name = data["name"]
-        ref_id = data["ref_id"]
+        ref_id = data["reference_id"]
         template_id = data["template_id"] if "template_id" in data.keys() else None
         # Create the analysis 
         analysis = core.analyses.create(name, ref_id, template_id)
         if not analysis:
             return rest_error("Unable to create an analsis with provided information.")
-        return rest_success(analysis)
+        return rest_success(analysis.to_json())
 
 
-
-    def get_setting(self, request):
-        # 1- Retrieve data from request
-        analysis_id = request.match_info.get('analysis_id', -1)
-
-        try:
-            settings = Analysis.from_id(analysis_id).setting
-        except Exception as err:
-            return rest_error("Unable to get analsis settings with provided information. " + str(err))
-        if settings is None: settings = {}
-        return rest_success(settings)
 
 
     async def update(self, request):
@@ -104,7 +91,7 @@ class AnalysisHandler:
         analysis_id = request.match_info.get('analysis_id', -1)
         data = await request.json()
         try:
-            core.analyses.update(analysis_id, data)
+            core.analyses.update(analysis_id, json.loads(data))
         except Exception as err:
             return rest_error("Error occured when trying to save settings for the analysis with id=" + str(analysis_id) + ". " + str(err))
         return rest_success() 

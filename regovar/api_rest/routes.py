@@ -64,13 +64,13 @@ app.router.add_route('GET',    "/api", apiHandler.api)
 app.router.add_route('GET',    "/ws",     websocket.get)
 
 
-app.router.add_route('GET',    "/users", userHandler.list)                                                        # Get list of all users (allow search parameters)
-app.router.add_route('POST',   "/users", userHandler.add)                                                         # Create new users with provided data
-app.router.add_route('GET',    "/users/{user_id}", userHandler.get)                                               # Get details about one user
-app.router.add_route('PUT',    "/users/{user_id}", userHandler.edit)                                              # Edit user with provided data
-app.router.add_route('POST',   "/users/login", userHandler.login)                                                 # Start user's session if provided credentials are correct
-app.router.add_route('GET',    "/users/logout", userHandler.logout)                                               # Kill user's session
-app.router.add_route('DELETE', "/users/{user_id}", userHandler.delete)                                            # Delete a user
+app.router.add_route('GET',    "/user", userHandler.list)                                                        # Get list of all users (allow search parameters)
+app.router.add_route('POST',   "/user", userHandler.new)                                                         # Create new users with provided data
+app.router.add_route('GET',    "/user/{user_id}", userHandler.get)                                               # Get details about one user
+app.router.add_route('PUT',    "/user/{user_id}", userHandler.edit)                                              # Edit user with provided data
+app.router.add_route('POST',   "/user/login", userHandler.login)                                                 # Start user's session if provided credentials are correct
+app.router.add_route('GET',    "/user/logout", userHandler.logout)                                               # Kill user's session
+app.router.add_route('DELETE', "/user/{user_id}", userHandler.delete)                                            # Delete a user
 
 app.router.add_route('GET',    "/project",                    projHandler.list)                                   # Get list of all projects (allow search parameters)
 app.router.add_route('POST',   "/project",                    projHandler.new)                                    # Create new project with provided data
@@ -137,7 +137,7 @@ app.router.add_route('POST',   "/variant", variantHandler.new)                  
 
 app.router.add_route('GET',    "/sample", sampleHandler.list)                                              # Get list of all samples in database
 app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)                                   # Get specific sample's data
-app.router.add_route('POST',   "/sample", sampleHandler.new)
+app.router.add_route('GET',   "/sample/import/{file_id}", sampleHandler.import_from_file)
 
 app.router.add_route('GET',    "/analysis",                                  analysisHandler.list)                # List analyses
 app.router.add_route('POST',   "/analysis",                                  analysisHandler.new)                 # Create new analysis
@@ -145,7 +145,6 @@ app.router.add_route('GET',    "/analysis/{analysis_id}",                    ana
 app.router.add_route('PUT',    "/analysis/{analysis_id}",                    analysisHandler.update)              # Save analysis metadata
 #app.router.add_route('POST',   "/analysis/{analysis_id}/ped",                analysisHandler.load_ped)            # Load ped file and update sample attributes accordingly
 app.router.add_route('POST',   "/analysis/{analysis_id}/import/{file_id}",   analysisHandler.load_file)           # Load a file (vcf and ped supported) to setup the analysis data (variant/annotations/samples)
-app.router.add_route('GET',    "/analysis/{analysis_id}/setting",            analysisHandler.get_setting)         # TODO : Get analysis setting (NEED ??)
 app.router.add_route('GET',    "/analysis/{analysis_id}/filter",             analysisHandler.get_filters)         # Get list of available filter for the provided analysis
 app.router.add_route('POST',   "/analysis/{analysis_id}/filter",             analysisHandler.new_filter)          # Create a new filter for the analisis
 app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.set_filter)          # TODO : Update filter

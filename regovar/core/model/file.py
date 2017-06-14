@@ -8,7 +8,6 @@ from core.framework.postgresql import *
 
 
 
-
 def file_init(self, loading_depth=0):
     """
         If loading_depth is > 0, children objects will be loaded. Max depth level is 2.

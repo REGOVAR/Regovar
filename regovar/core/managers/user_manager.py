@@ -17,34 +17,24 @@ class UserManager:
 
 
 
-    def get(self, fields=None, query=None, sort=None, offset=None, limit=None):
+    def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """
             Generic method to get users data according to provided filtering options
         """
-        # Check parameters
-        fields, query, sort, offset, limit = check_generic_query_parameter(Model.User.public_fields, ['lastname', "firstname"], fields, query, sort, offset, limit)
-
-        # Build query
-        result = []
-        sql = "SELECT " + ','.join(fields) + " FROM \"user\""
-
-        # Get result
-        rsql = Model.execute(sql)
-
-        # Get and return result
-        for s in rsql:
-            entry = {}
-            for f in fields:
-                if f == "roles" or f == "settings":
-                    data = eval("s." + f)
-                    if data:
-                        entry.update({f: json.loads(eval("s." + f))})
-                    else:
-                        entry.update({f: None})
-                else:
-                    entry.update({f: eval("s." + f)})
-            result.append(entry)
-        return result
+        if not isinstance(fields, dict):
+            fields = None
+        if query is None:
+            query = {}
+        if order is None:
+            order = "lastname"
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = RANGE_MAX
+        s = Model.session()
+        users = s.query(Model.User).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
+        for u in users: u.init(depth)
+        return users
 
 
 

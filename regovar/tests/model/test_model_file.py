@@ -17,13 +17,13 @@ from core.model import *
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # TEST PARAMETER / CONSTANTS
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-TU_PIRUS_FILE_PUBLIC_FIELDS = ["id", "name", "type", "path", "size", "upload_offset", "status", "create_date", "update_date", "tags", "md5sum", "job_source_id", "jobs_ids", "job_source", "jobs"]
+TU_FILE_PUBLIC_FIELDS = ["id", "name", "type", "path", "size", "upload_offset", "status", "create_date", "update_date", "tags", "md5sum", "job_source_id", "jobs_ids", "job_source", "jobs"]
 
 
 
 
 class TestModelFile(unittest.TestCase):
-    """ Test case for pirus model File's features. """
+    """ MODEL Unit Tests : File """
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
     # PREPARATION
@@ -48,15 +48,14 @@ class TestModelFile(unittest.TestCase):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def test_public_fields(self):
-        """ 
-            Check that public fileds describes in the model are same that in TU.
-            If you broke this test, you probably have to update TU, documentation and wiki...
-        """
-        self.assertEqual(File.public_fields, TU_PIRUS_FILE_PUBLIC_FIELDS)
+        """ public_fields """
+        # Check that public fields describes in the model are same that in TU.
+        # If you broke this test, you probably have to update TU, documentation and wiki...
+        self.assertEqual(File.public_fields, TU_FILE_PUBLIC_FIELDS)
 
 
     def test_from_id(self):
-        """ Check that requesting from id is working as expected """
+        """ from_id """
         self.assertEqual(File.from_id(0), None)
         f = File.from_id(1)
         self.assertIsInstance(f, File)
@@ -64,7 +63,7 @@ class TestModelFile(unittest.TestCase):
 
 
     def test_from_ids(self):
-        """ Check that requesting from list of id is working as expected """
+        """ from_ids """
         self.assertEqual(File.from_ids([]), [])
         f = File.from_ids([3,15415,1])
         self.assertIsInstance(f, list)
@@ -75,7 +74,7 @@ class TestModelFile(unittest.TestCase):
         self.assertEqual(f[1].id, 3)
 
     def test_load_depth(self):
-        """ Test that initialisation of File object with depth loading is working """
+        """ init & load_depth """
         f = File.from_id(4, 1)
         self.assertEqual(len(f.jobs), 1)
         self.assertIsInstance(f.jobs[0], Job)
@@ -83,7 +82,7 @@ class TestModelFile(unittest.TestCase):
         self.assertEqual(f.job_source.id, 1)
 
     def test_to_json(self):
-        """ Test export to json """
+        """ to_json """
         # Test export with default fields
         f = File.from_id(4, 1)
         j = f.to_json()
@@ -103,7 +102,7 @@ class TestModelFile(unittest.TestCase):
 
 
     def test_CRUD(self):
-        """ Test creation of a new file object, update, read and delete """
+        """ CRUD """
         # CREATE
         total = File.count()
         f1 = File.new()

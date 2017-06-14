@@ -15,14 +15,40 @@ def user_init(self, loading_depth=0):
     """
         If loading_depth is > 0, children objects will be loaded. Max depth level is 2.
         Children objects of a file are :
-            - job_source : set with a Job object if the file have been created by a job. 
-            - jobs       : the list of jobs in which the file is used or created
+            - projects : the list of projects that can access the user
+            - sandbox   : the sandbox project of the user
+            - 
         If loading_depth == 0, children objects are not loaded
     """
+    # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
+    if hasattr(self, "loading_depth"):
+        self.loading_depth = max(self.loading_depth, min(2, loading_depth))
+    else:
+        self.loading_depth = min(2, loading_depth)
+    # Load acl
     try:
         self.roles_dic = json.loads(self.roles)
     except:
         self.roles_dic = {}
+    self.projects_ids = UserProjectSharing.get_projects_ids(self.id)
+    self.load_depth(loading_depth)
+
+
+
+def user_load_depth(self, loading_depth):
+    from core.model.project import Project
+    if loading_depth > 0:
+        try:
+            self.projects = UserProjectSharing.get_projects(self.sandbox_id, self.loading_depth-1)
+            self.sandbox = Project.from_id(self.sandbox_id, self.loading_depth-1)
+        except Exception as ex:
+            raise RegovarException("User data corrupted (id={}).".format(self.id), "", ex)
+
+
+
+
+
+
 
 
 def user_from_id(user_id, loading_depth=0):
@@ -30,7 +56,7 @@ def user_from_id(user_id, loading_depth=0):
         Retrieve user with the provided id in the database
     """
     user = session().query(User).filter_by(id=user_id).first()
-    user.init()
+    if user : user.init(loading_depth)
     return user
 
 
@@ -68,9 +94,20 @@ def user_to_json(self, fields=None):
     result = {}
     if fields is None:
         fields = User.public_fields
-    for f in fields:
-        if f == "creation_date" or f == "update_date":
+    for f in fields:   
+        if f == "last_activity":
             result.update({f: eval("self." + f + ".ctime()")})
+        elif f == "settings" or f == "roles":
+            try:
+                result.update({f: json.loads(eval("self." + f ))})
+            except Exception as ex:
+                war("Unable to serialise user data : {}. {}".format(f, str(ex)))
+        elif f == "sandbox":
+            if self.loading_depth > 0:
+                result.update({"sandbox": self.sandbox.to_json()})
+        elif f == "projects":
+            if self.loading_depth > 0:
+                result.update({"projects": [p.to_json() for p in self.projects]})
         else:
             result.update({f: eval("self." + f)})
     return result
@@ -104,8 +141,15 @@ def user_is_admin(self):
     return isinstance(self, User) and isinstance(self.roles_dic, dict) and "Administration" in self.roles_dic.keys() and self.roles_dic["Administration"] == "Write"
 
 
+def user_count():
+    """
+        Return total of Analyses entries in database
+    """
+    return generic_count(User)
+
+
 User = Base.classes.user
-User.public_fields = ["id", "firstname", "lastname", "login", "email", "function", "location", "last_activity", "settings", "roles"]
+User.public_fields = ["id", "firstname", "lastname", "login", "email", "function", "location", "last_activity", "settings", "roles", "projects_ids", "sandbox_id", "sandbox", "projects"]
 User.from_id = user_from_id
 User.from_credential = user_from_credential
 User.to_json = user_to_json
@@ -114,3 +158,47 @@ User.erase_password = user_erase_password
 User.is_admin = user_is_admin
 User.save = generic_save
 User.init = user_init
+User.load_depth = user_load_depth
+User.count = user_count
+
+
+
+
+
+# =====================================================================================================================
+# UserProjectSharing
+# =====================================================================================================================
+
+
+def ups_get_projects_ids(user_id, write_auth=None):
+    """
+        Return the list of ids of projects that are accessible to the user.
+        If write_auth set to None, return both project readonly and writable;
+        otherwise return only readonly if false, only writable if true.
+    """
+    if not write_auth:
+        return [p.project_id for p in session().query(UserProjectSharing).filter_by(user_id=user_id).all()]
+    else:
+        return [p.project_id for p in session().query(UserProjectSharing).filter_by(user_id=user_id, write_authorisation=write_auth).all()]
+
+
+def ups_get_projects(user_id, write_auth=None, loading_depth=0):
+    """
+        Return the list of projects that are accessible to the user.
+    """
+    if not write_auth:
+        return [p.init(loading_depth-1) for p in session().query(UserProjectSharing).filter_by(user_id=user_id).all()]
+    else:
+        return [p.init(loading_depth-1) for p in session().query(UserProjectSharing).filter_by(user_id=user_id, write_authorisation=write_auth).all()]
+
+UserProjectSharing = Base.classes.user_project_sharing
+UserProjectSharing.get_projects_ids = ups_get_projects_ids
+UserProjectSharing.get_projects = ups_get_projects
+
+
+
+
+
+
+
+

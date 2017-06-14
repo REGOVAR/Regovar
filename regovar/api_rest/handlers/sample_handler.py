@@ -41,7 +41,7 @@ class SampleHandler:
         range_data = {
             "range_offset": offset,
             "range_limit" : limit,
-            "range_total" : core.samples.total(),
+            "range_total" : Sample.count(),
             "range_max"   : RANGE_MAX,
         }
         # Return result of the query 
@@ -60,15 +60,13 @@ class SampleHandler:
 
 
 
-    async def new(self, request):
+    def import_from_file(self, request):
         
-        data = await request.json()
+        file_id = request.match_info.get('file_id', None)
         try:
-            if "samples" in data.keys():
-                samples = []
-                for s in data["samples"]:
-                    samples.append(core.samples.new(s["name"], s["file_id"]))
+            result = core.samples.import_from_file(file_id)
         except Exception as ex:
             return rest_error("unable to import samples.".format(ex))
-
-        return rest_success([s.to_json() for s in samples])
+        if result:
+            return rest_success([s.to_json() for s in samples])
+        return rest_error("unable to import samples from file.")
