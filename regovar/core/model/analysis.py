@@ -101,7 +101,6 @@ def analysis_load(self, data):
     """
     try:
         if "name"              in data.keys(): self.name              = data['name']
-        if "owner_id"          in data.keys(): self.owner_id          = data['owner_id']
         if "project_id"        in data.keys(): self.project_id        = data['project_id']
         if "template_id"       in data.keys(): self.template_id       = data['template_id']
         if "comment"           in data.keys(): self.comment           = data['comment']
@@ -195,7 +194,7 @@ def analysis_get_attributes(self, loading_depth=0):
 
 
 Analysis = Base.classes.analysis
-Analysis.public_fields = ["id", "name", "owner_id", "project_id", "template_id", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "total_variants", "reference_id"]
+Analysis.public_fields = ["id", "name", "project_id", "template_id", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "total_variants", "reference_id"]
 Analysis.init = analysis_init
 Analysis.load_depth = analysis_load_depth
 Analysis.from_id = analysis_from_id

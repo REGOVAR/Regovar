@@ -50,6 +50,7 @@ CREATE TABLE public.analysis
     template_id integer,
     fields text COLLATE pg_catalog."C",
     filter text COLLATE pg_catalog."C",
+    "order" text COLLATE pg_catalog."C",
     selection text COLLATE pg_catalog."C",
     create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -109,7 +110,7 @@ CREATE TABLE public."reference"
 CREATE TABLE public.sample
 (
     id serial NOT NULL,
-    name character varying(50) COLLATE pg_catalog."C",
+    name character varying(255) COLLATE pg_catalog."C",
     comment character varying(255) COLLATE pg_catalog."C",
     is_mosaic boolean,
     file_id integer,

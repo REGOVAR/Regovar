@@ -315,7 +315,7 @@ class FilterEngine:
             try:
                 analysis.filter = json.dumps(filter_json)
                 analysis.fields = json.dumps(fields)
-                # TODO : analysis.order = '[]' if order is None else json.dumps(order)
+                analysis.order = '[]' if order is None else json.dumps(order)
                 analysis.save()
             except:
                 # TODO: log error

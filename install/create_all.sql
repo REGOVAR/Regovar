@@ -7,7 +7,6 @@
 --
 -- Assuming that Regovar is based on Pirus and Annso models
 --
-ALTER TABLE analysis ADD COLUMN owner_id integer;
 ALTER TABLE analysis ADD COLUMN project_id integer;
 ALTER TABLE job ADD COLUMN project_id integer;
 ALTER TABLE pipeline ADD COLUMN starred boolean;
