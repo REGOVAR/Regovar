@@ -1909,7 +1909,7 @@
                             <li><a href="#project_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> get</a></li>
                             <li><a href="#project_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
                             <li><a href="#project_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> update</a></li>
-                            <li><a href="#project_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>
+                            <li><a href="#project_api_05" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> delete</a></li>
                         </ul>
                     </div>
 
@@ -1959,9 +1959,6 @@
                             </div>
                             <!-- new project -->
                             <div class="tab-pane fade" id="project_api_03">
-                                <div class="alert alert-danger">
-                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
-                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1973,18 +1970,12 @@
                                     <div class="col-sm-2"><b>Body</b></div>
                                     <div class="col-sm-10">
                                         <pre>{
-    "date":datetime, 
-    "message":str, 
-    "type":enum, 
-    "user_id":int,
-    "project_id":int,
-    "analysis_id":int,
-    "file_id":int,
-    "subject_id":int,
-    "job_id":int,
-    "pipeline_id":int
+    "name":str, 
+    "is_folder":bool, 
+    "comment":str, 
+    "parent_id":int
 }</pre><br/>
-                                        <i>The only mandatory fields are <code>date</code> and <code>message</code>. Optional fields that end by "_id" are to link the project to an other objects in the database.</i>
+                                        <i>The only mandatory fields is <code>name</code>. By default <code>is_folder</code> is false. <code>parent_id</code> link to another project and allow to create arborescence of folder/project.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
@@ -1993,16 +1984,13 @@
                                         Query : 
                                         <input id="project_api_03_query" type="text" placeholder="/project" value="/project"/><br/>
                                         Body : <br/>
-                                        <textarea id="project_api_03_body" cols="40" rows="6">{...}</textarea><br/>
+                                        <textarea id="project_api_03_body" cols="40" rows="6">{"name": "My new project"}</textarea><br/>
                                         <button onclick="generic_exec_body('project_api_03_query', 'project_api_03_body', 'project_result', 'POST');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- update project -->
-                            <div class="tab-pane fade" id="event_api_04">
-                                <div class="alert alert-danger">
-                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
-                                </div>
+                            <div class="tab-pane fade" id="project_api_04">
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2021,16 +2009,10 @@
                                     <div class="col-sm-2"><b>Body</b></div>
                                     <div class="col-sm-10">
                                         <pre>{
-    "date":datetime, 
-    "message":str, 
-    "type":enum, 
-    "user_id":int,
-    "project_id":int,
-    "analysis_id":int,
-    "file_id":int,
-    "subject_id":int,
-    "job_id":int,
-    "pipeline_id":int
+    "name":str, 
+    "is_folder":bool, 
+    "comment":str, 
+    "parent_id":int
 }</pre><br/>
                                     </div>
                                 </div>
@@ -2040,8 +2022,35 @@
                                         Query : 
                                         <input id="project_api_04_query" type="text" placeholder="/project/{project_id}" value="/project/1"/><br/>
                                         Body : <br/>
-                                        <textarea id="project_api_04_body" cols="40" rows="6">{...}</textarea><br/>
+                                        <textarea id="project_api_04_body" cols="40" rows="6">{"comment":"update the comment"}</textarea><br/>
                                         <button onclick="generic_exec_body('project_api_04_query', 'project_api_04_body', 'project_result', 'PUT');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- delete projects -->
+                            <div class="tab-pane fade" id="project_api_05">
+                                <div class="alert alert-danger">
+                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>DELETE /project/{project_id}</code><br/>
+                                        <i>Return the list of projects in the database.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>project_id</code><br/>
+                                        <i>The id of the project.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="project_api_05_query" type="text" placeholder="/project/{project_id}" value="/project/2"/> 
+                                        <button onclick="generic_exec_from_input('project_api_05_query', 'project_result', 'DELETE');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>

@@ -72,20 +72,20 @@ app.router.add_route('POST',   "/user/login", userHandler.login)                
 app.router.add_route('GET',    "/user/logout", userHandler.logout)                                               # Kill user's session
 app.router.add_route('DELETE', "/user/{user_id}", userHandler.delete)                                            # Delete a user
 
-app.router.add_route('GET',    "/project",                    projHandler.list)                                   # Get list of all projects (allow search parameters)
-app.router.add_route('POST',   "/project",                    projHandler.new)                                    # Create new project with provided data
-app.router.add_route('GET',    "/project/{proj_id}",          projHandler.get)                                    # Get details about the project
-app.router.add_route('PUT',    "/project/{proj_id}",          projHandler.edit)                                   # Edit project meta data
-app.router.add_route('DELETE', "/project/{proj_id}",          projHandler.delete)                                 # Delete the project
-app.router.add_route('GET',    "/project/{proj_id}/events",   projHandler.events)                                 # Get list of events of the project (allow search parameters)
-app.router.add_route('GET',    "/project/{proj_id}/subjects", projHandler.subjects)                               # Get list of subjects of the project (allow search parameters)
-app.router.add_route('GET',    "/project/{proj_id}/tasks",    projHandler.tasks)                                  # Get list of tasks (jobs and analyses) of the project (allow search parameters)
-app.router.add_route('GET',    "/project/{proj_id}/files",    projHandler.files)                                  # Get list of files (samples and attachments) of the project (allow search parameters)
+app.router.add_route('GET',    "/project",                      projHandler.list)                                # Get list of all projects (allow search parameters)
+app.router.add_route('POST',   "/project",                      projHandler.create_or_update)                    # Create new project with provided data
+app.router.add_route('GET',    "/project/{project_id}",          projHandler.get)                                # Get details about the project
+app.router.add_route('PUT',    "/project/{project_id}",          projHandler.create_or_update)                   # Edit project meta data
+app.router.add_route('DELETE', "/project/{project_id}",          projHandler.delete)                             # Delete the project
+app.router.add_route('GET',    "/project/{project_id}/events",   projHandler.events)                             # Get list of events of the project (allow search parameters)
+app.router.add_route('GET',    "/project/{project_id}/subjects", projHandler.subjects)                           # Get list of subjects of the project (allow search parameters)
+app.router.add_route('GET',    "/project/{project_id}/tasks",    projHandler.tasks)                              # Get list of tasks (jobs and analyses) of the project (allow search parameters)
+app.router.add_route('GET',    "/project/{project_id}/files",    projHandler.files)                              # Get list of files (samples and attachments) of the project (allow search parameters)
 
-app.router.add_route('POST',   "/event",            eventHandler.new)                                             # Create a new event
-app.router.add_route('GET',    "/event/{event_id}", eventHandler.get)                                             # Get details about an event
-app.router.add_route('PUT',    "/event/{event_id}", eventHandler.edit)                                            # Edit event's data
-app.router.add_route('DELETE', "/event/{event_id}", eventHandler.delete)                                          # Delete an event
+app.router.add_route('POST',   "/event",            eventHandler.new)                                            # Create a new event
+app.router.add_route('GET',    "/event/{event_id}", eventHandler.get)                                            # Get details about an event
+app.router.add_route('PUT',    "/event/{event_id}", eventHandler.edit)                                           # Edit event's data
+app.router.add_route('DELETE', "/event/{event_id}", eventHandler.delete)                                         # Delete an event
 
 # app.router.add_route('POST',   "/subject",              subjectHandler.add)                                       # Create a sample
 # app.router.add_route('GET',    "/subject/{subject_id}", subjectHandler.get)                                       # Get details about a subject

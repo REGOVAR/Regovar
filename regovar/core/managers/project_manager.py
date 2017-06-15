@@ -16,7 +16,7 @@ class ProjectManager:
         pass
 
 
-    def get(self, fields=None, query=None, sort=None, offset=None, limit=None, depth=0):
+    def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """
             Generic method to get projects data according to provided filtering options
         """
@@ -30,10 +30,10 @@ class ProjectManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = session()
-        projects = s.query(Project).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
+        s = Model.session()
+        projects = s.query(Model.Project).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for p in projects: p.init(depth)
-        return analyses
+        return projects
 
 
 
@@ -50,6 +50,7 @@ class ProjectManager:
         # TODO
         
         # regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
+
 
 
 

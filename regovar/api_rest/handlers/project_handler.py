@@ -52,20 +52,18 @@ class ProjectHandler:
         return rest_success([p.to_json() for p in projects], range_data)
         
     
-    async def new(self, request):
+    async def create_or_update(self, request):
         """
-            Create new project with provided data
+            Create or update a project with provided data
         """
         from core.core import core
         data = await request.json()
-        is_folder = data["is_folder"]
-        name = data["name"]
-        parent_id = data["parent_id"]
+        if isinstance(data, str) : data = json.loads(data)
         # Create the project
         try:
-            project = core.projects.new(name, is_folder, parent_id)
-        except Exception as ex:
-            return rest_error("Error occured when creating the new project. {}".format(ex))
+            project = core.projects.create_or_update(data, 1)
+        except RegovarException as ex:
+            return rest_exception(ex)
         if project is None:
             return rest_error("Unable to create a new project.")
         return rest_success(project.to_json())
@@ -76,20 +74,11 @@ class ProjectHandler:
             Get details about the project
         """
         project_id = request.match_info.get('project_id', -1)
-        project = Project.from_id(job_id, 2)
+        project = Project.from_id(project_id, 1)
         if not project:
             return rest_error("Unable to find the project (id={})".format(project_id))
         return rest_success(project.to_json(Project.public_fields))
         
-        
-        
-    async def edit(self, request):
-        """
-            Edit project meta data
-        """
-        data = await request.json()
-        # Create the project
-        return rest_error("To be implemented")
     
     
     
@@ -97,8 +86,9 @@ class ProjectHandler:
         """
             Delete the project
         """
+        from core.core import core
         project_id = request.match_info.get('project_id', -1)
-        project = Project.delete(project_id, 2)
+        project = core.Project.delete(project_id, 1)
         if not project:
             return rest_error("Unable to delete the project (id={})".format(project_id))
         return rest_success(project.to_json(Project.public_fields))

@@ -109,6 +109,7 @@ def analysis_load(self, data):
         if "fields"            in data.keys(): self.fields            = json.dumps(data["fields"]) if isinstance(data, list) else str(data["fields"])
         if "filter"            in data.keys(): self.filter            = json.dumps(data["filter"]) if isinstance(data, dict) else str(data["filter"])
         if "selection"         in data.keys(): self.selection         = json.dumps(data["selection"]) if isinstance(data, list) else str(data["selection"])
+        if "order"             in data.keys(): self.order             = json.dumps(data["order"]) if isinstance(data, list) else str(data["order"])
         if "total_variants"    in data.keys(): self.total_variants    = data["total_variants"]
         if "reference_id"      in data.keys(): self.reference_id      = data["reference_id"]
         # check to reload dynamics properties
@@ -194,7 +195,7 @@ def analysis_get_attributes(self, loading_depth=0):
 
 
 Analysis = Base.classes.analysis
-Analysis.public_fields = ["id", "name", "project_id", "template_id", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "total_variants", "reference_id"]
+Analysis.public_fields = ["id", "name", "project_id", "template_id", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id"]
 Analysis.init = analysis_init
 Analysis.load_depth = analysis_load_depth
 Analysis.from_id = analysis_from_id
