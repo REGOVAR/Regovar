@@ -108,6 +108,7 @@ def get_or_create(session, model, defaults=None, **kwargs):
         query = session.query(model).filter_by(**kwargs)
         instance = query.first()
         if instance:
+            instance.init()
             return instance, False
         else:
             session.begin(nested=True)

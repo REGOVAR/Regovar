@@ -119,6 +119,23 @@ core.notify_all = notify_all
 
 
 
+
+
+
+
+def get_query_parameters(query_string, fields_to_retrieve):
+    get_params = MultiDict(parse_qsl(query_string))
+    result = {}
+    for key in fields_to_retrieve:
+        value = get_params.get(key, None)
+        result.update({key: value})
+    return result;
+
+
+
+
+
+
 def process_generic_get(query_string, allowed_fields):
         # 1- retrieve query parameters
         get_params = MultiDict(parse_qsl(query_string))

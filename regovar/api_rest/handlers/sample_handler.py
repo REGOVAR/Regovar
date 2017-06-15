@@ -60,13 +60,31 @@ class SampleHandler:
 
 
 
-    def import_from_file(self, request):
-        
+    async def import_from_file(self, request):
+        params = get_query_parameters(request.query_string, ["subject_id", "analysis_id"])
         file_id = request.match_info.get('file_id', None)
+        
+        
         try:
-            result = core.samples.import_from_file(file_id)
+            samples = await core.samples.import_from_file(file_id)
         except Exception as ex:
-            return rest_error("unable to import samples.".format(ex))
-        if result:
+            print(ex)
+            return rest_error("Import error : enable to import samples. ".format(str(ex)))
+        if samples:
+            for s in samples:
+                if params["subject_id"]: 
+                    s.subject_id = params["subject_id"]
+                else:
+                    # TODO: create new empty subject and associate it to the sample
+                    log("TODO : link sample {} to new empty subject".format(s.id))
+                if params["analysis_id"]: 
+                    AnalysisSample.new(s.id, params["analysis_id"])
             return rest_success([s.to_json() for s in samples])
+        
         return rest_error("unable to import samples from file.")
+    
+    
+    
+    
+    
+    

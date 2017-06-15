@@ -51,7 +51,7 @@ class AnalysisManager:
     
 
 
-    def create(self, name, ref_id, template_id=None):
+    def create(self, name, project_id, ref_id, template_id=None):
         """
             Create a new analysis in the database.
         """
@@ -61,6 +61,7 @@ class AnalysisManager:
                 ref_id = DEFAULT_REFERENCIAL_ID
             analysis = Analysis.new()
             analysis.name = name
+            analysis.project_id = project_id
             analysis.reference_id = ref_id
             analysis.template = template_id
             # Set fields with default Variant's fields

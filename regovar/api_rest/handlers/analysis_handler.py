@@ -72,13 +72,14 @@ class AnalysisHandler:
         data = await request.json()
         try:
             data = json.loads(data)
+            project_id = data["project_id"]
+            name = data["name"]
+            ref_id = data["reference_id"]
         except Exception as ex:
-            return rest_error("Unable to create new analysis. Provided data corrupted. " + str(ex))
-        name = data["name"]
-        ref_id = data["reference_id"]
+            return rest_error("Unable to create new analysis. Provided data missing or corrupted. " + str(ex))
         template_id = data["template_id"] if "template_id" in data.keys() else None
         # Create the analysis 
-        analysis = core.analyses.create(name, ref_id, template_id)
+        analysis = core.analyses.create(name, project_id, ref_id, template_id)
         if not analysis:
             return rest_error("Unable to create an analsis with provided information.")
         return rest_success(analysis.to_json())

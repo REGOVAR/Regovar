@@ -27,21 +27,21 @@ def sample_init(self, loading_depth=0):
             - analyses : a list of Analysis where this sample is used
         If loading_depth == 0, children objects are not loaded
     """
+    from core.model.analysis import Analysis, AnalysisSample
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     if hasattr(self, "loading_depth"):
         self.loading_depth = max(self.loading_depth, min(2, loading_depth))
     else:
         self.loading_depth = min(2, loading_depth)
     
-    self.files_ids = SampleFile.get_files_ids(self.id)
     self.analyses_ids = AnalysisSample.get_analyses_ids(self.id)
     self.load_depth(loading_depth)
             
 
 def sample_load_depth(self, loading_depth):
     from core.model.subject import Subject
-    from core.model.File import File
-    from core.model.analysis import Analysis
+    from core.model.file import File
+    from core.model.analysis import Analysis, AnalysisSample
     if loading_depth > 0:
         try:
             self.subject = None
@@ -55,11 +55,13 @@ def sample_load_depth(self, loading_depth):
 
 
 
-def sample_from_id(sample_id):
+def sample_from_id(sample_id, loading_depth=0):
     """
         Retrieve sample with the provided id in the database
     """
-    return session().query(Sample).filter_by(id=sample_id).first()
+    sample = session().query(Sample).filter_by(id=sample_id).first()
+    if sample : sample.init(loading_depth)
+    return sample
 
 
 
@@ -83,7 +85,7 @@ def sample_load(self, data):
     try:
         if "name"              in data.keys(): self.name              = data['name']
         if "subject_id"        in data.keys(): self.subject_id        = data['subject_id']
-        if "files_ids"         in data.keys(): self.files_ids         = data['files_ids']
+        if "file_id"         in data.keys(): self.file_id         = data['file_id']
         if "analyses_ids"      in data.keys(): self.analyses_ids      = data['analyses_ids']
         if "comment"           in data.keys(): self.comment           = data['comment']
         if "is_mosaic"         in data.keys(): self.is_mosaic         = data['is_mosaic']
@@ -124,7 +126,7 @@ def sample_count():
 
 
 Sample = Base.classes.sample
-Sample.public_fields = ["id", "name", "comment", "subject_id", "files_ids", "analyses_ids", "is_mosaic"]
+Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "is_mosaic"]
 Sample.init = sample_init
 Sample.load_depth = sample_load_depth
 Sample.from_id = sample_from_id

@@ -5,6 +5,7 @@
 CREATE TYPE field_type AS ENUM ('int', 'string', 'float', 'percent', 'enum', 'range', 'bool', 'list_i', 'list_s', 'list_f', 'list_p', 'list_b');
 CREATE TYPE annotation_db_type AS ENUM ('site', 'variant', 'transcript');
 CREATE TYPE sample_status AS ENUM ('empty', 'loading', 'ready', 'error');
+CREATE TYPE analysis_status AS ENUM ('empty', 'computing', 'ready', 'error');
 
 --
 -- Assuming that Annso is based on Pirus model
@@ -54,6 +55,8 @@ CREATE TABLE public.analysis
     update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     total_variants integer DEFAULT 0,
     reference_id integer DEFAULT 2,  -- 2 is for Hg19
+    computing_progress real DEFAULT 0,
+    status analysis_status,
     CONSTRAINT analysis_pkey PRIMARY KEY (id)
 );
 
@@ -110,7 +113,7 @@ CREATE TABLE public.sample
     comment character varying(255) COLLATE pg_catalog."C",
     is_mosaic boolean,
     file_id integer,
-    loading real DEFAULT 0,
+    loading_progress real DEFAULT 0,
     status sample_status,
     CONSTRAINT sample_pkey PRIMARY KEY (id)
 );

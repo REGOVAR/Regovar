@@ -10,13 +10,11 @@
 class AbstractImportManager():
     def __init__(self):
         # Description of the import script.
-        # 
-        self.metadata = {
+        metadata = {
             "name" : "VCF", # name of the import manager
             "input" :  ["vcf"],  # list of file extension that manage the import manager
             "description" : "Import variants from vcf file" # short desciption about what is imported
         }
-
 
     @staticmethod
     async def import_data(file_id, **kargs):

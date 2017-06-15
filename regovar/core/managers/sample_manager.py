@@ -56,7 +56,7 @@ class SampleManager:
  
  
  
-    async def import_from_file(file_id, analysis_id=None, reference_id=DEFAULT_REFERENCIAL_ID):
+    async def import_from_file(self, file_id, analysis_id=None, reference_id=DEFAULT_REFERENCIAL_ID):
         from core.managers.imports.vcf_manager import VcfManager
         # Check ref_id
         if analysis_id:
@@ -64,12 +64,18 @@ class SampleManager:
             if analysis:
                 reference_id=analysis.reference_id
         # Only import from VCF is supported for samples
-        success = await VcfManager.import_data(file_id, reference_id=reference_id)
+        print ("Using import manager {}. {}".format(VcfManager.metadata["name"],VcfManager.metadata["description"]))
+        result = await VcfManager.import_data(file_id, reference_id=reference_id)
         
         # if analysis_id set, associate it to sample
-        #if success and analysis_id:
-            #samples = Model.session().query(Sample).filter_by(file_id=file_id).all()
-            #for s in samples:
-                #AnalysisSample.new(s.id, analysis_id)
-                
-        return success
+        if result and result["success"]:
+            samples = [result["samples"][s] for s in result["samples"].keys()]
+            
+            if analysis_id:
+                for s in samples:
+                    Model.AnalysisSample.new(s.id, analysis_id)
+                    s.init()
+        if result["success"]:
+            return [result["samples"][s] for s in result["samples"].keys()]
+        
+        return False # TODO raise error
