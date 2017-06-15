@@ -92,10 +92,10 @@ class AnalysisHandler:
         analysis_id = request.match_info.get('analysis_id', -1)
         data = await request.json()
         try:
-            core.analyses.update(analysis_id, json.loads(data))
+            result = core.analyses.update(analysis_id, json.loads(data))
         except Exception as err:
             return rest_error("Error occured when trying to save settings for the analysis with id=" + str(analysis_id) + ". " + str(err))
-        return rest_success() 
+        return rest_success(result.to_json()) 
 
         
 

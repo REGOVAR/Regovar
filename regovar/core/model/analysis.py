@@ -52,7 +52,7 @@ def analysis_load_depth(self, loading_depth):
     if loading_depth > 0:
         try:
             self.project = Project.from_id(self.project_id, self.loading_depth-1)
-            self.template = Template.get_jobs(self.template_id, self.loading_depth-1)
+            self.template = Template.from_id(self.template_id, self.loading_depth-1)
             self.samples = AnalysisSample.get_samples(self.id, self.loading_depth-1)
             self.filters = self.get_filters(self.loading_depth-1)
         except Exception as ex:
@@ -243,12 +243,14 @@ def analysissample_get_samples(analysis_id, loading_depth=0):
     """
         Return the list of samples used in an analysis
     """
+    from core.model.sample import Sample
     samples_ids = analysissample_get_samples_ids(analysis_id)
+    result = []
     if len(samples_ids) > 0:
         samples = session().query(Sample).filter(Sample.id.in_(samples_ids)).all()
-    for s in samples:
-        s.init(loading_depth)
-        result.append(s)
+        for s in samples:
+            s.init(loading_depth)
+            result.append(s)
     return result
 
 
