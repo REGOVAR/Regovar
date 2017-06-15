@@ -40,6 +40,7 @@ class Core:
         self.samples = SampleManager()
         self.variants = VariantManager()
         self.annotations = AnnotationManager()
+        self.filters = FilterEngine()
         # Regovar Part (User, project, SLI management)
         self.users = UserManager()
         self.projects = ProjectManager()

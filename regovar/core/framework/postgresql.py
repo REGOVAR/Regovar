@@ -14,6 +14,7 @@ from sqlalchemy.sql.expression import ClauseElement
 from sqlalchemy.orm import sessionmaker
 
 from core.framework.common import *
+from core.framework.erreurs_list import *
 import config as C
 
 

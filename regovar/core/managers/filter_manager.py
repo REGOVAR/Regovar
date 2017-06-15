@@ -71,7 +71,6 @@ class FilterEngine:
         """
         from core.core import core
         if len(sample_ids) == 0: raise RegovarException("No sample... so not able to retrieve data")
-
         db_ref_suffix= "hg19"  # execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first().table_suffix
         progress = {"msg": "wt_processing", "start": datetime.datetime.now().ctime(), "analysis_id": analysis_id, "step": 1}
         core.notify_all(progress)
@@ -128,7 +127,7 @@ class FilterEngine:
         query += "".join(["CREATE INDEX {0}_idx_s{1}_dp ON {0} USING btree (s{1}_dp);".format(w_table, i) for i in sample_ids])
         execute(query)
         # Update count stat of the analysis
-        query = "UPDATE analysis SET total_variants=(SELECT COUNT(*) FROM {} WHERE is_variant), status='ANNOTATING' WHERE id={}".format(w_table, analysis_id)
+        query = "UPDATE analysis SET total_variants=(SELECT COUNT(*) FROM {} WHERE is_variant), status='computing' WHERE id={}".format(w_table, analysis_id)
         execute(query)
         # Update working table by computing annotation
         self.update_working_table(analysis_id, sample_ids, field_uids, dbs_uids, filter_ids, attributes)
@@ -273,7 +272,7 @@ class FilterEngine:
         core.notify_all(progress)
 
         # Update count stat of the analysis
-        query = "UPDATE analysis SET status='READY' WHERE id={}".format(analysis_id)
+        query = "UPDATE analysis SET status='ready' WHERE id={}".format(analysis_id)
         execute(query)
 
 
@@ -314,11 +313,10 @@ class FilterEngine:
         if not count and analysis_id > 0:
             settings = {}
             try:
-                settings = json.loads(execute("SELECT settings FROM analysis WHERE id={}".format(analysis_id)).first().settings)
-                settings["filter"] = filter_json
-                settings["fields"] = fields
-                settings["order"] = [] if order is None else order
-                execute("UPDATE analysis SET {0}update_date=CURRENT_TIMESTAMP WHERE id={1}".format("settings='{0}', ".format(json.dumps(settings)), analysis_id))
+                analysis.filter = json.dumps(filter_json)
+                analysis.fields = json.dumps(fields)
+                # TODO : analysis.order = '[]' if order is None else json.dumps(order)
+                analysis.save()
             except:
                 # TODO: log error
                 err("Not able to save current filter")

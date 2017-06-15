@@ -102,6 +102,7 @@ class AnalysisHandler:
     async def filtering(self, request, count=False):
         # 1- Retrieve data from request
         data = await request.json()
+        if isinstance(data, str): data = json.loads(data)
         analysis_id = request.match_info.get('analysis_id', -1)
         filter_json = data["filter"] if "filter" in data else {}
         fields = data["fields"] if "fields" in data else None

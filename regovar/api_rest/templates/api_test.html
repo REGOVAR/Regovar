@@ -1310,14 +1310,11 @@
                             <li><a href="#analysis_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
                             <li><a href="#analysis_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> update</a></li>
                             <li><a href="#analysis_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> load file</a></li>
-                            
                             <li><a href="#analysis_api_06" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list filters</a></li>
                             <li><a href="#analysis_api_07" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new filter</a></li>
                             <li><a href="#analysis_api_08" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete filter</a></li>
                             <li><a href="#analysis_api_09" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering</a></li>
                             <li><a href="#analysis_api_10" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering count</a></li>
-                            <li><a href="#analysis_api_11" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> selection</a></li>
-                            
                         </ul>
                     </div>
 
@@ -1567,11 +1564,84 @@
                                     </div>  
                                 </div>
                             </div>
-                        
-                        
-                        
-                        
-                        
+                            <!-- filtering -->
+                            <div class="tab-pane fade" id="analysis_api_09">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>POST /analysis/{analysis_id}/filtering</code><br/>
+                                        <i>Apply the provided filter and return the list of filtered variants.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>analysis_id</code><br/>
+                                        <i>The id of the analysis.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "filter": json, 
+    "fields": [<field_id>], 
+    "order": [<field_id>],
+    "limit": int,
+    "offset": int
+}</pre><br/>
+                                        <i> Read the doc about the json format used to describe filter : TODO.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="analysis_api_09_query" type="text" placeholder="/analysis/{analysis_id}/filtering" value="/analysis/1/filtering"/><br/>
+                                        Body : <br/>
+                                        <textarea id="analysis_api_09_body" cols="40" rows="6">{"filter": ["AND",[]]}</textarea><br/>
+                                        <button onclick="generic_exec_body('analysis_api_09_query', 'analysis_api_09_body', 'analysis_result', 'POST');" class="btn btn-primary">Test it</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- filtering count -->
+                            <div class="tab-pane fade" id="analysis_api_10">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>POST /analysis/{analysis_id}/filtering/count</code><br/>
+                                        <i>Apply the provided filter and return the total count of results that match the filter.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>analysis_id</code><br/>
+                                        <i>The id of the analysis.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "filter": json, 
+    "fields": [<field_id>], 
+    "order": [<field_id>]
+}</pre><br/>
+                                        <i> Read the doc about the json format used to describe filter : TODO.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="analysis_api_10_query" type="text" placeholder="/analysis/{analysis_id}/filtering/count" value="/analysis/1/filtering/count"/><br/>
+                                        Body : <br/>
+                                        <textarea id="analysis_api_10_body" cols="40" rows="6">{"filter": ["AND",[]]}</textarea><br/>
+                                        <button onclick="generic_exec_body('analysis_api_10_query', 'analysis_api_10_body', 'analysis_result', 'POST');" class="btn btn-primary">Test it</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1831,6 +1901,159 @@
             <!-- PROJECTS -->
             <!--          -->
             <div id="project" class="tab-pane fade">
+                <h1>Project REST api</h1>
+                <div class="panel with-nav-tabs panel-default">
+                    <div class="panel-heading">
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a href="#project_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
+                            <li><a href="#project_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> get</a></li>
+                            <li><a href="#project_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
+                            <li><a href="#project_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> update</a></li>
+                            <li><a href="#project_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>
+                        </ul>
+                    </div>
+
+
+                    <div class="panel-body">
+                        <div class="tab-content">
+                            <!-- List projects -->
+                            <div class="tab-pane fade in active" id="project_api_01">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /project</code><br/>
+                                        <i>Return the list of projects in the database.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="project_api_01_query" type="text" placeholder="/project" value="/project"/> 
+                                        <button onclick="generic_exec_from_input('project_api_01_query', 'project_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- get project -->
+                            <div class="tab-pane fade" id="project_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /project/{project_id}</code><br/>
+                                        <i>Get all details about the project.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>project_id</code><br/>
+                                        <i>The id of the project.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="project_api_02_query" type="text" placeholder="/project/{project_id}" value="/project/1"/> 
+                                        <button onclick="generic_exec_from_input('project_api_02_query', 'project_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- new project -->
+                            <div class="tab-pane fade" id="project_api_03">
+                                <div class="alert alert-danger">
+                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>POST /project</code><br/>
+                                        <i>Create a new project with provided information.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "date":datetime, 
+    "message":str, 
+    "type":enum, 
+    "user_id":int,
+    "project_id":int,
+    "analysis_id":int,
+    "file_id":int,
+    "subject_id":int,
+    "job_id":int,
+    "pipeline_id":int
+}</pre><br/>
+                                        <i>The only mandatory fields are <code>date</code> and <code>message</code>. Optional fields that end by "_id" are to link the project to an other objects in the database.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="project_api_03_query" type="text" placeholder="/project" value="/project"/><br/>
+                                        Body : <br/>
+                                        <textarea id="project_api_03_body" cols="40" rows="6">{...}</textarea><br/>
+                                        <button onclick="generic_exec_body('project_api_03_query', 'project_api_03_body', 'project_result', 'POST');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- update project -->
+                            <div class="tab-pane fade" id="event_api_04">
+                                <div class="alert alert-danger">
+                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>PUT /project/{project_id}</code><br/>
+                                        <i>Update the project with provided information.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>project_id</code><br/>
+                                        <i>The id of the project.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "date":datetime, 
+    "message":str, 
+    "type":enum, 
+    "user_id":int,
+    "project_id":int,
+    "analysis_id":int,
+    "file_id":int,
+    "subject_id":int,
+    "job_id":int,
+    "pipeline_id":int
+}</pre><br/>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="project_api_04_query" type="text" placeholder="/project/{project_id}" value="/project/1"/><br/>
+                                        Body : <br/>
+                                        <textarea id="project_api_04_body" cols="40" rows="6">{...}</textarea><br/>
+                                        <button onclick="generic_exec_body('project_api_04_query', 'project_api_04_body', 'project_result', 'PUT');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2>Result</h2>
+                    <button onclick="clear_container('project_result');">Clear</button>
+                    <pre id="project_result"/>
+                    </pre>
+                </div>
+            </div>
 
 
 
@@ -1838,6 +2061,159 @@
             <!-- SUBJECTS -->
             <!--          -->
             <div id="subject" class="tab-pane fade">
+                <h1>Subject REST api</h1>
+                <div class="panel with-nav-tabs panel-default">
+                    <div class="panel-heading">
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a href="#subject_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
+                            <li><a href="#subject_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> get</a></li>
+                            <li><a href="#subject_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
+                            <li><a href="#subject_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> update</a></li>
+                            <li><a href="#subject_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>
+                        </ul>
+                    </div>
+
+
+                    <div class="panel-body">
+                        <div class="tab-content">
+                            <!-- List subject -->
+                            <div class="tab-pane fade in active" id="subject_api_01">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /subject</code><br/>
+                                        <i>Return the list of subject in the database.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="subject_api_01_query" type="text" placeholder="/subject" value="/subject"/> 
+                                        <button onclick="generic_exec_from_input('subject_api_01_query', 'subject_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- get subject -->
+                            <div class="tab-pane fade" id="subject_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /subject/{subject_id}</code><br/>
+                                        <i>Get all details about the subject.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>subject_id</code><br/>
+                                        <i>The id of the subject.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="subject_api_02_query" type="text" placeholder="/subject/{subject_id}" value="/subject/1"/> 
+                                        <button onclick="generic_exec_from_input('subject_api_02_query', 'subject_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- new subject -->
+                            <div class="tab-pane fade" id="subject_api_03">
+                                <div class="alert alert-danger">
+                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>POST /subject</code><br/>
+                                        <i>Create a new subject with provided information.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "date":datetime, 
+    "message":str, 
+    "type":enum, 
+    "user_id":int,
+    "project_id":int,
+    "analysis_id":int,
+    "file_id":int,
+    "subject_id":int,
+    "job_id":int,
+    "pipeline_id":int
+}</pre><br/>
+                                        <i>The only mandatory fields are <code>date</code> and <code>message</code>.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="subject_api_03_query" type="text" placeholder="/subject" value="/subject"/><br/>
+                                        Body : <br/>
+                                        <textarea id="subject_api_03_body" cols="40" rows="6">{...}</textarea><br/>
+                                        <button onclick="generic_exec_body('subject_api_03_query', 'subject_api_03_body', 'subject_result', 'POST');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- update subject -->
+                            <div class="tab-pane fade" id="subject_api_04">
+                                <div class="alert alert-danger">
+                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>PUT /subject/{subject_id}</code><br/>
+                                        <i>Update the subject with provided information.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>subject_id</code><br/>
+                                        <i>The id of the subject.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "date":datetime, 
+    "message":str, 
+    "type":enum, 
+    "user_id":int,
+    "project_id":int,
+    "analysis_id":int,
+    "file_id":int,
+    "subject_id":int,
+    "job_id":int,
+    "pipeline_id":int
+}</pre><br/>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="subject_api_04_query" type="text" placeholder="/subject/{event_id}" value="/subject/1"/><br/>
+                                        Body : <br/>
+                                        <textarea id="subject_api_04_body" cols="40" rows="6">{...}</textarea><br/>
+                                        <button onclick="generic_exec_body('subject_api_04_query', 'subject_api_04_body', 'subject_result', 'PUT');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2>Result</h2>
+                    <button onclick="clear_container('subject_result');">Clear</button>
+                    <pre id="subject_result"/>
+                    </pre>
+                </div>
+            </div>
 
 
 
@@ -1872,7 +2248,7 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="sample_api_01_query" type="text" placeholder="/event" value="/event"/> 
+                                        <input id="event_api_01_query" type="text" placeholder="/event" value="/event"/> 
                                         <button onclick="generic_exec_from_input('event_api_01_query', 'event_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
@@ -1957,8 +2333,8 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
-                                        <code>user_id</code><br/>
-                                        <i>The id of the user.</i>
+                                        <code>event_id</code><br/>
+                                        <i>The id of the event.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
