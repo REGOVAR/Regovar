@@ -49,6 +49,18 @@ class AnalysisManager:
         for a in analyses: a.init(depth)
         return analyses
     
+    
+    
+    def get_filters(self, analysis_id, depth=0):
+        """
+            Return the list of filters for the provided analysis
+        """
+        s = session()
+        filters = s.query(Filter).filter_by(analysis_id=analysis_id).order_by("name").all()
+        for f in filters: f.init(depth)
+        return filters
+    
+    
 
 
     def create(self, name, project_id, ref_id, template_id=None):
@@ -229,30 +241,15 @@ class AnalysisManager:
         
 
 
-    def save_filter(self, analysis_id, name, filter_json):
+    def create_update_filter(self, filter_id, data):
         """
-            Save (add) a new filter for the analysis with the provided id.
+            Create or update a filter for the analysis with the provided id.
         """
-        instance = None
-        session().begin(nested=True)
-        try:
-            instance = Filter(analysis_id=analysis_id, name=name, filter=json.dumps(filter_json))
-            session().add(instance)
-            session().commit()  # commit the save point into the session (opened by the .begin() before the try:)
-            session().commit()  # commit into the database.
-            return instance.to_json(), True
-        except IntegrityError as e:
-            session().rollback()
-        return None, False
-
-
-    def update_filter(self, filter_id, name, filter_json):
-        query = "UPDATE filter SET name='{1}', filter='{2}' WHERE id={0}".format(filter_id, name, json.dumps(filter_json))
-        execute(query)
-
-
-    def delete_filter(self, filter_id):
-        execute("DELETE FROM filter WHERE id={}".format(filter_id))
+        filter = Filter.from_id(filter_id)
+        if not filter:
+            filter = Filter.new()
+        filter.load(data)
+        return filter
 
 
 

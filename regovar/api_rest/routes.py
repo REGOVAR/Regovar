@@ -126,34 +126,33 @@ app.router.add_route('GET',    "/db/{ref}", dbHdl.get)
 
 
 
-app.router.add_route('GET',    "/annotation", annotationHandler.list)                                             # Get list of genom's referencials supported
-app.router.add_route('GET',    "/annotation/{ref_id}", annotationHandler.get)                                     # Get list of all annotation's databases and for each the list of availables versions and the list of their fields for the latest version
-app.router.add_route('GET',    "/annotation/db/{db_id}", annotationHandler.get_database)                          # Get the database details and the list of all its fields
-app.router.add_route('GET',    "/annotation/field/{field_id}", annotationHandler.get_field)                       # Get the database details and the list of all its fields
+app.router.add_route('GET',    "/annotation", annotationHandler.list)                                                # Get list of genom's referencials supported
+app.router.add_route('GET',    "/annotation/{ref_id}", annotationHandler.get)                                        # Get list of all annotation's databases and for each the list of availables versions and the list of their fields for the latest version
+app.router.add_route('GET',    "/annotation/db/{db_id}", annotationHandler.get_database)                             # Get the database details and the list of all its fields
+app.router.add_route('GET',    "/annotation/field/{field_id}", annotationHandler.get_field)                          # Get the database details and the list of all its fields
 
-app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}", variantHandler.get)                              # Get all available information about the given variant
-app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}/{analysis_id}", variantHandler.get)                # Get all available information about the given variant + data in the context of the analysis
-app.router.add_route('POST',   "/variant", variantHandler.new)                                                    # Import all variant and their annotations provided as json in the POST body into the annso database
+app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}", variantHandler.get)                                 # Get all available information about the given variant
+app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}/{analysis_id}", variantHandler.get)                   # Get all available information about the given variant + data in the context of the analysis
+app.router.add_route('POST',   "/variant", variantHandler.new)                                                       # Import all variant and their annotations provided as json in the POST body into the annso database
 
-app.router.add_route('GET',    "/sample", sampleHandler.list)                                              # Get list of all samples in database
-app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)                                   # Get specific sample's data
-app.router.add_route('GET',   "/sample/import/{file_id}", sampleHandler.import_from_file)
+app.router.add_route('GET',    "/sample", sampleHandler.list)                                                        # Get list of all samples in database
+app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)                                             # Get specific sample's data
+app.router.add_route('GET',    "/sample/import/{file_id}", sampleHandler.import_from_file)                           # import sample's data from the file (vcf supported)
 
-app.router.add_route('GET',    "/analysis",                                  analysisHandler.list)                # List analyses
-app.router.add_route('POST',   "/analysis",                                  analysisHandler.new)                 # Create new analysis
-app.router.add_route('GET',    "/analysis/{analysis_id}",                    analysisHandler.get)                 # Get analysis metadata
-app.router.add_route('PUT',    "/analysis/{analysis_id}",                    analysisHandler.update)              # Save analysis metadata
-#app.router.add_route('POST',   "/analysis/{analysis_id}/ped",                analysisHandler.load_ped)            # Load ped file and update sample attributes accordingly
-app.router.add_route('POST',   "/analysis/{analysis_id}/import/{file_id}",   analysisHandler.load_file)           # Load a file (vcf and ped supported) to setup the analysis data (variant/annotations/samples)
-app.router.add_route('GET',    "/analysis/{analysis_id}/filter",             analysisHandler.get_filters)         # Get list of available filter for the provided analysis
-app.router.add_route('POST',   "/analysis/{analysis_id}/filter",             analysisHandler.new_filter)          # Create a new filter for the analisis
-app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.set_filter)          # TODO : Update filter
-app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.delete_filter)       # TODO : Delete a filter
-app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",          analysisHandler.filtering)           # Get result (variants) of the provided filter
-app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/count",    analysisHandler.filtering_count)     # Get total count of result of the provided filter
-app.router.add_route('GET',    "/analysis/{analysis_id}/selection",          analysisHandler.get_selection)       # Get variants data for the provided selection
-app.router.add_route('POST',   "/analysis/{analysis_id}/export/{pipe_id}",   analysisHandler.get_export)          # Export selection of the provided analysis into the requested format
-app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   analysisHandler.get_report)          # Generate report html for the provided analysis+report id
+app.router.add_route('GET',    "/analysis",                                  analysisHandler.list)                   # List analyses
+app.router.add_route('POST',   "/analysis",                                  analysisHandler.new)                    # Create new analysis
+app.router.add_route('GET',    "/analysis/{analysis_id}",                    analysisHandler.get)                    # Get analysis metadata
+app.router.add_route('PUT',    "/analysis/{analysis_id}",                    analysisHandler.update)                 # Save analysis metadata
+app.router.add_route('POST',   "/analysis/{analysis_id}/load/{file_id}",     analysisHandler.load_file)              # TODO : Load a file (vcf and ped supported) to setup the analysis data (variant/annotations/samples)
+app.router.add_route('GET',    "/analysis/{analysis_id}/filter",             analysisHandler.get_filters)            # Get list of available filter for the provided analysis
+app.router.add_route('POST',   "/analysis/{analysis_id}/filter",             analysisHandler.create_update_filter)   # Create a new filter for the analisis
+app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.create_update_filter)   # Update filter
+app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.delete_filter)          # Delete a filter
+app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",          analysisHandler.filtering)              # Get result (variants) of the provided filter
+app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/count",    analysisHandler.filtering_count)        # Get total count of result of the provided filter
+app.router.add_route('GET',    "/analysis/{analysis_id}/selection",          analysisHandler.get_selection)          # Get variants data for the provided selection
+#app.router.add_route('POST',   "/analysis/{analysis_id}/export/{pipe_id}",   analysisHandler.get_export)             # Export selection of the provided analysis into the requested format
+#app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   analysisHandler.get_report)             # Generate report html for the provided analysis+report id
 
 
 

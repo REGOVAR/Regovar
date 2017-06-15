@@ -37,15 +37,17 @@ class SampleHandler:
     def list(self, request):
         # Generic processing of the get query
         fields, query, order, offset, limit = process_generic_get(request.query_string, Sample.public_fields)
+        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
         # Get range meta data
         range_data = {
-            "range_offset": offset,
-            "range_limit" : limit,
-            "range_total" : Sample.count(),
-            "range_max"   : RANGE_MAX,
+            "range_offset" : offset,
+            "range_limit"  : limit,
+            "range_total"  : Sample.count(),
+            "range_max"    : RANGE_MAX,
         }
-        # Return result of the query 
-        return rest_success(core.samples.get(fields, query, order, offset, limit), range_data)
+        # Return result of the query.
+        samples = core.samples.get(fields, query, order, offset, limit, depth)
+        return rest_success([s.to_json() for s in samples], range_data)
 
 
     def get(self, request):

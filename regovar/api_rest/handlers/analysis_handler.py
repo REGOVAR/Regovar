@@ -133,24 +133,27 @@ class AnalysisHandler:
 
     def get_filters(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
-        result = core.analyses.get_filters(analysis_id)
-        return rest_success(result)
+        filters = core.analyses.get_filters(analysis_id)
+        return rest_success([f.to_json() for f in filters])
 
-    async def new_filter(self, request):
+
+    async def create_update_filter(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
+        filter_id = request.match_info.get('filter_id', None)
         data = await request.json()
-        result = core.analyses.save_filter(analysis_id, data['name'], data['filter'])
-        return rest_success(result)
+        try:
+            data = json.loads(data)
+            data.update({"analysis_id": analysis_id })
+            result = core.analyses.create_update_filter(filter_id, data)
+            return rest_success(result.to_json())
+        except Exception as ex:
+            return rest_error("Unable to create or update the filter with provided data. " + str(ex))
 
-    async def set_filter(self, request):
-        filter_id = request.match_info.get('filter_id', -1)
-        data = await request.json()
-        core.analyses.update_filter(filter_id, data['name'], data['filter'])
-        return rest_success()
+
 
     def delete_filter(self, request):
         filter_id = request.match_info.get('filter_id', -1)
-        core.analyses.delete_filter(filter_id)
+        Filter.delete(filter_id)
         return rest_success()
 
 

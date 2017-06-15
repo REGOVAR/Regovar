@@ -34,25 +34,24 @@ class SampleManager:
 
 
 
-    def get(self, fields=None, query=None, order=None, offset=None, limit=None, sublvl=0):
+    def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """
-            Generic method to get files metadata according to provided filtering options
+            Generic method to get sample data according to provided filtering options
         """
-        if fields is None:
-            fields = Sample.public_fields
+        if not isinstance(fields, dict):
+            fields = None
         if query is None:
             query = {}
         if order is None:
-            order = ['-create_date', "name"]
+            order = "name"
         if offset is None:
             offset = 0
         if limit is None:
-            limit = offset + RANGE_MAX
-
-        result = []
-        for s in execute("SELECT sp.id, sp.name, sp.comment  FROM sample sp"):
-            result.append({"id": s[0], "name": s[1], "comment": s[2], "analyses": []})
-        return result
+            limit = RANGE_MAX
+        s = Model.session()
+        samples = s.query(Model.Sample).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
+        for s in samples: s.init(depth)
+        return samples
  
  
  

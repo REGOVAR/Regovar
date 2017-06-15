@@ -1316,8 +1316,7 @@
                             <li><a href="#analysis_api_08" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete filter</a></li>
                             <li><a href="#analysis_api_09" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering</a></li>
                             <li><a href="#analysis_api_10" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering count</a></li>
-                            <li><a href="#analysis_api_11" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering count</a></li>
-                            <li><a href="#analysis_api_12" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> selection</a></li>
+                            <li><a href="#analysis_api_11" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> selection</a></li>
                             
                         </ul>
                     </div>
@@ -1450,6 +1449,129 @@
                                     </div>  
                                 </div>
                             </div>
+                            <!-- Load file  -->
+                            <div class="tab-pane fade" id="analysis_api_05">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /analysis/{analysis_id}/load/{file_id}</code><br/>
+                                        <i>Load a file into the analysis. Supported file are : <ul>
+                                            <li><code>VCF / GVCF</code> : import samples, variants and annotations in the database add sample to this analysis;</li>
+                                            <li><code>PED / FAM</code>  : define attributes to manage pedigree. If sample's name used in the ped file doesn't match with sample's name or nickname used in the analysis, 
+                                            the attribute will be created, but no value will be set for corresponding sample.</li>
+                                        </i><br/>
+                                        <i>Note : The file must be already uploaded.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>analysis_id</code><br/>
+                                        <i>The id of the analysis.</i><br/><br/>
+                                        <code>file_id</code><br/>
+                                        <i>The id of the file to load.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="analysis_api_05_query" type="text" placeholder="/analysis/{analysis_id}/load/{file_id}" value="/analysis/1/load/1"/> 
+                                        <button onclick="generic_exec_from_input('analysis_api_05_query', 'analysis_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- list filters -->
+                            <div class="tab-pane fade" id="analysis_api_06">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /analysis/{analysis_id}/filter</code><br/>
+                                        <i>Return the list of filters saved for this analysis.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>analysis_id</code><br/>
+                                        <i>The id of the analysis.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="analysis_api_06_query" type="text" placeholder="/analysis/{analysis_id}/filter" value="/analysis/1/filter"/> 
+                                        <button onclick="generic_exec_from_input('analysis_api_06_query', 'analysis_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- new filter -->
+                            <div class="tab-pane fade" id="analysis_api_07">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>POST /analysis/{analysis_id}/filter</code><br/>
+                                        <i>Create a new analysis with provided information. The template_id is optional.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>analysis_id</code><br/>
+                                        <i>The id of the analysis.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "name":str, 
+    "filter":json, 
+    "description":str
+}</pre><br/>
+                                        <i>The only mandatory fields are <code>name</code> and <code>filter</code>.</i></br>
+                                        <i> Read the doc about the json format used to describe filter : TODO.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="analysis_api_07_query" type="text" placeholder="/analysis/{analysis_id}/filter" value="/analysis/1/filter"/><br/>
+                                        Body : <br/>
+                                        <textarea id="analysis_api_07_body" cols="40" rows="6">{"name": "My filter", "filter": ["AND", []]}</textarea><br/>
+                                        <button onclick="generic_exec_body('analysis_api_07_query', 'analysis_api_07_body', 'analysis_result', 'POST');" class="btn btn-primary">Test it</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- delete filter -->
+                            <div class="tab-pane fade" id="analysis_api_08">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>DELETE /analysis/{analysis_id}/filter/{filter_id}"</code><br/>
+                                        <i>Delete the filter.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>analysis_id</code><br/>
+                                        <i>The id of the analysis.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="analysis_api_08_query" type="text" placeholder="/analysis/{analysis_id}/filter/{filter_id}"" value="/analysis/1/filter/1"/> 
+                                        <button onclick="generic_exec_from_input('analysis_api_08_query', 'analysis_result', 'DELETE');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                        
+                        
+                        
+                        
+                        
                         </div>
                     </div>
 
