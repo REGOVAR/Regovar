@@ -14,4 +14,14 @@ from core.framework.postgresql import *
 
 
 Indicator = Base.classes.indicator
-Indicator.public_fields = ["id", "analysis_id", "name", "filter", "description"]
+Indicator.public_fields = ["id", "name", "description", "default_value_id"]
+
+
+
+
+
+IndicatorValue = Base.classes.indicator_value
+Indicator.public_fields = ["id", "indicator_id", "name", "description", "style"]
+
+
+

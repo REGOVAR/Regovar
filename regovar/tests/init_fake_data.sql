@@ -1,43 +1,73 @@
+--
+-- TEST PROJECT, INDICATOR AND USER
+--
+INSERT INTO "user" (login, email, firstname, lastname, function, location, settings, roles, is_activated, sandbox_id) VALUES
+    -- WARNING, Admin user added by default, so, id=1 is already created
+    ('U2', 'user2@email.com', 'firstname2', 'lastname2', 'f2', 'l2', '{"fullescreen": true}', '{"Administration": "Read"}', True, 2),
+    ('U3', 'user3@email.com', 'firstname3', 'lastname3', 'f3', 'l3', NULL,                    '{}',                         True, 3),
+    ('U4', 'user4@email.com', 'firstname4', 'lastname4', 'f4', 'l4', NULL,                    '{}',                         False,4);
 
+INSERT INTO project (name, comment, parent_id, is_folder, is_sandbox) VALUES
+     -- WARNING, Admin user added by default, so, id=1 is already created for the sandbox project of the admin
+    ('sandbox U2', 'comment', NULL, False, True),
+    ('sandbox U3', 'comment', NULL, False, True),
+    ('sandbox U4', 'comment', NULL, False, True),
+    ('folder',     'comment', NULL, True,  False),
+    ('P1',         'comment', 5,    False, False),
+    ('P2',         'comment', NULL, False, False);
 
+INSERT INTO user_project_sharing (project_id, user_id, write_authorisation) VALUES
+    (5, 3, True),
+    (6, 3, False),
+    (7, 3, True),
+    (7, 4, True);
+    
+INSERT INTO indicator (name, description, default_value_id) VALUES
+    ('I1', 'description', 2);
 
+INSERT INTO indicator_value (indicator_id, name, description, style) VALUES
+    (1, 'I1.1', 'description', '{"icon":"circle", "color":"#FF0000"}'),
+    (1, 'I1.2', 'description', '{"icon":"circle", "color":"#00FF00"}'),
+    (1, 'I1.3', 'description', '{"icon":"circle", "color":"#0000FF"}');
+
+INSERT INTO project_indicator (indicator_id, project_id, indicator_value_id) VALUES
+    (1, 6, 3),
+    (1, 7, 1);
+    
+    
+    
+--
+-- TEST FILE PIPELINE AND JOB
+--
 INSERT INTO file (name, type, size, upload_offset, status, job_source_id) VALUES
-    ('TestPipeImage1.tar.xz', 'tar.xz', 30000, 30000, 'uploaded', NULL),
-    ('TestPipeImage2.tar.xz', 'tar.xz', 30000, 20000, 'uploading', NULL),
-    ('TestFile 1.bin', 'bin', 100000, 100000, 'checked', NULL),
-    ('TestFile 2.vcf', 'vcf', 100000, 100000, 'checked', 1);
+    ('F1.tar.xz', 'tar.xz', 30000,  30000,  'uploaded',  NULL),
+    ('F2.tar.xz', 'tar.xz', 30000,  20000,  'uploading', NULL),
+    ('F3.bin',    'bin',    100000, 100000, 'checked',   NULL),
+    ('F4.vcf',    'vcf',    100000, 100000, 'checked',   1);
 
 
 INSERT INTO pipeline (name, type, status, description, developers, image_file_id, manifest, documents) VALUES
-    ('TestPipeline 1', 'github', 'ready', 'Pipe description', '["ikit", "dridk"]', 1, '{}', '[]'),
-    ('TestPipeline 2', 'lxd', 'installing', 'Pipe description', '["oodnadata"]', 2, NULL, NULL);
+    ('P1', 'github', 'ready',      'description', '["ikit", "dridk"]', 1, '{}', '[]'),
+    ('P2', 'lxd',    'installing', 'description', '["oodnadata"]',     2, NULL, NULL);
 
-INSERT INTO job (pipeline_id, name, config, status, progress_value, progress_label) VALUES
-    (1, 'TestJob 1', '{}', 'done', 1, '100%'),
-    (1, 'TestJob 2', '{}', 'pause', 0.5, 'Step : 4/8');
+INSERT INTO job (pipeline_id, project_id, name, config, status, progress_value, progress_label) VALUES
+    (1, 4, 'J1', '{}', 'done',  1,   '100%'),
+    (1, 4, 'J2', '{}', 'pause', 0.5, 'Step : 4/8');
 
 
 INSERT INTO job_file (job_id, file_id, as_input) VALUES
     (1, 3, TRUE),
     (1, 4, FALSE);
-    
-    
-    
 
-INSERT INTO "project" (comment, is_sandbox) VALUES
-  ('My sandbox', True),
-  ('My sandbox', True),
-  ('Project Tester1', False),
-  ('Project Tester2', False),
-  ('Project Testers', False);
-INSERT INTO "user" (login, firstname, roles, sandbox_id) VALUES
-  ('tester1', 'Tester 1', '{}', 2),
-  ('tester2', 'Tester 2', '{}', 3);
+
+
+--
+-- TEST SAMPLE AND SUBJECT
+--
+
+
   
-INSERT INTO "user_project_sharing" (project_id, user_id, write_authorisation) VALUES
-  (4, 2, True),
-  (5, 2, False),
-  (5, 3, True),
-  (6, 2, True),
-  (6, 3, True);
   
+--
+-- TEST ANALYSIS (SAMPLE, ATTRIBUTES, FILTER, ...)
+--

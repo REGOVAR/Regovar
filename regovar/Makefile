@@ -31,8 +31,6 @@ install:
 	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$${database_name}'" ; \
 	sudo -u postgres psql -c "DROP DATABASE $${database_name}" ; \
 	sudo -u postgres psql -c "CREATE DATABASE $${database_name} OWNER regovar" ; \
-	psql -U regovar -d $$database_name -f ../install/create_all-pirus.sql ; \
-	psql -U regovar -d $$database_name -f ../install/create_all-annso.sql ; \
 	psql -U regovar -d $$database_name -f ../install/create_all.sql ;
 
 
@@ -42,8 +40,6 @@ test:
 	test -n "$${database_name}" && \
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $${database_name}_test" && \
 	sudo -u postgres psql -c "CREATE DATABASE $${database_name}_test OWNER regovar" && \
-	psql -U regovar -d $${database_name}_test -f ../install/create_all-pirus.sql ; \
-	psql -U regovar -d $${database_name}_test -f ../install/create_all-annso.sql ; \
 	psql -U regovar -d $${database_name}_test -f ../install/create_all.sql && \
 	psql -U regovar -d $${database_name}_test -f tests/init_fake_data.sql && \
 	sed -i.bak 's/^\(\s*DATABASE_NAME\s*=\s*"[^"]\+\)\(".*\)/\1_test\2/' config.py && \

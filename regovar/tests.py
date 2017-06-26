@@ -7,6 +7,7 @@ import os
 
 
 # Pirus part tests
+from tests.model.test_model_project import *
 from tests.model.test_model_file import *
 from tests.model.test_model_job import *
 from tests.model.test_model_pipeline import *
@@ -36,6 +37,9 @@ if __name__ == '__main__':
 
 
     # Load test to execute
+    for test in [m for m in TestModelProject.__dict__.keys() if str.startswith(m, "test_")]:
+        suiteModel.addTest(TestModelProject(test))
+
     for test in [m for m in TestModelFile.__dict__.keys() if str.startswith(m, "test_")]:
         suiteModel.addTest(TestModelFile(test))
 
@@ -48,7 +52,6 @@ if __name__ == '__main__':
     print("Done\n-----\nRunning tests :")
     runner = ColourTextTestRunner(verbosity=2)
     runner.run(suiteModel)
-    
     
     
     print("=====\nTEST CORE :")

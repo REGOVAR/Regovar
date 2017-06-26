@@ -60,7 +60,7 @@ class TestModelPipeline(unittest.TestCase):
         self.assertEqual(Pipeline.from_id(0), None)
         p = Pipeline.from_id(1)
         self.assertIsInstance(p, Pipeline)
-        self.assertEqual(p.name, "TestPipeline 1")
+        self.assertEqual(p.name, "P1")
 
 
     def test_from_ids(self):

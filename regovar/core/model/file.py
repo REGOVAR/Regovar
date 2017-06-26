@@ -138,7 +138,7 @@ def file_count():
 
 
 File = Base.classes.file
-File.public_fields = ["id", "name", "type", "path", "size", "upload_offset", "status", "create_date", "update_date", "tags", "md5sum", "job_source_id", "jobs_ids", "job_source", "jobs"]
+File.public_fields = ["id", "name", "type", "comment", "path", "size", "upload_offset", "status", "create_date", "update_date", "tags", "md5sum", "job_source_id", "jobs_ids", "job_source", "jobs"]
 File.init = file_init
 File.load_depth = file_load_depth
 File.from_id = file_from_id

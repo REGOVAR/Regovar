@@ -48,7 +48,7 @@ def sample_load_depth(self, loading_depth):
             self.files = None
             self.analyses = None
             self.subject = Subject.from_id(self.subject_id, self.loading_depth-1)
-            self.files = SampleFile.get_files(self.id, self.loading_depth-1)
+            #self.files = SampleFile.get_files(self.id, self.loading_depth-1)
             self.analyses = AnalysisSample.get_analyses(self.id, self.loading_depth-1)
         except Exception as ex:
             raise RegovarException("sample data corrupted (id={}).".format(self.id), "", ex)
@@ -144,44 +144,44 @@ Sample.count = sample_count
 # =====================================================================================================================
 # SAMPLEFILE associations
 # =====================================================================================================================
-def samplefile_get_files_ids(sample_id):
-    """
-        Return the list of files ids of the sample
-    """
-    result = []
-    files = session().query(SampleFile).filter_by(sample_id=sample_id).all()
-    for f in files:
-        result.append(f.file_id)
-    return result
+#def samplefile_get_files_ids(sample_id):
+    #"""
+        #Return the list of files ids of the sample
+    #"""
+    #result = []
+    #files = session().query(SampleFile).filter_by(sample_id=sample_id).all()
+    #for f in files:
+        #result.append(f.file_id)
+    #return result
 
 
-def samplefile_get_files(sample_id, loading_depth=0):
-    """
-        Return the list of input's files of the job
-    """
-    files_ids = samplefile_get_files_ids(sample_id)
-    if len(files) > 0:
-        files = session().query(File).filter(File.id.in_(files_ids)).all()
-    for f in files:
-        f.init(loading_depth)
-        result.append(f)
-    return result
+#def samplefile_get_files(sample_id, loading_depth=0):
+    #"""
+        #Return the list of input's files of the job
+    #"""
+    #files_ids = samplefile_get_files_ids(sample_id)
+    #if len(files) > 0:
+        #files = session().query(File).filter(File.id.in_(files_ids)).all()
+    #for f in files:
+        #f.init(loading_depth)
+        #result.append(f)
+    #return result
 
 
-def samplefile_new(sample_id, file_id):
-    """
-        Create a new sample-file association and save it in the database
-    """
-    sf = SampleFile(sample_id=sample_id, file_id=file_id)
-    sf.save()
-    return sf
+#def samplefile_new(sample_id, file_id):
+    #"""
+        #Create a new sample-file association and save it in the database
+    #"""
+    #sf = SampleFile(sample_id=sample_id, file_id=file_id)
+    #sf.save()
+    #return sf
 
 
-SampleFile = Base.classes.sample_file
-SampleFile.get_files_ids = samplefile_get_files_ids
-SampleFile.get_files = samplefile_get_files
-SampleFile.save = generic_save
-SampleFile.new = samplefile_new
+#SampleFile = Base.classes.sample_file
+#SampleFile.get_files_ids = samplefile_get_files_ids
+#SampleFile.get_files = samplefile_get_files
+#SampleFile.save = generic_save
+#SampleFile.new = samplefile_new
 
 
 

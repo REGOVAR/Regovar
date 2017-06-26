@@ -10,18 +10,28 @@ from core.framework.postgresql import *
 
 
 
- 
+
 def project_init(self, loading_depth=0):
     """
-        If loading_depth is > 0, children objects will be loaded. Max depth level is 2.
-        Children objects of a project are :
-            - indicators : project's custom indicators
-            - jobs_ids
-            - analyses_ids
-            - files_ids
-            - users_ids
-
-        If loading_depth == 0, children objects are not loaded, so source will be set with the id of the project if exists
+        Init properties of a project :
+            - id            : int           : the unique id of the project in the database
+            - name          : str           : the name of the project
+            - comment       : str           : an optional comment
+            - parent_id     : int           : null or refer to another project which is a folder that contains this project
+            - is_folder     : bool          : True if it's a folder, False if it's a project
+            - update_date   : date          : The last time that the object have been updated
+            - jobs_ids      : [int]         : The list of ids of jobs that contains the project
+            - files_ids     : [int]         : The list of ids of files that contains the project
+            - analyses_ids  : [int]         : The list of ids of analyses that contains the project
+            - subjects_ids  : [int]         : The list of ids of subjets associated to the project
+            - indicators    : [Indicator]   : The list of Indicator define for this project
+            - users         : [Users]       : The list of Users that can access to the project
+            - is_sandbox    : bool          : True if the project is the sandbox of an user; False otherwise
+        If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
+            - jobs          : [Job]         : The list of Job owns by the project
+            - analyses      : [Analysis]    : The list of Analysis owns by the project
+            - files         : [File]        : The list of File owns by the project
+            - parent        : Project       : The parent Project if defined
     """
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     if hasattr(self, "loading_depth"):
@@ -29,34 +39,29 @@ def project_init(self, loading_depth=0):
     else:
         self.loading_depth = min(2, loading_depth)
     try:
-        self.indicators=[]
-        self.subjects_ids = []
+        self.indicators= self.get_indicators()
+        self.subjects_ids = [s.id for s in self.get_subjects()]
         self.jobs_ids = [j.id for j in self.get_jobs()]
         self.analyses_ids = [a.id for a in self.get_analyses()]
         self.files_ids = [f.id for f in self.get_files()]
         self.users = self.get_users()
     except Exception as ex:
         raise RegovarException("Project data corrupted (id={}).".format(self.id), "", ex)
-    
     self.load_depth()
-            
-
-
 
 
 def project_load_depth(self):
-    self.jobs = None
-    self.analyses = None
-    self.files = None
+    self.jobs = []
+    self.analyses = []
+    self.files = []
+    self.subjects = []
+    self.parent = None
     if self.loading_depth > 0:
-        try:
-            self.jobs = self.get_jobs(self.loading_depth-1)
-            self.analyses = self.get_analyses(self.loading_depth-1)
-            self.files = self.get_files(self.loading_depth-1)
-        except Exception as ex:
-            raise RegovarException("Project data corrupted (id={}).".format(self.id), "", ex)
-
-
+        self.parent = Project.from_id(self.parent_id, self.loading_depth-1)
+        self.jobs = self.get_jobs(self.loading_depth-1)
+        self.analyses = self.get_analyses(self.loading_depth-1)
+        self.files = self.get_files(self.loading_depth-1)
+        self.subjects = self.get_subjects(self.loading_depth-1)
 
 
 
@@ -88,10 +93,14 @@ def project_to_json(self, fields=None):
     """
     result = {}
     if fields is None:
-        fields = ["id", "name", "comment", "parent_id", "is_folder", "last_activity", "jobs_ids", "files_ids", "analyses_ids", "indicators", "users", "is_sandbox"]
+        fields = ["id", "name", "comment", "parent_id", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "users", "is_sandbox"]
     for f in fields:
-        if f == "last_activity" :
-            result.update({f: eval("self." + f + ".ctime()")})
+        if f in ["create_date", "update_date"] :
+            result.update({f: eval("self." + f + ".isoformat()")})
+        elif f in ["jobs", "analyses", "files", "indicators"] and self.loading_depth > 0:
+            result[f] = [o.to_json() for o in eval("self." + f)]
+        elif f in ["parent"] and self.loading_depth > 0 and self.parent:
+            result[f] = self.parent.to_json()
         else:
             result.update({f: eval("self." + f)})
     return result
@@ -104,7 +113,7 @@ def project_load(self, data):
         if "comment" in data.keys(): self.comment = data['comment']
         if "parent_id" in data.keys(): self.parent_id = data['parent_id']
         if "is_folder" in data.keys(): self.is_folder = data['is_folder']
-        if "last_activity" in data.keys(): self.last_activity = data['last_activity']
+        if "update_date" in data.keys(): self.update_date = data['update_date']
         if "is_sandbox" in data.keys(): self.is_sandbox = data['is_sandbox']
         self.save()
         
@@ -150,6 +159,10 @@ def project_delete(project_id):
     """
     session().query(ProjectIndicator).filter_by(project_id=project_id).delete(synchronize_session=False)
     session().query(UserProjectSharing).filter_by(project_id=project_id).delete(synchronize_session=False)
+    session().query(ProjectFile).filter_by(project_id=project_id).delete(synchronize_session=False)
+    session().query(ProjectSubject).filter_by(project_id=project_id).delete(synchronize_session=False)
+    session().query(Project).filter_by(id=project_id).delete(synchronize_session=False)
+    # TODO : delete analyses and job linked to the project ? that means also deleting outputs files of these jobs
 
 
 def project_new():
@@ -162,11 +175,15 @@ def project_new():
     return p
 
 
-def project_count():
+def project_count(count_folder=False, count_sandbox=False):
     """
         Return total of Job entries in database
     """
-    return generic_count(Project)
+    kargs = {}
+    if not count_folder: kargs["is_folder"] = False
+    if not count_sandbox: kargs["is_sandbox"] = False
+    
+    return session().query(Project).filter_by(**kargs).count()
 
 
 
@@ -194,7 +211,9 @@ def projects_get_analyses(self, loading_depth=0):
         Return the list of analyses linked to the project
     """
     from core.model.analysis import Analysis
-    return session().query(Analysis).filter_by(project_id=self.id).all()
+    analyses = session().query(Analysis).filter_by(project_id=self.id).all()
+    for a in analyses : a.init(loading_depth)
+    return analyses
 
 
 
@@ -203,10 +222,19 @@ def projects_get_files(self, loading_depth=0):
         Return the list of files linked to the project
     """
     from core.model.file import File
-    files_ids = [pf.file_id for pf in session().query(ProjectFile).filter_by(project_id=self.id).all()]
-    if len(files_ids) > 0:
-        return session().query(File).filter(File.id.in_(files_ids)).all()
-    return []
+    ids = session().query(ProjectFile).filter_by(project_id=self.id).all()
+    return File.from_ids([i.file_id for i in ids], loading_depth)
+
+
+
+def projects_get_subjects(self, loading_depth=0):
+    """
+        Return the list of subjects linked to the project
+    """
+    from core.model.subject import Subject
+    ids = session().query(ProjectSubject).filter_by(project_id=self.id).all()
+    return Subject.from_ids([i.subject_id for i in ids], loading_depth)
+
 
 
 
@@ -232,7 +260,7 @@ def projects_get_users(self):
 
 
 Project = Base.classes.project
-Project.public_fields = ["id", "name", "comment", "parent_id", "is_folder", "last_activity", "jobs_ids", "files_ids", "analyses_ids", "indicators", "users", "is_sandbox"]
+Project.public_fields = ["id", "name", "comment", "parent_id", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "users", "is_sandbox"]
 Project.init = project_init
 Project.load_depth = project_load_depth
 Project.from_id = project_from_id
@@ -247,6 +275,7 @@ Project.get_jobs = projects_get_jobs
 Project.get_indicators = projects_get_indicators
 Project.get_analyses = projects_get_analyses
 Project.get_files = projects_get_files
+Project.get_subjects = projects_get_subjects
 Project.get_users = projects_get_users
 
 
@@ -258,7 +287,21 @@ Project.get_users = projects_get_users
 # =====================================================================================================================
 # PROJECT INDICATOR associations
 # =====================================================================================================================
+def projectindicator_to_json(self, fields=None):
+    """
+        Export the project indicator into json format with only requested fields
+    """
+    result = {}
+    if fields is None:
+        fields = ["project_id", "indicator_id", "indicator_value_id"]
+    for f in fields:
+        result.update({f: eval("self." + f)})
+    return result
+
+
+
 ProjectIndicator = Base.classes.project_indicator
+ProjectIndicator.to_json = projectindicator_to_json
 
 
 
@@ -279,6 +322,29 @@ def pf_save(self):
 ProjectFile = Base.classes.project_file
 ProjectFile.new = pf_new
 ProjectFile.save = pf_save
+
+
+
+
+# =====================================================================================================================
+# PROJECT SUBJECT associations
+# =====================================================================================================================
+def ps_new(project_id, subject_id):
+    ps = ProjectSubject(project_id=project_id, subject_id=subject_id)
+    ps.save()
+    return ps
+
+
+def ps_save(self):
+    generic_save(self)
+
+
+ProjectSubject = Base.classes.project_subject
+ProjectSubject.new = ps_new
+ProjectSubject.save = ps_save
+
+
+
 
 
 

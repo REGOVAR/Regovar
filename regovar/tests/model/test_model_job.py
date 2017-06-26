@@ -60,7 +60,7 @@ class TestModelJob(unittest.TestCase):
         self.assertEqual(Job.from_id(0), None)
         j = Job.from_id(2)
         self.assertIsInstance(j, Job)
-        self.assertEqual(j.name, "TestJob 2")
+        self.assertEqual(j.name, "J2")
 
 
     def test_from_ids(self):

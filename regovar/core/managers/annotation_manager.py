@@ -78,7 +78,7 @@ class AnnotationManager:
                  ORDER BY d.uid, a.ord"
         result = await execute_aio(query)
         for row in result:
-            meta = None if row.meta is None else json.loads(row.meta)
+            meta = row.meta
             self.fields_map[row.fuid] = {"uid": row.fuid, "name": row.name, "description": row.desc, "type": row.type, "meta": meta, "order": row.ford, "dbuid": row.duid}
             if row.duid in self.db_map.keys():
                 self.db_map[row.duid]["fields"].append(row.fuid)

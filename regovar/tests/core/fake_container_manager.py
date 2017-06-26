@@ -4,7 +4,7 @@
 
 import os
 from config import JOBS_DIR
-from core.managers.container_managers.container_manager import AbstractContainerManager
+from core.managers.containers.abstract_container_manager import AbstractContainerManager
 
 
 class FakeContainerManager4Test(AbstractContainerManager):

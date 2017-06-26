@@ -17,7 +17,11 @@ from core.model import *
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # TEST PARAMETER / CONSTANTS
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-TU_FILE_PUBLIC_FIELDS = ["id", "name", "type", "path", "size", "upload_offset", "status", "create_date", "update_date", "tags", "md5sum", "job_source_id", "jobs_ids", "job_source", "jobs"]
+TU_FILE_PUBLIC_FIELDS = ["id", "name", "type", "comment", "path", "size", "upload_offset", "status", "create_date", "update_date", "tags", "md5sum", "job_source_id", "jobs_ids", "job_source", "jobs"]
+
+
+
+
 
 
 
@@ -59,7 +63,7 @@ class TestModelFile(unittest.TestCase):
         self.assertEqual(File.from_id(0), None)
         f = File.from_id(1)
         self.assertIsInstance(f, File)
-        self.assertEqual(f.name, "TestPipeImage1.tar.xz")
+        self.assertEqual(f.name, "F1.tar.xz")
 
 
     def test_from_ids(self):
