@@ -53,7 +53,7 @@ class UserManager:
         if admin_id == user_to_delete_id:
             raise RegovarException(ERR.E101004, "E101004")
             
-        Model.execute("DELETE FROM \"user\" WHERE id={}".format(user_to_delete_id))
+        Model.User.delete(user_to_delete_id)
         # core.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
 
 
@@ -72,16 +72,14 @@ class UserManager:
         if "id" in user_data.keys():
             user_id = user_data["id"]
         if remote_user.is_admin() or user_id == remote_user.id:
-            user = Model.User.from_id(user_id) or Model.User()
-            if "login" in user_data.keys() : user.login = user_data["login"]
-            if "firstname" in user_data.keys() : user.firstname = user_data["firstname"]
-            if "lastname" in user_data.keys() : user.lastname = user_data["lastname"]
-            if "email" in user_data.keys() : user.email = user_data["email"]
-            if "function" in user_data.keys() : user.function = user_data["function"]
-            if "location" in user_data.keys() : user.location = user_data["location"]
+            user = Model.User.from_id(user_id) or Model.User.new()
+            user.load(user_data)
             # Todo : save file in statics assets directory (remove old avatar if necessary), and store new url into db
             #if "avatar" in user_data.keys() : user.avatar = user_data["avatar"]
-            if "password" in user_data.keys() : user.erase_password(user_data["password"])
+            
             user.save()
             return user
         return None
+    
+    
+    

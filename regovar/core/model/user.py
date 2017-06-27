@@ -13,33 +13,53 @@ from passlib.hash import pbkdf2_sha256
 
 def user_init(self, loading_depth=0):
     """
-        If loading_depth is > 0, children objects will be loaded. Max depth level is 2.
-        Children objects of a file are :
-            - projects : the list of projects that can access the user
-            - sandbox   : the sandbox project of the user
-            - 
-        If loading_depth == 0, children objects are not loaded
+        Init properties of an user :
+            - id            : int       : the unique id of the user in the database
+            - login         : str       : the login of the user
+            - firstname     : str       : firstname of the user
+            - lastname      : str       : lastname of the user
+            - email         : str       : email
+            - function      : str       : the function of the user
+            - location      : str       : the location of the user
+            - settings      : dict      : dict with regovar settings used by the user (language, prefered referencial, etc)
+            - roles         : dict      : dict with roles of the user on Regovar application (Administrator, Pipeline installer, etc)
+            - is_activated  : bool      : is the user activated or not
+            - sandbox_id    : int       : this id refer to the sandbox project of the user
+            - update_date   : datetime  : the last time that the object have been updated
+            - create_date   : datetime  : the date when the object have been created
+            - projects_ids  : [int]     : The list of ids of projects that the user can access
+            - subjects_ids  : [int]     : The list of ids of subjets that the user can access
+        If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
+            - projects      : [Project] : The list of projects that the user can access
+            - subjects      : [Subject] : The list of subjets that the user can access
+            - sandbox       : Project   : The sandbox project of the user
     """
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     if hasattr(self, "loading_depth"):
         self.loading_depth = max(self.loading_depth, min(2, loading_depth))
     else:
         self.loading_depth = min(2, loading_depth)
-    # Load acl
     try:
         self.roles_dic = json.loads(self.roles)
     except:
         self.roles_dic = {}
-    self.projects_ids = UserProjectSharing.get_projects_ids(self.id)
-    self.load_depth(loading_depth)
+        
+    self.subjects_ids = [s.id for s in self.get_subjects()]
+    self.projects_ids = [p.id for p in self.get_projects()]
+    self.load_depth()
 
 
 
-def user_load_depth(self, loading_depth):
-    from core.model.project import Project
-    if loading_depth > 0:
+def user_load_depth(self):
+    from core.model.project import Project, UserProjectSharing
+    from core.model.subject import Subject, UserSubjectSharing
+    self.projects = []
+    self.subjects = []
+    self.sandbox = None
+    if self.loading_depth > 0:
         try:
-            self.projects = UserProjectSharing.get_projects(self.sandbox_id, self.loading_depth-1)
+            self.projects = self.get_projects(self.loading_depth-1)
+            self.subjects = self.get_subjects(self.loading_depth-1)
             self.sandbox = Project.from_id(self.sandbox_id, self.loading_depth-1)
         except Exception as ex:
             raise RegovarException("User data corrupted (id={}).".format(self.id), "", ex)
@@ -94,23 +114,52 @@ def user_to_json(self, fields=None):
     result = {}
     if fields is None:
         fields = User.public_fields
-    for f in fields:   
-        if f == "last_activity":
-            result.update({f: eval("self." + f + ".ctime()")})
-        elif f == "settings" or f == "roles":
-            try:
-                result.update({f: json.loads(eval("self." + f ))})
-            except Exception as ex:
-                war("Unable to serialise user data : {}. {}".format(f, str(ex)))
-        elif f == "sandbox":
-            if self.loading_depth > 0:
-                result.update({"sandbox": self.sandbox.to_json()})
-        elif f == "projects":
-            if self.loading_depth > 0:
-                result.update({"projects": [p.to_json() for p in self.projects]})
-        else:
-            result.update({f: eval("self." + f)})
+    for f in fields:  
+        if f in User.public_fields:
+            if f in ["update_date", "create_date"]:
+                result.update({f: eval("self." + f + ".isoformat()")})
+            elif f in ["sandbox"] and self.loading_depth > 0:
+                result.update({f: eval("self.{}.to_json()".format(f))})
+            elif f in ["projects", "subjects"] and self.loading_depth > 0:
+                result.update({f: [o.to_json() for o in eval("self." + f)]})
+            else:
+                result.update({f: eval("self." + f)})
     return result
+
+
+
+def user_load(self, data):
+    """
+        Helper to update user's data by loading a json.
+        Note that following properties cannot be set by this ways :
+            - sandbox_id / sandbox (which MUST not be changed)
+            - update_date / create_date (which are managed automaticaly by the server)
+            - projects_ids / projects / subjects_ids / subjects (which are too complex to be set directly. 
+              Need to use UserProjectSharing and UserSubjectSharing objects to update these associations)
+    """
+    try:
+        # Required fields
+        if "login" in data.keys() : self.login = data["login"]
+        if "firstname" in data.keys() : self.firstname = data["firstname"]
+        if "lastname" in data.keys() : self.lastname = data["lastname"]
+        if "email" in data.keys() : self.email = data["email"]
+        if "function" in data.keys() : self.function = data["function"]
+        if "location" in data.keys() : self.location = data["location"]
+        if "settings" in data.keys() : self.settings = data["settings"]
+        if "roles" in data.keys() : self.roles = data["roles"]
+        if "is_activated" in data.keys() : self.is_activated = data["is_activated"]
+        # Update password
+        if "password" in data.keys() : 
+            self.erase_password(data["password"])
+            
+        self.save()
+    
+        # check to reload dynamics properties
+        if self.loading_depth > 0:
+            self.load_depth(self.loading_depth)
+    except KeyError as e:
+        raise RegovarException('Invalid input project: missing ' + e.args[0])
+    return self
 
 
 def user_set_password(self, old, new):
@@ -141,6 +190,45 @@ def user_is_admin(self):
     return isinstance(self, User) and isinstance(self.roles_dic, dict) and "Administration" in self.roles_dic.keys() and self.roles_dic["Administration"] == "Write"
 
 
+
+def user_get_projects(self, loading_depth=0):
+    """
+        Return the list of projects that can access the user
+    """
+    from core.model.project import Project, UserProjectSharing
+    ids = session().query(UserProjectSharing).filter_by(user_id=self.id).all()
+    return Project.from_ids([i.project_id for i in ids], loading_depth)
+
+
+
+def user_get_subjects(self, loading_depth=0):
+    """
+        Return the list of subjects that can access the user
+    """
+    from core.model.subject import Subject, UserSubjectSharing
+    ids = session().query(UserSubjectSharing).filter_by(user_id=self.id).all()
+    return Subject.from_ids([i.subject_id for i in ids], loading_depth)
+
+
+
+
+def user_delete(user_id):
+    """
+        Delete the user with the provided id in the database
+    """
+    from core.model.project import Project, UserProjectSharing
+    from core.model.subject import UserSubjectSharing
+    
+    u = User.from_id(user_id)
+    if u:
+        Project.delete(u.sandbox_id)
+        session().query(UserProjectSharing).filter_by(user_id=user_id).delete(synchronize_session=False)
+        session().query(UserSubjectSharing).filter_by(user_id=user_id).delete(synchronize_session=False)
+        session().query(User).filter_by(id=user_id).delete(synchronize_session=False)
+        
+
+
+
 def user_count():
     """
         Return total of Analyses entries in database
@@ -148,53 +236,47 @@ def user_count():
     return generic_count(User)
 
 
+def user_new(login=None):
+    """
+        Return a new user object
+    """
+    from core.model.project import Project
+    # Check login or create a fake one if not provided
+    if not login:
+        login = "user_{}".format(User.count() + 1)
+        
+    # create sandbox project
+    sandbox = Project.new()
+    sandbox.load({"comment": "My sandbox"})
+        
+    u = User(login=login, sandbox_id=sandbox.id)
+    
+    try:
+        u.save()
+    except Exception as ex:
+        raise RegovarException("Unable to create new user with provided informations.", "", ex)
+    return u
+    
+
+
 User = Base.classes.user
-User.public_fields = ["id", "firstname", "lastname", "login", "email", "function", "location", "last_activity", "settings", "roles", "projects_ids", "sandbox_id", "sandbox", "projects"]
+User.public_fields = ["id", "firstname", "lastname", "login", "email", "function", "location", "update_date", "create_date", "settings", "roles", "projects_ids", "subjects_ids", "sandbox_id", "sandbox", "projects", "subjects"]
+User.init = user_init
+User.load_depth = user_load_depth
 User.from_id = user_from_id
+User.from_ids = user_from_ids
 User.from_credential = user_from_credential
+User.load = user_load
 User.to_json = user_to_json
+User.get_projects = user_get_projects
+User.get_subjects = user_get_subjects
 User.set_password = user_set_password
 User.erase_password = user_erase_password
 User.is_admin = user_is_admin
 User.save = generic_save
-User.init = user_init
-User.load_depth = user_load_depth
+User.new = user_new
 User.count = user_count
-
-
-
-
-
-# =====================================================================================================================
-# UserProjectSharing
-# =====================================================================================================================
-
-
-def ups_get_projects_ids(user_id, write_auth=None):
-    """
-        Return the list of ids of projects that are accessible to the user.
-        If write_auth set to None, return both project readonly and writable;
-        otherwise return only readonly if false, only writable if true.
-    """
-    if not write_auth:
-        return [p.project_id for p in session().query(UserProjectSharing).filter_by(user_id=user_id).all()]
-    else:
-        return [p.project_id for p in session().query(UserProjectSharing).filter_by(user_id=user_id, write_authorisation=write_auth).all()]
-
-
-def ups_get_projects(user_id, write_auth=None, loading_depth=0):
-    """
-        Return the list of projects that are accessible to the user.
-    """
-    if not write_auth:
-        return [p.init(loading_depth-1) for p in session().query(UserProjectSharing).filter_by(user_id=user_id).all()]
-    else:
-        return [p.init(loading_depth-1) for p in session().query(UserProjectSharing).filter_by(user_id=user_id, write_authorisation=write_auth).all()]
-
-UserProjectSharing = Base.classes.user_project_sharing
-UserProjectSharing.get_projects_ids = ups_get_projects_ids
-UserProjectSharing.get_projects = ups_get_projects
-
+User.delete = user_delete
 
 
 

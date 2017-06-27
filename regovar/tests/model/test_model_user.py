@@ -17,7 +17,7 @@ from core.model import *
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # TEST PARAMETER / CONSTANTS
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-TU_USER_PUBLIC_FIELDS = ["id", "firstname", "lastname", "login", "email", "function", "location", "last_activity", "settings", "roles", "projects_ids", "sandbox_id", "sandbox", "projects"]
+TU_PUBLIC_FIELDS = ["id", "firstname", "lastname", "login", "email", "function", "location", "update_date", "create_date", "settings", "roles", "projects_ids", "subjects_ids", "sandbox_id", "sandbox", "projects", "subjects"]
 
 
 
@@ -51,7 +51,7 @@ class TestModelUser(unittest.TestCase):
         """ public_fields """
         # Check that public fields describes in the model are same that in TU.
         # If you broke this test, you probably have to update TU, documentation and wiki...
-        self.assertEqual(User.public_fields, TU_USER_PUBLIC_FIELDS)
+        self.assertEqual(User.public_fields, TU_PUBLIC_FIELDS)
 
 
     def test_from_id(self):
@@ -75,73 +75,104 @@ class TestModelUser(unittest.TestCase):
 
     def test_load_depth(self):
         """ init & load_depth """
-        u = User.from_id(2, 1)
+        u = User.from_id(3, 1)
+        # Check properties
+        self.assertEqual(u.id, 3)
+        self.assertEqual(u.login, "U3")
+        self.assertEqual(u.email, "user3@email.com")
+        self.assertEqual(u.firstname, "firstname3")
+        self.assertEqual(u.lastname, "lastname3")
+        self.assertEqual(u.function, "f3")
+        self.assertEqual(u.location, "l3")
+        self.assertIsInstance(u.settings, dict)
+        self.assertEqual(u.settings["fullscreen"], True)
+        self.assertIsInstance(u.roles, dict)
+        self.assertEqual(len(u.roles.keys()), 0)
+        self.assertEqual(u.is_activated, True)
+        self.assertEqual(u.sandbox_id, 3)
+        self.assertIsInstance(u.projects_ids, list)
+        self.assertEqual(len(u.projects_ids), 2)
+        self.assertEqual(u.projects_ids, [6, 7])
+        self.assertIsInstance(u.subjects_ids, list)
+        self.assertEqual(len(u.subjects_ids), 2)
+        self.assertEqual(u.subjects_ids, [1, 2])
+        # Check "depth loaded" properties
         self.assertIsInstance(u.sandbox, Project)
-        self.assertEqual(u.sandbox.id, 2)
-        self.assertEqual(len(u.projects), 3)
+        self.assertEqual(u.sandbox.id, 3)
+        self.assertIsInstance(u.projects, list)
+        self.assertEqual(len(u.projects), 2)
         self.assertIsInstance(u.projects[0], Project)
-        self.assertEqual(u.projects[0].id, 4)
+        self.assertEqual(u.projects[0].id, 6)
+        self.assertIsInstance(u.subjects, list)
+        self.assertEqual(len(u.subjects), 2)
+        self.assertIsInstance(u.subjects[0], Subject)
+        self.assertEqual(u.subjects[0].id, 1)
+        
+        
+        
 
     def test_to_json(self):
         """ to_json """
         # Test export with default fields
-        f = User.from_id(4, 1)
-        j = f.to_json()
-        self.assertEqual(len(j), 11)
+        u = User.from_id(4, 1)
+        j = u.to_json()
+        self.assertEqual(len(j), 17)
         json.dumps(j)
 
         # Test export with only requested fields
-        j = f.to_json(["id", "name", "type", "job_source_id"])
+        j = u.to_json(["id", "login", "firstname", "roles"])
         self.assertEqual(len(j), 4)
         json.dumps(j)
 
         # Test export with depth loading
-        j = f.to_json(["id", "name", "job_source", "jobs"])
+        j = u.to_json(["id", "login", "projects", "roles"])
         self.assertEqual(len(j), 4)
-        self.assertEqual(j["job_source"]["id"], 1)
-        self.assertEqual(j["jobs"][0]["status"], "done")
+        self.assertEqual(j["projects"][0]['indicators'][0]['indicator_id'], 1)
+        self.assertEqual(j["roles"], {})
 
 
     def test_CRUD(self):
         """ CRUD """
         # CREATE
         total = User.count()
-        f1 = User.new()
+        o1 = User.new("MyLogin")
         self.assertEqual(User.count(), total + 1)
-        self.assertNotEqual(f1.id, None)
+        self.assertNotEqual(o1.id, None)
+        self.assertEqual(o1.login, "MyLogin")
         # UPDATE
-        f1.name = "TestFile"
-        f1.save()
+        o1.login = "TestUser"
+        o1.save()
         # READ
-        f2 = User.from_id(f1.id)
-        self.assertEqual(f2.name, "TestFile")
-        self.assertEqual(f2.create_date, f1.create_date)
-        update1 = f2.update_date
+        o2 = User.from_id(o1.id)
+        self.assertEqual(o2.login, "TestUser")
+        self.assertEqual(o2.create_date, o1.create_date)
+        update1 = o2.update_date
         # UPDATE loading
-        f2.load({
-            "name" : "FinalTest", 
-            "size" : 123, 
-            "upload_offset" : 12,
-            "status" : "checked",
-            "md5sum" : "md5Final",
-            "job_source_id" : 1
+        o2.load({
+            "login" : "FinalUser", 
+            "roles" : {"Administrator": "Write"}, 
+            "password" : "toto"
             })
-        self.assertNotEqual(update1, f2.update_date)
-        self.assertEqual(f2.name,"FinalTest")
-        self.assertEqual(f2.size,123)
-        self.assertEqual(f2.upload_offset,12)
-        self.assertEqual(f2.status,"checked")
-        self.assertEqual(f2.job_source_id,1)
+        self.assertNotEqual(update1, o2.update_date)
+        self.assertEqual(o2.login,"FinalUser")
+        self.assertEqual(o2.roles["Administrator"], "Write")
+        o2b = User.from_credential("FinalUser", "toto")
+        self.assertEqual(User.from_credential("FinalUser", "Bad pwd"), None)
+        self.assertEqual(o2b.id, o2.id)
         # READ
-        f3 = User.from_id(f1.id, 1)
-        self.assertEqual(f3.name,"FinalTest")
-        self.assertEqual(f3.size,123)
-        self.assertEqual(f3.upload_offset,12)
-        self.assertEqual(f3.status,"checked")
-        self.assertEqual(f3.job_source.id, 1)
-        self.assertEqual(f2.update_date, f3.update_date)
+        o3 = User.from_id(o1.id, 1)
+        self.assertEqual(o3.login,"FinalUser")
+        self.assertEqual(o3.roles["Administrator"], "Write")
+        self.assertEqual(o2.update_date, o3.update_date)
         # DELETE
-        User.delete(f3.id)
-        f4 = User.from_id(f3.id)
-        self.assertEqual(f4, None)
+        User.delete(o3.id)
+        o4 = User.from_id(o3.id)
+        self.assertEqual(o4, None)
         self.assertEqual(User.count(), total)
+
+
+
+
+
+
+

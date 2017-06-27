@@ -93,28 +93,38 @@ def project_to_json(self, fields=None):
     """
     result = {}
     if fields is None:
-        fields = ["id", "name", "comment", "parent_id", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "users", "is_sandbox"]
+        fields = Project.public_fields
     for f in fields:
-        if f in ["create_date", "update_date"] :
-            result.update({f: eval("self." + f + ".isoformat()")})
-        elif f in ["jobs", "analyses", "files", "indicators"] and self.loading_depth > 0:
-            result[f] = [o.to_json() for o in eval("self." + f)]
-        elif f in ["parent"] and self.loading_depth > 0 and self.parent:
-            result[f] = self.parent.to_json()
-        else:
-            result.update({f: eval("self." + f)})
+        if f in Project.public_fields:
+            if f in ["create_date", "update_date"] :
+                result.update({f: eval("self." + f + ".isoformat()")})
+            elif f in ["jobs", "analyses", "files"] and self.loading_depth > 0:
+                result[f] = [o.to_json() for o in eval("self." + f)]
+            elif f in ["indicators"]:
+                result[f] = [o.to_json() for o in eval("self." + f)]
+            elif f in ["parent"] and self.loading_depth > 0 and self.parent:
+                result[f] = self.parent.to_json()
+            else:
+                result.update({f: eval("self." + f)})
     return result
 
 
+
 def project_load(self, data):
+    """
+        Helper to update project's data by loading a json.
+        Note that following properties cannot be set by this ways :
+            - id / is_sandbox (which MUST not be changed. this property is managfed by regovar's Model itself)
+            - update_date / create_date (which are managed automaticaly by the server)
+            - subjects_ids / subjects (which are too complex to be set directly. 
+              Need to use UserSubjectSharing objects to update these associations)
+    """
     try:
         # Required fields
         if "name" in data.keys(): self.name = data['name']
         if "comment" in data.keys(): self.comment = data['comment']
         if "parent_id" in data.keys(): self.parent_id = data['parent_id']
         if "is_folder" in data.keys(): self.is_folder = data['is_folder']
-        if "update_date" in data.keys(): self.update_date = data['update_date']
-        if "is_sandbox" in data.keys(): self.is_sandbox = data['is_sandbox']
         self.save()
         
         # TODO : update indicators

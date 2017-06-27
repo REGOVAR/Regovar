@@ -106,6 +106,8 @@ CREATE TABLE public.user
     roles json,
     is_activated boolean DEFAULT True,
     sandbox_id integer,
+    create_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    update_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT user_pkey PRIMARY KEY (id),
     CONSTRAINT user_ukey1 UNIQUE (login),
     CONSTRAINT user_ukey2 UNIQUE (email)
@@ -137,6 +139,7 @@ CREATE TABLE subject
     birthday timestamp without time zone,
     deathday timestamp without time zone,
     comment text COLLATE pg_catalog."C",
+    create_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT subject_pkey PRIMARY KEY (id)
 );

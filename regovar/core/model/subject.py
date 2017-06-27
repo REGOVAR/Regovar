@@ -97,14 +97,17 @@ def subject_to_json(self, fields=None):
     """
     result = {}
     if fields is None:
-        fields = ["id", "identifiant", "firstname", "lastname", "sex", "comment", "birthday", "deathday", "update_date", "jobs_ids", "samples_ids", "files_ids", "analyses_ids",  "indicators", "users", "projects_ids"]
+        fields = Subject.public_fields
     for f in fields:
-        if f == "last_activity" :
-            result.update({f: eval("self." + f + ".ctime()")})
-        elif f in ["jobs", "analyses", "files", "projects", "samples"] and self.loading_depth > 0:
-            result[f] = [o.to_json() for o in eval("self." + f)]
-        else:
-            result.update({f: eval("self." + f)})
+        if f in Subject.public_fields:
+            if f in ["create_date", "update_date"] :
+                result.update({f: eval("self." + f + ".isoformat()")})
+            elif f in ["jobs", "analyses", "files", "projects", "samples"] and self.loading_depth > 0:
+                result[f] = [o.to_json() for o in eval("self." + f)]
+            elif f in ["indicators"]:
+                result[f] = [o.to_json() for o in eval("self." + f)]
+            else:
+                result.update({f: eval("self." + f)})
     return result
 
 

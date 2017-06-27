@@ -3,9 +3,9 @@
 --
 INSERT INTO "user" (login, email, firstname, lastname, function, location, settings, roles, is_activated, sandbox_id) VALUES
     -- WARNING, Admin user added by default, so, id=1 is already created
-    ('U2', 'user2@email.com', 'firstname2', 'lastname2', 'f2', 'l2', '{"fullescreen": true}', '{"Administration": "Read"}', True, 2),
-    ('U3', 'user3@email.com', 'firstname3', 'lastname3', 'f3', 'l3', NULL,                    '{}',                         True, 3),
-    ('U4', 'user4@email.com', 'firstname4', 'lastname4', 'f4', 'l4', NULL,                    '{}',                         False,4);
+    ('U2', 'user2@email.com', 'firstname2', 'lastname2', 'f2', 'l2', '{"fullscreen": true}', '{"Administration": "Read"}', True, 2),
+    ('U3', 'user3@email.com', 'firstname3', 'lastname3', 'f3', 'l3', '{"fullscreen": true}', '{}',                         True, 3),
+    ('U4', 'user4@email.com', 'firstname4', 'lastname4', 'f4', 'l4', NULL,                    '{}',                        False,4);
 
 INSERT INTO project (name, comment, parent_id, is_folder, is_sandbox) VALUES
      -- WARNING, Admin user added by default, so, id=1 is already created for the sandbox project of the admin
