@@ -33,8 +33,37 @@ INSERT INTO indicator_value (indicator_id, name, description, style) VALUES
 INSERT INTO project_indicator (indicator_id, project_id, indicator_value_id) VALUES
     (1, 6, 3),
     (1, 7, 1);
+
+
+
+--
+-- TEST SAMPLE AND SUBJECT
+--
+INSERT INTO subject (identifiant, firstname, lastname, sex) VALUES
+    ('S1', 'firstname1', 'lastname1', 'male'),
+    ('S2', 'firstname2', 'lastname2', 'female'),
+    ('S3', NULL, NULL, NULL);
     
+INSERT INTO sample (subject_id, name, is_mosaic, file_id, loading_progress, reference_id, status) VALUES
+    (1, 'sp_1', False, 4, 1, 2, 'ready'),
+    (2, 'sp_2', True,  4, 1, 2, 'ready'),
+    (3, 'sp_3', True,  4, 1, 2, 'ready');
+
+INSERT INTO user_subject_sharing (subject_id, user_id, write_authorisation) VALUES
+    (1, 3, True),
+    (1, 4, False),
+    (2, 3, True),
+    (2, 4, True),
+    (2, 5, True);
     
+INSERT INTO subject_file (subject_id, file_id) VALUES
+    (1, 1),
+    (1, 2),
+    (2, 1);
+    
+INSERT INTO subject_indicator (indicator_id, subject_id, indicator_value_id) VALUES
+    (1, 1, 3),
+    (1, 3, 1);
     
 --
 -- TEST FILE PIPELINE AND JOB
@@ -45,7 +74,6 @@ INSERT INTO file (name, type, size, upload_offset, status, job_source_id) VALUES
     ('F3.bin',    'bin',    100000, 100000, 'checked',   NULL),
     ('F4.vcf',    'vcf',    100000, 100000, 'checked',   1);
 
-
 INSERT INTO pipeline (name, type, status, description, developers, image_file_id, manifest, documents) VALUES
     ('P1', 'github', 'ready',      'description', '["ikit", "dridk"]', 1, '{}', '[]'),
     ('P2', 'lxd',    'installing', 'description', '["oodnadata"]',     2, NULL, NULL);
@@ -54,7 +82,6 @@ INSERT INTO job (pipeline_id, project_id, name, config, status, progress_value, 
     (1, 4, 'J1', '{}', 'done',  1,   '100%'),
     (1, 4, 'J2', '{}', 'pause', 0.5, 'Step : 4/8');
 
-
 INSERT INTO job_file (job_id, file_id, as_input) VALUES
     (1, 3, TRUE),
     (1, 4, FALSE);
@@ -62,12 +89,36 @@ INSERT INTO job_file (job_id, file_id, as_input) VALUES
 
 
 --
--- TEST SAMPLE AND SUBJECT
---
-
-
-  
-  
---
 -- TEST ANALYSIS (SAMPLE, ATTRIBUTES, FILTER, ...)
 --
+
+
+  
+  
+        
+--
+-- TEST EVENTS (with PROJECT, USER, SUBJECT, JOB, ANALYSIS, FILE)
+--
+
+
+        
+--
+-- TEST PANEL
+--
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

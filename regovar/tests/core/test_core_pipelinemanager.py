@@ -58,7 +58,7 @@ class TestCorePipelineManager(unittest.TestCase):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def test_main_workflow_image_upload(self):
-        """ Check that pipeline core's workflow, for pipeline installed from remote image, is working as expected. """
+        """ CRUD Pipeline from Image UPLOAD """
 
         # Upload init
         p, f = core.pipelines.install_init_image_upload("test_image_success.tar.gz", 10, {"type" : "FakeManager4Test"})

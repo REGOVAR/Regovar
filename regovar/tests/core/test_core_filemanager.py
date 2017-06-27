@@ -44,7 +44,7 @@ class TestCoreFileManager(unittest.TestCase):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     def test_CRUD_upload(self):
-        """ Check that upload's features are working as expected """
+        """ CRUD File with UPLOAD """
 
         # Upload init
         f = core.files.upload_init("test_upload.tar.gz", 10, {'tags':'Coucou'})
@@ -97,7 +97,7 @@ class TestCoreFileManager(unittest.TestCase):
 
 
     def test_CRUD_local(self):
-        """ Check that creating file by retrieving it on a local path on the server is working as expected """
+        """ CRUD File from LOCAL """
 
         # Create a file into tmp directory
         path = "/tmp/pirus_tu_filemanager_import_from_local.test"

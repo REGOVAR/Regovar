@@ -56,7 +56,7 @@ class TestCoreLxdManager(unittest.TestCase):
         """ Check that installation of the PirusSimpleContainer from local image file is working. """
 
         # install the fake pipeline
-        p = core.pipelines.install_init_image_local(self.IMAGE_FILE_PATH, move=False, metadata={"type" : "lxd"})
+        p = core.pipelines.install_init_image_local(self.IMAGE_FILE_PATH, move=False, pipe_metadata={"type" : "lxd"})
         core.pipelines.install(p.id, asynch=False)  # install it synchronously to be able to test correctly
         TestCoreLxdManager.pid = p.id
 

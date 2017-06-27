@@ -63,7 +63,7 @@ class PipelineManager:
 
 
 
-    def install_init_image_upload(self, filepath, file_size, metadata={}):
+    def install_init_image_upload(self, filepath, file_size, pipe_metadata={}):
         """ 
             Initialise a pipeline installation. 
             To use if the image have to be uploaded on the server.
@@ -75,15 +75,15 @@ class PipelineManager:
         """
         from core.core import core
 
-        pfile = core.files.upload_init(filepath, file_size, metadata)
-        pipe = self.install_init(filepath, metadata)
+        pfile = core.files.upload_init(filepath, file_size)
+        pipe = self.install_init(filepath, pipe_metadata)
         pipe.image_file_id = pfile.id
         pipe.save()
         return pipe, pfile
 
 
 
-    async def install_init_image_url(self, url, metadata={}):
+    async def install_init_image_url(self, url, pipe_metadata={}):
         """ 
             Initialise a pipeline installation. 
             To use if the image have to be retrieved via an url.
@@ -96,7 +96,7 @@ class PipelineManager:
 
 
 
-    def install_init_image_local(self, filepath, move=False, metadata={}):
+    def install_init_image_local(self, filepath, move=False, pipe_metadata={}):
         """ 
             Initialise a pipeline installation. 
             To use if the image have to be retrieved on the local server.
@@ -107,8 +107,8 @@ class PipelineManager:
         """
         from core.core import core
 
-        pfile = core.files.from_local(filepath, move, metadata)
-        pipe = self.install_init(os.path.basename(filepath), metadata)
+        pfile = core.files.from_local(filepath, move)
+        pipe = self.install_init(os.path.basename(filepath), pipe_metadata)
 
         # Sometime getting sqlalchemy error 'is not bound to a Session' 
         # why it occure here ... why sometime :/ 

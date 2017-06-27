@@ -251,7 +251,7 @@ def projects_get_users(self):
         if u:
             result.append({"id": u.id, "firstname": u.firstname, "lastname": u.lastname, "write_authorisation": ups.write_authorisation})
         else:
-            war("User's id ({}) linked to the project ({}), but user doesn't exists.".format(u.id, self.id))
+            war("User's id ({}) linked to the project ({}), but user doesn't exists.".format(ups.user_id, self.id))
     return result
 
 

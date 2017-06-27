@@ -65,7 +65,7 @@ def subject_load_depth(self):
         self.jobs = self.get_jobs(self.loading_depth-1)
         self.analyses = self.get_analyses(self.loading_depth-1)
         self.files = self.get_files(self.loading_depth-1)
-        self.projects = self.get_subjects(self.loading_depth-1)
+        self.projects = self.get_projects(self.loading_depth-1)
 
 
 
@@ -244,7 +244,7 @@ def subject_get_projects(self, loading_depth=0):
     """
         Return the list of projects linked to the subject
     """
-    from core.model.project import Project
+    from core.model.project import Project, ProjectSubject
     ids = session().query(ProjectSubject).filter_by(subject_id=self.id).all()
     return Project.from_ids([i.project_id for i in ids], loading_depth)
 
@@ -256,15 +256,15 @@ def subject_get_users(self):
         Return the list of users that have access to the subject
     """
     from core.model.user import User
-    ussl = session().query(UserSubjectSharing).filter_by(project_id=self.id).all()
+    ussl = session().query(UserSubjectSharing).filter_by(subject_id=self.id).all()
     users_ids = [u.user_id for u in ussl]
     result = []
     for uss in ussl:
         u = session().query(User).filter_by(id=uss.user_id).first()
         if u:
-            result.append({"id": u.id, "firstname": u.firstname, "lastname": u.lastname, "write_authorisation": uss.write_authorisation})
+            result.append({"id": u.id, "login" : u.login, "firstname": u.firstname, "lastname": u.lastname, "write_authorisation": uss.write_authorisation})
         else:
-            war("User's id ({}) linked to the subject ({}), but user doesn't exists.".format(u.id, self.id))
+            war("User's id ({}) linked to the subject ({}), but user doesn't exists.".format(uss.user_id, self.id))
     return result
 
 
@@ -286,6 +286,7 @@ Subject.delete = subject_delete
 Subject.count = subject_count
 Subject.get_jobs = subject_get_jobs
 Subject.get_samples = subject_get_samples
+Subject.get_projects = subject_get_projects
 Subject.get_indicators = subject_get_indicators
 Subject.get_analyses = subject_get_analyses
 Subject.get_files = subject_get_files
@@ -293,4 +294,75 @@ Subject.get_users = subject_get_users
 
 
 
+
+
+# =====================================================================================================================
+# SUBJECT INDICATOR associations
+# =====================================================================================================================
+def subjectindicator_to_json(self, fields=None):
+    """
+        Export the subject indicator into json format with only requested fields
+    """
+    result = {}
+    if fields is None:
+        fields = ["subject_id", "indicator_id", "indicator_value_id"]
+    for f in fields:
+        result.update({f: eval("self." + f)})
+    return result
+
+
+
+SubjectIndicator = Base.classes.subject_indicator
+SubjectIndicator.to_json = subjectindicator_to_json
+
+
+
+
+# =====================================================================================================================
+# SUBJECT FILES associations
+# =====================================================================================================================
+def sf_new(subject_id, file_id):
+    sf = SubjectFile(subject_id=subject_id, file_id=file_id)
+    sf.save()
+    return sf
+
+
+def sf_save(self):
+    generic_save(self)
+
+
+SubjectFile = Base.classes.subject_file
+SubjectFile.new = sf_new
+SubjectFile.save = sf_save
+
+
+
+
+
+
+
+# =====================================================================================================================
+# SUBJECT USERS associations
+# =====================================================================================================================
+def uss_get_auth(subject_id, user_id):
+    uss = session().query(UserSubjectSharing).filter_by(subject_id=subject_id, user_id=user_id).first()
+    if uss : 
+        return uss.write_authorisation
+    return None
+
+
+def uss_new(subject_id, user_id, write_authorisation):
+    uss = UserSubjectSharing(subject_id=subject_id, file_id=file_id, write_authorisation=write_authorisation)
+    uss.save()
+    return uss
+
+
+def uss_save(self):
+    generic_save(self)
+
+
+UserSubjectSharing = Base.classes.user_subject_sharing
+UserSubjectSharing.get_auth = uss_get_auth
+UserSubjectSharing.new = uss_new
+UserSubjectSharing.save = uss_save
 

@@ -177,3 +177,41 @@ class TestModelProject(unittest.TestCase):
         o4 = Project.from_id(o3.id)
         self.assertEqual(o4, None)
         self.assertEqual(Project.count(), total)
+        
+        
+        
+        
+    def test_indicator_management(self):
+        """ Indicator management """
+        # TODO
+        self.assertEqual(1, 2)
+        
+        
+    def test_user_management(self):
+        """ User sharing management """
+        # TODO
+        self.assertEqual(1, 2)
+        
+        
+    def test_file_management(self):
+        """ File management """
+        # TODO
+        self.assertEqual(1, 2)
+        
+        
+    def test_subject_management(self):
+        """ Subject management """
+        # TODO
+        self.assertEqual(1, 2)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
