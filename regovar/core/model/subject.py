@@ -10,7 +10,7 @@ from core.framework.postgresql import *
 
 
 
-def subject_init(self, loading_depth=0):
+def subject_init(self, loading_depth=0, force=False):
     """
         Init properties of a subject :
             - id            : int           : the unique id of the subject in the database
@@ -23,9 +23,9 @@ def subject_init(self, loading_depth=0):
             - deathday      : datetime      : The dethday of the subject
             - update_date   : date          : The last time that the object have been updated
             - jobs_ids      : [int]         : The list of ids of jobs with subject's files as inputs
+            - analyses_ids  : [int]         : The list of ids of analyses that are using subject's sample as inputs
             - samples_ids   : [int]         : The list of ids of samples of the subject
             - files_ids     : [int]         : The list of ids of files that contains the subject
-            - analyses_ids  : [int]         : The list of ids of analyses that are using subject's sample as inputs
             - projects_ids  : [int]         : The list of ids of projects associated to the subject
             - indicators    : [Indicator]   : The list of Indicator define for this subject
             - users         : [Users]       : The list of Users that can access to the subject
@@ -36,9 +36,9 @@ def subject_init(self, loading_depth=0):
             - files         : [File]        : The list of File owns by the subject
             - projects      : [Project]     : The list of Project that contains this subject
     """
-    # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
-    if hasattr(self, "loading_depth"):
-        self.loading_depth = max(self.loading_depth, min(2, loading_depth))
+    # Avoid recursion infinit loop
+    if hasattr(self, "loading_depth") and not force:
+        return
     else:
         self.loading_depth = min(2, loading_depth)
     try:
@@ -49,23 +49,20 @@ def subject_init(self, loading_depth=0):
         self.files_ids = [f.id for f in self.get_files()]
         self.samples_ids = [s.id for s in self.get_samples()]
         self.users = self.get_users()
+        
+        self.jobs = []
+        self.samples = []
+        self.analyses = []
+        self.files = []
+        self.projects = []
+        if self.loading_depth > 0:
+            self.samples = self.get_samples(self.loading_depth-1)
+            self.jobs = self.get_jobs(self.loading_depth-1)
+            self.analyses = self.get_analyses(self.loading_depth-1)
+            self.files = self.get_files(self.loading_depth-1)
+            self.projects = self.get_projects(self.loading_depth-1)
     except Exception as ex:
         raise RegovarException("subject data corrupted (id={}).".format(self.id), "", ex)
-    self.load_depth()
-
-
-def subject_load_depth(self):
-    self.jobs = []
-    self.samples = []
-    self.analyses = []
-    self.files = []
-    self.projects = []
-    if self.loading_depth > 0:
-        self.samples = self.get_samples(self.loading_depth-1)
-        self.jobs = self.get_jobs(self.loading_depth-1)
-        self.analyses = self.get_analyses(self.loading_depth-1)
-        self.files = self.get_files(self.loading_depth-1)
-        self.projects = self.get_projects(self.loading_depth-1)
 
 
 
@@ -102,9 +99,7 @@ def subject_to_json(self, fields=None):
         if f in Subject.public_fields:
             if f in ["create_date", "update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
-            elif f in ["jobs", "analyses", "files", "projects", "samples"] and self.loading_depth > 0:
-                result[f] = [o.to_json() for o in eval("self." + f)]
-            elif f in ["indicators"]:
+            elif f in ["jobs", "analyses", "files", "projects", "samples", "indicators"]:
                 result[f] = [o.to_json() for o in eval("self." + f)]
             else:
                 result.update({f: eval("self." + f)})
@@ -129,29 +124,29 @@ def subject_load(self, data):
         # Update user sharing
         if "users" in data.keys():
             # Delete all associations
-            session().query(UserProjectSharing).filter_by(subject_id=self.id).delete(synchronize_session=False)
+            session().query(UserSubjectSharing).filter_by(subject_id=self.id).delete(synchronize_session=False)
             # Create new associations
             self.users = data["users"]
             for u in data["users"]:
                 if isinstance(u, dict) and "id" in u.keys() and "write_authorisation" in u.keys():
-                    UserProjectSharing.new(self.id, u["id"], u["write_authorisation"])
+                    UserProjectSubring.set(self.id, u["id"], u["write_authorisation"])
                 else:
                     err("Wrong User sharing token for the Subject")
         
         # update files linkeds
         if "files_ids" in data.keys():
             # Delete all associations
-            session().query(ProjectFile).filter_by(subject_id=self.id).delete(synchronize_session=False)
+            session().query(SubjectFile).filter_by(subject_id=self.id).delete(synchronize_session=False)
             # Create new associations
             self.files_ids = data["files_ids"]
             for fid in data["files_ids"]:
-                ProjectFile.new(self.id, fid)
+                SubjectFile.set(self.id, fid)
         
-        # TODO : update 
+        # TODO : projects
+        # TODO : samples
 
         # check to reload dynamics properties
-        if self.loading_depth > 0:
-            self.load_depth(self.loading_depth)
+        self.init(self.loading_depth, True)
     except KeyError as e:
         raise RegovarException('Invalid input subject: missing ' + e.args[0])
     return self
@@ -167,6 +162,7 @@ def subject_delete(subject_id):
     """
     session().query(SubjectIndicator).filter_by(subject_id=subject_id).delete(synchronize_session=False)
     session().query(UserSubjectSharing).filter_by(subject_id=subject_id).delete(synchronize_session=False)
+    session().query(Subject).filter_by(id=subject_id).delete(synchronize_session=False)
 
 
 def subject_new():
@@ -183,16 +179,9 @@ def subject_count():
     """
         Return total of Subject entries in database
     """
-    return generic_count(self)
+    return generic_count(Subject)
 
 
-
-def subject_get_jobs(self, loading_depth=0):
-    """
-        Return the list of jobs linked to the subject
-    """
-    # TODO
-    return []
 
 
 
@@ -208,10 +197,22 @@ def subject_get_indicators(self, loading_depth=0):
 
 def subject_get_analyses(self, loading_depth=0):
     """
-        Return the list of analyses linked to the subject
+        Return the list of analyses linked to the subject (ie analyses that are using subject's samples as inputs)
     """
-    # TODO
-    return []
+    from core.model.sample import Sample
+    from core.model.analysis import Analysis, AnalysisSample
+    
+    samples = session().query(Sample).filter_by(subject_id=self.id).all()
+    samples_ids = [s.id for s in samples]
+    analyses = []
+    if len(samples_ids) > 0:
+        analyses_ids = session().query(AnalysisSample).filter(AnalysisSample.sample_id.in_(samples_ids)).all()
+        analyses_ids = [i.analysis_id for i in analyses_ids]
+        if len(analyses_ids) > 0:
+            analyses = session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
+    
+    for a in analyses: a.init(loading_depth)
+    return analyses
 
 
 
@@ -219,17 +220,26 @@ def subject_get_samples(self, loading_depth=0):
     """
         Return the list of samples linked to the subject
     """
-    # TODO
-    return []
+    from core.model.sample import Sample
+    samples = session().query(Sample).filter_by(subject_id=self.id).all()
+    for s in samples: s.init(loading_depth)
+    return samples
 
 
 
 def subject_get_jobs(self, loading_depth=0):
     """
-        Return the list of jobs linked to the subject
+        Return the list of jobs linked to the subject (ie jobs that are using subject's files as inputs)
     """
-    # TODO
-    return []
+    from core.model.file import File
+    from core.model.job import Job, JobFile
+    
+    files = session().query(SubjectFile).filter_by(subject_id=self.id).all()
+    files_ids = [f.file_id for f in files]
+    jobs = []
+    for fid in files_ids:
+        jobs.extend(JobFile.get_jobs(fid))
+    return jobs
 
 
 
@@ -278,7 +288,6 @@ def subject_get_users(self):
 Subject = Base.classes.subject
 Subject.public_fields = ["id", "identifiant", "firstname", "lastname", "sex", "comment", "birthday", "deathday", "update_date", "jobs_ids", "samples_ids", "files_ids", "analyses_ids", "jobs", "samples", "analyses", "files", "indicators", "users", "projects_ids", "projects"]
 Subject.init = subject_init
-Subject.load_depth = subject_load_depth
 Subject.from_id = subject_from_id
 Subject.from_ids = subject_from_ids
 Subject.to_json = subject_to_json
@@ -329,13 +338,34 @@ def sf_new(subject_id, file_id):
     sf.save()
     return sf
 
+def sf_set(subject_id, file_id):
+    """
+        Create or update the link between subject and the file
+    """
+    # Get or create the association
+    sf = session().query(SubjectFile).filter_by(subject_id=subject_id, file_id=file_id).first()
+    if not sf: 
+        sf = SubjectFile(subject_id=subject_id, file_id=file_id)
+        sf.save()
+    return sf
+
+
+
+def sf_unset(subject_id, file_id):
+    """
+        Delete a the link between the subject and the file
+    """
+    session().query(SubjectFile).filter_by(subject_id=subject_id, file_id=file_id).delete(synchronize_session=False)
+
+
 
 def sf_save(self):
     generic_save(self)
 
 
 SubjectFile = Base.classes.subject_file
-SubjectFile.new = sf_new
+SubjectFile.set = sf_set
+SubjectFile.unset = sf_unset
 SubjectFile.save = sf_save
 
 
@@ -354,10 +384,29 @@ def uss_get_auth(subject_id, user_id):
     return None
 
 
-def uss_new(subject_id, user_id, write_authorisation):
-    uss = UserSubjectSharing(subject_id=subject_id, file_id=file_id, write_authorisation=write_authorisation)
+def uss_set(subject_id, user_id, write_authorisation):
+    """
+        Create or update the sharing option between subject and user
+    """
+    # Get or create the association
+    uss = session().query(UserSubjectSharing).filter_by(subject_id=subject_id, user_id=user_id).first()
+    if not uss: uss = UserSubjectSharing()
+    
+    # Update the association     
+    uss.subject_id=subject_id
+    uss.user_id=user_id
+    uss.write_authorisation=write_authorisation
     uss.save()
     return uss
+
+
+
+def uss_unset(subject_id, user_id):
+    """
+        Delete a the sharing option between the subject and the user
+    """
+    session().query(UserSubjectSharing).filter_by(subject_id=subject_id, user_id=user_id).delete(synchronize_session=False)
+    
 
 
 def uss_save(self):
@@ -366,6 +415,7 @@ def uss_save(self):
 
 UserSubjectSharing = Base.classes.user_subject_sharing
 UserSubjectSharing.get_auth = uss_get_auth
-UserSubjectSharing.new = uss_new
+UserSubjectSharing.set = uss_set
+UserSubjectSharing.unset = uss_unset
 UserSubjectSharing.save = uss_save
 

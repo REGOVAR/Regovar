@@ -197,8 +197,8 @@ CREATE TABLE public.job
     priority int,
     comment text COLLATE pg_catalog."C",
 
-    config text COLLATE pg_catalog."C",
-    start_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    config json,
+    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     status job_status,
 

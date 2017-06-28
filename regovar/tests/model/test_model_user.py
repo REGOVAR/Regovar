@@ -116,11 +116,11 @@ class TestModelUser(unittest.TestCase):
         # Test export with default fields
         u = User.from_id(4, 1)
         j = u.to_json()
-        self.assertEqual(len(j), 17)
+        self.assertEqual(len(j), len(TU_PUBLIC_FIELDS))
         json.dumps(j)
 
         # Test export with only requested fields
-        j = u.to_json(["id", "login", "firstname", "roles"])
+        j = u.to_json(["id", "login", "firstname", "roles", "wrong_field"])
         self.assertEqual(len(j), 4)
         json.dumps(j)
 

@@ -11,7 +11,7 @@ from core.framework.postgresql import *
 
 
 
-def project_init(self, loading_depth=0):
+def project_init(self, loading_depth=0, force=False):
     """
         Init properties of a project :
             - id            : int           : the unique id of the project in the database
@@ -30,12 +30,13 @@ def project_init(self, loading_depth=0):
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - jobs          : [Job]         : The list of Job owns by the project
             - analyses      : [Analysis]    : The list of Analysis owns by the project
+            - subjects      : [Subject]     : The list of Subjects linked to this project
             - files         : [File]        : The list of File owns by the project
             - parent        : Project       : The parent Project if defined
     """
-    # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
-    if hasattr(self, "loading_depth"):
-        self.loading_depth = max(self.loading_depth, min(2, loading_depth))
+    # Avoid recursion infinit loop
+    if hasattr(self, "loading_depth") and not force:
+        return
     else:
         self.loading_depth = min(2, loading_depth)
     try:
@@ -45,24 +46,20 @@ def project_init(self, loading_depth=0):
         self.analyses_ids = [a.id for a in self.get_analyses()]
         self.files_ids = [f.id for f in self.get_files()]
         self.users = self.get_users()
+
+        self.jobs = []
+        self.analyses = []
+        self.files = []
+        self.subjects = []
+        self.parent = None
+        if self.loading_depth > 0:
+            self.parent = Project.from_id(self.parent_id, self.loading_depth-1)
+            self.jobs = self.get_jobs(self.loading_depth-1)
+            self.analyses = self.get_analyses(self.loading_depth-1)
+            self.files = self.get_files(self.loading_depth-1)
+            self.subjects = self.get_subjects(self.loading_depth-1)
     except Exception as ex:
         raise RegovarException("Project data corrupted (id={}).".format(self.id), "", ex)
-    self.load_depth()
-
-
-def project_load_depth(self):
-    self.jobs = []
-    self.analyses = []
-    self.files = []
-    self.subjects = []
-    self.parent = None
-    if self.loading_depth > 0:
-        self.parent = Project.from_id(self.parent_id, self.loading_depth-1)
-        self.jobs = self.get_jobs(self.loading_depth-1)
-        self.analyses = self.get_analyses(self.loading_depth-1)
-        self.files = self.get_files(self.loading_depth-1)
-        self.subjects = self.get_subjects(self.loading_depth-1)
-
 
 
 def project_from_id(project_id, loading_depth=0):
@@ -98,9 +95,7 @@ def project_to_json(self, fields=None):
         if f in Project.public_fields:
             if f in ["create_date", "update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
-            elif f in ["jobs", "analyses", "files"] and self.loading_depth > 0:
-                result[f] = [o.to_json() for o in eval("self." + f)]
-            elif f in ["indicators"]:
+            elif f in ["jobs", "analyses", "files", "indicators"]:
                 result[f] = [o.to_json() for o in eval("self." + f)]
             elif f in ["parent"] and self.loading_depth > 0 and self.parent:
                 result[f] = self.parent.to_json()
@@ -136,7 +131,7 @@ def project_load(self, data):
             self.users = data["users"]
             for u in data["users"]:
                 if isinstance(u, dict) and "id" in u.keys() and "write_authorisation" in u.keys():
-                    UserProjectSharing.new(self.id, u["id"], u["write_authorisation"])
+                    UserProjectSharing.set(self.id, u["id"], u["write_authorisation"])
                 else:
                     err("")
         
@@ -147,13 +142,12 @@ def project_load(self, data):
             # Create new associations
             self.files_ids = data["files_ids"]
             for fid in data["files_ids"]:
-                ProjectFile.new(self.id, fid)
+                ProjectFile.set(self.id, fid)
         
         # TODO : update 
 
-        # check to reload dynamics properties
-        if self.loading_depth > 0:
-            self.load_depth(self.loading_depth)
+        # Reload dynamics properties
+        self.init(self.loading_depth, True)
     except KeyError as e:
         raise RegovarException('Invalid input project: missing ' + e.args[0])
     return self
@@ -192,7 +186,6 @@ def project_count(count_folder=False, count_sandbox=False):
     kargs = {}
     if not count_folder: kargs["is_folder"] = False
     if not count_sandbox: kargs["is_sandbox"] = False
-    
     return session().query(Project).filter_by(**kargs).count()
 
 
@@ -202,8 +195,9 @@ def projects_get_jobs(self, loading_depth=0):
         Return the list of jobs linked to the project
     """
     from core.model.job import Job
-    return session().query(Job).filter_by(project_id=self.id).all()
-
+    jobs = session().query(Job).filter_by(project_id=self.id).all()
+    for j in jobs: j.init(loading_depth)
+    return jobs
 
 
 def projects_get_indicators(self, loading_depth=0):
@@ -270,9 +264,8 @@ def projects_get_users(self):
 
 
 Project = Base.classes.project
-Project.public_fields = ["id", "name", "comment", "parent_id", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "users", "is_sandbox"]
+Project.public_fields = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "users", "is_sandbox"]
 Project.init = project_init
-Project.load_depth = project_load_depth
 Project.from_id = project_from_id
 Project.from_ids = project_from_ids
 Project.to_json = project_to_json
@@ -324,13 +317,34 @@ def pf_new(project_id, file_id):
     pf.save()
     return pf
 
+def pf_set(project_id, file_id):
+    """
+        Create or update the link between project and the file
+    """
+    # Get or create the association
+    pf = session().query(ProjectFile).filter_by(project_id=project_id, file_id=file_id).first()
+    if not pf: 
+        pf = ProjectFile(project_id=project_id, file_id=file_id)
+        pf.save()
+    return pf
+
+
+
+def pf_unset(project_id, file_id):
+    """
+        Delete a the link between the project and the file
+    """
+    session().query(ProjectFile).filter_by(project_id=project_id, file_id=file_id).delete(synchronize_session=False)
+
+
 
 def pf_save(self):
     generic_save(self)
 
 
 ProjectFile = Base.classes.project_file
-ProjectFile.new = pf_new
+ProjectFile.set = pf_set
+ProjectFile.unset = pf_unset
 ProjectFile.save = pf_save
 
 
@@ -368,19 +382,40 @@ def ups_get_auth(project_id, user_id):
     return None
 
 
-def ups_new(project_id, user_id, write_authorisation):
-    ups = UserProjectSharing(project_id=project_id, file_id=file_id, write_authorisation=write_authorisation)
+def ups_set(project_id, user_id, write_authorisation):
+    """
+        Create or update the sharing option between project and user
+    """
+    # Get or create the association
+    ups = session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).first()
+    if not ups: ups = UserProjectSharing()
+    
+    # Update the association     
+    ups.project_id=project_id
+    ups.user_id=user_id
+    ups.write_authorisation=write_authorisation
     ups.save()
     return ups
 
+
+
+def ups_unset(project_id, user_id):
+    """
+        Delete a the sharing option between the project and the user
+    """
+    session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).delete(synchronize_session=False)
+    
+    
 
 def ups_save(self):
     generic_save(self)
 
 
+
 UserProjectSharing = Base.classes.user_project_sharing
 UserProjectSharing.get_auth = ups_get_auth
-UserProjectSharing.new = ups_new
+UserProjectSharing.set = ups_set
+UserProjectSharing.unset = ups_unset
 UserProjectSharing.save = ups_save
 
 

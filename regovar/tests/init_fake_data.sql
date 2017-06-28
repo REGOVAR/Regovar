@@ -5,7 +5,7 @@ INSERT INTO "user" (login, email, firstname, lastname, function, location, setti
     -- WARNING, Admin user added by default, so, id=1 is already created
     ('U2', 'user2@email.com', 'firstname2', 'lastname2', 'f2', 'l2', '{"fullscreen": true}', '{"Administration": "Read"}', True, 2),
     ('U3', 'user3@email.com', 'firstname3', 'lastname3', 'f3', 'l3', '{"fullscreen": true}', '{}',                         True, 3),
-    ('U4', 'user4@email.com', 'firstname4', 'lastname4', 'f4', 'l4', NULL,                    '{}',                        False,4);
+    ('U4', 'user4@email.com', 'firstname4', 'lastname4', 'f4', 'l4', NULL,                   '{}',                         False,4);
 
 INSERT INTO project (name, comment, parent_id, is_folder, is_sandbox) VALUES
      -- WARNING, Admin user added by default, so, id=1 is already created for the sandbox project of the admin
@@ -53,17 +53,22 @@ INSERT INTO user_subject_sharing (subject_id, user_id, write_authorisation) VALU
     (1, 3, True),
     (1, 4, False),
     (2, 3, True),
-    (2, 4, True),
-    (2, 5, True);
+    (2, 4, True);
     
 INSERT INTO subject_file (subject_id, file_id) VALUES
     (1, 1),
-    (1, 2),
+    (1, 3),
     (2, 1);
     
 INSERT INTO subject_indicator (indicator_id, subject_id, indicator_value_id) VALUES
     (1, 1, 3),
     (1, 3, 1);
+
+INSERT INTO project_subject (project_id, subject_id) VALUES
+    (6, 1),
+    (6, 2),
+    (7, 2),
+    (7, 3);
     
 --
 -- TEST FILE PIPELINE AND JOB
@@ -79,12 +84,16 @@ INSERT INTO pipeline (name, type, status, description, developers, image_file_id
     ('P2', 'lxd',    'installing', 'description', '["oodnadata"]',     2, NULL, NULL);
 
 INSERT INTO job (pipeline_id, project_id, name, config, status, progress_value, progress_label) VALUES
-    (1, 4, 'J1', '{}', 'done',  1,   '100%'),
-    (1, 4, 'J2', '{}', 'pause', 0.5, 'Step : 4/8');
+    (1, 6, 'J1', '{}', 'done',  1,   '100%'),
+    (1, 6, 'J2', '{}', 'pause', 0.5, 'Step : 4/8');
 
 INSERT INTO job_file (job_id, file_id, as_input) VALUES
-    (1, 3, TRUE),
-    (1, 4, FALSE);
+    (1, 3, True),
+    (1, 4, False);
+    
+INSERT INTO project_file (project_id, file_id) VALUES
+    (6, 1),
+    (6, 2);
 
 
 

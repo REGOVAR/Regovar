@@ -17,7 +17,7 @@ from core.model import *
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # TEST PARAMETER / CONSTANTS
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-TU_PUBLIC_FIELDS = ["id", "name", "comment", "parent_id", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "users", "is_sandbox"]
+TU_PUBLIC_FIELDS = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "users", "is_sandbox"]
 
 
 
@@ -85,13 +85,13 @@ class TestModelProject(unittest.TestCase):
         self.assertEqual(p.is_folder, False)
         self.assertEqual(p.is_sandbox, False)
         self.assertIsInstance(p.jobs_ids, list)
-        self.assertEqual(len(p.jobs_ids), 0)
+        self.assertEqual(len(p.jobs_ids), 2)
         self.assertIsInstance(p.files_ids, list)
-        self.assertEqual(len(p.files_ids), 0)
+        self.assertEqual(len(p.files_ids), 2)
         self.assertIsInstance(p.analyses_ids, list)
         self.assertEqual(len(p.analyses_ids), 0)
         self.assertIsInstance(p.subjects_ids, list)
-        self.assertEqual(len(p.subjects_ids), 0)
+        self.assertEqual(len(p.subjects_ids), 2)
         self.assertIsInstance(p.indicators, list)
         self.assertEqual(len(p.indicators), 1)
         self.assertIsInstance(p.indicators[0], ProjectIndicator)
@@ -103,11 +103,16 @@ class TestModelProject(unittest.TestCase):
         self.assertEqual(p.is_sandbox, False)
         # Check "depth loaded" properties
         self.assertIsInstance(p.jobs, list)
-        self.assertEqual(len(p.jobs), 0)
+        self.assertEqual(len(p.jobs), 2)
         self.assertIsInstance(p.analyses, list)
         self.assertEqual(len(p.analyses), 0)
+        #self.assertIsInstance(p.analyses[0], ProjectIndicator)
         self.assertIsInstance(p.files, list)
-        self.assertEqual(len(p.files), 0)
+        self.assertEqual(len(p.files), 2)
+        self.assertIsInstance(p.files[0], File)
+        self.assertIsInstance(p.subjects, list)
+        self.assertEqual(len(p.subjects), 2)
+        self.assertIsInstance(p.subjects[0], Subject)
         self.assertIsInstance(p.parent, Project)
         self.assertEqual(p.parent.is_folder, True)
         
@@ -115,20 +120,16 @@ class TestModelProject(unittest.TestCase):
         
     def test_to_json(self):
         """ to_json """
-        # Test export with default fields
+        # Test export with all fields
         p = Project.from_id(6, 1)
         j = p.to_json()
-        self.assertEqual(len(j), 16)
+        self.assertEqual(len(j), len(TU_PUBLIC_FIELDS))
         json.dumps(j)
 
         # Test export with only requested fields
-        j = p.to_json(["id", "name", "parent_id", "indicators"])
+        j = p.to_json(["id", "name", "parent", "indicators", "wrong_field"])
         self.assertEqual(len(j), 4)
         json.dumps(j)
-
-        # Test export with depth loading
-        j = p.to_json(["id", "name", "parent", "indicators"])
-        self.assertEqual(len(j), 4)
         self.assertEqual(j["parent"]["id"], 5)
         self.assertEqual(j["parent"]["name"], "folder")
 
@@ -153,29 +154,27 @@ class TestModelProject(unittest.TestCase):
         o1.save()
         # READ
         o2 = Project.from_id(o1.id)
-        self.assertEqual(o2.name, "P3")
-        self.assertEqual(o2.create_date, o1.create_date)
-        update1 = o2.update_date
+        self.assertEqual(o2, o1)
+
         # UPDATE loading
         o2.load({
             "name" : "P3.1", 
             "comment" : "comment P3", 
             "parent_id" : 5
             })
-        self.assertNotEqual(update1, o2.update_date)
         self.assertEqual(o2.name,"P3.1")
         self.assertEqual(o2.comment,"comment P3")
         self.assertEqual(o2.parent_id, 5)
         # READ
-        o3 = Project.from_id(o1.id, 1)
-        self.assertEqual(o3.name,"P3.1")
-        self.assertEqual(o3.comment, "comment P3")
-        self.assertEqual(o3.parent_id, 5)
-        self.assertEqual(o3.parent.id , 5)
+        o2.init(1, True)
+        self.assertEqual(o2.name,"P3.1")
+        self.assertEqual(o2.comment, "comment P3")
+        self.assertEqual(o2.parent_id, 5)
+        self.assertEqual(o2.parent.id , 5)
         # DELETE
-        Project.delete(o3.id)
-        o4 = Project.from_id(o3.id)
-        self.assertEqual(o4, None)
+        Project.delete(o2.id)
+        o3 = Project.from_id(o2.id)
+        self.assertEqual(o3, None)
         self.assertEqual(Project.count(), total)
         
         
@@ -183,26 +182,57 @@ class TestModelProject(unittest.TestCase):
         
     def test_indicator_management(self):
         """ Indicator management """
-        # TODO
-        self.assertEqual(1, 2)
+        self.skipTest('TODO')
         
         
     def test_user_management(self):
         """ User sharing management """
-        # TODO
-        self.assertEqual(1, 2)
+        # READ
+        # - read only access
+        self.assertEqual(UserProjectSharing.get_auth(6,3), False)
+        # - no access
+        self.assertEqual(UserProjectSharing.get_auth(4,3), None)
+        # - Read/Write access
+        self.assertEqual(UserProjectSharing.get_auth(7,3), True)
+        
+        # CREATE / UPDATE
+        UserProjectSharing.set(1, 3, False)
+        UserProjectSharing.set(6, 3, True)
+        self.assertEqual(UserProjectSharing.get_auth(1,3), False)
+        self.assertEqual(UserProjectSharing.get_auth(6,3), True)
+        p1 = Project.from_id(1)
+        self.assertEqual(len(p1.users), 1)
+        self.assertEqual(p1.users[0]["id"], 3)
+        self.assertEqual(p1.users[0]["write_authorisation"], False)
+        # DELETE
+        UserProjectSharing.unset(1, 3)
+        p1.init(1, True)
+        self.assertEqual(len(p1.users), 0)
+        user = User.from_id(3,1)
+        self.assertEqual(len(user.projects_ids), 2)
+        self.assertEqual(user.projects_ids, [6,7])
         
         
     def test_file_management(self):
         """ File management """
-        # TODO
-        self.assertEqual(1, 2)
+        # READ
+        p1 = Project.from_id(6)
+        self.assertEqual(p1.files_ids, [1,2])
+        # CREATE / UPDATE
+        ProjectFile.set(6, 2)
+        ProjectFile.set(6, 3)
+        p1.init(1, True) #reload object
+        self.assertEqual(p1.files_ids, [1,2,3])
+        # DELETE
+        ProjectFile.unset(6, 2)
+        p1.init(1, True) #reload object
+        self.assertEqual(p1.files_ids, [1,3])
+        
         
         
     def test_subject_management(self):
         """ Subject management """
-        # TODO
-        self.assertEqual(1, 2)
+        self.skipTest('TODO')
         
         
         

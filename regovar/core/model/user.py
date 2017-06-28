@@ -11,7 +11,7 @@ from passlib.hash import pbkdf2_sha256
 
 
 
-def user_init(self, loading_depth=0):
+def user_init(self, loading_depth=0, force=False):
     """
         Init properties of an user :
             - id            : int       : the unique id of the user in the database
@@ -34,38 +34,25 @@ def user_init(self, loading_depth=0):
             - subjects      : [Subject] : The list of subjets that the user can access
             - sandbox       : Project   : The sandbox project of the user
     """
-    # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
-    if hasattr(self, "loading_depth"):
-        self.loading_depth = max(self.loading_depth, min(2, loading_depth))
+    from core.model.project import Project
+    # Avoid recursion infinit loop
+    if hasattr(self, "loading_depth") and not force:
+        return
     else:
         self.loading_depth = min(2, loading_depth)
+
     try:
-        self.roles_dic = json.loads(self.roles)
-    except:
-        self.roles_dic = {}
-        
-    self.subjects_ids = [s.id for s in self.get_subjects()]
-    self.projects_ids = [p.id for p in self.get_projects()]
-    self.load_depth()
-
-
-
-def user_load_depth(self):
-    from core.model.project import Project, UserProjectSharing
-    from core.model.subject import Subject, UserSubjectSharing
-    self.projects = []
-    self.subjects = []
-    self.sandbox = None
-    if self.loading_depth > 0:
-        try:
+        self.subjects_ids = [s.id for s in self.get_subjects()]
+        self.projects_ids = [p.id for p in self.get_projects()]
+        self.projects = []
+        self.subjects = []
+        self.sandbox = None
+        if self.loading_depth > 0:
             self.projects = self.get_projects(self.loading_depth-1)
             self.subjects = self.get_subjects(self.loading_depth-1)
             self.sandbox = Project.from_id(self.sandbox_id, self.loading_depth-1)
-        except Exception as ex:
-            raise RegovarException("User data corrupted (id={}).".format(self.id), "", ex)
-
-
-
+    except Exception as ex:
+        raise RegovarException("User data corrupted (id={}).".format(self.id), "", ex)
 
 
 
@@ -151,12 +138,10 @@ def user_load(self, data):
         # Update password
         if "password" in data.keys() : 
             self.erase_password(data["password"])
-            
         self.save()
     
-        # check to reload dynamics properties
-        if self.loading_depth > 0:
-            self.load_depth(self.loading_depth)
+        # reload dynamics properties
+        self.init(self.loading_depth, True)
     except KeyError as e:
         raise RegovarException('Invalid input project: missing ' + e.args[0])
     return self
@@ -197,7 +182,12 @@ def user_get_projects(self, loading_depth=0):
     """
     from core.model.project import Project, UserProjectSharing
     ids = session().query(UserProjectSharing).filter_by(user_id=self.id).all()
-    return Project.from_ids([i.project_id for i in ids], loading_depth)
+    projects = Project.from_ids([i.project_id for i in ids], loading_depth)
+    result = []
+    for p in projects:
+        if not p.is_folder:
+            result.append(p)
+    return result
 
 
 
@@ -262,7 +252,6 @@ def user_new(login=None):
 User = Base.classes.user
 User.public_fields = ["id", "firstname", "lastname", "login", "email", "function", "location", "update_date", "create_date", "settings", "roles", "projects_ids", "subjects_ids", "sandbox_id", "sandbox", "projects", "subjects"]
 User.init = user_init
-User.load_depth = user_load_depth
 User.from_id = user_from_id
 User.from_ids = user_from_ids
 User.from_credential = user_from_credential

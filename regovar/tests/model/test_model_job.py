@@ -17,7 +17,7 @@ from core.model import *
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # TEST PARAMETER / CONSTANTS
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-TU_PIRUS_JOB_PUBLIC_FIELDS = ["id", "pipeline_id", "pipeline", "config", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs", "path", "logs", "name"]
+TU_PUBLIC_FIELDS = ["id", "pipeline_id", "pipeline", "config", "create_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs", "path", "logs", "name"]
 
 
 
@@ -52,7 +52,7 @@ class TestModelJob(unittest.TestCase):
         """ public_fields """
         # Check that public fields describes in the model are same that in TU.
         # If you broke this test, you probably have to update TU, documentation and wiki...
-        self.assertEqual(Job.public_fields, TU_PIRUS_JOB_PUBLIC_FIELDS)
+        self.assertEqual(Job.public_fields, TU_PUBLIC_FIELDS)
 
 
     def test_from_id(self):
@@ -93,7 +93,7 @@ class TestModelJob(unittest.TestCase):
         # Test export with default fields
         f = Job.from_id(1, 1)
         j = f.to_json()
-        self.assertEqual(len(j), 11)
+        self.assertEqual(len(j), len(TU_PUBLIC_FIELDS))
         json.dumps(j)
 
         # Test export with only requested fields
@@ -122,13 +122,13 @@ class TestModelJob(unittest.TestCase):
         # READ
         j2 = Job.from_id(j1.id)
         self.assertEqual(j2.name, "TestJob")
-        self.assertEqual(j2.start_date, j1.start_date)
+        self.assertEqual(j2.create_date, j1.create_date)
         update1 = j2.update_date
         # UPDATE loading
         j2.load({
             "name" : "FinalJob", 
             "pipeline_id" : 2, 
-            "config" : '{"param1" : 1, "param2" : [1,2,3]}',
+            "config" : {"param1" : 1, "param2" : [1,2,3]},
             "status" : "finalizing",
             "progress_value" : 0.9,
             "progress_label" : "90%",
@@ -138,9 +138,8 @@ class TestModelJob(unittest.TestCase):
         self.assertNotEqual(update1, j2.update_date)
         self.assertEqual(j2.name,"FinalJob")
         self.assertEqual(j2.pipeline_id,2)
-        configjson = json.loads(j2.config)
 
-        self.assertEqual(configjson["param2"][1], 2)
+        self.assertEqual(j2.config["param2"][1], 2)
         self.assertEqual(j2.status,"finalizing")
         self.assertEqual(j2.progress_value, 0.9)
         self.assertEqual(j2.progress_label, "90%")

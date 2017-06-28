@@ -73,7 +73,7 @@ class JobManager:
         for fid in inputs_ids: JobFile.new(job.id, int(fid), True)
         job.save()
         # TODO : check if enough free resources to start the new job. otherwise, set status to waiting and return
-        job.init(1)
+        job.init(1, True)
         # Init directories entries for the container
         job.path = os.path.join(JOBS_DIR, CONTAINERS_CONFIG[job.pipeline.type]["job_name"].format("{}-{}".format(job.pipeline_id, job.id)))
         job.save()
