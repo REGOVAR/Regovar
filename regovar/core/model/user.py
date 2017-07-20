@@ -172,7 +172,7 @@ def user_is_admin(self):
     """
         Return True if user have administration rights; False otherwise
     """
-    return isinstance(self, User) and isinstance(self.roles_dic, dict) and "Administration" in self.roles_dic.keys() and self.roles_dic["Administration"] == "Write"
+    return isinstance(self, User) and isinstance(self.roles, dict) and "Administration" in self.roles.keys() and self.roles["Administration"] == "Write"
 
 
 

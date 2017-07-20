@@ -34,6 +34,42 @@ from api_rest.rest import *
 
 
 class ProjectHandler:
+
+
+    def build_tree(parent_id):
+        """
+            Recursive method to build treeview of folders/projects
+        """
+        from core.core import core
+
+        currentLevelProjects = core.projects.get(None, {"parent_id": parent_id, "is_sandbox": False}, None, None, None, 1)
+        result = []
+
+        for p in currentLevelProjects:
+            entry = p.to_json(["id", "name", "comment", "parent_id", "update_date", "create_date", "is_sandbox", "is_folder"])
+
+            if p.is_folder:
+                entry["children"] = ProjectHandler.build_tree(p.id)
+            else:
+                entry["subjects"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.subjects]
+                entry["analyses"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.analyses]
+                entry["analyses"] += [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.jobs]
+
+
+            result.append(entry)
+
+
+        return result
+
+
+
+    def tree(self, request):
+        """
+            Get projects as tree
+        """
+        return rest_success(ProjectHandler.build_tree(None))
+
+
     def list(self, request):
         """
             Get list of all projects (allow search parameters)
@@ -57,9 +93,14 @@ class ProjectHandler:
             Create or update a project with provided data
         """
         from core.core import core
+        project_id = request.match_info.get('project_id', -1)
         data = await request.json()
+
         if isinstance(data, str) : data = json.loads(data)
-        # Create the project
+        # If provided by the query parameter, ensure that we use the query project_id
+        if project_id != -1:
+        	data["id"] = project_id
+        # Create or update the project
         try:
             project = core.projects.create_or_update(data, 1)
         except RegovarException as ex:
