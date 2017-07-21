@@ -72,8 +72,9 @@ app.router.add_route('POST',   "/user/login", userHandler.login)                
 app.router.add_route('GET',    "/user/logout", userHandler.logout)                                               # Kill user's session
 app.router.add_route('DELETE', "/user/{user_id}", userHandler.delete)                                            # Delete a user
 
-app.router.add_route('GET',    "/project",                      projHandler.list)                                # Get list of all projects (allow search parameters)
-app.router.add_route('POST',   "/project",                      projHandler.create_or_update)                    # Create new project with provided data
+app.router.add_route('GET',    "/project/browserTree",           projHandler.tree)                               # Get projects as tree
+app.router.add_route('GET',    "/project",                       projHandler.list)                               # Get list of all projects (allow search parameters)
+app.router.add_route('POST',   "/project",                       projHandler.create_or_update)                   # Create new project with provided data
 app.router.add_route('GET',    "/project/{project_id}",          projHandler.get)                                # Get details about the project
 app.router.add_route('PUT',    "/project/{project_id}",          projHandler.create_or_update)                   # Edit project meta data
 app.router.add_route('DELETE', "/project/{project_id}",          projHandler.delete)                             # Delete the project
@@ -151,8 +152,8 @@ app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}", ana
 app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",          analysisHandler.filtering)              # Get result (variants) of the provided filter
 app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/count",    analysisHandler.filtering_count)        # Get total count of result of the provided filter
 app.router.add_route('GET',    "/analysis/{analysis_id}/selection",          analysisHandler.get_selection)          # Get variants data for the provided selection
-#app.router.add_route('POST',   "/analysis/{analysis_id}/export/{pipe_id}",   analysisHandler.get_export)             # Export selection of the provided analysis into the requested format
-#app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   analysisHandler.get_report)             # Generate report html for the provided analysis+report id
+app.router.add_route('POST',   "/analysis/{analysis_id}/export/{pipe_id}",   analysisHandler.get_export)             # Export selection of the provided analysis into the requested format
+app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   analysisHandler.get_report)             # Generate report html for the provided analysis+report id
 
 
 

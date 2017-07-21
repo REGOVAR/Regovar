@@ -6,7 +6,7 @@ import core.model as Model
 from core.framework.common import *
 from core.framework.erreurs_list import ERR
 
-
+from config import *
 
 
 
