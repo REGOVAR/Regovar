@@ -105,11 +105,14 @@ class AnalysisHandler:
         if isinstance(data, str): data = json.loads(data)
         analysis_id = request.match_info.get('analysis_id', -1)
         filter_json = data["filter"] if "filter" in data else {}
+        if isinstance(filter_json, str): filter_json = json.loads(filter_json)
         fields = data["fields"] if "fields" in data else None
+        if isinstance(fields, str): fields = json.loads(fields)
         limit = data["limit"] if "limit" in data else 100
         offset = data["offset"] if "offset" in data else 0
         mode = data["mode"] if "mode" in data else "table"
         order = data["order"] if "order" in data else None
+        if isinstance(order, str): order = json.loads(order)
 
         # 2- Check parameters
         if "mode" in data: mode = data["mode"]

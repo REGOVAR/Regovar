@@ -20,11 +20,11 @@ from core.managers import *
 # =====================================================================================================================
 # CORE MAIN OBJECT
 # =====================================================================================================================
-def notify_all_print(msg):
+def notify_all_print(self, data):
     """
         Default delegate used by the core for notification.
     """
-    print(str(msg))
+    print(str(data))
 
 
 class Core:

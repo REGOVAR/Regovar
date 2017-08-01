@@ -112,8 +112,18 @@ def prepare_vcf_parsing(filename):
     snpeff = {'snpeff' : False }
     if 'SnpEffVersion' in headers.keys() :
         if 'ANN' in headers['INFO'].keys():
-            # TODO
-            pass
+            d = headers['INFO']['ANN']['description'].split('\'')
+            snpeff = {
+                'snpeff' : {
+                    'version' : headers['SnpEffVersion'][0].strip().strip('"').split(' ')[0],
+                    'flag' : 'ANN',
+                    'name' : 'SnpEff',
+                    'db_type' : 'transcript',
+                    'db_pk_field' : 'Feature_ID',
+                    'columns' : [c.strip() for c in d[1].strip().split('|')],
+                    'description' : d[0].strip(),
+                }
+            }
         elif 'EFF' in headers['INFO'].keys():
             d = headers['INFO']['EFF']['description'].split('\'')
             snpeff = {
@@ -368,6 +378,9 @@ def escape_value_for_sql(value):
         value = value.replace('%', '%%')
         value = value.replace("'", "''")
 
+        # Workaround for some wrong annotations found
+        value = value.replace('-:0', '-: 0')   # VEP aa_maf = "-:0.1254..."
+
     return value
 
 
@@ -460,7 +473,7 @@ def getMaxUcscBin(start, end):
 def transaction_end(job_id, result):
     job_in_progress.remove(job_id)
     if result is Exception or result is None:
-        core.notify_all({'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
+        core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
             
             
 class VcfManager(AbstractImportManager):
@@ -494,7 +507,7 @@ class VcfManager(AbstractImportManager):
         count = 0
         for r in vcf_reader: 
             records_current += 1 
-            core.notify_all({'msg':'import_vcf', 'data' : {'file_id' : file_id, 'progress_value' : records_current / max(1,records_count), 'progress_label' : ""}})
+            core.notify_all(None, data={'msg':'import_vcf', 'data' : {'file_id' : file_id, 'progress_value' : records_current / max(1,records_count), 'progress_label' : ""}})
             # TODO : update sample's progress indicator
             
             chrm = normalize_chr(str(r.chrom))
@@ -530,7 +543,7 @@ class VcfManager(AbstractImportManager):
                                 for col_pos, col_name in enumerate(metadata['columns']):
                                     q_fields.append(metadata['db_map'][col_name]['name'])
                                     val = escape_value_for_sql(data[col_pos])
-
+                                    
                                     if col_name == 'Allele':
                                         allele = val.strip().strip("-")
                                     if col_name == metadata['db_pk_field']:
@@ -553,7 +566,7 @@ class VcfManager(AbstractImportManager):
 
 
                     # manage split big request to avoid sql out of memory transaction
-                    if count >= 10000:
+                    if count >= 10:
                         count = 0
                         # Model.execute_async(transaction1 + transaction2 + transaction3, transaction_end)
                         transaction = sql_query1 + sql_query2 + sql_query3
@@ -570,12 +583,23 @@ class VcfManager(AbstractImportManager):
         # Loop done, execute last pending query 
         log("VCF import : Execute last async query")
         transaction = sql_query1 + sql_query2 + sql_query3
-        Model.execute(transaction)
+        if transaction:
+            Model.execute(transaction)
         log("VCF import : Done")
 
+        # Compute composite variant by sample
+        sql_pattern = "UPDATE sample_variant" + db_ref_suffix + " u SET is_composite=TRUE WHERE u.sample_id = {0} AND u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM (SELECT array_agg(v.variant_id) as vids, g.name2 FROM sample_variant" + db_ref_suffix + " v INNER JOIN refgene" + db_ref_suffix + " g ON g.chr=v.chr AND g.txrange @> v.pos WHERE v.sample_id={0} AND v.genotype=1 or v.genotype=3 GROUP BY name2 HAVING count(*) > 1) AS sub)"
+
+
+        log("Computing is_composite fields by samples :")
+        for sid in samples:
+            query = sql_pattern.format(samples[sid].id)
+            log(" - sample {}".format(samples[sid].id))
+            Model.execute(query)
+        log("Sample import from VCF Done")
 
         end = datetime.datetime.now()
-        core.notify_all({'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
+        core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
         # TODO : update sample's progress indicator
 
 
@@ -627,14 +651,12 @@ class VcfManager(AbstractImportManager):
             
             if len(samples.keys()) == 0 : 
                 war("VCF files without sample cannot be imported in the database.")
-                core.notify_all({'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : "VCF files without sample cannot be imported in the database."}})
+                core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : "VCF files without sample cannot be imported in the database."}})
                 return;
 
-            core.notify_all({'msg':'import_vcf_start', 'data' : {'file_id' : file_id, 'samples' : [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
+            core.notify_all(None, data={'msg':'import_vcf_start', 'data' : {'file_id' : file_id, 'samples' : [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
             # TODO : update sample's progress indicator
 
-            # Associate sample to the file
-            Model.execute("INSERT INTO sample_file (sample_id, file_id) VALUES {0} ON CONFLICT DO NOTHING;".format( ','.join(["({0}, {1})".format(samples[sid].id, file_id) for sid in samples])))
 
             records_count = vcf_metadata['count']
             log ("Importing file {0}\n\r\trecords  : {1}\n\r\tsamples  :  ({2}) {3}\n\r\tstart    : {4}".format(filepath, records_count, len(samples.keys()), reprlib.repr([s for s in samples.keys()]), start))

@@ -66,6 +66,13 @@ def exec_cmd(cmd, asynch=False):
     return res, out, err
 
 
+def notify_all(msg):
+    """
+        Default delegate used by the core for notification.
+    """
+    print(str(msg))
+
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # TOOLS
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 

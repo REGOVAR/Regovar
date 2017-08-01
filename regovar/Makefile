@@ -10,7 +10,8 @@ clear:
 	
 
 list_db:
-	psql -U regovar -d regovar -c "SELECT relname as Table, pg_size_pretty(pg_total_relation_size(relid)) As Size, pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) as ExternalSize, rowcount as RowCount \
+	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
+	psql -U regovar -d $${database_name} -c "SELECT relname as Table, pg_size_pretty(pg_total_relation_size(relid)) As Size, pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) as ExternalSize, rowcount as RowCount \
     FROM pg_catalog.pg_statio_user_tables  \
     LEFT JOIN ( \
         SELECT table_name, n_tup_ins - n_tup_del as rowcount  \
@@ -31,8 +32,8 @@ install:
 	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$${database_name}'" ; \
 	sudo -u postgres psql -c "DROP DATABASE $${database_name}" ; \
 	sudo -u postgres psql -c "CREATE DATABASE $${database_name} OWNER regovar" ; \
-	psql -U regovar -d $$database_name -f ../install/create_all.sql ;
-
+	psql -U regovar -d $$database_name -f ../install/create_all.sql ; \
+	psql -U regovar -d $$database_name -f ../install/import_refgen.sql ;
 
 
 test:

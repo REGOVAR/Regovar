@@ -39,7 +39,7 @@ class JobManager:
         if query is None:
             query = {}
         if order is None:
-            order = "name, start_date desc"
+            order = "name"
         if offset is None:
             offset = 0
         if limit is None:
@@ -298,7 +298,7 @@ class JobManager:
             self.finalize(job.id, asynch)
         # Push notification
         if notify:
-            core.notify_all(msg={"action": "job_updated", "data" : [job.to_json()]})
+            core.notify_all(data={"action": "job_updated", "data" : [job.to_json()]})
 
 
     def __init_job(self, job_id, asynch, auto_notify):

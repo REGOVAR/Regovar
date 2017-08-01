@@ -586,6 +586,7 @@ CREATE TABLE public.sample_variant_hg19
     depth integer,
     infos character varying(255)[][] COLLATE pg_catalog."C",
     mosaic real,
+    is_composite boolean DEFAULT False,
     CONSTRAINT sample_variant_hg19_pkey PRIMARY KEY (sample_id, chr, pos, ref, alt),
     CONSTRAINT sample_variant_hg19_ukey UNIQUE (sample_id, variant_id)
 );
@@ -785,7 +786,8 @@ INSERT INTO public.annotation_field(database_uid, ord, wt_default, name, name_ui
   ('8beee586e1cd098bc64b48403ed7755d', 9,  True, 'sample_alist',  'samples analysis',       'string', 'List of sample (in the analysis) that have the variant.', NULL),
   ('8beee586e1cd098bc64b48403ed7755d', 10, True, 'sample_acount', 'samples analysis count', 'int',    'Number of sample (in the analysis) that have the variant.', NULL),
   ('8beee586e1cd098bc64b48403ed7755d', 20, True, 's{}_gt',    'GT',     'enum',   'Genotype.', '{"enum" : {"0":"ref/ref", "1":"alt/alt", "2":"ref/alt", "3":"alt1/alt2"}}'),
-  ('8beee586e1cd098bc64b48403ed7755d', 30, True, 's{}_dp',    'DP',     'float',  'Depth.', NULL);
+  ('8beee586e1cd098bc64b48403ed7755d', 30, True, 's{}_dp',    'DP',     'float',  'Depth.', NULL),
+  ('8beee586e1cd098bc64b48403ed7755d', 40, True, 's{}_is_composite',    'is composite',     'bool',  'Is the variant composite for this sample.', NULL);
 
 INSERT INTO public.annotation_field(database_uid, ord, wt_default, name, name_ui, type, description, meta) VALUES
   ('d9121852fc1a279b95cb7e18c976f112', 1,  True, 'variant_id','id',     'int',    'Variant unique id in the database.', NULL),
@@ -798,7 +800,8 @@ INSERT INTO public.annotation_field(database_uid, ord, wt_default, name, name_ui
   ('d9121852fc1a279b95cb7e18c976f112', 9,  True, 'sample_alist',  'samples analysis',       'string', 'List of sample (in the analysis) that have the variant.', NULL),
   ('d9121852fc1a279b95cb7e18c976f112', 10, True, 'sample_acount', 'samples analysis count', 'int',    'Number of sample (in the analysis) that have the variant.', NULL),
   ('d9121852fc1a279b95cb7e18c976f112', 20, True, 's{}_gt',    'GT',     'enum',   'Genotype.', '{"enum" : {"0":"ref/ref", "1":"alt/alt", "2":"ref/alt", "3":"alt1/alt2"}}'),
-  ('d9121852fc1a279b95cb7e18c976f112', 30, True, 's{}_dp',    'DP',     'float',  'Depth.', NULL);
+  ('d9121852fc1a279b95cb7e18c976f112', 30, True, 's{}_dp',    'DP',     'float',  'Depth.', NULL),
+  ('d9121852fc1a279b95cb7e18c976f112', 40, True, 's{}_is_composite',    'is composite',     'bool',  'Is the variant composite for this sample.', NULL);
 
 INSERT INTO public.annotation_field(database_uid, ord, wt_default, name, name_ui, type, description, meta) VALUES
   ('7363e34fee56d2cb43583f9bd19d3980', 1,  True, 'variant_id','id',     'int',    'Variant unique id in the database.', NULL),
@@ -811,7 +814,9 @@ INSERT INTO public.annotation_field(database_uid, ord, wt_default, name, name_ui
   ('7363e34fee56d2cb43583f9bd19d3980', 9,  True, 'sample_alist',  'samples analysis',       'string', 'List of sample (in the analysis) that have the variant.', NULL),
   ('7363e34fee56d2cb43583f9bd19d3980', 10, True, 'sample_acount', 'samples analysis count', 'int',    'Number of sample (in the analysis) that have the variant.', NULL),
   ('7363e34fee56d2cb43583f9bd19d3980', 20, True, 's{}_gt',    'GT',     'enum',   'Genotype.', '{"enum" : {"0":"ref/ref", "1":"alt/alt", "2":"ref/alt", "3":"alt1/alt2"}}'),
-  ('7363e34fee56d2cb43583f9bd19d3980', 30, True, 's{}_dp',    'DP',     'float',  'Depth.', NULL);
+  ('7363e34fee56d2cb43583f9bd19d3980', 30, True, 's{}_dp',    'DP',     'float',  'Depth.', NULL),
+  ('7363e34fee56d2cb43583f9bd19d3980', 40, True, 's{}_is_composite',    'is composite',     'bool',  'Is the variant composite for this sample.', NULL);
+
 
 
 UPDATE annotation_field SET uid=MD5(concat(database_uid, name));

@@ -73,7 +73,7 @@ class FilterEngine:
         if len(sample_ids) == 0: raise RegovarException("No sample... so not able to retrieve data")
         db_ref_suffix= "hg19"  # execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first().table_suffix
         progress = {"msg": "wt_processing", "start": datetime.datetime.now().ctime(), "analysis_id": analysis_id, "step": 1}
-        core.notify_all(progress)
+        core.notify_all(None, data=progress)
         # Create schema
         w_table = 'wt_{}'.format(analysis_id)
         query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE TABLE {0} (\
@@ -94,7 +94,8 @@ class FilterEngine:
             sample_acount integer, \
             depth integer, "
         query += ", ".join(["s{}_gt integer".format(i) for i in sample_ids]) + ", "
-        query += ", ".join(["s{}_dp integer".format(i) for i in sample_ids]) 
+        query += ", ".join(["s{}_dp integer".format(i) for i in sample_ids]) + ", "
+        query += ", ".join(["s{}_is_composite boolean".format(i) for i in sample_ids]) 
         query += ", CONSTRAINT {0}_ukey UNIQUE (variant_id, transcript_pk_field_uid, transcript_pk_value));"
         execute(query.format(w_table))
         # Insert variant without annotation first
@@ -108,7 +109,7 @@ class FilterEngine:
         execute(query.format(w_table, db_ref_suffix, ','.join([str(i) for i in sample_ids])))
         # Complete sample-variant's associations
         for sid in sample_ids:
-            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth FROM (SELECT variant_id, genotype, depth FROM sample_variant_{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(w_table, db_ref_suffix, sid))
+            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, is_composite FROM sample_variant_{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(w_table, db_ref_suffix, sid))
 
         query = "UPDATE {0} SET \
             is_variant=(CASE WHEN ref<>alt THEN True ELSE False END), \
@@ -125,6 +126,7 @@ class FilterEngine:
         query += "CREATE INDEX {0}_idx_trx ON {0} USING btree (transcript_pk_field_uid, transcript_pk_value);".format(w_table)
         query += "".join(["CREATE INDEX {0}_idx_s{1}_gt ON {0} USING btree (s{1}_gt);".format(w_table, i) for i in sample_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_dp ON {0} USING btree (s{1}_dp);".format(w_table, i) for i in sample_ids])
+        query += "".join(["CREATE INDEX {0}_idx_s{1}_is_composite ON {0} USING btree (s{1}_is_composite);".format(w_table, i) for i in sample_ids])
         execute(query)
         # Update count stat of the analysis
         query = "UPDATE analysis SET total_variants=(SELECT COUNT(*) FROM {} WHERE is_variant), status='computing' WHERE id={}".format(w_table, analysis_id)
@@ -144,7 +146,7 @@ class FilterEngine:
         diff_fields = []
         diff_dbs = []
         progress = {"msg": "wt_processing", "start": datetime.datetime.now().ctime(), "analysis_id": analysis_id, "step": 2, "progress_total": total, "progress_current": 0}
-        core.notify_all(progress)
+        core.notify_all(None, data=progress)
         try:
             query = "SELECT column_name FROM information_schema.columns WHERE table_name='wt_{}'".format(analysis_id)
             current_fields = [row.column_name if row.column_name[0] != '_' else row.column_name[1:] for row in execute(query)]
@@ -200,7 +202,7 @@ class FilterEngine:
             # Add new annotation columns to the working table
             execute(query)
         progress.update({"step": 3})
-        core.notify_all(progress)
+        core.notify_all(None, data=progress)
 
         # Loop over new annotation's databases, because if new: need to add new transcripts to the working table
         fields_to_copy_from_variant = ["variant_id","bin","chr","pos","ref","alt","is_transition","sample_tlist","sample_tcount","sample_alist","sample_acount","depth"]
@@ -221,7 +223,7 @@ class FilterEngine:
                                        self.db_map[uid]["name"])
                 execute(query)
         progress.update({"step": 4})
-        core.notify_all(progress)
+        core.notify_all(None, data=progress)
 
         # Create update query to retrieve annotation
         UPDATE_LOOP_RANGE = 1000
@@ -261,15 +263,15 @@ class FilterEngine:
                 for page in range(0, total, UPDATE_LOOP_RANGE):
                     execute(query)
                     progress.update({"progress_current": page})
-                    core.notify_all(progress)
+                    core.notify_all(None, data=progress)
             progress.update({"step": 5, "progress_current": total})
-            core.notify_all(progress)
+            core.notify_all(None, data=progress)
 
         # Apply queries to update attributes and filters columns in the wt
         if len(update_queries) > 0:
             execute("".join(update_queries))
         progress.update({"step": 6})
-        core.notify_all(progress)
+        core.notify_all(None, data=progress)
 
         # Update count stat of the analysis
         query = "UPDATE analysis SET status='ready' WHERE id={}".format(analysis_id)
@@ -313,9 +315,9 @@ class FilterEngine:
         if not count and analysis_id > 0:
             settings = {}
             try:
-                analysis.filter = json.dumps(filter_json)
-                analysis.fields = json.dumps(fields)
-                analysis.order = '[]' if order is None else json.dumps(order)
+                analysis.filter = filter_json
+                analysis.fields = fields
+                analysis.order = [] if order is None else order
                 analysis.save()
             except:
                 # TODO: log error
@@ -509,7 +511,7 @@ class FilterEngine:
                     else:
                         return "_{0}".format(data[1])
             if data[0] == 'value':
-                if ftype in ['int', 'float', 'enum', 'percent']:
+                if ftype in ['int', 'float', 'enum', 'percent', 'bool']:
                     return str(data[1])
                 elif ftype == 'string':
                     return "'{0}'".format(data[1])

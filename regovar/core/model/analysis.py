@@ -125,6 +125,18 @@ def analysis_load(self, data):
         if "reference_id"       in data.keys(): self.reference_id       = data["reference_id"]
         if "computing_progress" in data.keys(): self.computing_progress = data["computing_progress"]
         if "status"             in data.keys(): self.status             = data["status"]
+
+        if "samples_ids"        in data.keys():
+            # Remove old
+            for sid in self.samples_ids:
+                if sid not in data["samples_ids"]:
+                    AnalysisSample.delete(self.id, sid)
+            # Add new samples
+            for sid in data["samples_ids"]:
+                if sid not in self.samples_ids:
+                    AnalysisSample.new(self.id, sid)
+
+
         # check to reload dynamics properties
         if self.loading_depth > 0:
             self.load_depth(self.loading_depth)
@@ -292,13 +304,21 @@ def analysissample_get_analyses(sample_id, loading_depth=0):
     return result
 
 
-def analysissample_new(sample_id, analysis_id, nickname=None):
+def analysissample_new(analysis_id, sample_id, nickname=None):
     """
         Create a new sample-file association and save it in the database
     """
     sf = AnalysisSample(sample_id=sample_id, analysis_id=analysis_id, nickname=nickname)
     sf.save()
     return sf
+
+
+def analysissample_delete(analysis_id, sample_id):
+    """
+        Delete the link between an analysis and a sample
+    """
+    # TODO : delete linked filters, AnalysisSample, Attribute, WorkingTable
+    session().query(AnalysisSample).filter_by(analysis_id=analysis_id, sample_id=sample_id).delete(synchronize_session=False)
 
 
 AnalysisSample = Base.classes.analysis_sample
@@ -308,7 +328,7 @@ AnalysisSample.get_samples = analysissample_get_samples
 AnalysisSample.get_analyses = analysissample_get_analyses
 AnalysisSample.save = generic_save
 AnalysisSample.new = analysissample_new
-
+AnalysisSample.delete = analysissample_delete
 
 
 
