@@ -96,6 +96,7 @@ def prepare_vcf_parsing(filename):
         d = headers['INFO']['CSQ']['description'].split('Format:')
         vep = {
             'vep' : {
+                'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
                 'version' : headers['VEP'][0].split(' ')[0],
                 'flag' : 'CSQ',
                 'name' : 'VEP',
@@ -115,6 +116,7 @@ def prepare_vcf_parsing(filename):
             d = headers['INFO']['ANN']['description'].split('\'')
             snpeff = {
                 'snpeff' : {
+                    'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
                     'version' : headers['SnpEffVersion'][0].strip().strip('"').split(' ')[0],
                     'flag' : 'ANN',
                     'name' : 'SnpEff',
@@ -128,6 +130,7 @@ def prepare_vcf_parsing(filename):
             d = headers['INFO']['EFF']['description'].split('\'')
             snpeff = {
                 'snpeff' : {
+                    'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
                     'version' : headers['SnpEffVersion'][0].strip().strip('"').split(' ')[0],
                     'flag' : 'EFF',
                     'name' : 'SnpEff',
@@ -139,6 +142,26 @@ def prepare_vcf_parsing(filename):
             }
             if 'Transcript_ID' not in snpeff['snpeff']['columns']:
                 snpeff = {'snpeff' : False }
+
+    # Check for dbNSFP
+    dbnsfp = {'dbnsfp' : False }
+    dbnsfp_fields = [f.replace("dbNSFP_", "", 1) for f in headers['INFO'].keys() if f.startswith("dbNSFP_")]
+    sorted(dbnsfp_fields)
+    if len(dbnsfp_fields) > 0:
+        dbnsfp = {
+            'dbnsfp' : {
+                'type' : 'column_annotation', # use this key for standard annotations (one by column in INFO field)
+                'version' : "", # how to get version dbNSFP used by SnpSift ?
+                'flag' : '',
+                'name' : 'dbNSFP',
+                'prefix' : 'dbNSFP_',
+                'db_type' : 'variant',
+                'columns' : dbnsfp_fields,
+                'description' : "A database for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome.",
+            }
+        }
+
+
 
 
     # Retrieve extension
@@ -158,6 +181,7 @@ def prepare_vcf_parsing(filename):
     }
     result['annotations'].update(vep)
     result['annotations'].update(snpeff)
+    result['annotations'].update(dbnsfp)
     return result
 
 
@@ -183,8 +207,9 @@ def create_annotation_db(reference_id, reference_name, table_name, vcf_annotatio
         Create an annotation database according to information retrieved from the VCF file with the prepare_vcf_parsing method
     """
     # Create annotation table
-    pk = 'transcript_id character varying(100), ' if vcf_annotation_metadata['db_type'] == 'transcript' else ''
-    pk2 = ',transcript_id' if vcf_annotation_metadata['db_type'] == 'transcript' else ''
+    isTranscript = vcf_annotation_metadata['db_type'] == 'transcript'
+    pk = 'transcript_id character varying(100), ' if isTranscript else ''
+    pk2 = ',transcript_id' if isTranscript else ''
     pattern = "CREATE TABLE {0} (variant_id bigint, bin integer, chr integer, pos bigint, ref text, alt text, " + pk + "{1}, CONSTRAINT {0}_ukey UNIQUE (variant_id" + pk2 +"));"
     query   = ""
     db_map = {}
@@ -193,25 +218,44 @@ def create_annotation_db(reference_id, reference_name, table_name, vcf_annotatio
         col_name = normalise_annotation_name(col)
         fields.append("{} text".format(col_name))
         db_map[col_name] = { 'name' : col_name, 'type' : 'string', 'name_ui' : col }  # By default, create a table with only text field. Type can be changed by user via a dedicated UI
+    
     query += pattern.format(table_name, ', '.join(fields))
     query += "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(table_name)
     query += "CREATE INDEX {0}_idx_var ON {0} USING btree (bin, chr, pos);".format(table_name)
-    if vcf_annotation_metadata['db_type'] == 'transcript':
-        query += "CREATE INDEX {0}_idx_tid ON {0} USING btree (transcript_id);".format(table_name)
+        
 
-    # Register annotation
-    db_uid, pk_uid = Model.execute("SELECT MD5('{0}'), MD5(concat(MD5('{0}'), '{1}'))".format(table_name, normalise_annotation_name(vcf_annotation_metadata['db_pk_field']))).first()
-    query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, db_pk_field_uid, jointure) VALUES "
-    query += "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{8}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt AND {2}.transcript_id={{0}}.transcript_pk_value');".format( # We removed this condition /*AND {{0}}.transcript_pk_field_uid=\"{8}\"*/ in the jointure as this condition is already done by a previous query when updating working table with annotations
-        db_uid, 
-        reference_id, 
-        table_name, 
-        vcf_annotation_metadata['version'], 
-        vcf_annotation_metadata['name'], 
-        vcf_annotation_metadata['description'], 
-        30, 
-        vcf_annotation_metadata['db_type'],
-        pk_uid)  
+
+    if isTranscript:
+        # Register annotation
+        db_uid, pk_uid = Model.execute("SELECT MD5('{0}'), MD5(concat(MD5('{0}'), '{1}'))".format(table_name, normalise_annotation_name(vcf_annotation_metadata['db_pk_field']))).first()
+    
+        query += "CREATE INDEX {0}_idx_tid ON {0} USING btree (transcript_id);".format(table_name)
+        query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, db_pk_field_uid, jointure) VALUES "
+        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{8}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt AND {2}.transcript_id={{0}}.transcript_pk_value');"
+        query += q.format(
+            db_uid, 
+            reference_id, 
+            table_name, 
+            vcf_annotation_metadata['version'], 
+            vcf_annotation_metadata['name'], 
+            vcf_annotation_metadata['description'], 
+            30, 
+            vcf_annotation_metadata['db_type'],
+            pk_uid)
+    else:
+        db_uid = Model.execute("SELECT MD5('{0}')".format(table_name)).first()[0]
+    
+        query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, jointure) VALUES "
+        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt AND {2}.transcript_id={{0}}.transcript_pk_value');"
+        query += q.format(
+            db_uid, 
+            reference_id, 
+            table_name, 
+            vcf_annotation_metadata['version'], 
+            vcf_annotation_metadata['name'], 
+            vcf_annotation_metadata['description'], 
+            30, 
+            vcf_annotation_metadata['db_type'])
 
     query += "INSERT INTO annotation_field (database_uid, ord, name, name_ui, type) VALUES "
     for idx, f in enumerate(vcf_annotation_metadata['columns']):
@@ -227,7 +271,7 @@ def prepare_annotation_db(reference_id, vcf_annotation_metadata):
     """
 
     reference  = Model.execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first()[0]
-    table_name = normalise_annotation_name('{}_{}_{}'.format(vcf_annotation_metadata['flag'], vcf_annotation_metadata['version'], reference))
+    table_name = normalise_annotation_name('{}_{}_{}'.format(vcf_annotation_metadata['name'], vcf_annotation_metadata['version'], reference))
     
     # Get database schema (if available)
     table_cols = {}
@@ -500,70 +544,94 @@ class VcfManager(AbstractImportManager):
         
         sql_pattern1 = "INSERT INTO {0} (chr, pos, ref, alt, is_transition, bin, sample_list) VALUES ({1}, {2}, '{3}', '{4}', {5}, {6}, array[{7}]) ON CONFLICT (chr, pos, ref, alt) DO UPDATE SET sample_list=array_intersect({0}.sample_list, array[{7}])  WHERE {0}.chr={1} AND {0}.pos={2} AND {0}.ref='{3}' AND {0}.alt='{4}';"
         sql_pattern2 = "INSERT INTO sample_variant" + db_ref_suffix + " (sample_id, variant_id, bin, chr, pos, ref, alt, genotype, depth) SELECT {0}, id, {1}, '{2}', {3}, '{4}', '{5}', '{6}', {7} FROM variant" + db_ref_suffix + " WHERE bin={1} AND chr={2} AND pos={3} AND ref='{4}' AND alt='{5}' ON CONFLICT (sample_id, variant_id) DO NOTHING;"
-        sql_pattern3 = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, transcript_id, {1}) SELECT id, {3},{4},{5},'{6}','{7}', '{8}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id, transcript_id) DO  NOTHING;" # TODO : on conflict, shall update fields with value in the VCF to complete database annotation with (maybe) new fields
+        
+        sql_annot_trx = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, transcript_id, {1}) SELECT id, {3},{4},{5},'{6}','{7}', '{8}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id, transcript_id) DO  NOTHING;" # TODO : on conflict, shall update fields with value in the VCF to complete database annotation with (maybe) new fields
+        sql_annot_var = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, {1}) SELECT id, {3},{4},{5},'{6}','{7}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id) DO  NOTHING;"
+
         sql_query1 = ""
         sql_query2 = ""
         sql_query3 = ""
         count = 0
-        for r in vcf_reader: 
+        ipdb.set_trace()
+        for row in vcf_reader: 
             records_current += 1 
             core.notify_all(None, data={'msg':'import_vcf', 'data' : {'file_id' : file_id, 'progress_value' : records_current / max(1,records_count), 'progress_label' : ""}})
             # TODO : update sample's progress indicator
             
-            chrm = normalize_chr(str(r.chrom))
-            samples_array = ','.join([str(samples[s].id) for s in r.samples])
-            for sn in r.samples:
-                s = r.samples.get(sn)
-                if (len(s.alleles) > 0) :
-                    pos, ref, alt = normalize(r.pos, r.ref, s.alleles[0])
+
+            chrm = normalize_chr(str(row.chrom))
+            samples_array = ','.join([str(samples[s].id) for s in row.samples])
+            for sn in row.samples:
+                sp = row.samples.get(sn)
+                if (len(sp.alleles) > 0) :
+                    pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
                     if pos is not None and alt != ref :
                         bin = getMaxUcscBin(pos, pos + len(ref))
                         sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
-                        sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(s), get_info(s, 'DP'))
+                        sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'))
                         count += 1
 
-                    pos, ref, alt = normalize(r.pos, r.ref, s.alleles[1])
+                    pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[1])
                     if pos is not None and alt != ref :
                         bin = getMaxUcscBin(pos, pos + len(ref))
                         sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
-                        sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(s), get_info(s, 'DP'))
+                        sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'))
                         count += 1
 
 
                     # Import custom annotation for the variant
                     for ann_name, metadata in vcf_metadata['annotations'].items():
                         if metadata:
-                            # By transcript (r.info is a list of annotation. Inside we shall find, transcript and allele information to be able to save data for the current variant)
-                            for info in r.info[metadata['flag']]:
-                                data = info.split('|')
+                            if metadata['type'] == 'multiple_annotation': 
+                                # Flag is set, we have to parse specified info fields (use by VEP and SnpEff by example)
+                                # By transcript (row.info is a list of annotation. Inside we shall find, transcript and allele information to be able to save data for the current variant)
+                                for info in row.info[metadata['flag']]:
+                                    data = info.split('|')
+                                    q_fields = []
+                                    q_values = []
+                                    allele   = ""
+                                    trx_pk = "NULL"
+                                    for col_pos, col_name in enumerate(metadata['columns']):
+                                        q_fields.append(metadata['db_map'][col_name]['name'])
+                                        val = escape_value_for_sql(data[col_pos])
+                                        
+                                        if col_name == 'Allele':
+                                            allele = val.strip().strip("-")
+                                        if col_name == metadata['db_pk_field']:
+                                            trx_pk = val.strip()
+
+                                        q_values.append('\'{}\''.format(val) if val != '' and val is not None else 'NULL')
+
+                                    pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
+                                    # print(pos, ref, alt, allele)
+                                    if pos is not None and alt==allele and len(q_fields) > 0:
+                                        # print("ok")
+                                        sql_query3 += sql_annot_trx.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
+                                        count += 1
+                                    pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[1])
+                                    # print(pos, ref, alt, allele)
+                                    if pos is not None and alt==allele and len(q_fields) > 0:
+                                        # print("ok")
+                                        sql_query3 += sql_annot_trx.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
+                                        count += 1
+                            elif metadata['type'] == 'column_annotation': 
                                 q_fields = []
                                 q_values = []
-                                allele   = ""
-                                trx_pk = "NULL"
-                                for col_pos, col_name in enumerate(metadata['columns']):
-                                    q_fields.append(metadata['db_map'][col_name]['name'])
-                                    val = escape_value_for_sql(data[col_pos])
-                                    
-                                    if col_name == 'Allele':
-                                        allele = val.strip().strip("-")
-                                    if col_name == metadata['db_pk_field']:
-                                        trx_pk = val.strip()
+                                # No flag, but column, we have to parse column to retrieve variant's annotations
+                                for col_name in metadata['columns']:
+                                    if col_name in row.info:
+                                        data = row.info[col_name]
+                                        if isinstance(data, tuple): data = ', '.join([str(v) for v in data])
+                                        q_fields.append(metadata['db_map'][col_name]['name'])
+                                        val = escape_value_for_sql(data)
 
-                                    q_values.append('\'{}\''.format(val) if val != '' and val is not None else 'NULL')
+                                        q_values.append('\'{}\''.format(val) if val != '' and val is not None else 'NULL')
 
-                                pos, ref, alt = normalize(r.pos, r.ref, s.alleles[0])
-                                # print(pos, ref, alt, allele)
-                                if pos is not None and alt==allele:
+                                pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
+                                if pos is not None and len(q_fields) > 0:
                                     # print("ok")
-                                    sql_query3 += sql_pattern3.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
+                                    sql_query3 += sql_annot_var.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt)
                                     count += 1
-                                pos, ref, alt = normalize(r.pos, r.ref, s.alleles[1])
-                                # print(pos, ref, alt, allele)
-                                if pos is not None and alt==allele:
-                                    # print("ok")
-                                    sql_query3 += sql_pattern3.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
-                                    count += 1
-
 
                     # manage split big request to avoid sql out of memory transaction
                     if count >= 10:
@@ -588,7 +656,7 @@ class VcfManager(AbstractImportManager):
         log("VCF import : Done")
 
         # Compute composite variant by sample
-        sql_pattern = "UPDATE sample_variant" + db_ref_suffix + " u SET is_composite=TRUE WHERE u.sample_id = {0} AND u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM (SELECT array_agg(v.variant_id) as vids, g.name2 FROM sample_variant" + db_ref_suffix + " v INNER JOIN refgene" + db_ref_suffix + " g ON g.chr=v.chr AND g.txrange @> v.pos WHERE v.sample_id={0} AND v.genotype=1 or v.genotype=3 GROUP BY name2 HAVING count(*) > 1) AS sub)"
+        sql_pattern = "UPDATE sample_variant" + db_ref_suffix + " u SET is_composite=TRUE WHERE u.sample_id = {0} AND u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM (SELECT array_agg(v.variant_id) as vids, g.name2 FROM sample_variant" + db_ref_suffix + " v INNER JOIN refgene" + db_ref_suffix + " g ON g.chr=v.chr AND g.txrange @> v.pos WHERE v.sample_id={0} AND v.genotype=2 or v.genotype=3 GROUP BY name2 HAVING count(*) > 1) AS sub)"
 
 
         log("Computing is_composite fields by samples :")

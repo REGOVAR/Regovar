@@ -511,7 +511,7 @@ class FilterEngine:
                     else:
                         return "_{0}".format(data[1])
             if data[0] == 'value':
-                if ftype in ['int', 'float', 'enum', 'percent', 'bool']:
+                if ftype in ['int', 'float', 'enum', 'percent', 'bool', 'sample_array']:
                     return str(data[1])
                 elif ftype == 'string':
                     return "'{0}'".format(data[1])
