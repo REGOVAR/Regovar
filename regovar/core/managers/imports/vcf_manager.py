@@ -208,8 +208,8 @@ def create_annotation_db(reference_id, reference_name, table_name, vcf_annotatio
     """
     # Create annotation table
     isTranscript = vcf_annotation_metadata['db_type'] == 'transcript'
-    pk = 'transcript_id character varying(100), ' if isTranscript else ''
-    pk2 = ',transcript_id' if isTranscript else ''
+    pk = 'regovar_trx_id character varying(100), ' if isTranscript else ''
+    pk2 = ',regovar_trx_id' if isTranscript else ''
     pattern = "CREATE TABLE {0} (variant_id bigint, bin integer, chr integer, pos bigint, ref text, alt text, " + pk + "{1}, CONSTRAINT {0}_ukey UNIQUE (variant_id" + pk2 +"));"
     query   = ""
     db_map = {}
@@ -229,9 +229,9 @@ def create_annotation_db(reference_id, reference_name, table_name, vcf_annotatio
         # Register annotation
         db_uid, pk_uid = Model.execute("SELECT MD5('{0}'), MD5(concat(MD5('{0}'), '{1}'))".format(table_name, normalise_annotation_name(vcf_annotation_metadata['db_pk_field']))).first()
     
-        query += "CREATE INDEX {0}_idx_tid ON {0} USING btree (transcript_id);".format(table_name)
+        query += "CREATE INDEX {0}_idx_tid ON {0} USING btree (regovar_trx_id);".format(table_name)
         query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, db_pk_field_uid, jointure) VALUES "
-        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{8}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt AND {2}.transcript_id={{0}}.transcript_pk_value');"
+        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{8}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt AND {2}.regovar_trx_id={{0}}.transcript_pk_value');"
         query += q.format(
             db_uid, 
             reference_id, 
@@ -246,7 +246,7 @@ def create_annotation_db(reference_id, reference_name, table_name, vcf_annotatio
         db_uid = Model.execute("SELECT MD5('{0}')".format(table_name)).first()[0]
     
         query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, jointure) VALUES "
-        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt AND {2}.transcript_id={{0}}.transcript_pk_value');"
+        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt AND {2}.regovar_trx_id={{0}}.transcript_pk_value');"
         query += q.format(
             db_uid, 
             reference_id, 
@@ -545,7 +545,7 @@ class VcfManager(AbstractImportManager):
         sql_pattern1 = "INSERT INTO {0} (chr, pos, ref, alt, is_transition, bin, sample_list) VALUES ({1}, {2}, '{3}', '{4}', {5}, {6}, array[{7}]) ON CONFLICT (chr, pos, ref, alt) DO UPDATE SET sample_list=array_intersect({0}.sample_list, array[{7}])  WHERE {0}.chr={1} AND {0}.pos={2} AND {0}.ref='{3}' AND {0}.alt='{4}';"
         sql_pattern2 = "INSERT INTO sample_variant" + db_ref_suffix + " (sample_id, variant_id, bin, chr, pos, ref, alt, genotype, depth) SELECT {0}, id, {1}, '{2}', {3}, '{4}', '{5}', '{6}', {7} FROM variant" + db_ref_suffix + " WHERE bin={1} AND chr={2} AND pos={3} AND ref='{4}' AND alt='{5}' ON CONFLICT (sample_id, variant_id) DO NOTHING;"
         
-        sql_annot_trx = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, transcript_id, {1}) SELECT id, {3},{4},{5},'{6}','{7}', '{8}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id, transcript_id) DO  NOTHING;" # TODO : on conflict, shall update fields with value in the VCF to complete database annotation with (maybe) new fields
+        sql_annot_trx = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, regovar_trx_id, {1}) SELECT id, {3},{4},{5},'{6}','{7}', '{8}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id, regovar_trx_id) DO  NOTHING;" # TODO : on conflict, shall update fields with value in the VCF to complete database annotation with (maybe) new fields
         sql_annot_var = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, {1}) SELECT id, {3},{4},{5},'{6}','{7}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id) DO  NOTHING;"
 
         sql_query1 = ""
@@ -592,6 +592,9 @@ class VcfManager(AbstractImportManager):
                                     allele   = ""
                                     trx_pk = "NULL"
                                     for col_pos, col_name in enumerate(metadata['columns']):
+                                        if col_pos >= len(data):
+                                            # With EFF, ERROR/WARNING columns can be optional
+                                            continue
                                         q_fields.append(metadata['db_map'][col_name]['name'])
                                         val = escape_value_for_sql(data[col_pos])
                                         
@@ -634,7 +637,7 @@ class VcfManager(AbstractImportManager):
                                     count += 1
 
                     # manage split big request to avoid sql out of memory transaction
-                    if count >= 10:
+                    if count >= 1000:
                         count = 0
                         # Model.execute_async(transaction1 + transaction2 + transaction3, transaction_end)
                         transaction = sql_query1 + sql_query2 + sql_query3

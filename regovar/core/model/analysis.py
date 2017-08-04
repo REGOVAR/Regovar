@@ -20,9 +20,9 @@ def analysis_init(self, loading_depth=0):
             - project_id        : int           : the id of the project that owns this analysis
             - name              : str           : the name of the analysis
             - comment           : str           : an optional comment
-            - template_id       : int           : null or refer to the template that have been used to init the analysis settings
+            - settings          : json          : null or refer to the template that have been used to init the analysis settings
             - fields            : [str]         : The list of field's id to display
-            - filter            : dict          : The last current filter to applied
+            - filter            : json          : The last current filter to applied
             - order             : [str]         : The list of field's id to used to order result
             - selection         : [str]         : The list of ids of selected variants
             - create_date       : datetime      : The date when the analysis have been created
@@ -36,7 +36,6 @@ def analysis_init(self, loading_depth=0):
             - attributes        : [Attribute]   : The list of attributes defined for this analysis
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - project           : [Job]         : The list of Job owns by the project
-            - template          : [Analysis]    : The list of Analysis owns by the project
             - samples           : [File]        : The list of File owns by the project
             - filters           : Project       : The parent Project if defined
     """
@@ -57,13 +56,11 @@ def analysis_load_depth(self, loading_depth):
     from core.model.project import Project
     from core.model.template import Template
     self.project = None
-    self.template = None
     self.samples = []
     self.filters = []
     if loading_depth > 0:
         try:
             self.project = Project.from_id(self.project_id, self.loading_depth-1)
-            self.template = Template.from_id(self.template_id, self.loading_depth-1)
             self.samples = AnalysisSample.get_samples(self.id, self.loading_depth-1)
             self.filters = self.get_filters(self.loading_depth-1)
         except Exception as ex:
@@ -102,18 +99,18 @@ def analysis_to_json(self, fields=None):
             except Exception as ex:
                 err("Analysis.to_json unable to evaluate the value of the field {}. {}".format(f, str(ex)))
     return result
-
+    
+    
 
 def analysis_load(self, data):
     """
         Helper to update several paramters at the same time. Note that dynamics properties (project, template, samples, samples_ids, attributes)
-        cannot be updated with this method. However, you can update project_id and template_id.
+        cannot be updated with this method. However, you can update project_id .
         To update sample and Attributes you must used dedicated models object : AnalysisSample and Attribute
     """
     try:
         if "name"               in data.keys(): self.name               = data['name']
         if "project_id"         in data.keys(): self.project_id         = data['project_id']
-        if "template_id"        in data.keys(): self.template_id        = data['template_id']
         if "comment"            in data.keys(): self.comment            = data['comment']
         if "create_date"        in data.keys(): self.create_date        = data['create_date']
         if "update_date"        in data.keys(): self.update_date        = data['update_date']
@@ -124,9 +121,15 @@ def analysis_load(self, data):
         if "total_variants"     in data.keys(): self.total_variants     = data["total_variants"]
         if "reference_id"       in data.keys(): self.reference_id       = data["reference_id"]
         if "computing_progress" in data.keys(): self.computing_progress = data["computing_progress"]
-        if "status"             in data.keys(): self.status             = data["status"]
+        if "status"             in data.keys(): self.status             = data["status"] if data["status"] else 'emmpty'
+        if "settings" in data.keys(): 
+            # When settings change, need to regenerate working table
+            self.settings = data['settings']
+            self.status = "empty"
+            self.computing_progress = 0
+            execute("DROP TABLE IF EXISTS wt_{}".format(self.id))
 
-        if "samples_ids"        in data.keys():
+        if "samples_ids" in data.keys():
             # Remove old
             for sid in self.samples_ids:
                 if sid not in data["samples_ids"]:
@@ -135,6 +138,10 @@ def analysis_load(self, data):
             for sid in data["samples_ids"]:
                 if sid not in self.samples_ids:
                     AnalysisSample.new(self.id, sid)
+            # When settings change, need to regenerate working table
+            self.status = "empty"
+            self.computing_progress = 0
+            execute("DROP TABLE IF EXISTS wt_{}".format(self.id))
 
 
         # check to reload dynamics properties
@@ -221,7 +228,7 @@ def analysis_get_attributes(self, loading_depth=0):
 
 
 Analysis = Base.classes.analysis
-Analysis.public_fields = ["id", "name", "project_id", "template_id", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "computing_progress", "status"]
+Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "computing_progress", "status"]
 Analysis.init = analysis_init
 Analysis.load_depth = analysis_load_depth
 Analysis.from_id = analysis_from_id

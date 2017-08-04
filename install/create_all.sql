@@ -252,7 +252,7 @@ CREATE TABLE public.analysis
     project_id integer,
     name character varying(255) COLLATE pg_catalog."C",
     comment text COLLATE pg_catalog."C",
-    template_id integer,
+    settings json,
     fields json,
     filter json,
     "order" json,
