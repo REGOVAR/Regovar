@@ -955,6 +955,7 @@
                             <li><a href="#annot_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list db</a></li>
                             <li><a href="#annot_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show db</a></li>
                             <li><a href="#annot_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show field</a></li>
+                            <li><a href="#annot_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete db</a></li>
                         </ul>
                     </div>
 
@@ -1047,6 +1048,30 @@
                                     <div class="col-sm-10">
                                         <input id="annot_api_04_query" type="text" placeholder="/annotation/field/{field_id}" value="/annotation/field/de2b02e8a7f3c77cf55efd18e0832f22"/> 
                                         <button onclick="generic_exec_from_input('annot_api_04_query', 'annot_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- Delete db -->
+                            <div class="tab-pane fade" id="annot_api_05">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>DELETE /annotation/db/{db_id}</code><br/>
+                                        <i>Delete an annotation database with all its fields. The user have to take care regarding side effects of this actions on his analysis.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>ref_id</code><br/>
+                                        <i>The id of the database.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="annot_api_05_query" type="text" placeholder="/annotation/db/{db_id}" value="/annotation/db/d9121852fc1a279b95cb7e18c976f112"/> 
+                                        <button onclick="generic_exec_from_input('annot_api_05_query', 'annot_result', 'DELETE');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
@@ -1315,6 +1340,7 @@
                             <li><a href="#analysis_api_08" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete filter</a></li>
                             <li><a href="#analysis_api_09" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering</a></li>
                             <li><a href="#analysis_api_10" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering count</a></li>
+                            <li><a href="#analysis_api_11" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> clear wt</a></li>
                         </ul>
                     </div>
 
@@ -1640,6 +1666,32 @@
                                         <textarea id="analysis_api_10_body" cols="40" rows="6">{"filter": ["AND",[]]}</textarea><br/>
                                         <button onclick="generic_exec_body('analysis_api_10_query', 'analysis_api_10_body', 'analysis_result', 'POST');" class="btn btn-primary">Test it</button>
                                     </div>
+                                </div>
+                            </div>
+
+
+                            <!-- clear temporary data -->
+                            <div class="tab-pane fade" id="analysis_api_11">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /analysis/{analysis_id}/clear_temps_data</code><br/>
+                                        <i>Clear temporary data of the analysis (to save disk space by example)</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>analysis_id</code><br/>
+                                        <i>The id of the analysis.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="analysis_api_11_query" type="text" placeholder="/analysis/{analysis_id}/clear_temps_data" value="/analysis/1/clear_temps_data"/> 
+                                        <button onclick="generic_exec_from_input('analysis_api_11_query', 'analysis_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
                                 </div>
                             </div>
                         </div>

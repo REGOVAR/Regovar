@@ -245,12 +245,12 @@ class FilterEngine:
                 "db_name": self.fields_map[f_uid[1:]]['db_name']})
         # Loop to update working table annotation (queries "packed" fields requested by annotation's database)
         for db_uid in to_update.keys():
-            qset_ann = ''
+            qset_ann = ', '.join(['_{0}=_ann._{0}'.format(f["uid"]) for f in to_update[db_uid]])
+            qslt_ann = ','.join(['{0}.{1} AS _{2}'.format(f['db_name'], f["name"], f["uid"]) for f in to_update[db_uid]])
+            qjoin = 'LEFT JOIN {0} '.format(self.db_map[db_uid]['join'].format('_var'))
+            
             if self.db_map[db_uid]["type"] == "transcript":
-                qset_ann = ', '.join(['_{0}=_ann._{0}'.format(f["uid"]) for f in to_update[db_uid]])
-                qslt_ann = ','.join(['{0}.{1} AS _{2}'.format(f['db_name'], f["name"], f["uid"]) for f in to_update[db_uid]])
                 qslt_var = "SELECT variant_id, bin, chr, pos, ref, alt, transcript_pk_value FROM wt_{0} WHERE annotated=False AND transcript_pk_field_uid='{1}' LIMIT {2}".format(analysis.id, self.db_map[self.fields_map[f_uid[1:]]['db_uid']]['db_pk_field_uid'], UPDATE_LOOP_RANGE)
-                qjoin = 'LEFT JOIN {0} '.format(self.db_map[db_uid]['join'].format('_var'))
                 query = "UPDATE wt_{0} SET annotated=True, {1} FROM (SELECT _var.variant_id, _var.transcript_pk_value, {2} \
                     FROM ({3}) AS _var {4}) AS _ann \
                     WHERE wt_{0}.variant_id=_ann.variant_id AND wt_{0}.transcript_pk_field_uid='{5}' AND wt_{0}.transcript_pk_value=_ann.transcript_pk_value".format(
@@ -261,10 +261,7 @@ class FilterEngine:
                     qjoin,
                     self.db_map[self.fields_map[f_uid[1:]]['db_uid']]['db_pk_field_uid'])
             else:
-                qset_ann = ', '.join(['{0}=_ann._{0}'.format(f_uid) for f_uid in diff_fields])
-                qslt_ann = ','.join(['{0}.{1} AS _{2}'.format(self.fields_map[f_uid[1:]]['db_name'], self.fields_map[f_uid[1:]]['name'], f_uid) for f_uid in diff_fields])
                 qslt_var = 'SELECT variant_id, bin, chr, pos, ref, alt, transcript_pk_value FROM wt_{0} WHERE annotated=False AND transcript_pk_field_uid IS NULL LIMIT {1}'.format(analysis.id, UPDATE_LOOP_RANGE)
-                qjoin = 'LEFT JOIN {0} '.format(self.db_map[db_uid]['join'].format('_var'))
                 query = "UPDATE wt_{0} SET annotated=True, {1} FROM (SELECT _var.variant_id, {2} \
                     FROM ({3}) AS _var {4}) AS _ann \
                     WHERE wt_{0}.variant_id=_ann.variant_id".format(
@@ -273,6 +270,7 @@ class FilterEngine:
                     qslt_ann, 
                     qslt_var, 
                     qjoin)
+
 
             if qset_ann != "":
                 # Mark all variant as not annotated (to be able to do a "resumable update")

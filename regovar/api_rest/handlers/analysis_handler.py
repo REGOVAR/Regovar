@@ -161,6 +161,17 @@ class AnalysisHandler:
         return rest_success()
 
 
+
+    def clear_temps_data(self, request):
+        analysis_id = request.match_info.get('analysis_id', -1)
+        try:
+            result = core.analyses.clear_temps_data(analysis_id)
+            return rest_success()
+        except Exception as ex:
+            return rest_error("Unable to clear temporary data for analysis {}. {}".format(analysis_id, ex))
+
+
+
     async def get_selection(self, request):
         data = await request.json()
         analysis_id = request.match_info.get('analysis_id', -1)

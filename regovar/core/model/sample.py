@@ -25,6 +25,7 @@ def sample_init(self, loading_depth=0):
             - subject : set with a Subject object if exists. 
             - files  : a list of File associated to this sample
             - analyses : a list of Analysis where this sample is used
+            - default_dbuid : list of annotation's databases used in the vcf from where come the sample
         If loading_depth == 0, children objects are not loaded
     """
     from core.model.analysis import Analysis, AnalysisSample
@@ -85,10 +86,11 @@ def sample_load(self, data):
     try:
         if "name"              in data.keys(): self.name              = data['name']
         if "subject_id"        in data.keys(): self.subject_id        = data['subject_id']
-        if "file_id"         in data.keys(): self.file_id         = data['file_id']
+        if "file_id"           in data.keys(): self.file_id           = data['file_id']
         if "analyses_ids"      in data.keys(): self.analyses_ids      = data['analyses_ids']
         if "comment"           in data.keys(): self.comment           = data['comment']
         if "is_mosaic"         in data.keys(): self.is_mosaic         = data['is_mosaic']
+        if "default_dbuid"     in data.keys(): self.default_dbuid     = data['default_dbuid']
         # check to reload dynamics properties
         if self.loading_depth > 0:
             self.load_depth(self.loading_depth)
@@ -126,7 +128,7 @@ def sample_count():
 
 
 Sample = Base.classes.sample
-Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "is_mosaic"]
+Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "is_mosaic", "default_dbuid"]
 Sample.init = sample_init
 Sample.load_depth = sample_load_depth
 Sample.from_id = sample_from_id

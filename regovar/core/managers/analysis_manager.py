@@ -171,7 +171,7 @@ class AnalysisManager:
         """
         analysis = Analysis.from_id(analysis_id)
         if not analysis:
-            raise RegovarException("Unable to fin analysis with the provided id {}".format(analysis_id))
+            raise RegovarException("Unable to find analysis with the provided id {}".format(analysis_id))
         
         # Update analysis's simple properties
         analysis.load(data)
@@ -196,6 +196,7 @@ class AnalysisManager:
                 # delete old analysis sample associations
                 execute("DELETE FROM analysis_sample WHERE analysis_id={}".format(analysis_id))
                 execute("INSERT INTO analysis_sample (analysis_id, sample_id, nickname) VALUES " + query)
+                self.clear_temps_data(analysis.id)
             else:
                 # TODO: log error
                 pass
@@ -217,6 +218,22 @@ class AnalysisManager:
         # return reloaded analysis
         return Analysis.from_id(analysis_id, 1)
         
+
+
+    def clear_temps_data(self, analysis_id):
+        """
+            Clear temporary data of the analysis (to save disk space by example)
+        """
+        analysis = Analysis.from_id(analysis_id)
+        if not analysis:
+            raise RegovarException("Unable to fin analysis with the provided id {}".format(analysis_id))
+        try:
+            execute("DROP TABLE IF EXISTS wt_{} CASCADE;".format(analysis_id))
+            analysis.status = "empty"
+            analysis.save()
+        except Exception as ex:
+            raise RegovarException("Error occure when trying to clear temporary data of the analysis {}. {}".format(analysis_id, ex))
+        return True
 
 
 

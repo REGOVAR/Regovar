@@ -77,6 +77,16 @@ class AnnotationDBHandler:
         return rest_success(core.annotations.fields_map[field_id])
 
 
+    async def delete(self, request):
+        """
+            Delete an annotations database and all its fields
+            User have to take care regarding side effects of this actions on his analysis
+        """
+        dbuid = request.match_info.get("db_id", None)
+        if not await core.annotations.delete(dbuid) :
+            return rest_success()
+        return rest_error()
+
 
 
 

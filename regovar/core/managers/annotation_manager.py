@@ -93,3 +93,19 @@ class AnnotationManager:
 
     def get_fields(self):
         return self.fields_map 
+
+
+    async def delete(self, db_uid):
+        """
+            Delete an annotations database and all its fields
+            User have to take care regarding side effects of this actions on his analysis
+        """
+        try:
+            db_name = execute("SELECT name FROM annotation_database WHERE uid='{}'".format(db_uid)).first()[0]
+            execute("DROP TABLE IF EXISTS {1} CASCADE; DELETE FROM annotation_field WHERE database_uid='{0}'; DELETE FROM annotation_database WHERE uid='{0}';".format(db_uid, db_name))
+            # force refresh of annotation mapping
+            await self.load_annotation_metadata()
+            return True
+        except Exception as ex:
+            err("Unable to delete annotation database with uid : ".format(db_uid), ex)
+            return False

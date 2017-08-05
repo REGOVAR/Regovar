@@ -127,7 +127,7 @@ def analysis_load(self, data):
             self.settings = data['settings']
             self.status = "empty"
             self.computing_progress = 0
-            execute("DROP TABLE IF EXISTS wt_{}".format(self.id))
+            execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
 
         if "samples_ids" in data.keys():
             # Remove old
@@ -141,13 +141,34 @@ def analysis_load(self, data):
             # When settings change, need to regenerate working table
             self.status = "empty"
             self.computing_progress = 0
-            execute("DROP TABLE IF EXISTS wt_{}".format(self.id))
+            execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
+
+            # If settings empty, init it with informations from samples
+            if len(self.settings["annotations_db"]) == 0:
+                settings = self.settings
+                from core.model.sample import Sample
+                dbuids = []
+                for sid in data["samples_ids"]:
+                    sample = Sample.from_id(sid)
+                    if sample and sample.default_dbuid:
+                        for dbuid in sample.default_dbuid:
+                            if dbuid not in dbuids:
+                                dbuids.append(dbuid)
+                self.status = "empty"
+                settings["annotations_db"] = dbuids
+                self.settings = settings
 
 
         # check to reload dynamics properties
         if self.loading_depth > 0:
             self.load_depth(self.loading_depth)
         self.save()
+
+        # FIXME : why sqlalchemy don't care about json settings the first time ?
+        if settings:
+            self.settings = settings
+            self.save()
+        # END FIXME
     except Exception as err:
         raise RegovarException('Invalid input data to load.', "", err)
     return self
@@ -171,6 +192,7 @@ def analysis_new():
     a.filter=ANALYSIS_DEFAULT_FILTER
     a.selection=[]
     a.order=[]
+    a.settings = {"trio": False, "annotations_db": []}
     a.save()
     a.init()
     return a

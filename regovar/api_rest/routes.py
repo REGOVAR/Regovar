@@ -131,6 +131,7 @@ app.router.add_route('GET',    "/annotation", annotationHandler.list)           
 app.router.add_route('GET',    "/annotation/{ref_id}", annotationHandler.get)                                        # Get list of all annotation's databases and for each the list of availables versions and the list of their fields for the latest version
 app.router.add_route('GET',    "/annotation/db/{db_id}", annotationHandler.get_database)                             # Get the database details and the list of all its fields
 app.router.add_route('GET',    "/annotation/field/{field_id}", annotationHandler.get_field)                          # Get the database details and the list of all its fields
+app.router.add_route('DELETE', "/annotation/db/{db_id}", annotationHandler.delete)                                   # Delete an annotation database with all its fields.
 
 app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}", variantHandler.get)                                 # Get all available information about the given variant
 app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}/{analysis_id}", variantHandler.get)                   # Get all available information about the given variant + data in the context of the analysis
@@ -152,8 +153,12 @@ app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}", ana
 app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",          analysisHandler.filtering)              # Get result (variants) of the provided filter
 app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/count",    analysisHandler.filtering_count)        # Get total count of result of the provided filter
 app.router.add_route('GET',    "/analysis/{analysis_id}/selection",          analysisHandler.get_selection)          # Get variants data for the provided selection
+app.router.add_route('GET',    "/analysis/{analysis_id}/clear_temps_data",   analysisHandler.clear_temps_data)       # Clear temporary data (to save disk space by example)
+
 app.router.add_route('POST',   "/analysis/{analysis_id}/export/{pipe_id}",   analysisHandler.get_export)             # Export selection of the provided analysis into the requested format
 app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   analysisHandler.get_report)             # Generate report html for the provided analysis+report id
+
+
 
 
 

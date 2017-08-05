@@ -146,7 +146,7 @@ def prepare_vcf_parsing(filename):
     # Check for dbNSFP
     dbnsfp = {'dbnsfp' : False }
     dbnsfp_fields = [f.replace("dbNSFP_", "", 1) for f in headers['INFO'].keys() if f.startswith("dbNSFP_")]
-    sorted(dbnsfp_fields)
+    dbnsfp_fields = sorted(dbnsfp_fields)
     if len(dbnsfp_fields) > 0:
         dbnsfp = {
             'dbnsfp' : {
@@ -246,7 +246,7 @@ def create_annotation_db(reference_id, reference_name, table_name, vcf_annotatio
         db_uid = Model.execute("SELECT MD5('{0}')".format(table_name)).first()[0]
     
         query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, jointure) VALUES "
-        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt AND {2}.regovar_trx_id={{0}}.transcript_pk_value');"
+        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt');"
         query += q.format(
             db_uid, 
             reference_id, 
@@ -552,7 +552,6 @@ class VcfManager(AbstractImportManager):
         sql_query2 = ""
         sql_query3 = ""
         count = 0
-        ipdb.set_trace()
         for row in vcf_reader: 
             records_current += 1 
             core.notify_all(None, data={'msg':'import_vcf', 'data' : {'file_id' : file_id, 'progress_value' : records_current / max(1,records_count), 'progress_label' : ""}})
@@ -622,8 +621,8 @@ class VcfManager(AbstractImportManager):
                                 q_values = []
                                 # No flag, but column, we have to parse column to retrieve variant's annotations
                                 for col_name in metadata['columns']:
-                                    if col_name in row.info:
-                                        data = row.info[col_name]
+                                    if metadata['prefix'] + col_name in row.info.keys():
+                                        data = row.info[metadata['prefix'] + col_name]
                                         if isinstance(data, tuple): data = ', '.join([str(v) for v in data])
                                         q_fields.append(metadata['db_map'][col_name]['name'])
                                         val = escape_value_for_sql(data)
@@ -715,6 +714,7 @@ class VcfManager(AbstractImportManager):
                 s = Model.Sample.new()
                 s.name = i
                 s.file_id = file_id
+                s.default_dbuid = [vcf_metadata["annotations"][f]["db_uid"] for f in vcf_metadata["annotations"].keys()]
                 # TODO : is_mosaic according to the data in the vcf
                 s.save()
                 samples.update({i : s})
@@ -733,7 +733,8 @@ class VcfManager(AbstractImportManager):
             log ("Importing file {0}\n\r\trecords  : {1}\n\r\tsamples  :  ({2}) {3}\n\r\tstart    : {4}".format(filepath, records_count, len(samples.keys()), reprlib.repr([s for s in samples.keys()]), start))
             run_async(VcfManager.import_delegate, file_id, vcf_reader, db_ref_suffix, vcf_metadata, samples)
 
-            
+            # When import is done, force refresh of annotations map of the core
+            await core.annotations.load_annotation_metadata()
         
             return {"success": True, "samples": samples, "records_count": records_count }
         return {"success": False, "error": "File not supported"}

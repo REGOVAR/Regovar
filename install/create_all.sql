@@ -323,6 +323,7 @@ CREATE TABLE public.sample
     loading_progress real DEFAULT 0,
     reference_id integer,
     status sample_status,
+    default_dbuid JSON,
     CONSTRAINT sample_pkey PRIMARY KEY (id)
 );
 
