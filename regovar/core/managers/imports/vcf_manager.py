@@ -518,6 +518,8 @@ def transaction_end(job_id, result):
     job_in_progress.remove(job_id)
     if result is Exception or result is None:
         core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
+    else:
+        log("Transaction success")
             
             
 class VcfManager(AbstractImportManager):
@@ -554,7 +556,6 @@ class VcfManager(AbstractImportManager):
         count = 0
         for row in vcf_reader: 
             records_current += 1 
-            core.notify_all(None, data={'msg':'import_vcf', 'data' : {'file_id' : file_id, 'progress_value' : records_current / max(1,records_count), 'progress_label' : ""}})
             # TODO : update sample's progress indicator
             
 
@@ -636,11 +637,13 @@ class VcfManager(AbstractImportManager):
                                     count += 1
 
                     # manage split big request to avoid sql out of memory transaction
-                    if count >= 1000:
+                    if count >= 5000:
                         count = 0
                         # Model.execute_async(transaction1 + transaction2 + transaction3, transaction_end)
                         transaction = sql_query1 + sql_query2 + sql_query3
-                        log("VCF import : Execute async query")
+                        #core.notify_all(None, data={'msg':'import_vcf', 'data' : {'file_id' : file_id, 'progress_value' : records_current / max(1,records_count), 'progress_label' : ""}})
+                        log("VCF import : line {} (chrm {})".format(records_current, chrm))
+                        log("VCF import : Execute sync query {}/{} ({}%)".format(records_current, records_count, round(records_current / records_count * 100, 2)))
                         Model.execute(transaction)
                         # job_id = Model.execute_bw(transaction, transaction_end)
                         # job_in_progress.append(job_id)
@@ -667,6 +670,9 @@ class VcfManager(AbstractImportManager):
             log(" - sample {}".format(samples[sid].id))
             Model.execute(query)
         log("Sample import from VCF Done")
+
+        # When import is done, force refresh of annotations map of the core
+        run_until_complete(core.annotations.load_annotation_metadata())
 
         end = datetime.datetime.now()
         core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
@@ -714,7 +720,10 @@ class VcfManager(AbstractImportManager):
                 s = Model.Sample.new()
                 s.name = i
                 s.file_id = file_id
-                s.default_dbuid = [vcf_metadata["annotations"][f]["db_uid"] for f in vcf_metadata["annotations"].keys()]
+                s.default_dbuid = []
+                for dbname in vcf_metadata["annotations"].keys():
+                    if vcf_metadata["annotations"][dbname]:
+                        s.default_dbuid.append(vcf_metadata["annotations"][dbname]["db_uid"])
                 # TODO : is_mosaic according to the data in the vcf
                 s.save()
                 samples.update({i : s})
@@ -732,9 +741,6 @@ class VcfManager(AbstractImportManager):
             records_count = vcf_metadata['count']
             log ("Importing file {0}\n\r\trecords  : {1}\n\r\tsamples  :  ({2}) {3}\n\r\tstart    : {4}".format(filepath, records_count, len(samples.keys()), reprlib.repr([s for s in samples.keys()]), start))
             run_async(VcfManager.import_delegate, file_id, vcf_reader, db_ref_suffix, vcf_metadata, samples)
-
-            # When import is done, force refresh of annotations map of the core
-            await core.annotations.load_annotation_metadata()
         
             return {"success": True, "samples": samples, "records_count": records_count }
         return {"success": False, "error": "File not supported"}

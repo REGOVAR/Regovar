@@ -100,6 +100,7 @@ class FilterEngine:
         query += ", CONSTRAINT {0}_ukey UNIQUE (variant_id, transcript_pk_field_uid, transcript_pk_value));"
 
         log(" > create wt schema")
+
         execute(query.format(w_table))
         # Insert variant without annotation first
         query =  "INSERT INTO {0} (variant_id, bin, chr, pos, ref, alt, is_transition, sample_tlist) \
@@ -272,41 +273,62 @@ class FilterEngine:
                     qjoin)
 
 
-            if qset_ann != "":
-                # Mark all variant as not annotated (to be able to do a "resumable update")
-                log(" > mark all wt entries as 'not annotated'")
-                execute("UPDATE wt_{} SET annotated=False".format(analysis.id))
-                for page in range(0, total, UPDATE_LOOP_RANGE):
-                    log(" > update wt from {} to {} (on {})".format(page, page+UPDATE_LOOP_RANGE, total))
-                    execute(query)
-                    progress.update({"progress_current": page})
-                    core.notify_all(None, data=progress)
-            progress.update({"step": 5, "progress_current": total})
-            core.notify_all(None, data=progress)
+            # if qset_ann != "":
+            #     # Mark all variant as not annotated (to be able to do a "resumable update")
+            #     log(" > mark all wt entries as 'not annotated'")
+            #     execute("UPDATE wt_{} SET annotated=False".format(analysis.id))
+            #     for page in range(0, total, UPDATE_LOOP_RANGE):
+            #         log(" > update wt from {} to {} (on {})".format(page, page+UPDATE_LOOP_RANGE, total))
+            #         execute(query)
+            #         progress.update({"progress_current": page})
+            #         core.notify_all(None, data=progress)
+            # progress.update({"step": 5, "progress_current": total})
+            # core.notify_all(None, data=progress)
 
         # Apply queries to update attributes and filters columns in the wt
-        if len(update_queries) > 0:
-            log(" > update filters and attributes")
-            execute("".join(update_queries))
-        progress.update({"step": 6})
-        core.notify_all(None, data=progress)
+        # if len(update_queries) > 0:
+        #     log(" > update filters and attributes")
+        #     execute("".join(update_queries))
+        # progress.update({"step": 6})
+        # core.notify_all(None, data=progress)
 
-        # Check if trio analysis => htz_comp field
+        # Check if trio analysis
         if analysis.settings["trio"]:
+            db_ref_suffix= "_hg19"  # execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first().table_suffix
             trio = analysis.settings["trio"]
             colname = "htz_comp_{}_{}_{}".format(trio["child"], trio["mother"], trio["father"])
             if colname not in current_fields:
-                log(" > trio analysis : create precomputed column")
-                execute("ALTER TABLE wt_{} ADD COLUMN {} boolean DEFAULT False".format(analysis.id, colname))
-                
-                query = "UPDATE wt_{0} u SET htz_comp_{1}_{2}_{3}=TRUE WHERE u.variant_id IN ( SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM ( SELECT array_agg(w.variant_id) as vids, g.name2 FROM wt_{0} w  INNER JOIN refgene{4} g ON g.chr=w.chr AND g.txrange @> w.pos  WHERE  s{1}_gt > 1 --  variant de l'enfant r/a ou a1/a2 AND ( (s{2}_gt > 1 AND (s{3}_gt = NULL or s{3}_gt < 2)) OR (s{3}_gt > 1 AND (s{2}_gt = NULL or s{2}_gt < 2))) GROUP BY name2 HAVING count(*) > 1) AS sub )"
+                log(" > trio analysis : create htz_comp column")
+                print("ALTER TABLE wt_{} ADD COLUMN {} boolean DEFAULT False".format(analysis.id, colname))
+                query = "UPDATE wt_{0} u SET htz_comp_{1}_{2}_{3}=TRUE WHERE u.variant_id IN ( SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM ( SELECT array_agg(w.variant_id) as vids, g.name2 FROM wt_{0} w  INNER JOIN refgene{4} g ON g.chr=w.chr AND g.txrange @> w.pos  WHERE  s{1}_gt > 1 AND ( (s{2}_gt > 1 AND (s{3}_gt = NULL or s{3}_gt < 2)) OR (s{3}_gt > 1 AND (s{2}_gt = NULL or s{2}_gt < 2))) GROUP BY name2 HAVING count(*) > 1) AS sub )"
                 log(" > trio analysis : compute column : {}".format(colname))
-                db_ref_suffix= "_hg19"  # execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first().table_suffix
-                execute(query.format(analysis.id, trio["child"], trio["mother"], trio["father"], db_ref_suffix))
+                print (query.format(analysis.id, trio["child"], trio["mother"], trio["father"], db_ref_suffix))
+                #execute(query.format(analysis.id, trio["child"], trio["mother"], trio["father"], db_ref_suffix))
+            
+            colname = "denovo_{}_{}_{}".format(trio["child"], trio["mother"], trio["father"])
+            if colname not in current_fields:
+                log(" > trio analysis : create denovo column")
+                print("ALTER TABLE wt_{} ADD COLUMN {} boolean DEFAULT False".format(analysis.id, colname))
+                query = "UPDATE wt_{0} SET denovo_{1}_{2}_{3}=TRUE WHERE s{1}_gt>0 and s{2}_gt=0 and s{3}_gt=0"
+                log(" > trio analysis : compute column : {}".format(colname))
+                print(query.format(analysis.id, trio["child"], trio["mother"], trio["father"]))
+
+            colname = "xlinked_{}_{}_{}".format(trio["child"], trio["mother"], trio["father"])
+            if colname not in current_fields:
+                log(" > trio analysis : create xlinked column")
+                print("ALTER TABLE wt_{} ADD COLUMN {} boolean DEFAULT False".format(analysis.id, colname))
+                query = "UPDATE wt_{0} SET xlinked_{1}_{2}_{3}=TRUE WHERE chr=23 AND s{1}_gt>1 and s{2}_gt>1"
+                # if trio["child_sex"] == "F":
+                #     query += "  AND s{3}_gt>1"
+                log(" > trio analysis : compute column : {}".format(colname))
+                print(query.format(analysis.id, trio["child"], trio["mother"], trio["father"]))
+
+
         # Update count stat of the analysis
         query = "UPDATE analysis SET status='ready' WHERE id={}".format(analysis.id)
         log(" > wt is ready")
         execute(query)
+        
 
 
 

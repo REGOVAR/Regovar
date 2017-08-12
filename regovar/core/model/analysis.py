@@ -108,6 +108,7 @@ def analysis_load(self, data):
         cannot be updated with this method. However, you can update project_id .
         To update sample and Attributes you must used dedicated models object : AnalysisSample and Attribute
     """
+    settings = False
     try:
         if "name"               in data.keys(): self.name               = data['name']
         if "project_id"         in data.keys(): self.project_id         = data['project_id']
