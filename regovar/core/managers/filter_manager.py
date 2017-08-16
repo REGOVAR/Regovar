@@ -64,7 +64,297 @@ class FilterEngine:
             self.fields_map[row.fuid] = {"name": row.fname, "type": row.type, "db_uid": row.duid, "db_name_ui": row.dname_ui, "db_name": row.dname, "db_type": row.dtype, "join": row.jointure, "wt_default": row.wt_default}
 
 
-    def create_working_table(self, analysis, sample_ids):
+
+
+
+
+
+    def create_working_table(self, analysis_id):
+        # retrieve analysis data
+        analysis = Analysis.from_id(analysis_id)
+        if analysis is None:
+            raise RegovarException("Not able to retrieve analysis with provided id: {}".format(analysis_id))
+        analysis.db_suffix = "_hg19" # TODO : to retrieve from analysis.ref_id
+        samples_ids = analysis.samples_ids
+        annotations_dbs = analysis.settings["annotations_db"]
+
+        # Retrieve attributes of the analysis
+        attributes = {}
+        for row in execute("select sample_id, value, name from attribute where analysis_id={0}".format(analysis.id)):
+            if row.name not in attributes.keys():
+                attributes[row.name] = {row.sample_id: row.value}
+            else:
+                attributes[row.name].update({row.sample_id: row.value})
+
+        # Retrieve saved filter's ids of the analysis
+        filters_ids = []
+        for row in execute("select id from filter where analysis_id={0} ORDER BY id ASC".format(analysis.id)):
+            filters_ids.append(row.id)
+
+        # We assume that we can use by default head version of all existing panels
+        # TODO
+        panels_ids = []
+
+        # create wt table
+        self.create_wt_schema(analysis, samples_ids, annotations_dbs, attributes, filters_ids, panels_ids)
+
+        # insert variant
+        self.insert_wt_variants(analysis, samples_ids, annotations_dbs)
+
+        # set sample's fields (GT, DP, ...)
+        self.update_wt_samples_fields(analysis, samples_ids)
+
+        # compute stats and predefined filter (attributes, panels, trio, ...)
+        self.update_wt_stats_prefilters(analysis, samples_ids, attributes, filters_ids, panels_ids)
+
+        # variant's indexes
+        self.create_wt_variants_indexes(analysis, samples_ids)
+
+        # insert trx annotations
+        self.insert_wt_trx(analysis, samples_ids, annotations_dbs)
+
+        # trx's indexes
+        self.create_wt_trx_indexes(analysis, samples_ids)
+
+        # Update count stat of the analysis
+        query = "UPDATE analysis SET status='ready', computing_progress=1 WHERE id={}".format(analysis.id)
+        log(" > wt is ready")
+        execute(query)
+
+
+
+    def create_wt_schema(self, analysis, samples_ids, annotations_dbs, attributes, filters_ids, panels_ids):
+        wt = "wt_{}".format(analysis.id)
+        query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE TABLE {0} (\
+            is_variant boolean DEFAULT False, \
+            variant_id bigint, \
+            bin integer, \
+            chr integer, \
+            pos bigint, \
+            ref text, \
+            alt text,\
+            trx_pk_uid character varying(32), \
+            trx_pk_value character varying(100), \
+            is_transition boolean, \
+            sample_tlist integer[], \
+            sample_tcount integer, \
+            sample_alist integer[], \
+            sample_acount integer, \
+            trx_count integer, \
+            is_dom boolean, \
+            is_rec_hom boolean, \
+            is_rec_htzcomp boolean, \
+            is_denovo boolean, \
+            is_inherited boolean, \
+            is_aut boolean, \
+            is_xlk boolean, \
+            is_mit boolean, "
+        query += ", ".join(["s{}_gt integer".format(i) for i in samples_ids]) + ", "
+        query += ", ".join(["s{}_dp integer".format(i) for i in samples_ids]) + ", "
+        query += ", ".join(["s{}_is_composite boolean".format(i) for i in samples_ids]) + ", "
+
+        # Add annotation's columns
+        for dbuid in annotations_dbs:
+            query += ", ".join(["_{} {}".format(fuid, self.sql_type_map[self.fields_map[fuid]['type']]) for fuid in self.db_map[dbuid]["fields"]]) + ", "
+
+        # Add attribute's columns
+        # TODO
+
+        # Add filter's columns
+        # TODO
+
+        # Add panel's columns
+        # TODO
+
+        query = query[:-2] + ");"
+        log(" > create wt schema")
+        execute(query.format(wt))
+
+
+    def insert_wt_variants(self, analysis, samples_ids, annotations_dbs):
+        wt = "wt_{}".format(analysis.id)
+
+        # create temp table with id of variants
+        query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE TABLE {0}_var (id bigint); "
+        query += "INSERT INTO {0}_var (id) SELECT DISTINCT variant_id FROM sample_variant{1} WHERE sample_id IN ({2}); "
+        query += "CREATE INDEX {0}_var_idx_id ON {0}_var USING btree (id);"
+
+        res = execute(query.format(wt, analysis.db_suffix, ",".join([str(sid) for sid in samples_ids])))
+
+        # set total number of variant for the analysis
+        log(" > {} variants found".format(res.rowcount))
+        query = "UPDATE analysis SET total_variants={1} WHERE id={0}".format(analysis.id, res.rowcount)
+        
+
+        # Insert variants and their annotations
+        q_fields = "is_variant, variant_id, bin, chr, pos, ref, alt, is_transition, sample_tlist"
+        q_select = "True, _vids.id, _var.bin, _var.chr, _var.pos, _var.ref, _var.alt, _var.is_transition, _var.sample_list"
+        q_from   = "{0}_var _vids LEFT JOIN variant{1} _var ON _vids.id=_var.id".format(wt, analysis.db_suffix)
+
+        for dbuid in annotations_dbs:
+            if self.db_map[dbuid]["type"] == "variant":
+                dbname = "_db_{}".format(dbuid)
+                q_from += " LEFT JOIN {0}".format(self.db_map[dbuid]['join'].format(dbname, '_var'))
+                q_fields += ", " + ", ".join(["_{}".format(fuid) for fuid in self.db_map[dbuid]["fields"]])
+                q_select += ", " + ", ".join(["{}.{}".format(dbname, self.fields_map[fuid]["name"]) for fuid in self.db_map[dbuid]["fields"]])
+
+        # execute query
+        query = "INSERT INTO {0} ({1}) SELECT {2} FROM {3};".format(wt, q_fields, q_select, q_from)
+        execute(query)
+
+
+    def update_wt_samples_fields(self, analysis, samples_ids):
+        wt = "wt_{}".format(analysis.id)
+        for sid in samples_ids:
+            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
+
+
+    def update_wt_stats_prefilters(self, analysis, samples_ids, attributes, filters_ids, panels_ids):
+        wt = "wt_{}".format(analysis.id)
+
+        # Variant occurence stats
+        query = "UPDATE {0} SET \
+            sample_tcount=array_length(sample_tlist,1), \
+            sample_alist=array_intersect(sample_tlist, array[{1}]), \
+            sample_acount=array_length(array_intersect(sample_tlist, array[{1}]),1)"
+        log(" > compute statistics")
+        execute(query.format(wt, ",".join([str(i) for i in samples_ids])))
+        
+        # Attributes
+        # TODO
+
+        # Filter
+        # TODO
+
+        # Panels
+        # TODO
+
+        # Predefinied quickfilters
+        if len(samples_ids) == 1:
+            self.update_wt_compute_prefilter_single(analysis, samples_ids[0], "M")
+        # TODO trio, and so on
+
+
+
+    def create_wt_variants_indexes(self, analysis, samples_ids):
+        wt = "wt_{}".format(analysis.id)
+
+        # Common indexes for variants
+        query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(wt)
+        query += "".join(["CREATE INDEX {0}_idx_s{1}_gt ON {0} USING btree (s{1}_gt);".format(wt, i) for i in samples_ids])
+        query += "".join(["CREATE INDEX {0}_idx_s{1}_dp ON {0} USING btree (s{1}_dp);".format(wt, i) for i in samples_ids])
+        query += "".join(["CREATE INDEX {0}_idx_s{1}_is_composite ON {0} USING btree (s{1}_is_composite);".format(wt, i) for i in samples_ids])
+        query = "CREATE INDEX {0}_idx_is_dom ON {0} USING btree (is_dom);".format(wt)
+        query = "CREATE INDEX {0}_idx_is_rec_hom ON {0} USING btree (is_rec_hom);".format(wt)
+        query = "CREATE INDEX {0}_idx_is_rec_htzcomp ON {0} USING btree (is_rec_htzcomp);".format(wt)
+        query = "CREATE INDEX {0}_idx_is_denovo ON {0} USING btree (is_denovo);".format(wt)
+        query = "CREATE INDEX {0}_idx_is_inherited ON {0} USING btree (is_inherited);".format(wt)
+        query = "CREATE INDEX {0}_idx_is_aut ON {0} USING btree (is_aut);".format(wt)
+        query = "CREATE INDEX {0}_idx_is_xlk ON {0} USING btree (is_xlk);".format(wt)
+        query = "CREATE INDEX {0}_idx_is_mit ON {0} USING btree (is_mit);".format(wt)
+        execute(query)
+        log(" > create index for variants random access")
+
+        # Add indexes on attributes columns
+        # TODO
+
+        # Add indexes on filter columns
+        # TODO
+
+        # Add indexes on panel columns
+        # TODO
+
+
+    def insert_wt_trx(self, analysis, samples_ids, annotations_dbs):
+        wt = "wt_{}".format(analysis.id)
+
+        # Insert trx and their annotations
+        q_fields = "is_variant, variant_id, trx_pk_uid, trx_pk_value, bin, chr, pos, ref, alt, is_transition, sample_tlist, sample_tcount, sample_alist, sample_acount"
+        q_select = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id,  _wt.bin, _wt.chr, _wt.pos, _wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, _wt.sample_tcount, _wt.sample_alist, _wt.sample_acount"
+        q_from   = "{0} _wt".format(wt, analysis.db_suffix)
+
+        # first loop over "variant db" in order to set common annotation to trx
+        for dbuid in annotations_dbs:
+            if self.db_map[dbuid]["type"] == "variant":
+                q_fields += ", " + ", ".join(["_{}".format(fuid) for fuid in self.db_map[dbuid]["fields"]])
+                q_select += ", " + ", ".join(["_{}".format(fuid) for fuid in self.db_map[dbuid]["fields"]])
+
+
+        # Second loop to execute insert query by trx annotation db
+        for dbuid in annotations_dbs:
+            if self.db_map[dbuid]["type"] == "transcript":
+                dbname = "_db_{}".format(dbuid)
+                q_from_db   = q_from + " INNER JOIN {0}".format(self.db_map[dbuid]['join'].format(dbname, '_wt'))
+                q_fields_db = q_fields + ", " + ", ".join(["_{}".format(fuid) for fuid in self.db_map[dbuid]["fields"]])
+                pk_uid = self.db_map[dbuid]["db_pk_field_uid"]
+                q_select_db = q_select.format(pk_uid, dbname)
+                q_select_db += ", " + ", ".join(["{}.{}".format(dbname, self.fields_map[fuid]["name"]) for fuid in self.db_map[dbuid]["fields"]])
+
+                # execute query
+                query = "INSERT INTO {0} ({1}) SELECT {2} FROM {3} WHERE _wt.is_variant;".format(wt, q_fields_db, q_select_db, q_from_db)
+                res = execute(query)
+                log(" > {} trx inserted for {} annotations".format(res.rowcount, self.db_map[dbuid]["name"]))
+
+
+    def create_wt_trx_indexes(self, analysis, samples_ids):
+        # query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(w_table)
+        # query += "CREATE INDEX {0}_idx_var ON {0} USING btree (bin, chr, pos, trx_pk_uid, trx_pk_value);".format(w_table)
+        
+        pass
+
+
+
+    def update_wt_compute_prefilter_single(self, analysis, sample_id, sex="F"):
+        wt = "wt_{}".format(analysis.id)
+
+        # Dominant
+        if sex == "F":
+            query = "UPDATE {0} SET is_dom=True WHERE s{1}_gt>1"
+        else: # sex == "M"
+            query = "UPDATE {0} SET is_dom=True WHERE chr=23 OR s{1}_gt>1"
+        res = execute(query.format(wt, sample_id))
+        log(" > is_dom : {} variants".format(res.rowcount))
+
+        # Recessif Homozygous
+        query = "UPDATE {0} SET is_rec_hom=True WHERE s{1}_gt=1"
+        res = execute(query.format(wt, sample_id))
+        log(" > is_rec_hom : {} variants".format(res.rowcount))
+
+        # Recessif Heterozygous compoud
+        query = "UPDATE {0} SET is_rec_htzcomp=True WHERE s{1}_is_composite"
+        res = execute(query.format(wt, sample_id))
+        log(" > is_rec_htzcomp : {} variants".format(res.rowcount))
+
+        # Inherited and denovo are not available for single
+        log(" > is_denovo & is_inherited : disabled")
+
+        # Autosomal
+        query = "UPDATE {0} SET is_aut=True WHERE chr<23"
+        res = execute(query.format(wt))
+        log(" > is_aut : {} variants".format(res.rowcount))
+
+        # X-Linked
+        query = "UPDATE {0} SET is_xlk=True WHERE chr=23"
+        res = execute(query.format(wt))
+        log(" > is_xlk : {} variants".format(res.rowcount))
+
+        # X-Linked
+        query = "UPDATE {0} SET is_mit=True WHERE chr=25"
+        res = execute(query.format(wt))
+        log(" > is_mit : {} variants".format(res.rowcount))
+
+
+
+    def update_wt_compute_prefilter_trio(self, analysis, samples_ids, trio):
+        pass
+
+
+
+
+
+
+
+    def create_working_table2(self, analysis, sample_ids):
         """
             Create a working sql table for the analysis to improove speed of filtering/annotation.
             A Working table contains all variants used by the analysis, with all annotations used by filters or displayed
@@ -86,8 +376,8 @@ class FilterEngine:
             pos bigint, \
             ref text, \
             alt text,\
-            transcript_pk_field_uid character varying(32), \
-            transcript_pk_value character varying(100), \
+            trx_pk_uid character varying(32), \
+            trx_pk_value character varying(100), \
             is_transition boolean, \
             sample_tlist integer[], \
             sample_tcount integer, \
@@ -97,7 +387,7 @@ class FilterEngine:
         query += ", ".join(["s{}_gt integer".format(i) for i in sample_ids]) + ", "
         query += ", ".join(["s{}_dp integer".format(i) for i in sample_ids]) + ", "
         query += ", ".join(["s{}_is_composite boolean".format(i) for i in sample_ids]) 
-        query += ", CONSTRAINT {0}_ukey UNIQUE (variant_id, transcript_pk_field_uid, transcript_pk_value));"
+        query += ", CONSTRAINT {0}_ukey UNIQUE (variant_id, trx_pk_uid, trx_pk_value));"
 
         log(" > create wt schema")
 
@@ -109,7 +399,7 @@ class FilterEngine:
                 variant_{1}.sample_list \
             FROM sample_variant_{1} INNER JOIN variant_{1} ON sample_variant_{1}.variant_id=variant_{1}.id \
             WHERE sample_variant_{1}.sample_id IN ({2}) \
-            ON CONFLICT (variant_id, transcript_pk_field_uid, transcript_pk_value) DO NOTHING;"
+            ON CONFLICT (variant_id, trx_pk_uid, trx_pk_value) DO NOTHING;"
 
         log(" > insert variants")
         execute(query.format(w_table, db_ref_suffix, ','.join([str(i) for i in sample_ids])))
@@ -129,8 +419,8 @@ class FilterEngine:
         # FIXME : do we need to create index on boolean fields ? Is partition a better way to do for low cardinality fields : http://www.postgresql.org/docs/9.1/static/ddl-partitioning.html
         # query = "CREATE INDEX {0}_idx_ann ON {0} USING btree (annotated);".format(w_table)
         query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(w_table)
-        query += "CREATE INDEX {0}_idx_var ON {0} USING btree (bin, chr, pos, transcript_pk_field_uid, transcript_pk_value);".format(w_table)
-        query += "CREATE INDEX {0}_idx_trx ON {0} USING btree (transcript_pk_field_uid, transcript_pk_value);".format(w_table)
+        query += "CREATE INDEX {0}_idx_var ON {0} USING btree (bin, chr, pos, trx_pk_uid, trx_pk_value);".format(w_table)
+        query += "CREATE INDEX {0}_idx_trx ON {0} USING btree (trx_pk_uid, trx_pk_value);".format(w_table)
         query += "".join(["CREATE INDEX {0}_idx_s{1}_gt ON {0} USING btree (s{1}_gt);".format(w_table, i) for i in sample_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_dp ON {0} USING btree (s{1}_dp);".format(w_table, i) for i in sample_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_is_composite ON {0} USING btree (s{1}_is_composite);".format(w_table, i) for i in sample_ids])
@@ -203,9 +493,9 @@ class FilterEngine:
                     for q in queries[:-1]:
                         query += q
                     # add the query to update wt with the filter
-                    # Note : As transcript_pk_field_uid and transcript_pk_field_value may be null, we cannot use '=' operator and must use 'IS NOT DISTINCT FROM' 
+                    # Note : As trx_pk_uid and transcript_pk_field_value may be null, we cannot use '=' operator and must use 'IS NOT DISTINCT FROM' 
                     #        as two expressions that return 'null' are not considered as equal in SQL.
-                    update_queries.append("UPDATE wt_{0} SET filter_{1}=True FROM ({2}) AS _sub WHERE wt_{0}.variant_id=_sub.variant_id AND wt_{0}.transcript_pk_field_uid IS NOT DISTINCT FROM _sub.transcript_pk_field_uid AND wt_{0}.transcript_pk_value IS NOT DISTINCT FROM _sub.transcript_pk_value ; ".format(analysis.id, f_id, queries[-1].strip()[:-1]))
+                    update_queries.append("UPDATE wt_{0} SET filter_{1}=True FROM ({2}) AS _sub WHERE wt_{0}.variant_id=_sub.variant_id AND wt_{0}.trx_pk_uid IS NOT DISTINCT FROM _sub.trx_pk_uid AND wt_{0}.trx_pk_value IS NOT DISTINCT FROM _sub.trx_pk_value ; ".format(analysis.id, f_id, queries[-1].strip()[:-1]))
         if query != "":
             log(" > Update wt schema, adding new annotation's columns")
             execute(query)
@@ -218,9 +508,9 @@ class FilterEngine:
         fields_to_copy_from_variant.extend(['s{}_dp'.format(s) for s in sample_ids])
         fields_to_copy_from_variant.extend(['attr_{}'.format(a.lower()) for a in attributes.keys()])
         fields_to_copy_from_variant.extend(['filter_{}'.format(f) for f in filter_ids])
-        pattern = "INSERT INTO wt_{0} (annotated, transcript_pk_field_uid, transcript_pk_value, {1}) \
+        pattern = "INSERT INTO wt_{0} (annotated, trx_pk_uid, trx_pk_value, {1}) \
         SELECT False, '{2}', {4}.regovar_trx_id, {3} \
-        FROM (SELECT {1} FROM wt_{0} WHERE transcript_pk_field_uid IS NULL) AS _var \
+        FROM (SELECT {1} FROM wt_{0} WHERE trx_pk_uid IS NULL) AS _var \
         INNER JOIN {4} ON _var.variant_id={4}.variant_id" # TODO : check if more optim to select with JOIN ON bin/chr/pos/ref/alt
         for uid in diff_dbs:
             if self.db_map[uid]["type"] == "transcript":
@@ -251,10 +541,10 @@ class FilterEngine:
             qjoin = 'LEFT JOIN {0} '.format(self.db_map[db_uid]['join'].format('_var'))
             
             if self.db_map[db_uid]["type"] == "transcript":
-                qslt_var = "SELECT variant_id, bin, chr, pos, ref, alt, transcript_pk_value FROM wt_{0} WHERE annotated=False AND transcript_pk_field_uid='{1}' LIMIT {2}".format(analysis.id, self.db_map[self.fields_map[f_uid[1:]]['db_uid']]['db_pk_field_uid'], UPDATE_LOOP_RANGE)
-                query = "UPDATE wt_{0} SET annotated=True, {1} FROM (SELECT _var.variant_id, _var.transcript_pk_value, {2} \
+                qslt_var = "SELECT variant_id, bin, chr, pos, ref, alt, trx_pk_value FROM wt_{0} WHERE annotated=False AND trx_pk_uid='{1}' LIMIT {2}".format(analysis.id, self.db_map[self.fields_map[f_uid[1:]]['db_uid']]['db_pk_field_uid'], UPDATE_LOOP_RANGE)
+                query = "UPDATE wt_{0} SET annotated=True, {1} FROM (SELECT _var.variant_id, _var.trx_pk_value, {2} \
                     FROM ({3}) AS _var {4}) AS _ann \
-                    WHERE wt_{0}.variant_id=_ann.variant_id AND wt_{0}.transcript_pk_field_uid='{5}' AND wt_{0}.transcript_pk_value=_ann.transcript_pk_value".format(
+                    WHERE wt_{0}.variant_id=_ann.variant_id AND wt_{0}.trx_pk_uid='{5}' AND wt_{0}.trx_pk_value=_ann.trx_pk_value".format(
                     analysis.id, 
                     qset_ann, 
                     qslt_ann, 
@@ -262,7 +552,7 @@ class FilterEngine:
                     qjoin,
                     self.db_map[self.fields_map[f_uid[1:]]['db_uid']]['db_pk_field_uid'])
             else:
-                qslt_var = 'SELECT variant_id, bin, chr, pos, ref, alt, transcript_pk_value FROM wt_{0} WHERE annotated=False AND transcript_pk_field_uid IS NULL LIMIT {1}'.format(analysis.id, UPDATE_LOOP_RANGE)
+                qslt_var = 'SELECT variant_id, bin, chr, pos, ref, alt, trx_pk_value FROM wt_{0} WHERE annotated=False AND trx_pk_uid IS NULL LIMIT {1}'.format(analysis.id, UPDATE_LOOP_RANGE)
                 query = "UPDATE wt_{0} SET annotated=True, {1} FROM (SELECT _var.variant_id, {2} \
                     FROM ({3}) AS _var {4}) AS _ann \
                     WHERE wt_{0}.variant_id=_ann.variant_id".format(
@@ -348,20 +638,18 @@ class FilterEngine:
         analysis = Analysis.from_id(analysis_id)
         if analysis is None:
             raise RegovarException("Not able to retrieve analysis with provided id: {}".format(analysis_id))
+        if not analysis.status or analysis.status == 'empty':
+            self.create_working_table(analysis.id)
+        elif analysis.status == 'computing':
+            raise RegovarException("Analysis {} is not ready to be used: computing progress {} %".format(analysis.id, round(analysis.computing_progress*100, 2)))
+        elif analysis.status == 'error':
+            raise RegovarException("Analysis {} in error: sysadmin must check log on server".format(analysis.id))
+
 
         # Parse data to generate sql query and retrieve list of needed annotations databases/fields
         query, field_uids, dbs_uids, sample_ids, filter_ids, attributes = self.build_query(analysis, mode, filter_json, fields, order, limit, offset, count)
 
-        # Prepare database working table
-        if not analysis.status or analysis.status == 'empty':
-            self.create_working_table(analysis, sample_ids)
-            # Update working table by computing annotation
-            field_uids = []
-            for db_uid in analysis.settings["annotations_db"]:
-                field_uids.extend(self.db_map[db_uid]["fields"].keys())
-            self.update_working_table(analysis, sample_ids, field_uids, filter_ids, attributes)
-        else:
-            self.update_working_table(analysis, sample_ids, field_uids, filter_ids, attributes)
+        
 
         # Execute query
         sql_result = None
@@ -389,7 +677,7 @@ class FilterEngine:
             with Timer() as t:
                 if sql_result is not None:
                     for row in sql_result:
-                        entry = {"id" : "{}_{}_{}".format(row.variant_id, row.transcript_pk_field_uid, row.transcript_pk_value )}
+                        entry = {"id" : "{}_{}_{}".format(row.variant_id, row.trx_pk_uid, row.trx_pk_value )}
                         for f_uid in fields:
                             # Manage special case for fields splitted by sample
                             if self.fields_map[f_uid]['name'].startswith('s{}_'):
@@ -486,7 +774,7 @@ class FilterEngine:
             else:
                 with_trx = with_trx or self.fields_map[f_uid]["db_type"] == "transcript"
                 fields_names.append('{}._{}'.format(wt, f_uid))
-        q_select = 'variant_id, transcript_pk_field_uid, transcript_pk_value{} {}'.format(',' if len(fields_names) > 0 else '', ', '.join(fields_names))
+        q_select = 'variant_id, trx_pk_uid, trx_pk_value{} {}'.format(',' if len(fields_names) > 0 else '', ', '.join(fields_names))
 
         # Build FROM/JOIN
         q_from = wt
