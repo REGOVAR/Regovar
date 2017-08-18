@@ -71,17 +71,16 @@ class AnalysisManager:
         try:
             if ref_id not in core.annotations.ref_list.keys():
                 ref_id = DEFAULT_REFERENCIAL_ID
-            analysis = Analysis.new()
+            analysis = Analysis.new()            
             analysis.name = name
             analysis.project_id = project_id
             analysis.reference_id = ref_id
             analysis.template = template_id
             # Set fields with default Variant's fields
-            fields = []
-            db_uid = core.annotations.db_list[ref_id]['db']['Variant']['versions']['']
+            analysis.fields = []
+            db_uid = core.annotations.db_list[0]['db']['Variant']['versions']['_regovar_']
             for f in core.annotations.db_map[db_uid]["fields"][1:]:
-                fields.append(f)
-            analysis.fields = json.dumps(fields)
+                analysis.fields.append(f)
             analysis.save()
             log('Core.AnalysisManager.create : New analysis \"{}\" created with the id {}.'.format(name, analysis.id))
             return analysis

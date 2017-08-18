@@ -231,7 +231,7 @@ def create_annotation_db(reference_id, reference_name, table_name, vcf_annotatio
     
         query += "CREATE INDEX {0}_idx_tid ON {0} USING btree (regovar_trx_id);".format(table_name)
         query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, db_pk_field_uid, jointure) VALUES "
-        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{8}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt AND {2}.regovar_trx_id={{0}}.transcript_pk_value');"
+        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{8}', '{2} {{0}} ON {{0}}.bin={{1}}.bin AND {{0}}.chr={{1}}.chr AND {{0}}.pos={{1}}.pos AND {{0}}.ref={{1}}.ref AND {{0}}.alt={{1}}.alt');"
         query += q.format(
             db_uid, 
             reference_id, 
@@ -246,7 +246,7 @@ def create_annotation_db(reference_id, reference_name, table_name, vcf_annotatio
         db_uid = Model.execute("SELECT MD5('{0}')".format(table_name)).first()[0]
     
         query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, jointure) VALUES "
-        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{2} ON {2}.bin={{0}}.bin AND {2}.chr={{0}}.chr AND {2}.pos={{0}}.pos AND {2}.ref={{0}}.ref AND {2}.alt={{0}}.alt');"
+        q = "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}, '{7}', '{2} {{0}} ON {{0}}.bin={{1}}.bin AND {{0}}.chr={{1}}.chr AND {{0}}.pos={{1}}.pos AND {{0}}.ref={{1}}.ref AND {{0}}.alt={{1}}.alt');"
         query += q.format(
             db_uid, 
             reference_id, 

@@ -55,13 +55,13 @@ class FilterEngine:
         self.fields_map = {}
         self.db_map = {}
         self.variant_table = "sample_variant_{0}".format(refname)
-        query = "SELECT d.uid AS duid, d.name AS dname, d.name_ui AS dname_ui, d.jointure, d.reference_id, d.type AS dtype, d.db_pk_field_uid, a.uid AS fuid, a.name AS fname, a.type, a.wt_default FROM annotation_field a LEFT JOIN annotation_database d ON a.database_uid=d.uid"
+        query = "SELECT d.uid AS duid, d.name AS dname, d.name_ui AS dname_ui, d.jointure, d.reference_id, d.type AS dtype, d.db_pk_field_uid, a.uid AS fuid, a.name AS fname, a.type FROM annotation_field a LEFT JOIN annotation_database d ON a.database_uid=d.uid"
         result = await execute_aio(query)
         for row in result:
             if row.duid not in self.db_map:
                 self.db_map[row.duid] = {"name": row.dname, "join": row.jointure, "fields": {}, "reference_id": row.reference_id, "type": row.dtype, "db_pk_field_uid" : row.db_pk_field_uid}
             self.db_map[row.duid]["fields"][row.fuid] = {"name": row.fname, "type": row.type}
-            self.fields_map[row.fuid] = {"name": row.fname, "type": row.type, "db_uid": row.duid, "db_name_ui": row.dname_ui, "db_name": row.dname, "db_type": row.dtype, "join": row.jointure, "wt_default": row.wt_default}
+            self.fields_map[row.fuid] = {"name": row.fname, "type": row.type, "db_uid": row.duid, "db_name_ui": row.dname_ui, "db_name": row.dname, "db_type": row.dtype, "join": row.jointure}
 
 
 
@@ -721,7 +721,7 @@ class FilterEngine:
                 attributes[row.name].update({row.sample_id: row.value})
 
         # Init fields uid and db uids with the defaults annotations fields according to the reference (hg19 by example)
-        # for row in execute("SELECT d.uid AS duid, f.uid FROM annotation_database d INNER JOIN annotation_field f ON d.uid=f.database_uid WHERE d.reference_id={} AND d.type='variant' AND f.wt_default=True".format(reference_id)):
+        # for row in execute("SELECT d.uid AS duid, f.uid FROM annotation_database d INNER JOIN annotation_field f ON d.uid=f.database_uid WHERE d.reference_id={} AND d.type='variant'".format(reference_id)):
         #     if row.duid not in db_uids:
         #         db_uids.append(row.duid)
         #     field_uids.append(row.uid)
@@ -760,7 +760,7 @@ class FilterEngine:
             if self.fields_map[f_uid]["db_uid"] not in db_uids:
                 db_uids.append(self.fields_map[f_uid]["db_uid"])
             field_uids.append(f_uid)
-            if self.fields_map[f_uid]['db_name_ui'] == 'Variant':
+            if self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Computed']:
                 # Manage special case for fields splitted by sample
                 if self.fields_map[f_uid]['name'].startswith('s{}_'):
                     # Special case of htz composite that have different maining in trio or solo
@@ -807,14 +807,7 @@ class FilterEngine:
                 check_field_uid(data[2])
                 # Manage special case for fields splitted by sample
                 if metadata['name'].startswith('s{}_'):
-                    # With these special fields, we don't allow field to field comparaison. 
-                    # First shall always be the special fields, and the second shall be everythong except another special fields
-                    # Special case of htz composite that have different maining in trio or solo
-                    if metadata['name'] == "s{}_is_composite" and isinstance(analysis.settings["trio"], dict):
-                        trio = analysis.settings["trio"]
-                        return '{}.htz_comp_{}_{}_{}=TRUE'.format(wt, trio["child"], trio["mother"], trio["father"])
-                    else:
-                        return ' (' + ' OR '.join(['{0}{1}{2}'.format(metadata['name'].format(s), FilterEngine.op_map[operator], parse_value(metadata["type"], data[2])) for s in sample_ids]) + ') '
+                    return ' (' + ' OR '.join(['{0}{1}{2}'.format(metadata['name'].format(s), FilterEngine.op_map[operator], parse_value(metadata["type"], data[2])) for s in sample_ids]) + ') '
                 else:
                     return '{0}{1}{2}'.format(parse_value(metadata["type"], data[1]), FilterEngine.op_map[operator], parse_value(metadata["type"], data[2]))
             elif operator in ['~', '!~']:
@@ -862,14 +855,14 @@ class FilterEngine:
         def parse_value(ftype, data):
             if data[0] == 'field':
                 if self.fields_map[data[1]]["type"] == ftype:
-                    if self.fields_map[data[1]]['db_name_ui'] == 'Variant':
+                    if self.fields_map[data[1]]['db_name_ui'] in ['Variant', 'Computed']:
                         return "{0}".format(self.fields_map[data[1]]["name"])
                     else:
                         return "_{0}".format(data[1])
             if data[0] == 'value':
-                if ftype in ['int', 'float', 'enum', 'percent', 'bool', 'sample_array']:
+                if ftype in ['int', 'float', 'enum', 'bool', 'sample_array']:
                     return str(data[1])
-                elif ftype == 'string':
+                elif ftype in ['string', 'sequence']:
                     return "'{0}'".format(data[1])
                 elif ftype == 'string%':
                     return "'%%{0}%%'".format(data[1])

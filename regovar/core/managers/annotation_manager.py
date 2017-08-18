@@ -52,17 +52,18 @@ class AnnotationManager:
 
 
     async def load_annotation_metadata(self):
-        self.ref_list = {}
+        self.ref_list = { 0 : "All"}
         self.db_list = {}
         self.db_map = {}
         self.fields_map = {}
 
         query = "SELECT d.uid, d.reference_id, d.version, d.name_ui, d.description, d.url, r.name \
-                 FROM annotation_database d INNER JOIN reference r ON r.id=d.reference_id \
+                 FROM annotation_database d LEFT JOIN reference r ON r.id=d.reference_id \
                  ORDER BY r.name ASC, d.ord ASC, version DESC"
         result = await execute_aio(query)
         for row in result:
-            self.ref_list.update({row.reference_id: row.name})
+            if row.reference_id not in self.ref_list.keys():
+                self.ref_list.update({row.reference_id: row.name})
             if row.reference_id in self.db_list.keys():
                 if row.name_ui in self.db_list[row.reference_id].keys():
                     self.db_list[row.reference_id][row.name_ui]["versions"][row.version] = row.uid
