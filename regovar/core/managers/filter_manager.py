@@ -855,7 +855,7 @@ class FilterEngine:
         def parse_value(ftype, data):
             if data[0] == 'field':
                 if self.fields_map[data[1]]["type"] == ftype:
-                    if self.fields_map[data[1]]['db_name_ui'] in ['Variant', 'Computed']:
+                    if self.fields_map[data[1]]['db_name'] == "wt" :
                         return "{0}".format(self.fields_map[data[1]]["name"])
                     else:
                         return "_{0}".format(data[1])

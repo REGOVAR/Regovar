@@ -34,6 +34,61 @@ from api_rest.rest import *
 
 
 class SampleHandler:
+    
+    def build_tree(subject_id):
+        from core.core import core
+
+        currentLevelProjects = core.projects.get(None, {"subject_id": subject_id, "is_sandbox": False}, None, None, None, 1)
+        result = []
+
+        for p in currentLevelProjects:
+            entry = p.to_json(["id", "name", "comment", "subject_id", "update_date", "create_date", "is_sandbox", "is_folder"])
+
+            if p.is_folder:
+                entry["children"] = ProjectHandler.build_tree(p.id)
+            else:
+                entry["subjects"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.subjects]
+                entry["analyses"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.analyses]
+                entry["analyses"] += [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.jobs]
+
+
+            result.append(entry)
+
+
+        return result
+
+
+
+    def tree(self, request):
+        """
+            Get samples as tree of samples (with subject as folders)
+            Samples that are not linked to a subject are grouped into an "empty" subject
+        """
+        ref_id = request.match_info.get('ref_id', None)
+        if ref_id is None:
+            return rest_error("A valid referencial id must be provided to get samples tree")
+        # TODO : check that ref_id exists in database
+        # TODO : pagination
+        # TODO : search parameters
+        
+        sql  = "SELECT s.id, s.subject_id AS sid, s.name AS sname, s.comment, s.file_id AS fid, s.loading_progress, s.status, p.identifiant, p.firstname, p.lastname, p.sex, p.birthday, p.deathday, p.comment AS scomment, f.name AS filename, f.update_date AS sdate "
+        sql += "FROM sample s LEFT JOIN subject p ON s.subject_id=p.id LEFT JOIN file f ON s.file_id=f.id "
+        sql += "WHERE s.reference_id={0} ORDER BY lastname, firstname, sdate".format(ref_id)
+        
+        result = []
+        current_subject = {"id" : None, "samples" : []}
+        
+        for row in execute(sql):
+            if row.sid != current_subject["id"]:
+                result.append(current_subject)
+                current_subject = {"id" : row.sid, "samples": [], "firstname":row.firstname, "lastname": row.lastname, "sex": row.sex, "birthday": row.birthday, "deathday": row.deathday, "identifiant": row.identifiant, "comment": row.scomment}
+            
+            current_subject["samples"].append({"id": row.id, "name": row.sname, "comment": row.comment, "file_id": row.fid, "filename": row.filename, "import_date": row.sdate.isoformat(), "status": row.status, "loading_progress": row.loading_progress})
+        result.append(current_subject)
+        
+        return rest_success(result)
+    
+    
     def list(self, request):
         # Generic processing of the get query
         fields, query, order, offset, limit = process_generic_get(request.query_string, Sample.public_fields)

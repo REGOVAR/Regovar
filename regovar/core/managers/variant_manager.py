@@ -54,7 +54,8 @@ class VariantManager:
                 "alt": alt,
                 "annotations": {},
                 "online_tools_variant": {
-                    "varsome": "https://varsome.com/variant/{0}/chr{1}-{2}-{3}".format(ref_name, chrm, pos, ref)},
+                    "varsome": "https://varsome.com/variant/{0}/chr{1}-{2}-{3}".format(ref_name, chrm, pos, ref),
+                    "marrvel": "http://marrvel.org/search/variant/{0}:{1}%20{2}%3E{3}".format(variant.vchr, pos, ref, "")},
                 "stats": {}}
             if gene:
                 result.update({"online_tools_gene": {
