@@ -146,7 +146,6 @@ class AnalysisHandler:
         filter_id = request.match_info.get('filter_id', None)
         data = await request.json()
         try:
-            data = json.loads(data)
             data.update({"analysis_id": analysis_id })
             result = core.analyses.create_update_filter(filter_id, data)
             return rest_success(result.to_json())

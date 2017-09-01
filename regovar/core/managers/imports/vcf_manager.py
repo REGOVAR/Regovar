@@ -16,6 +16,7 @@ from core.managers.imports.abstract_import_manager import AbstractImportManager
 from core.framework.common import *
 import core.model as Model
 
+from core.managers.imports.vcf_import_vep import VepImporter
 
 
 
@@ -93,6 +94,7 @@ def prepare_vcf_parsing(filename):
     # Check for VEP
     vep = {'vep' : False}
     if 'VEP' in headers.keys() and 'CSQ' in headers['INFO'].keys():
+        VepImporter.init(headers['INFO']['CSQ']['description'])
         d = headers['INFO']['CSQ']['description'].split('Format:')
         vep = {
             'vep' : {
@@ -183,6 +185,20 @@ def prepare_vcf_parsing(filename):
     result['annotations'].update(snpeff)
     result['annotations'].update(dbnsfp)
     return result
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
 
 
 def normalise_annotation_name(name):
@@ -582,7 +598,12 @@ class VcfManager(AbstractImportManager):
                     # Import custom annotation for the variant
                     for ann_name, metadata in vcf_metadata['annotations'].items():
                         if metadata:
-                            if metadata['type'] == 'multiple_annotation': 
+                            if metadata['flag'] == 'CSQ':
+                                vep_query, vep_count = VepImporter.import_annotations(bin, chrm, pos, ref, alt, row.info[metadata['flag']])
+                                sql_query3 += vep_query
+                                count += vep_count
+                                
+                            elif metadata['type'] == 'multiple_annotation': 
                                 # Flag is set, we have to parse specified info fields (use by VEP and SnpEff by example)
                                 # By transcript (row.info is a list of annotation. Inside we shall find, transcript and allele information to be able to save data for the current variant)
                                 for info in row.info[metadata['flag']]:

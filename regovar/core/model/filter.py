@@ -55,10 +55,7 @@ def filter_to_json(self, fields=None):
     if fields is None:
         fields = Filter.public_fields
     for f in fields:
-        if f == "filter" and self.filter:
-            result.update({f: json.loads(self.filter)})
-        else:
-            result.update({f: eval("self." + f)})
+        result.update({f: eval("self." + f)})
     return result
 
 
@@ -72,7 +69,7 @@ def filter_load(self, data):
     try:
         if "name"        in data.keys(): self.name        = data['name']
         if "analysis_id" in data.keys(): self.analysis_id = data['analysis_id']
-        if "filter"      in data.keys(): self.filter      = json.dumps(data['filter'])
+        if "filter"      in data.keys(): self.filter      = data['filter']
         if "description" in data.keys(): self.description = data['description']
         # check to reload dynamics properties
         if self.loading_depth > 0:
