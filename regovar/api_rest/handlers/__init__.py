@@ -16,3 +16,4 @@ from api_rest.handlers.api_handler import ApiHandler
 from api_rest.handlers.user_handler import UserHandler
 from api_rest.handlers.project_handler import ProjectHandler
 from api_rest.handlers.event_handler import EventHandler
+from api_rest.handlers.search_handler import SearchHandler

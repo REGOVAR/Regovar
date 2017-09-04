@@ -57,7 +57,7 @@ class AnalysisHandler:
             Return all data about the analysis with the provided id (analysis metadata: name, settings, template data, samples used, filters, ... )
         """
         analysis_id = request.match_info.get('analysis_id', -1)
-        analysis = Analysis.from_id(analysis_id)
+        analysis = Analysis.from_id(analysis_id, 1)
         if not analysis:
             return rest_error("Unable to find the analysis with id=" + str(analysis_id))
         return rest_success(analysis.to_json())
