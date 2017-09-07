@@ -108,8 +108,11 @@ class SearchHandler:
             Return analyses that match the query
         """
         result = session().query(Analysis).filter(Analysis.name.ilike("%{0}%".format(query.lower()))).all()
-        for r in result: r.init(0)
-        return [r.to_json() for r in result]
+        for res in result: res.init(1)
+        fields = Analysis.public_fields
+        fields.extend(["project"])
+        print(fields)
+        return [r.to_json(fields) for r in result]
     
 
 

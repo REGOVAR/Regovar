@@ -40,32 +40,30 @@ def analysis_init(self, loading_depth=0):
             - filters           : Project       : The parent Project if defined
     """
     from core.model.attribute import Attribute
-    # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
-    if hasattr(self, "loading_depth"):
-        self.loading_depth = max(self.loading_depth, min(2, loading_depth))
-    else:
-        self.loading_depth = min(2, loading_depth)
-    if not self.filter: self.filter = ANALYSIS_DEFAULT_FILTER
-    self.filters_ids = self.get_filters_ids()
-    self.samples_ids = AnalysisSample.get_samples_ids(self.id)
-    self.attributes = Attribute.get_attributes(self.id)
-    self.load_depth(loading_depth)
-            
-
-def analysis_load_depth(self, loading_depth):
     from core.model.project import Project
     from core.model.template import Template
-    self.project = None
-    self.samples = []
-    self.filters = []
-    if loading_depth > 0:
-        try:
+    # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
+    # Avoid recursion infinit loop
+    if hasattr(self, "loading_depth") and self.loading_depth >= loading_depth:
+        return
+    else:
+        self.loading_depth = min(2, loading_depth)
+    try:
+        if not self.filter: self.filter = ANALYSIS_DEFAULT_FILTER
+        self.filters_ids = self.get_filters_ids()
+        self.samples_ids = AnalysisSample.get_samples_ids(self.id)
+        self.attributes = Attribute.get_attributes(self.id)
+        
+        self.project = None
+        self.samples = []
+        self.filters = []
+        if self.loading_depth > 0:
             self.project = Project.from_id(self.project_id, self.loading_depth-1)
             self.samples = AnalysisSample.get_samples(self.id, self.loading_depth-1)
             self.filters = self.get_filters(self.loading_depth-1)
-        except Exception as ex:
-            raise RegovarException("Analysis data corrupted (id={}).".format(self.id), "", ex)
-
+    except Exception as ex:
+        raise RegovarException("Analysis data corrupted (id={}).".format(self.id), "", ex)
+            
 
 
 def analysis_from_id(analysis_id, loading_depth=0):
@@ -253,7 +251,6 @@ def analysis_get_attributes(self, loading_depth=0):
 Analysis = Base.classes.analysis
 Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "computing_progress", "status"]
 Analysis.init = analysis_init
-Analysis.load_depth = analysis_load_depth
 Analysis.from_id = analysis_from_id
 Analysis.to_json = analysis_to_json
 Analysis.load = analysis_load
