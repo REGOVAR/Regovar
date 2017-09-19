@@ -81,13 +81,18 @@ def analysis_to_json(self, fields=None):
     """
         export the analysis into json format with only requested fields
     """
+    from core.model.sample import Sample
     result = {}
     if fields is None:
         fields = Analysis.public_fields
     for f in fields:
         if f == "create_date" or f == "update_date":
             result.update({f: eval("self." + f + ".isoformat()")})
-        elif f in ["samples", "filters", "attributes"] and self.loading_depth>0:
+        elif f == "samples":
+            fields = Sample.public_fields
+            if "analyses" in fields : fields.remove("analyses")
+            result[f] = [o.to_json(fields) for o in eval("self." + f)]
+        elif f in ["filters", "attributes"] and self.loading_depth>0:
             result[f] = [o.to_json() for o in eval("self." + f)]
         elif f in ["project", "template"] and self.loading_depth>0:
             result[f] = eval("self." + f + ".to_json()")
@@ -322,12 +327,13 @@ def analysissample_get_analyses(sample_id, loading_depth=0):
     """
         Return the list of analyses that used the sample
     """
+    result = []
     analyses_ids = analysissample_get_analyses_ids(sample_id)
     if len(analyses_ids) > 0:
         analyses = session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
-    for a in analyses:
-        a.init(loading_depth)
-        result.append(a)
+        for a in analyses:
+            a.init(loading_depth)
+            result.append(a)
     return result
 
 

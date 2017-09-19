@@ -20,39 +20,42 @@ from core.framework.postgresql import *
 
 def sample_init(self, loading_depth=0):
     """
-        If loading_depth is > 0, children objects will be loaded. Max depth level is 2.
-        Children objects of a sample are :
-            - subject : set with a Subject object if exists. 
-            - files  : a list of File associated to this sample
-            - analyses : a list of Analysis where this sample is used
-            - default_dbuid : list of annotation's databases used in the vcf from where come the sample
-        If loading_depth == 0, children objects are not loaded
+        Init properties of a sample :
+            - id               : int        : the unique id of the sample in the database
+            - name             : str        : the name of the sampel (name in the vcf file by default)
+            - comment          : str        : a comment on the sample
+            - is_mosaic        : bool       : true if data (variant) for this sample are mosaic; false otherwise
+            - subject_id       : int        : the id of the subject linked to this sample
+            - file_id          : int        : the id of the file (vcf) from which the sample have been extracted
+            - loading_progress : float      : progress (from 0 to 1) of the import of the sample
+            - reference_id     : int        : the reference id for this sample
+            - status           : enum       : import status values can be : 'empty', 'loading', 'ready', 'error'
+            - default_dbuid    : [str]      : list of annotation's databases used in the vcf from where come the sample
+            - analyses_id      : [int]      : the list of id of analyses that are using this sample
+        If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
+            - subject          : Subject    : Subject data of the linked subject
+            - file             : File       : File data of the source file 
+            - analyses         : [Analysis] : Analysis data of linked analyses
     """
     from core.model.analysis import Analysis, AnalysisSample
-    # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
-    if hasattr(self, "loading_depth"):
-        self.loading_depth = max(self.loading_depth, min(2, loading_depth))
-    else:
-        self.loading_depth = min(2, loading_depth)
-    
-    self.analyses_ids = AnalysisSample.get_analyses_ids(self.id)
-    self.load_depth(loading_depth)
-            
-
-def sample_load_depth(self, loading_depth):
     from core.model.subject import Subject
     from core.model.file import File
-    from core.model.analysis import Analysis, AnalysisSample
-    if loading_depth > 0:
-        try:
-            self.subject = None
-            self.files = None
-            self.analyses = None
+    # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
+    if hasattr(self, "loading_depth") and self.loading_depth >= loading_depth:
+        return
+    else:
+        self.loading_depth = min(2, loading_depth)
+    try:
+        self.analyses_ids = AnalysisSample.get_analyses_ids(self.id)
+        self.subject = None
+        self.file = None
+        self.analyses = []
+        if loading_depth > 0:
             self.subject = Subject.from_id(self.subject_id, self.loading_depth-1)
-            #self.files = SampleFile.get_files(self.id, self.loading_depth-1)
+            self.file = File.from_id(self.file_id, self.loading_depth-1)
             self.analyses = AnalysisSample.get_analyses(self.id, self.loading_depth-1)
-        except Exception as ex:
-            raise RegovarException("sample data corrupted (id={}).".format(self.id), "", ex)
+    except Exception as ex:
+        raise RegovarException("Sample data corrupted (id={}).".format(self.id), "", ex)
 
 
 
@@ -74,7 +77,16 @@ def sample_to_json(self, fields=None):
     if fields is None:
         fields = Sample.public_fields
     for f in fields:
-        result.update({f: eval("self." + f)})
+        
+        if f in ["analyses"] and self.loading_depth>0:
+            result[f] = [o.to_json() for o in eval("self." + f)]
+        elif f in ["subject", "file"] and self.loading_depth>0:
+            if eval("self." + f) :
+                result[f] = eval("self." + f + ".to_json()")
+            else:
+                result[f] = None
+        else:
+            result.update({f: eval("self." + f)})
     return result
 
 
@@ -128,9 +140,8 @@ def sample_count():
 
 
 Sample = Base.classes.sample
-Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "is_mosaic", "default_dbuid"]
+Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "is_mosaic", "default_dbuid", "loading_progress", "reference_id", "status", "subject", "file", "analyses"]
 Sample.init = sample_init
-Sample.load_depth = sample_load_depth
 Sample.from_id = sample_from_id
 Sample.to_json = sample_to_json
 Sample.load = sample_load

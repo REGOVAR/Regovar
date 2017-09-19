@@ -140,7 +140,7 @@ app.router.add_route('POST',   "/variant", variantHandler.new)                  
 
 app.router.add_route('GET',    "/sample/browserTree/{ref_id}", sampleHandler.tree)                                   # Get samples as tree
 app.router.add_route('GET',    "/sample", sampleHandler.list)                                                        # Get list of all samples in database
-app.router.add_route('GET',    "/sample/{ref_id}", sampleHandler.list)                                               # Get list of all samples in database for the provided genome reference
+#app.router.add_route('GET',    "/sample/{ref_id}", sampleHandler.list)                                               # Get list of all samples in database for the provided genome reference
 app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)                                             # Get specific sample's data
 app.router.add_route('GET',    "/sample/import/{file_id}", sampleHandler.import_from_file)                           # import sample's data from the file (vcf supported)
 

@@ -108,7 +108,7 @@ def user_role(role):
 
 def notify_all(self, data):
     msg = json.dumps(data)
-    if 'msg' not in data.keys() or data['msg'] != 'hello':
+    if 'action' not in data.keys() or data['action'] != 'hello':
         log ("API_rest Notify All: {0}".format(msg))
     for ws in WebsocketHandler.socket_list:
         ws[0].send_str(msg)
@@ -225,7 +225,7 @@ class WebsocketHandler:
         await ws.prepare(request)
 
         WebsocketHandler.socket_list.append((ws, ws_id))
-        msg = {'msg':'hello', 'data': [[str(_ws[1]) for _ws in WebsocketHandler.socket_list]]}
+        msg = {'action':'hello', 'data': [[str(_ws[1]) for _ws in WebsocketHandler.socket_list]]}
         notify_all(None, msg)
 
         try:
@@ -237,8 +237,8 @@ class WebsocketHandler:
                     else:
                         # Analyse message sent by client and send response if needed
                         data = msg.json()
-                        if data['msg'] == 'user_info':
-                            log('WebsocketHandler {0} '.format(data['msg']))
+                        if data['action'] == 'user_info':
+                            log('WebsocketHandler {0} '.format(data['action']))
                             pass
                         elif msg.tp == aiohttp.MsgType.error:
                             log('ws connection closed with exception {0}'.format(ws.exception()))

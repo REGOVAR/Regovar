@@ -8,6 +8,5 @@ from core.framework.postgresql import *
 
 
 
-
 AnnotationDatabase = Base.classes.annotation_database
 AnnotationField = Base.classes.annotation_field

@@ -815,8 +815,8 @@ INSERT INTO public."parameter" (key, description, value) VALUES
 -- 2c0a7043a9e736eaf14b6614fff102c0 = SELECT MD5('Regovar')
 -- 492f18b60811bf85ce118c0c6a1a5c4a = SELECT MD5('Variant')
 INSERT INTO public.annotation_database(uid, reference_id, name, version, name_ui, description, url, ord,  jointure, type) VALUES
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 0, 'wt', '_regovar_', 'Variant', 'Basic information about the variant.', '',  0, '', 'variant'),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 0, 'wt', '_regovar_', 'Regovar', 'Regovar computed annotations'        , '',  0, '', 'variant');
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 0, 'wt', '_all_', 'Variant', 'Basic information about the variant.', '',  0, '', 'variant'),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 0, 'wt', '_all_', 'Regovar', 'Regovar computed annotations'        , '',  0, '', 'variant');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
   ('492f18b60811bf85ce118c0c6a1a5c4a', 1,  'variant_id',       'id',                     'int',          'Variant unique id in the database.', NULL),

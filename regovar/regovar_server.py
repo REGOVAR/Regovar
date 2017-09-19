@@ -5,7 +5,7 @@ import os
 
 
 
-# Annso package
+# Regovar package
 from config import *
 from core.framework.common import RegovarException, err
 

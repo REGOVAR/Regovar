@@ -70,22 +70,18 @@ class SampleHandler:
         # TODO : check that ref_id exists in database
         # TODO : pagination
         # TODO : search parameters
-        
-        sql  = "SELECT s.id, s.subject_id AS sid, s.name AS sname, s.comment, s.file_id AS fid, s.loading_progress, s.status, p.identifiant, p.firstname, p.lastname, p.sex, p.birthday, p.deathday, p.comment AS scomment, f.name AS filename, f.update_date AS sdate "
-        sql += "FROM sample s LEFT JOIN subject p ON s.subject_id=p.id LEFT JOIN file f ON s.file_id=f.id "
-        sql += "WHERE s.reference_id={0} ORDER BY lastname, firstname, sdate".format(ref_id)
-        
         result = []
-        current_subject = {"id" : None, "samples" : []}
-        
-        for row in execute(sql):
-            if row.sid != current_subject["id"]:
-                result.append(current_subject)
-                current_subject = {"id" : row.sid, "samples": [], "firstname":row.firstname, "lastname": row.lastname, "sex": row.sex, "birthday": row.birthday, "deathday": row.deathday, "identifiant": row.identifiant, "comment": row.scomment}
+        samples = [s for s in session().query(Sample).filter_by(reference_id=ref_id).order_by(Sample.subject_id).all()]
+        current_subject = {"id":-1}
+        for s in samples:
+            if s.subject_id != current_subject["id"]:
+                if current_subject["id"] != -1: result.append(current_subject)
+                current_subject = {"id": s.subject_id, "samples": []}
             
-            current_subject["samples"].append({"id": row.id, "name": row.sname, "comment": row.comment, "file_id": row.fid, "filename": row.filename, "import_date": row.sdate.isoformat(), "status": row.status, "loading_progress": row.loading_progress})
-        result.append(current_subject)
-        
+            s.init(1)
+            current_subject["samples"].append(s.to_json())
+        if current_subject["id"] != -1: 
+            result.append(current_subject)
         return rest_success(result)
     
     
@@ -109,7 +105,7 @@ class SampleHandler:
         sid = request.match_info.get('sample_id', None)
         if sid is None:
             return rest_error("No valid sample id provided")
-        sample = Sample.from_id(sid)
+        sample = Sample.from_id(sid, 1)
         if sample is None:
             return rest_error("No sample found with id="+str(sid))
         return rest_success(sample.to_json())

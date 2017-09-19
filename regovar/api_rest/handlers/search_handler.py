@@ -109,9 +109,7 @@ class SearchHandler:
         """
         result = session().query(Analysis).filter(Analysis.name.ilike("%{0}%".format(query.lower()))).all()
         for res in result: res.init(1)
-        fields = Analysis.public_fields
-        fields.extend(["project"])
-        print(fields)
+        fields = Analysis.public_fields + ["project"]
         return [r.to_json(fields) for r in result]
     
 

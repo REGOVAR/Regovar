@@ -44,25 +44,37 @@ class AnnotationDBHandler:
             ref_id = DEFAULT_REFERENCIAL_ID 
         ref_id = int(ref_id)
 
+        
         result = { "ref_id": ref_id, "ref_name": core.annotations.ref_list[ref_id], "db": []}
+
 
         # First we add db common to all ref (variant info and regovar computed annotation)
         for db_name in core.annotations.db_list[0]["order"]:
-            db_data = core.annotations.db_list[0]['db'][db_name]
-            db_data.update({"selected": "_regovar_"})
-            db_data['fields'] = []
-            for fuid in core.annotations.db_map[db_data['versions'][db_data['selected']]]['fields']:
-                db_data['fields'].append(core.annotations.fields_map[fuid])
+            db_data = core.annotations.db_list[0]['db'][db_name].copy()
+            dbs = db_data.pop('versions')
+            db_data.update({"versions": {}})
+            db_data.update({"default": next(iter(dbs.values()))})
+            
+            for dversion, duid in dbs.items():
+                fields = []
+                for fuid in  core.annotations.db_map[duid]['fields']:
+                    fields.append(core.annotations.fields_map[fuid])
+                db_data['versions'][duid] = {'uid' : duid, 'version': dversion, 'fields': fields}
             result["db"].append(db_data)
 
         # Next add annotations available for the ref
         if ref_id != 0:
             for db_name in core.annotations.db_list[ref_id]["order"]:
-                db_data = core.annotations.db_list[ref_id]['db'][db_name]
-                db_data.update({"selected": next(iter(db_data['versions'].keys()))})
-                db_data['fields'] = []
-                for fuid in core.annotations.db_map[db_data['versions'][db_data['selected']]]['fields']:
-                    db_data['fields'].append(core.annotations.fields_map[fuid])
+                db_data = core.annotations.db_list[ref_id]['db'][db_name].copy()
+                dbs = db_data.pop('versions')
+                db_data.update({"versions": {}})
+                db_data.update({"default": next(iter(dbs.values()))})
+                
+                for dversion, duid in dbs.items():
+                    fields = []
+                    for fuid in core.annotations.db_map[duid]['fields']:
+                        fields.append(core.annotations.fields_map[fuid])
+                    db_data['versions'][duid] = {'uid' : duid, 'version': dversion, 'fields': fields}
                 result["db"].append(db_data)
 
 

@@ -40,11 +40,18 @@ class ApiHandler:
         pass
 
     def welcom(self, request):
+        
         return rest_success({
             "api_url": HOST_P,
             "title": "Regovar Service API",
             "version": VERSION,
-            "website" : "core.org"
+            "website" : "http://regovar.org",
+            "last_analyses": self.get_last_analyses(),
+            "last_subjects" : [],
+            "last_events": [],
+            "references" : [{"id": ref[0], "name": ref[1]} for ref in core.annotations.ref_list.items()],
+            "default_reference_id": DEFAULT_REFERENCIAL_ID
+                
         })
 
 
@@ -65,3 +72,18 @@ class ApiHandler:
             "hostname" : HOST_P,
             "file_public_fields" : ", ".join(File.public_fields)
             }
+    
+    
+    
+    
+    
+    
+    
+    def get_last_analyses(self):
+        """
+            Return last analyses
+        """
+        result = session().query(Analysis).order_by(Analysis.update_date.desc(), Analysis.name.asc()).limit(10).all()
+        for res in result: res.init(1)
+        fields = Analysis.public_fields + ["project"]
+        return [r.to_json(fields) for r in result]

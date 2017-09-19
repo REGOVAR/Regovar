@@ -78,7 +78,7 @@ class AnalysisManager:
             analysis.template = template_id
             # Set fields with default Variant's fields
             analysis.fields = []
-            db_uid = core.annotations.db_list[0]['db']['Variant']['versions']['_regovar_']
+            db_uid = core.annotations.db_list[0]['db']['Variant']['versions']['_all_']
             for f in core.annotations.db_map[db_uid]["fields"][1:]:
                 analysis.fields.append(f)
             analysis.save()
