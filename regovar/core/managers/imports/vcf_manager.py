@@ -735,14 +735,15 @@ class VcfManager(AbstractImportManager):
         ipdb.set_trace()
         # stop workers
         for i in range(max_thread):
-            q.put(None)
+            queries_queue.put(None)
         for t in workers:
             t.join()
     
 
         # Waiting that all query in the queue was executed
         log("VCF parsing done : Waiting for sql queries executions")
-        queries_queue.join()
+        if queries_queue.qsize > 0:
+            queries_queue.join()
 
 
         log("VCF import : Done")
