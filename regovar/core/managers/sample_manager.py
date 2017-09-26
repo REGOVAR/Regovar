@@ -55,12 +55,12 @@ class SampleManager:
  
  
  
-    async def import_from_file(self, file_id, analysis_id=None, reference_id=DEFAULT_REFERENCIAL_ID):
+    async def import_from_file(self, file_id, reference_id, analysis_id=None):
         from core.managers.imports.vcf_manager import VcfManager
         # Check ref_id
         if analysis_id:
             analysis = Model.Analysis.from_id(analysis_id)
-            if analysis:
+            if analysis and not reference_id:
                 reference_id=analysis.reference_id
         # Only import from VCF is supported for samples
         print ("Using import manager {}. {}".format(VcfManager.metadata["name"],VcfManager.metadata["description"]))

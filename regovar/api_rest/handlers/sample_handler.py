@@ -116,10 +116,11 @@ class SampleHandler:
     async def import_from_file(self, request):
         params = get_query_parameters(request.query_string, ["subject_id", "analysis_id"])
         file_id = request.match_info.get('file_id', None)
+        ref_id = request.match_info.get('ref_id', None)
         
         
         try:
-            samples = await core.samples.import_from_file(file_id)
+            samples = await core.samples.import_from_file(file_id, ref_id)
         except Exception as ex:
             print(ex)
             return rest_error("Import error : enable to import samples. ".format(str(ex)))

@@ -95,7 +95,8 @@ def analysis_to_json(self, fields=None):
         elif f in ["filters", "attributes"] and self.loading_depth>0:
             result[f] = [o.to_json() for o in eval("self." + f)]
         elif f in ["project", "template"] and self.loading_depth>0:
-            result[f] = eval("self." + f + ".to_json()")
+            obj = eval("self." + f)
+            result[f] = obj.to_json() if obj else None
         else:
             try:
                 result.update({f: eval("self." + f)})
@@ -132,6 +133,7 @@ def analysis_load(self, data):
             self.status = "empty"
             self.computing_progress = 0
             execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
+            execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(self.id))
 
         if "samples_ids" in data.keys():
             # Remove old
@@ -146,6 +148,7 @@ def analysis_load(self, data):
             self.status = "empty"
             self.computing_progress = 0
             execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
+            execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(self.id))
 
             # If settings empty, init it with informations from samples
             if len(self.settings["annotations_db"]) == 0:

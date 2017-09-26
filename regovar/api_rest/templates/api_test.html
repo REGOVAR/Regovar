@@ -1285,7 +1285,7 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /sample/import/{file_id}?...</code><br/>
+                                        <code>GET /sample/import/{file_id}/{ref_id}?...</code><br/>
                                         <i>Import samples data from file. Today, only VCF(.gz) files are supported.</i><br/>
                                         <i>Optional query parameters allow you to link the samples imported to a subject and or an analysis.</i>
                                     </div>  
@@ -1293,19 +1293,16 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
-                                        <code>sample_id</code><br/>
-                                        <i>The id of the sample.</i><br/><br/>
-                                        <code>subject_id={subject_id}</code><br/>
-                                        <i>The id of the subject that will be linked to the imported samples. If not set, new empty subject will be created for each samples.</i><br/><br/>
-                                        <code>analysis_id={analysis_id}</code><br/>
-                                        <i>The id of the analysis that will be linked to the imported samples. When the import will be done, the analysis should be reloaded to take in account
-                                        the new samples and their data. If not set, the samples are not linked to any analysis.</i>
+                                        <code>file_id</code><br/>
+                                        <i>The id of the file to import.</i><br/><br/>
+                                        <code>ref_id</code><br/>
+                                        <i>The id of the reference to use.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="sample_api_03_query" type="text" placeholder="/sample/import/{file_id}?..." value="/sample/import/1"/> 
+                                        <input id="sample_api_03_query" type="text" placeholder="/sample/import/{file_id}/{ref_id}?..." value="/sample/import/1/2"/> 
                                         <button onclick="generic_exec_from_input('sample_api_03_query', 'sample_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>

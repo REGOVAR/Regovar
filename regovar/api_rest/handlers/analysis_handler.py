@@ -71,15 +71,18 @@ class AnalysisHandler:
         # 1- Retrieve data from request
         data = await request.json()
         try:
-            data = json.loads(data)
+            
             project_id = data["project_id"]
             name = data["name"]
             ref_id = data["reference_id"]
+            samples = data["samples_ids"] if "samples_ids" in data.keys() else []
+            settings = data["settings"] if "settings" in data.keys() else None
+            template_id = data["template_id"] if "template_id" in data.keys() else None
         except Exception as ex:
             return rest_error("Unable to create new analysis. Provided data missing or corrupted. " + str(ex))
-        template_id = data["template_id"] if "template_id" in data.keys() else None
         # Create the analysis 
         analysis = core.analyses.create(name, project_id, ref_id, template_id)
+        core.analyses.update(analysis.id, data)
         if not analysis:
             return rest_error("Unable to create an analsis with provided information.")
         return rest_success(analysis.to_json())

@@ -232,7 +232,9 @@ class FilterEngine:
         # Predefinied quickfilters
         if len(samples_ids) == 1:
             self.update_wt_compute_prefilter_single(analysis, samples_ids[0], "M")
-        # TODO trio, and so on
+        elif analysis.settings["trio"]:
+            self.update_wt_compute_prefilter_trio(analysis, samples_ids, analysis.settings["trio"])
+        
 
 
 
@@ -338,7 +340,7 @@ class FilterEngine:
         res = execute(query.format(wt))
         log(" > is_xlk : {} variants".format(res.rowcount))
 
-        # X-Linked
+        # Mitochondrial
         query = "UPDATE {0} SET is_mit=True WHERE chr=25"
         res = execute(query.format(wt))
         log(" > is_mit : {} variants".format(res.rowcount))
@@ -346,11 +348,53 @@ class FilterEngine:
 
 
     def update_wt_compute_prefilter_trio(self, analysis, samples_ids, trio):
-        pass
+        wt  = "wt_{}".format(analysis.id)
+        sex = trio["child_sex"]
+        child_id = trio["child_id"]
+        mother_id = trio["mother_id"]
+        father_id = trio["father_id"]
+        child_idx = trio["child_index"]
+        mother_idx = trio["mother_index"]
+        father_idx = trio["father_index"]
 
+        # Dominant
+        if sex == "F":
+            query = "UPDATE {0} SET is_dom=True WHERE s{1}_gt>1"
+        else: # sex == "M"
+            query = "UPDATE {0} SET is_dom=True WHERE chr=23 OR s{1}_gt>1"
+        res = execute(query.format(wt, child_id))
+        log(" > is_dom : {} variants".format(res.rowcount))
 
+        # Recessif Homozygous
+        query = "UPDATE {0} SET is_rec_hom=True WHERE s{1}_gt=1"
+        res = execute(query.format(wt, child_id))
+        log(" > is_rec_hom : {} variants".format(res.rowcount))
 
+        # Recessif Heterozygous compoud
+        query = "UPDATE {0} u SET is_rec_htzcomp=True WHERE u.variant_id IN ( SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM ( SELECT array_agg(w.variant_id) as vids, g.name2 FROM {0} w  INNER JOIN refgene{4} g ON g.chr=w.chr AND g.txrange @> w.pos  WHERE  s{1}_gt > 1 AND ( (s{2}_gt > 1 AND (s{3}_gt = NULL or s{3}_gt < 2)) OR (s{3}_gt > 1 AND (s{2}_gt = NULL or s{2}_gt < 2))) GROUP BY name2 HAVING count(*) > 1) AS sub )"
+        res = execute(query.format(wt, child_id, mother_id, father_id, analysis.db_suffix))
+        log(" > is_rec_htzcomp : {} variants".format(res.rowcount))
 
+        # Inherited and denovo are not available for single
+        query = "UPDATE {0} SET is_denovo=True WHERE s{1}_gt>0 and s{2}_gt=0 and s{3}_gt=0"
+        res = execute(query.format(wt, child_id, mother_id, father_id))
+        log(" > is_denovo : {} variants".format(res.rowcount))        
+
+        # Autosomal
+        query = "UPDATE {0} SET is_aut=True WHERE chr<23"
+        res = execute(query.format(wt))
+        log(" > is_aut : {} variants".format(res.rowcount))
+
+        # X-Linked
+        query = "UPDATE {0} SET is_xlk=True WHERE chr=23 AND s{1}_gt>1 and s{2}_gt>1"
+        if trio["child_sex"] == "F": query += " AND s{3}_gt>1"
+        res = execute(query.format(wt, child_id, mother_id, father_id))
+        log(" > is_xlk : {} variants".format(res.rowcount))
+
+        # mitochondrial
+        query = "UPDATE {0} SET is_mit=True WHERE chr=25"
+        res = execute(query.format(wt))
+        log(" > is_mit : {} variants".format(res.rowcount))
 
 
 

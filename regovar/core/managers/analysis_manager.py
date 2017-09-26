@@ -228,6 +228,7 @@ class AnalysisManager:
             raise RegovarException("Unable to fin analysis with the provided id {}".format(analysis_id))
         try:
             execute("DROP TABLE IF EXISTS wt_{} CASCADE;".format(analysis_id))
+            execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(analysis_id))
             analysis.status = "empty"
             analysis.save()
         except Exception as ex:

@@ -260,7 +260,7 @@ CREATE TABLE public.analysis
     create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     total_variants integer DEFAULT 0,
-    reference_id integer DEFAULT 2,  -- 2 is for Hg19
+    reference_id integer,
     computing_progress real DEFAULT 0,
     status analysis_status,
     CONSTRAINT analysis_pkey PRIMARY KEY (id)
@@ -607,61 +607,6 @@ CREATE INDEX annotation_field_idx2
 -- --------------------------------------------
 -- TABLES ACCORDING TO REF
 -- --------------------------------------------
-CREATE TABLE public.variant_hg19
-(
-    id bigserial NOT NULL,
-    bin integer,
-    chr integer,
-    pos bigint NOT NULL,
-    ref text NOT NULL,
-    alt text NOT NULL,
-    is_transition boolean,
-    sample_list integer[],
-    CONSTRAINT variant_hg19_pkey PRIMARY KEY (id),
-    CONSTRAINT variant_hg19_ukey UNIQUE (chr, pos, ref, alt)
-);
-CREATE TABLE public.sample_variant_hg19
-(
-    sample_id integer NOT NULL,
-    bin integer,
-    chr integer,
-    pos bigint NOT NULL,
-    ref text NOT NULL,
-    alt text NOT NULL,
-    variant_id bigint,
-    genotype integer,
-    depth integer,
-    infos character varying(255)[][] COLLATE pg_catalog."C",
-    mosaic real,
-    is_composite boolean DEFAULT False,
-    CONSTRAINT sample_variant_hg19_pkey PRIMARY KEY (sample_id, chr, pos, ref, alt),
-    CONSTRAINT sample_variant_hg19_ukey UNIQUE (sample_id, variant_id)
-);
-CREATE INDEX sample_variant_hg19_idx_id
-  ON public.sample_variant_hg19
-  USING btree
-  (variant_id);
-CREATE INDEX sample_variant_hg19_idx_samplevar
-  ON public.sample_variant_hg19
-  USING btree
-  (sample_id);
-CREATE INDEX sample_variant_hg19_idx_site
-  ON public.sample_variant_hg19
-  USING btree
-  (sample_id, bin, chr, pos);
-CREATE INDEX variant_hg19_idx_id
-  ON public.variant_hg19
-  USING btree
-  (id);
-CREATE INDEX variant_hg19_idx_site
-  ON public.variant_hg19
-  USING btree
-  (bin, chr, pos);
-
-
-
-
-  
 CREATE TABLE public.variant_hg18
 (
     id bigserial NOT NULL,
@@ -715,55 +660,7 @@ CREATE INDEX variant_hg18_idx_site
 
 
   
-CREATE TABLE public.variant_hg38
-(
-    id bigserial NOT NULL,
-    bin integer,
-    chr integer,
-    pos bigint NOT NULL,
-    ref text NOT NULL,
-    alt text NOT NULL,
-    is_transition boolean,
-    sample_list integer[],
-    CONSTRAINT variant_hg38_pkey PRIMARY KEY (id),
-    CONSTRAINT variant_hg38_ukey UNIQUE (chr, pos, ref, alt)
-);
-CREATE TABLE public.sample_variant_hg38
-(
-    sample_id integer NOT NULL,
-    bin integer,
-    chr integer,
-    pos bigint NOT NULL,
-    ref text NOT NULL,
-    alt text NOT NULL,
-    variant_id bigint,
-    genotype integer,
-    depth integer,
-    infos character varying(255)[][] COLLATE pg_catalog."C",
-    mosaic real,
-    CONSTRAINT sample_variant_hg38_pkey PRIMARY KEY (sample_id, chr, pos, ref, alt),
-    CONSTRAINT sample_variant_hg38_ukey UNIQUE (sample_id, variant_id)
-);
-CREATE INDEX sample_variant_hg38_idx_id
-  ON public.sample_variant_hg38
-  USING btree
-  (variant_id);
-CREATE INDEX sample_variant_hg38_idx_samplevar
-  ON public.sample_variant_hg38
-  USING btree
-  (sample_id);
-CREATE INDEX sample_variant_hg38_idx_site
-  ON public.sample_variant_hg38
-  USING btree
-  (sample_id, bin, chr, pos);
-CREATE INDEX variant_hg38_idx_id
-  ON public.variant_hg38
-  USING btree
-  (id);
-CREATE INDEX variant_hg38_idx_site
-  ON public.variant_hg38
-  USING btree
-  (bin, chr, pos);
+
 
 
 
@@ -794,13 +691,6 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 
 
-INSERT INTO public.reference(id, name, description, url, table_suffix) VALUES 
-  (1, 'Hg18', 'Human Genom version 18', 'http://hgdownload.cse.ucsc.edu/goldenpath/hg18/chromosomes/', 'hg18'),
-  (2, 'Hg19', 'Human Genom version 19', 'http://hgdownload.cse.ucsc.edu/goldenpath/hg19/chromosomes/', 'hg19'),
-  (3, 'Hg38', 'Human Genom version 38', 'http://hgdownload.cse.ucsc.edu/goldenpath/hg19/chromosomes/', 'hg38');
-
-
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 INSERT INTO public."parameter" (key, description, value) VALUES
     ('database_version',          'The current version of the database',           'V1.0.0'),
@@ -816,7 +706,7 @@ INSERT INTO public."parameter" (key, description, value) VALUES
 -- 492f18b60811bf85ce118c0c6a1a5c4a = SELECT MD5('Variant')
 INSERT INTO public.annotation_database(uid, reference_id, name, version, name_ui, description, url, ord,  jointure, type) VALUES
   ('492f18b60811bf85ce118c0c6a1a5c4a', 0, 'wt', '_all_', 'Variant', 'Basic information about the variant.', '',  0, '', 'variant'),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 0, 'wt', '_all_', 'Regovar', 'Regovar computed annotations'        , '',  0, '', 'variant');
+  ('2c0a7043a9e736eaf14b6614fff102c0', 0, 'wt', '_all_', 'Regovar', 'Regovar computed annotations'        , '',  1, '', 'variant');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
   ('492f18b60811bf85ce118c0c6a1a5c4a', 1,  'variant_id',       'id',                     'int',          'Variant unique id in the database.', NULL),

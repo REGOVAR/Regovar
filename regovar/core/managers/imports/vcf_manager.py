@@ -7,16 +7,18 @@ import os
 import datetime
 import sqlalchemy
 import subprocess
-import multiprocessing as mp
+#import multiprocessing as mp
 import reprlib
 import gzip
 from pysam import VariantFile
 
-from core.managers.imports.abstract_import_manager import AbstractImportManager
+from core.managers.imports.abstract_import_manager import AbstractImportManager, AbstractTranscriptDataImporter
 from core.framework.common import *
 import core.model as Model
 
 from core.managers.imports.vcf_import_vep import VepImporter
+
+
 
 
 
@@ -53,7 +55,7 @@ def debug_clear_header(filename):
 
 
 
-def prepare_vcf_parsing(filename):
+def prepare_vcf_parsing(reference_id, filename):
     """
         Parse vf headers and return information about which data shall be parsed
         and stored in the database
@@ -92,76 +94,63 @@ def prepare_vcf_parsing(filename):
                 break;
 
     # Check for VEP
-    vep = {'vep' : False}
-    if 'VEP' in headers.keys() and 'CSQ' in headers['INFO'].keys():
-        VepImporter.init(headers['INFO']['CSQ']['description'])
-        d = headers['INFO']['CSQ']['description'].split('Format:')
-        vep = {
-            'vep' : {
-                'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
-                'version' : headers['VEP'][0].split(' ')[0],
-                'flag' : 'CSQ',
-                'name' : 'VEP',
-                'db_type' : 'transcript',
-                'db_pk_field' : 'Feature',
-                'description' : d[0].strip(),
-                'columns' : d[1].strip().split('|'),
-            }
-        }
-        if 'Feature' not in vep['vep']['columns']:
-            vep = {'vep' : False }
-
+    vep_imp = VepImporter()
+    if vep_imp.init(headers, reference_id):
+        vep = {'vep' : vep_imp}
+    else:
+        vep = {'vep' : False}
+    
     # Check for SnpEff
     snpeff = {'snpeff' : False }
-    if 'SnpEffVersion' in headers.keys() :
-        if 'ANN' in headers['INFO'].keys():
-            d = headers['INFO']['ANN']['description'].split('\'')
-            snpeff = {
-                'snpeff' : {
-                    'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
-                    'version' : headers['SnpEffVersion'][0].strip().strip('"').split(' ')[0],
-                    'flag' : 'ANN',
-                    'name' : 'SnpEff',
-                    'db_type' : 'transcript',
-                    'db_pk_field' : 'Feature_ID',
-                    'columns' : [c.strip() for c in d[1].strip().split('|')],
-                    'description' : d[0].strip(),
-                }
-            }
-        elif 'EFF' in headers['INFO'].keys():
-            d = headers['INFO']['EFF']['description'].split('\'')
-            snpeff = {
-                'snpeff' : {
-                    'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
-                    'version' : headers['SnpEffVersion'][0].strip().strip('"').split(' ')[0],
-                    'flag' : 'EFF',
-                    'name' : 'SnpEff',
-                    'db_type' : 'transcript',
-                    'db_pk_field' : 'Transcript_ID',
-                    'columns' : [c.strip() for c in d[1].strip().split('|')],
-                    'description' : d[0].strip(),
-                }
-            }
-            if 'Transcript_ID' not in snpeff['snpeff']['columns']:
-                snpeff = {'snpeff' : False }
+    #if 'SnpEffVersion' in headers.keys() :
+        #if 'ANN' in headers['INFO'].keys():
+            #d = headers['INFO']['ANN']['description'].split('\'')
+            #snpeff = {
+                #'snpeff' : {
+                    #'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
+                    #'version' : headers['SnpEffVersion'][0].strip().strip('"').split(' ')[0],
+                    #'flag' : 'ANN',
+                    #'name' : 'SnpEff',
+                    #'db_type' : 'transcript',
+                    #'db_pk_field' : 'Feature_ID',
+                    #'columns' : [c.strip() for c in d[1].strip().split('|')],
+                    #'description' : d[0].strip(),
+                #}
+            #}
+        #elif 'EFF' in headers['INFO'].keys():
+            #d = headers['INFO']['EFF']['description'].split('\'')
+            #snpeff = {
+                #'snpeff' : {
+                    #'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
+                    #'version' : headers['SnpEffVersion'][0].strip().strip('"').split(' ')[0],
+                    #'flag' : 'EFF',
+                    #'name' : 'SnpEff',
+                    #'db_type' : 'transcript',
+                    #'db_pk_field' : 'Transcript_ID',
+                    #'columns' : [c.strip() for c in d[1].strip().split('|')],
+                    #'description' : d[0].strip(),
+                #}
+            #}
+            #if 'Transcript_ID' not in snpeff['snpeff']['columns']:
+                #snpeff = {'snpeff' : False }
 
-    # Check for dbNSFP
+    ## Check for dbNSFP
     dbnsfp = {'dbnsfp' : False }
-    dbnsfp_fields = [f.replace("dbNSFP_", "", 1) for f in headers['INFO'].keys() if f.startswith("dbNSFP_")]
-    dbnsfp_fields = sorted(dbnsfp_fields)
-    if len(dbnsfp_fields) > 0:
-        dbnsfp = {
-            'dbnsfp' : {
-                'type' : 'column_annotation', # use this key for standard annotations (one by column in INFO field)
-                'version' : "", # how to get version dbNSFP used by SnpSift ?
-                'flag' : '',
-                'name' : 'dbNSFP',
-                'prefix' : 'dbNSFP_',
-                'db_type' : 'variant',
-                'columns' : dbnsfp_fields,
-                'description' : "A database for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome.",
-            }
-        }
+    #dbnsfp_fields = [f.replace("dbNSFP_", "", 1) for f in headers['INFO'].keys() if f.startswith("dbNSFP_")]
+    #dbnsfp_fields = sorted(dbnsfp_fields)
+    #if len(dbnsfp_fields) > 0:
+        #dbnsfp = {
+            #'dbnsfp' : {
+                #'type' : 'column_annotation', # use this key for standard annotations (one by column in INFO field)
+                #'version' : "", # how to get version dbNSFP used by SnpSift ?
+                #'flag' : '',
+                #'name' : 'dbNSFP',
+                #'prefix' : 'dbNSFP_',
+                #'db_type' : 'variant',
+                #'columns' : dbnsfp_fields,
+                #'description' : "A database for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome.",
+            #}
+        #}
 
 
 
@@ -352,32 +341,6 @@ def normalize_chr(chrm):
     return chrm
 
 
-def normalize(pos, ref, alt):
-    """
-        Normalize given (position, ref and alt) from VCF into Database format
-            - Assuming that position in VCF are 1-based (0-based in Database)
-            - triming ref and alt to get minimal alt (and update position accordingly)
-    """
-    # input pos comming from VCF are 1-based.
-    # to be consistent with UCSC databases we convert it into 0-based
-    pos -= 1
-
-    if (ref == alt):
-        return None,None,None
-    if ref is None:
-        ref = ''
-    if alt is None:
-        alt = ''
-    while len(ref) > 0 and len(alt) > 0 and ref[0]==alt[0] :
-        ref = ref[1:]
-        alt = alt[1:]
-        pos += 1
-    if len(ref) == len(alt):
-        while ref[-1:]==alt[-1:]:
-            ref = ref[0:-1]
-            alt = alt[0:-1]
-    return pos, ref, alt
-
 
 def normalize_gt(infos):
     """
@@ -529,13 +492,36 @@ def getMaxUcscBin(start, end):
 # Import manager
 # =======================================================================================================
 
+from queue import Queue
+from threading import Thread
 
-def transaction_end(job_id, result):
-    job_in_progress.remove(job_id)
-    if result is Exception or result is None:
-        core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
-    else:
-        log("Transaction success")
+
+queries_queue = Queue(maxsize=0)
+workers = []
+max_thread = 7
+
+# define bw worker
+def worker():
+    while True:
+        query = queries_queue.get()
+        if query is None:
+            break
+        Model.execute(query)
+        queries_queue.task_done()
+        
+# init workers
+for i in range(max_thread):
+    t = Thread(target=worker)
+    t.start()
+    workers.append(t)
+
+
+#def transaction_end(job_id, result):
+    #job_in_progress.remove(job_id)
+    #if result is Exception or result is None:
+        #core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
+    #else:
+        #log("Transaction success")
             
             
 class VcfManager(AbstractImportManager):
@@ -563,122 +549,152 @@ class VcfManager(AbstractImportManager):
         sql_pattern1 = "INSERT INTO {0} (chr, pos, ref, alt, is_transition, bin, sample_list) VALUES ({1}, {2}, '{3}', '{4}', {5}, {6}, array[{7}]) ON CONFLICT (chr, pos, ref, alt) DO UPDATE SET sample_list=array_intersect({0}.sample_list, array[{7}])  WHERE {0}.chr={1} AND {0}.pos={2} AND {0}.ref='{3}' AND {0}.alt='{4}';"
         sql_pattern2 = "INSERT INTO sample_variant" + db_ref_suffix + " (sample_id, variant_id, bin, chr, pos, ref, alt, genotype, depth) SELECT {0}, id, {1}, '{2}', {3}, '{4}', '{5}', '{6}', {7} FROM variant" + db_ref_suffix + " WHERE bin={1} AND chr={2} AND pos={3} AND ref='{4}' AND alt='{5}' ON CONFLICT (sample_id, variant_id) DO NOTHING;"
         
-        sql_annot_trx = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, regovar_trx_id, {1}) SELECT id, {3},{4},{5},'{6}','{7}', '{8}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id, regovar_trx_id) DO  NOTHING;" # TODO : on conflict, shall update fields with value in the VCF to complete database annotation with (maybe) new fields
+        sql_annot_trx = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, regovar_trx_id, {1}) SELECT id, {3},{4},{5},'{6}','{7}', '{8}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id, regovar_trx_id) DO  NOTHING; " # TODO : do update on conflict
         sql_annot_var = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, {1}) SELECT id, {3},{4},{5},'{6}','{7}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id) DO  NOTHING;"
 
         sql_query1 = ""
         sql_query2 = ""
         sql_query3 = ""
         count = 0
+        
         for row in vcf_reader: 
             records_current += 1 
+            #log("> {} : {}".format(records_current, count))
+            #if records_current == 14356:
+                #ipdb.set_trace()
+                    
             # TODO : update sample's progress indicator
             
-
+            # Register variant and variant/sample associations
             chrm = normalize_chr(str(row.chrom))
             samples_array = ','.join([str(samples[s].id) for s in row.samples])
             for sn in row.samples:
                 sp = row.samples.get(sn)
-                if (len(sp.alleles) > 0) :
-                    pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
-                    if pos is not None and alt != ref :
+                if (len(sp.alleles) > 0):
+                    for allele in sp.alleles:
+                        pos, ref, alt = AbstractTranscriptDataImporter.normalise(None, row.pos, row.ref, allele)
                         bin = getMaxUcscBin(pos, pos + len(ref))
                         sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
                         sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'))
                         count += 1
 
-                    pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[1])
-                    if pos is not None and alt != ref :
-                        bin = getMaxUcscBin(pos, pos + len(ref))
-                        sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
-                        sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'))
-                        count += 1
+                    #pos, ref, alt = AbstractTranscriptDataImporter.normalise(None, row.pos, row.ref, sp.alleles[1])
+                    #if pos is not None and alt != ref :
+                        #bin = getMaxUcscBin(pos, pos + len(ref))
+                        #sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
+                        #sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'))
+                        #count += 1
 
-
-                    # Import custom annotation for the variant
-                    for ann_name, metadata in vcf_metadata['annotations'].items():
-                        if metadata:
-                            if metadata['flag'] == 'CSQ':
-                                vep_query, vep_count = VepImporter.import_annotations(bin, chrm, pos, ref, alt, row.info[metadata['flag']])
-                                sql_query3 += vep_query
-                                count += vep_count
+            # Register variant annotations
+            for ann_name, importer in vcf_metadata['annotations'].items():
+                if importer:
+                    vep_query, vep_count = importer.import_annotations(sql_annot_trx, bin, chrm, pos, ref, alt, row.info)
+                    sql_query3 += vep_query
+                    count += vep_count
                                 
-                            elif metadata['type'] == 'multiple_annotation': 
-                                # Flag is set, we have to parse specified info fields (use by VEP and SnpEff by example)
-                                # By transcript (row.info is a list of annotation. Inside we shall find, transcript and allele information to be able to save data for the current variant)
-                                for info in row.info[metadata['flag']]:
-                                    data = info.split('|')
-                                    q_fields = []
-                                    q_values = []
-                                    allele   = ""
-                                    trx_pk = "NULL"
-                                    for col_pos, col_name in enumerate(metadata['columns']):
-                                        if col_pos >= len(data):
-                                            # With EFF, ERROR/WARNING columns can be optional
-                                            continue
-                                        q_fields.append(metadata['db_map'][col_name]['name'])
-                                        val = escape_value_for_sql(data[col_pos])
-                                        
-                                        if col_name == 'Allele':
-                                            allele = val.strip().strip("-")
-                                        if col_name == metadata['db_pk_field']:
-                                            trx_pk = val.strip()
+                    #elif metadata['type'] == 'multiple_annotation': 
+                        ## Flag is set, we have to parse specified info fields (use by VEP and SnpEff by example)
+                        ## By transcript (row.info is a list of annotation. Inside we shall find, transcript and allele information to be able to save data for the current variant)
+                        #for info in row.info[metadata['flag']]:
+                            #data = info.split('|')
+                            #q_fields = []
+                            #q_values = []
+                            #allele   = ""
+                            #trx_pk = "NULL"
+                            #for col_pos, col_name in enumerate(metadata['columns']):
+                                #if col_pos >= len(data):
+                                    ## With EFF, ERROR/WARNING columns can be optional
+                                    #continue
+                                #q_fields.append(metadata['db_map'][col_name]['name'])
+                                #val = escape_value_for_sql(data[col_pos])
+                                
+                                #if col_name == 'Allele':
+                                    #allele = val.strip().strip("-")
+                                #if col_name == metadata['db_pk_field']:
+                                    #trx_pk = val.strip()
 
-                                        q_values.append('\'{}\''.format(val) if val != '' and val is not None else 'NULL')
+                                #q_values.append('\'{}\''.format(val) if val != '' and val is not None else 'NULL')
 
-                                    pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
-                                    # print(pos, ref, alt, allele)
-                                    if pos is not None and alt==allele and len(q_fields) > 0:
-                                        # print("ok")
-                                        sql_query3 += sql_annot_trx.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
-                                        count += 1
-                                    pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[1])
-                                    # print(pos, ref, alt, allele)
-                                    if pos is not None and alt==allele and len(q_fields) > 0:
-                                        # print("ok")
-                                        sql_query3 += sql_annot_trx.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
-                                        count += 1
-                            elif metadata['type'] == 'column_annotation': 
-                                q_fields = []
-                                q_values = []
-                                # No flag, but column, we have to parse column to retrieve variant's annotations
-                                for col_name in metadata['columns']:
-                                    if metadata['prefix'] + col_name in row.info.keys():
-                                        data = row.info[metadata['prefix'] + col_name]
-                                        if isinstance(data, tuple): data = ', '.join([str(v) for v in data])
-                                        q_fields.append(metadata['db_map'][col_name]['name'])
-                                        val = escape_value_for_sql(data)
+                            #pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
+                            ## print(pos, ref, alt, allele)
+                            #if pos is not None and alt==allele and len(q_fields) > 0:
+                                ## print("ok")
+                                #sql_query3 += sql_annot_trx.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
+                                #count += 1
+                            #pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[1])
+                            ## print(pos, ref, alt, allele)
+                            #if pos is not None and alt==allele and len(q_fields) > 0:
+                                ## print("ok")
+                                #sql_query3 += sql_annot_trx.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
+                                #count += 1
+                    #elif metadata['type'] == 'column_annotation': 
+                        #q_fields = []
+                        #q_values = []
+                        ## No flag, but column, we have to parse column to retrieve variant's annotations
+                        #for col_name in metadata['columns']:
+                            #if metadata['prefix'] + col_name in row.info.keys():
+                                #data = row.info[metadata['prefix'] + col_name]
+                                #if isinstance(data, tuple): data = ', '.join([str(v) for v in data])
+                                #q_fields.append(metadata['db_map'][col_name]['name'])
+                                #val = escape_value_for_sql(data)
 
-                                        q_values.append('\'{}\''.format(val) if val != '' and val is not None else 'NULL')
+                                #q_values.append('\'{}\''.format(val) if val != '' and val is not None else 'NULL')
 
-                                pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
-                                if pos is not None and len(q_fields) > 0:
-                                    # print("ok")
-                                    sql_query3 += sql_annot_var.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt)
-                                    count += 1
+                        #pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
+                        #if pos is not None and len(q_fields) > 0:
+                            ## print("ok")
+                            #sql_query3 += sql_annot_var.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt)
+                            #count += 1
 
-                    # manage split big request to avoid sql out of memory transaction
-                    if count >= 5000:
-                        count = 0
-                        # Model.execute_async(transaction1 + transaction2 + transaction3, transaction_end)
-                        transaction = sql_query1 + sql_query2 + sql_query3
-                        #core.notify_all(None, data={'msg':'import_vcf', 'data' : {'file_id' : file_id, 'progress_value' : records_current / max(1,records_count), 'progress_label' : ""}})
-                        log("VCF import : line {} (chrm {})".format(records_current, chrm))
-                        log("VCF import : Execute sync query {}/{} ({}%)".format(records_current, records_count, round(records_current / records_count * 100, 2)))
-                        Model.execute(transaction)
-                        # job_id = Model.execute_bw(transaction, transaction_end)
-                        # job_in_progress.append(job_id)
-                        # log("VCF import : Execute async query, new job_id : {}. Jobs running [{}]".format(job_id, ','.join([job_in_progress])))
-                        # Reset query buffers
-                        sql_query1 = ""
-                        sql_query2 = ""
-                        sql_query3 = ""
+            # split big request to avoid sql out of memory transaction or too long freeze of the server
+            #ipdb.set_trace()
+            if count >= 5000:
+                progress = records_current / records_count
+                
+                    
+                count = 0
+                # Model.execute_async(transaction1 + transaction2 + transaction3, transaction_end)
+                transaction = sql_query1 + sql_query2 + sql_query3
+                
+                log("VCF import : line {} (chrm {})".format(records_current, chrm))
+                log("VCF import : Execute sync query {}/{} ({}%)".format(records_current, records_count, round(progress * 100, 2)))
+                
+                    
+                # update sample's progress indicator
+                for sid in samples:
+                    samples[sid].loading_progress = progress
+                    samples[sid].status = "loading"
+                    samples[sid].save()
+                core.notify_all(None, data={'msg':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
+                
+                #Model.execute(transaction)
+                log("VCF iport : enqueue query")
+                queries_queue.put(transaction)
+                #job_id = Model.execute_bw(transaction, transaction_end)
+                #job_in_progress.append(job_id)
+                # log("VCF import : Execute async query, new job_id : {}. Jobs running [{}]".format(job_id, ','.join([job_in_progress])))
+                # Reset query buffers
+                sql_query1 = ""
+                sql_query2 = ""
+                sql_query3 = ""
 
         # Loop done, execute last pending query 
         log("VCF import : Execute last async query")
         transaction = sql_query1 + sql_query2 + sql_query3
         if transaction:
-            Model.execute(transaction)
+            queries_queue.put(transaction)
+            #Model.execute(transaction)
+            
+        # Waiting that all query in the queue was executed
+        log("VCF parsing done : Waiting for sql queries executions")
+        queries_queue.join()
+
+        # stop workers
+        for i in range(max_thread):
+            q.put(None)
+        for t in workers:
+            t.join()
+    
         log("VCF import : Done")
 
         # Compute composite variant by sample
@@ -691,14 +707,18 @@ class VcfManager(AbstractImportManager):
             log(" - sample {}".format(samples[sid].id))
             Model.execute(query)
         log("Sample import from VCF Done")
-
-        # When import is done, force refresh of annotations map of the core
-        run_until_complete(core.annotations.load_annotation_metadata())
-
         end = datetime.datetime.now()
-        core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
-        # TODO : update sample's progress indicator
+        
+        # update sample's progress indicator
+        for sid in samples:
+            samples[sid].loading_progress = 1
+            samples[sid].status = "ready"
+            samples[sid].save()
 
+        core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
+        
+        # When import is done, force refresh of annotations map of the core
+        # TODO : run_until_complete(core.annotations.load_annotation_metadata())
 
 
 
@@ -712,20 +732,15 @@ class VcfManager(AbstractImportManager):
             Return the list of sample that have been added.
         """
         from core.core import core
+        
         file = Model.File.from_id(file_id)
         filepath = file.path
         reference_id = kargs["reference_id"]
         start_0 = datetime.datetime.now()
         job_in_progress = []
 
-        vcf_metadata = prepare_vcf_parsing(filepath)
+        vcf_metadata = prepare_vcf_parsing(reference_id, filepath)
         db_ref_suffix= "_" + Model.execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first().table_suffix
-
-        # Prepare database for import of custom annotation, and set the mapping between VCF info fields and DB schema
-        for annotation in vcf_metadata['annotations'].keys():
-            if vcf_metadata['annotations'][annotation]:
-                data = prepare_annotation_db(reference_id, vcf_metadata['annotations'][annotation])
-                vcf_metadata['annotations'][annotation].update(data)
 
 
         if filepath.endswith(".vcf") or filepath.endswith(".vcf.gz"):
@@ -738,30 +753,43 @@ class VcfManager(AbstractImportManager):
             # samples = {i : Model.get_or_create(Model.session(), Model.Sample, name=i)[0] for i in list((vcf_reader.header.samples))}
             samples = {}
             for i in list((vcf_reader.header.samples)):
-                s = Model.Sample.new()
-                s.name = i
-                s.file_id = file_id
-                s.default_dbuid = []
+                sample = Model.Sample.new()
+                sample.name = i
+                sample.file_id = file_id
+                sample.reference_id = reference_id
+                sample.default_dbuid = []
                 for dbname in vcf_metadata["annotations"].keys():
                     if vcf_metadata["annotations"][dbname]:
-                        s.default_dbuid.append(vcf_metadata["annotations"][dbname]["db_uid"])
+                        sample.default_dbuid.append(vcf_metadata["annotations"][dbname].db_uid)
                 # TODO : is_mosaic according to the data in the vcf
-                s.save()
-                samples.update({i : s})
+                sample.save()
+                samples.update({i : sample})
             
             
             if len(samples.keys()) == 0 : 
                 war("VCF files without sample cannot be imported in the database.")
-                core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : "VCF files without sample cannot be imported in the database."}})
+                core.notify_all(None, data={'msg':'import_vcf_error', 'data' : {'file_id' : file_id, 'msg' : "VCF files without sample cannot be imported in the database."}})
                 return;
 
-            core.notify_all(None, data={'msg':'import_vcf_start', 'data' : {'file_id' : file_id, 'samples' : [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
+            core.notify_all(None, data={'msg':'import_vcf_start', 'data' : {'file_id' : file_id, 'samples' : [ {'id' : samples[sid].id, 'name' : samples[sid].name} for sid in samples.keys()]}})
             # TODO : update sample's progress indicator
 
 
             records_count = vcf_metadata['count']
-            log ("Importing file {0}\n\r\trecords  : {1}\n\r\tsamples  :  ({2}) {3}\n\r\tstart    : {4}".format(filepath, records_count, len(samples.keys()), reprlib.repr([s for s in samples.keys()]), start))
+            log ("Importing file {0}\n\r\trecords  : {1}\n\r\tsamples  :  ({2}) {3}\n\r\tstart    : {4}".format(filepath, records_count, len(samples.keys()), reprlib.repr([sid for sid in samples.keys()]), start))
             run_async(VcfManager.import_delegate, file_id, vcf_reader, db_ref_suffix, vcf_metadata, samples)
         
             return {"success": True, "samples": samples, "records_count": records_count }
         return {"success": False, "error": "File not supported"}
+
+
+
+
+
+
+
+
+
+
+
+
