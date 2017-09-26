@@ -191,8 +191,8 @@ class VepImporter(AbstractTranscriptDataImporter):
                 except Exception as ex:
                     err("import_annotations error when trying to import {}='{}'".format(col_name, vals),ex)
             
-            pos, ref, alt = self.normalise(pos, ref, allele)
-            if pos is not None and len(q_fields) > 0:
+
+            if len(q_fields) > 0:
                 query += sql_pattern.format(self.table_name, ','.join(q_fields), ','.join([str(val) for val in q_values]), bin, chrm, pos, ref, allele, trx_pk)
                 count += 1
                 

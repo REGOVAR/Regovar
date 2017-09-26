@@ -182,6 +182,34 @@ def prepare_vcf_parsing(reference_id, filename):
     
 
 
+def normalise(self, pos, ref, alt):
+    """
+        Normalise given (position, ref and alt) from VCF into Database format
+            - Assuming that position in VCF are 1-based (0-based in Database)
+            - triming ref and alt to get minimal alt (and update position accordingly)
+    """
+    # input pos comming from VCF are 1-based.
+    # to be consistent with UCSC databases we convert it into 0-based
+    pos -= 1
+    
+    if ref==alt:
+        return pos, ref, alt
+    
+    if ref is None:
+        ref = ''
+    if alt is None:
+        alt = ''
+    # trim left
+    while len(ref) > 0 and len(alt) > 0 and ref[0]==alt[0] :
+        ref = ref[1:]
+        alt = alt[1:]
+        pos += 1
+    # trim right
+    if len(ref) == len(alt):
+        while ref[-1:]==alt[-1:]:
+            ref = ref[0:-1]
+            alt = alt[0:-1]
+    return pos, ref, alt
 
 
 
@@ -506,8 +534,17 @@ def worker():
         query = queries_queue.get()
         if query is None:
             break
-        Model.execute(query)
+
+        try:
+            worker_session = Model.Session()
+            result = worker_session.execute(query)
+            worker_session.commit()
+        except Exception as ex:
+            r = RegovarException(ERR.E100001, "E100001", ex)
+            log_snippet(query, r)
+
         queries_queue.task_done()
+        
         
 # init workers
 for i in range(max_thread):
@@ -572,11 +609,18 @@ class VcfManager(AbstractImportManager):
                 sp = row.samples.get(sn)
                 if (len(sp.alleles) > 0):
                     for allele in sp.alleles:
-                        pos, ref, alt = AbstractTranscriptDataImporter.normalise(None, row.pos, row.ref, allele)
+                        pos, ref, alt = normalise(None, row.pos, row.ref, allele)
                         bin = getMaxUcscBin(pos, pos + len(ref))
                         sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
                         sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'))
                         count += 1
+
+                    # Register variant annotations
+                    for ann_name, importer in vcf_metadata['annotations'].items():
+                        if importer:
+                            vep_query, vep_count = importer.import_annotations(sql_annot_trx, bin, chrm, pos, ref, alt, row.info)
+                            sql_query3 += vep_query
+                            count += vep_count
 
                     #pos, ref, alt = AbstractTranscriptDataImporter.normalise(None, row.pos, row.ref, sp.alleles[1])
                     #if pos is not None and alt != ref :
@@ -585,12 +629,8 @@ class VcfManager(AbstractImportManager):
                         #sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'))
                         #count += 1
 
-            # Register variant annotations
-            for ann_name, importer in vcf_metadata['annotations'].items():
-                if importer:
-                    vep_query, vep_count = importer.import_annotations(sql_annot_trx, bin, chrm, pos, ref, alt, row.info)
-                    sql_query3 += vep_query
-                    count += vep_count
+            
+
                                 
                     #elif metadata['type'] == 'multiple_annotation': 
                         ## Flag is set, we have to parse specified info fields (use by VEP and SnpEff by example)
@@ -661,11 +701,18 @@ class VcfManager(AbstractImportManager):
                 
                     
                 # update sample's progress indicator
+                # note : as we are updating lot of data in the database with several asynch thread
+                #        so to avoid conflict with session, we force sqlachemy to retrieve sample
+                #        that's why we don't use samples collection
+                # ipdb.set_trace()
+                sps = []
                 for sid in samples:
-                    samples[sid].loading_progress = progress
-                    samples[sid].status = "loading"
-                    samples[sid].save()
-                core.notify_all(None, data={'msg':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
+                    sp = Model.Sample.from_id(samples[sid].id)
+                    sps += [sp]
+                    sp.loading_progress = progress
+                    sp.status = "loading"
+                    sp.save()
+                core.notify_all(None, data={'msg':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : sp.id, 'name' : sp.name} for sp in sps]}})
                 
                 #Model.execute(transaction)
                 log("VCF iport : enqueue query")
@@ -684,17 +731,20 @@ class VcfManager(AbstractImportManager):
         if transaction:
             queries_queue.put(transaction)
             #Model.execute(transaction)
-            
-        # Waiting that all query in the queue was executed
-        log("VCF parsing done : Waiting for sql queries executions")
-        queries_queue.join()
 
+        ipdb.set_trace()
         # stop workers
         for i in range(max_thread):
             q.put(None)
         for t in workers:
             t.join()
     
+
+        # Waiting that all query in the queue was executed
+        log("VCF parsing done : Waiting for sql queries executions")
+        queries_queue.join()
+
+
         log("VCF import : Done")
 
         # Compute composite variant by sample
@@ -713,7 +763,7 @@ class VcfManager(AbstractImportManager):
         for sid in samples:
             samples[sid].loading_progress = 1
             samples[sid].status = "ready"
-            samples[sid].save()
+            #samples[sid].save()
 
         core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
         

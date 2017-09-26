@@ -176,7 +176,7 @@ def execute(query):
     try:
         result = p__db_session.execute(query)
         p__db_session.commit()
-        p__db_session.commit() # FIXME : Need a second commit to force session to commit :/ ... strange behavior when we execute(raw_sql) instead of using sqlalchemy's objects as query
+        #p__db_session.commit() # FIXME : Need a second commit to force session to commit :/ ... strange behavior when we execute(raw_sql) instead of using sqlalchemy's objects as query
     except Exception as err:
         r = RegovarException(ERR.E100001, "E100001", err)
         log_snippet(query, r)

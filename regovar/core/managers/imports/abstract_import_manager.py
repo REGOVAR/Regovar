@@ -56,34 +56,7 @@ class AbstractTranscriptDataImporter():
     # TOOLS 
     # ===========================================================================================================
     
-    def normalise(self, pos, ref, alt):
-        """
-            Normalise given (position, ref and alt) from VCF into Database format
-                - Assuming that position in VCF are 1-based (0-based in Database)
-                - triming ref and alt to get minimal alt (and update position accordingly)
-        """
-        # input pos comming from VCF are 1-based.
-        # to be consistent with UCSC databases we convert it into 0-based
-        pos -= 1
-        
-        if ref==alt:
-            return pos, ref, alt
-        
-        if ref is None:
-            ref = ''
-        if alt is None:
-            alt = ''
-        # trim left
-        while len(ref) > 0 and len(alt) > 0 and ref[0]==alt[0] :
-            ref = ref[1:]
-            alt = alt[1:]
-            pos += 1
-        # trim right
-        if len(ref) == len(alt):
-            while ref[-1:]==alt[-1:]:
-                ref = ref[0:-1]
-                alt = alt[0:-1]
-        return pos, ref, alt
+
     
     
     
