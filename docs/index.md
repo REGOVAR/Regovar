@@ -10,7 +10,7 @@ REGOVAR est un projet collaboratif, libre et ouvert de logiciel d’analyse de d
    * [Installation du serveur](Guide%20utilisateur/04.%20Installation%20du%20serveur.md)
    * [Installation du client](Guide%20utilisateur/05.%20Installation%20du%20client.md)
  * [Guide du développeur](Guide%20developpeur/01.%20Bienvenue.md) : pour ceux qui souhaitent participer au développement de Regovar.
-   * [Reste à faire](Guide%20developpeur/raf.md) : une liste de sujet sur lequel avancer.
+   * [Reste à faire](https://github.com/REGOVAR/Regovar/milestone/1) : les sujets sur lequel avancer pour la prochaine release.
  * [Tutoriels](Tutoriels/Tutoriels.md) : un ensemble de tutoriels sur certains aspects complexes du logiciel.
 
 
