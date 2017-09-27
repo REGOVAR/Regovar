@@ -164,6 +164,7 @@
                             <li class="active"><a href="#misc_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Config</a></li>
                             <li><a href="#misc_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Website</a></li>
                             <li><a href="#misc_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Api</a></li>
+                            <li><a href="#misc_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Welcom</a></li>
                         </ul>
                     </div>
                     <div class="panel-body">
@@ -209,6 +210,21 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10"><a href="/api" target="_blank" class="btn btn-default">Test it</a></div>  
+                                </div>
+                            </div>
+                            
+                             <!-- GET Welcom -->
+                            <div class="tab-pane fade" id="misc_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /</code><br/>
+                                        <i>Return the server "welcom" data for Regovar client : The list of 10 last analysis/subjects edited, the list of 20 last events, the list of references available, and so on.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10"><button onclick="generic_exec_static('/', 'misc_result');">Test it</button></div>
                                 </div>
                             </div>
                         </div>

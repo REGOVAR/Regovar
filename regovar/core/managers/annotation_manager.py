@@ -57,13 +57,19 @@ class AnnotationManager:
         self.db_map = {}
         self.fields_map = {}
 
+        # Get list of available reference
+        query = "SELECT id, name FROM reference"
+        result = await execute_aio(query)
+        for row in result:
+            if row.id not in self.ref_list.keys():
+                self.ref_list.update({row.id: row.name})
+            
+        # Get list of available annotations databases
         query = "SELECT d.uid, d.reference_id, d.version, d.name_ui, d.description, d.url, r.name \
                  FROM annotation_database d LEFT JOIN reference r ON r.id=d.reference_id \
                  ORDER BY r.name ASC, d.ord ASC, version DESC"
         result = await execute_aio(query)
         for row in result:
-            if row.reference_id not in self.ref_list.keys():
-                self.ref_list.update({row.reference_id: row.name})
             if row.reference_id in self.db_list.keys():
                 if row.name_ui in self.db_list[row.reference_id].keys():
                     self.db_list[row.reference_id][row.name_ui]["versions"][row.version] = row.uid
@@ -73,6 +79,7 @@ class AnnotationManager:
             else:
                 self.db_list[row.reference_id] = {'order': [row.name_ui], 'db': {row.name_ui: {"name": row.name_ui, "description": row.description, "versions": {row.version: row.uid}}}}
 
+        # Get list of all annotations fields
         query = "SELECT d.uid AS duid, d.reference_id AS ref, d.version, d.ord AS dord, d.name_ui AS dname, d.description AS ddesc, d.update_date AS ddate, a.uid AS fuid, a.name_ui AS name, a.ord AS ford, a.type AS type, a.description AS desc, a.meta AS meta \
                  FROM annotation_field a \
                  INNER JOIN annotation_database d ON a.database_uid=d.uid \

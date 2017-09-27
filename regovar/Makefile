@@ -33,7 +33,9 @@ install:
 	sudo -u postgres psql -c "DROP DATABASE $${database_name}" ; \
 	sudo -u postgres psql -c "CREATE DATABASE $${database_name} OWNER regovar" ; \
 	psql -U regovar -d $$database_name -f ../install/create_all.sql ; \
-	psql -U regovar -d $$database_name -f ../install/import_refgen.sql ;
+	psql -U regovar -d $$database_name -f ../install/install_hg19.sql ; \
+	psql -U regovar -d $$database_name -f ../install/install_hg38.sql ;
+	
 
 
 test:

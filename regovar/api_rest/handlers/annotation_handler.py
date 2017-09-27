@@ -41,7 +41,7 @@ class AnnotationDBHandler:
         """
         ref_id = request.match_info.get('ref_id', None)
         if ref_id is None or int(ref_id) not in core.annotations.ref_list.keys() :
-            ref_id = DEFAULT_REFERENCIAL_ID 
+            return rest_error("A valid reference id must be provided.")
         ref_id = int(ref_id)
 
         
@@ -63,7 +63,7 @@ class AnnotationDBHandler:
             result["db"].append(db_data)
 
         # Next add annotations available for the ref
-        if ref_id != 0:
+        if ref_id != 0 and ref_id in core.annotations.db_list.keys():
             for db_name in core.annotations.db_list[ref_id]["order"]:
                 db_data = core.annotations.db_list[ref_id]['db'][db_name].copy()
                 dbs = db_data.pop('versions')
