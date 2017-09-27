@@ -1,11 +1,5 @@
 ![Regovar](https://raw.githubusercontent.com/REGOVAR/Regovar/master/logo/logotitle.color.png)
 
-| Projet        | Etat          | Avancement V1 |
-| ------------- |:-------------|:--------------|
-| Serveur       |               | 90% |
-| Client        | [![Build status](https://ci.appveyor.com/api/projects/status/275xv8xawf4hn199?svg=true)](https://ci.appveyor.com/project/ikit/qregovar) | 50% |
-| Doc           | [![Documentation Status](https://readthedocs.org/projects/regovar/badge/?version=latest)](http://regovar.readthedocs.io/fr/latest/?badge=latest) | 5% |
-| Poster        | [Terminé](https://github.com/REGOVAR/Sandbox/raw/master/sandbox/jobim_poster/poster.pdf) | 100% |
 
 
 REGOVAR est un projet collaboratif, libre et ouvert de logiciel d’analyse de données de séquençage haut débit pour les panels de gènes, l’exome et le génome (DPNI, recherche de SNV, CNV, SV...). Il vise à impliquer et fédérer les différentes communautés concernées (généticiens cliniciens, biologistes et bioinformaticiens), sans limites institutionnelles ou géographiques.
