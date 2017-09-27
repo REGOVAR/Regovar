@@ -23,10 +23,9 @@ REGOVAR est un projet collaboratif, libre et ouvert de logiciel d’analyse de d
 ## Autres liens :
  * Site officiel : http://regovar.org
  * Sources du serveur : https://github.com/REGOVAR/Regovar
+ * Sources du client : https://github.com/REGOVAR/QRegovar
 
- 
-## Translations :
- * [English documentation (todo)](http://regovar.readthedocs.io/latest/)
+
 
 
 ![Aperçu](https://raw.githubusercontent.com/REGOVAR/QRegovar/master/docs/mockup/mockup.gif)
