@@ -37,8 +37,7 @@ class FilterEngine:
               # We just need to test if one of the "joined" field is set or not
               'IN': '{0}.chr is not null',
               'NOTIN': '{0}.chr is null'}
-    sql_type_map = {'int': 'integer', 'string': 'text', 'float': 'real', 'percent': 'real', 'enum': 'integer', 'range': 'int8range', 'bool': 'boolean',
-                    'list_i': 'text', 'list_s': 'text', 'list_f': 'text', 'list_i': 'text', 'list_pb': 'text'}
+    sql_type_map = {'int': 'integer', 'string': 'text', 'float': 'real', 'enum': 'varchar(50)', 'range': 'int8range', 'bool': 'boolean', 'sequence': 'text', 'list' : 'varchar(250)[]'}
 
 
     def __init__(self):
@@ -50,11 +49,8 @@ class FilterEngine:
             Init Annso Filtering engine.
             Init mapping collection for annotations databases and fields
         """
-        refname = 'hg19'  # execute("SELECT table_suffix FROM reference WHERE id="+str(reference)).first()["table_suffix"]
-        self.reference = 2
         self.fields_map = {}
         self.db_map = {}
-        self.variant_table = "sample_variant_{0}".format(refname)
         query = "SELECT d.uid AS duid, d.name AS dname, d.name_ui AS dname_ui, d.jointure, d.reference_id, d.type AS dtype, d.db_pk_field_uid, a.uid AS fuid, a.name AS fname, a.type FROM annotation_field a LEFT JOIN annotation_database d ON a.database_uid=d.uid"
         result = await execute_aio(query)
         for row in result:
@@ -69,12 +65,11 @@ class FilterEngine:
 
 
 
-    def create_working_table(self, analysis_id):
+    def create_working_table(self, analysis):
         # retrieve analysis data
-        analysis = Analysis.from_id(analysis_id)
         if analysis is None:
-            raise RegovarException("Not able to retrieve analysis with provided id: {}".format(analysis_id))
-        analysis.db_suffix = "_hg19" # TODO : to retrieve from analysis.ref_id
+            raise RegovarException("Analysis cannot be null")
+        analysis.db_suffix = "_" + execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix 
         samples_ids = analysis.samples_ids
         annotations_dbs = analysis.settings["annotations_db"]
 
@@ -140,7 +135,6 @@ class FilterEngine:
             sample_tcount integer, \
             sample_alist integer[], \
             sample_acount integer, \
-            trx_count integer, \
             is_dom boolean, \
             is_rec_hom boolean, \
             is_rec_htzcomp boolean, \
@@ -153,10 +147,12 @@ class FilterEngine:
         query += ", ".join(["s{}_dp integer".format(i) for i in samples_ids]) + ", "
         query += ", ".join(["s{}_is_composite boolean".format(i) for i in samples_ids]) + ", "
 
+
         # Add annotation's columns
         for dbuid in annotations_dbs:
-            query += ", ".join(["_{} {}".format(fuid, self.sql_type_map[self.fields_map[fuid]['type']]) for fuid in self.db_map[dbuid]["fields"]]) + ", "
-
+            for fuid in self.db_map[dbuid]["fields"]:
+                query += "_{} {}, ".format(fuid, self.sql_type_map[self.fields_map[fuid]['type']])
+                
         # Add attribute's columns
         # TODO
 
@@ -168,6 +164,7 @@ class FilterEngine:
 
         query = query[:-2] + ");"
         log(" > create wt schema")
+        ipdb.set_trace()
         execute(query.format(wt))
 
 
@@ -175,7 +172,7 @@ class FilterEngine:
         wt = "wt_{}".format(analysis.id)
 
         # create temp table with id of variants
-        query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE TABLE {0}_var (id bigint); "
+        query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE TABLE {0}_var (id bigint, trx_count integer); "
         query += "INSERT INTO {0}_var (id) SELECT DISTINCT variant_id FROM sample_variant{1} WHERE sample_id IN ({2}); "
         query += "CREATE INDEX {0}_var_idx_id ON {0}_var USING btree (id);"
 
@@ -236,8 +233,6 @@ class FilterEngine:
             self.update_wt_compute_prefilter_trio(analysis, samples_ids, analysis.settings["trio"])
         
 
-
-
     def create_wt_variants_indexes(self, analysis, samples_ids):
         wt = "wt_{}".format(analysis.id)
 
@@ -271,8 +266,19 @@ class FilterEngine:
         wt = "wt_{}".format(analysis.id)
 
         # Insert trx and their annotations
-        q_fields = "is_variant, variant_id, trx_pk_uid, trx_pk_value, bin, chr, pos, ref, alt, is_transition, sample_tlist, sample_tcount, sample_alist, sample_acount"
-        q_select = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id,  _wt.bin, _wt.chr, _wt.pos, _wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, _wt.sample_tcount, _wt.sample_alist, _wt.sample_acount"
+        q_fields  = "is_variant, variant_id, trx_pk_uid, trx_pk_value, bin, chr, pos, ref, alt, is_transition, sample_tlist, sample_tcount, sample_alist, sample_acount, "
+        q_fields += "is_dom, is_rec_hom, is_rec_htzcomp, is_denovo, is_inherited, is_aut, is_xlk, is_mit, "
+        q_fields += ", ".join(["s{}_gt".format(i) for i in samples_ids]) + ", "
+        q_fields += ", ".join(["s{}_dp".format(i) for i in samples_ids]) + ", "
+        q_fields += ", ".join(["s{}_is_composite".format(i) for i in samples_ids])
+        
+        q_select  = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id, _wt.bin, _wt.chr, _wt.pos, _wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, "
+        q_select += "_wt.sample_tcount, _wt.sample_alist, _wt.sample_acount, _wt.is_dom, _wt.is_rec_hom, _wt.is_rec_htzcomp, _wt.is_denovo, _wt.is_inherited, "
+        q_select += "_wt.is_aut, _wt.is_xlk, _wt.is_mit, "
+        q_select += ", ".join(["_wt.s{}_gt".format(i) for i in samples_ids]) + ", "
+        q_select += ", ".join(["_wt.s{}_dp".format(i) for i in samples_ids]) + ", "
+        q_select += ", ".join(["_wt.s{}_is_composite".format(i) for i in samples_ids])
+        
         q_from   = "{0} _wt".format(wt, analysis.db_suffix)
 
         # first loop over "variant db" in order to set common annotation to trx
@@ -283,6 +289,7 @@ class FilterEngine:
 
 
         # Second loop to execute insert query by trx annotation db
+        ipdb.set_trace()
         for dbuid in annotations_dbs:
             if self.db_map[dbuid]["type"] == "transcript":
                 dbname = "_db_{}".format(dbuid)
@@ -301,7 +308,6 @@ class FilterEngine:
     def create_wt_trx_indexes(self, analysis, samples_ids):
         # query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(w_table)
         # query += "CREATE INDEX {0}_idx_var ON {0} USING btree (bin, chr, pos, trx_pk_uid, trx_pk_value);".format(w_table)
-        
         pass
 
 
@@ -683,7 +689,7 @@ class FilterEngine:
         if analysis is None:
             raise RegovarException("Not able to retrieve analysis with provided id: {}".format(analysis_id))
         if not analysis.status or analysis.status == 'empty':
-            self.create_working_table(analysis.id)
+            self.create_working_table(analysis)
         elif analysis.status == 'computing':
             raise RegovarException("Analysis {} is not ready to be used: computing progress {} %".format(analysis.id, round(analysis.computing_progress*100, 2)))
         elif analysis.status == 'error':

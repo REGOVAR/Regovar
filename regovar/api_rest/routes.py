@@ -21,6 +21,7 @@ from api_rest.handlers import *
 apiHandler = ApiHandler()
 userHandler = UserHandler()
 projHandler = ProjectHandler()
+subjectHandler = SubjectHandler()
 eventHandler = EventHandler()
 websocket = WebsocketHandler()
 
@@ -59,10 +60,10 @@ app.on_shutdown.append(on_shutdown)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # ROUTES
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-app.router.add_route('GET',    "/",       apiHandler.welcom)                                                      # Get "welcom page of the rest API"
-app.router.add_route('GET',    "/config", apiHandler.config)
-app.router.add_route('GET',    "/api", apiHandler.api)
-app.router.add_route('GET',    "/ws",     websocket.get)
+app.router.add_route('GET',    "/",       apiHandler.welcom)                                                     # Get "welcom page of the rest API"
+app.router.add_route('GET',    "/config", apiHandler.config)                                                     # Get config of the server
+app.router.add_route('GET',    "/api",    apiHandler.api)                                                        # Get html test api page
+app.router.add_route('GET',    "/ws",     websocket.get)                                                         # Websocket url to use with ws or wss protocol
 
 
 app.router.add_route('GET',    "/user", userHandler.list)                                                        # Get list of all users (allow search parameters)
@@ -73,7 +74,7 @@ app.router.add_route('POST',   "/user/login", userHandler.login)                
 app.router.add_route('GET',    "/user/logout", userHandler.logout)                                               # Kill user's session
 app.router.add_route('DELETE', "/user/{user_id}", userHandler.delete)                                            # Delete a user
 
-app.router.add_route('GET',    "/project/browserTree",           projHandler.tree)                               # Get projects as tree
+app.router.add_route('GET',    "/project/browserTree",           projHandler.tree)                               # Get projects as tree (allow search parameters)
 app.router.add_route('GET',    "/project",                       projHandler.list)                               # Get list of all projects (allow search parameters)
 app.router.add_route('POST',   "/project",                       projHandler.create_or_update)                   # Create new project with provided data
 app.router.add_route('GET',    "/project/{project_id}",          projHandler.get)                                # Get details about the project
@@ -81,7 +82,7 @@ app.router.add_route('PUT',    "/project/{project_id}",          projHandler.cre
 app.router.add_route('DELETE', "/project/{project_id}",          projHandler.delete)                             # Delete the project
 app.router.add_route('GET',    "/project/{project_id}/events",   projHandler.events)                             # Get list of events of the project (allow search parameters)
 app.router.add_route('GET',    "/project/{project_id}/subjects", projHandler.subjects)                           # Get list of subjects of the project (allow search parameters)
-app.router.add_route('GET',    "/project/{project_id}/tasks",    projHandler.tasks)                              # Get list of tasks (jobs and analyses) of the project (allow search parameters)
+app.router.add_route('GET',    "/project/{project_id}/analyses", projHandler.analyses)                           # Get list of analyses (pipeline and filtering) of the project (allow search parameters)
 app.router.add_route('GET',    "/project/{project_id}/files",    projHandler.files)                              # Get list of files (samples and attachments) of the project (allow search parameters)
 
 app.router.add_route('POST',   "/event",            eventHandler.new)                                            # Create a new event
@@ -89,18 +90,21 @@ app.router.add_route('GET',    "/event/{event_id}", eventHandler.get)           
 app.router.add_route('PUT',    "/event/{event_id}", eventHandler.edit)                                           # Edit event's data
 app.router.add_route('DELETE', "/event/{event_id}", eventHandler.delete)                                         # Delete an event
 
-# app.router.add_route('POST',   "/subject",              subjectHandler.add)                                       # Create a sample
-# app.router.add_route('GET',    "/subject/{subject_id}", subjectHandler.get)                                       # Get details about a subject
-# app.router.add_route('PUT',    "/subject/{subject_id}", subjectHandler.edit)                                      # Edit subject's data
-# app.router.add_route('DELETE', "/subject/{subject_id}", subjectHandler.delete)                                    # Delete a subject
+app.router.add_route('GET',    "/subject/browserTree",           subjectHandler.tree)                            # Get subjects as tree (allow search parameters)
+app.router.add_route('GET',    "/subject",                       subjectHandler.list)                            # Get subjects as list (allow search parameters)
+app.router.add_route('POST',   "/subject",                       subjectHandler.create_or_update)                # Create subjects
+app.router.add_route('GET',    "/subject/{subject_id}",          subjectHandler.get)                             # Get details about a subject
+app.router.add_route('PUT',    "/subject/{subject_id}",          subjectHandler.create_or_update)                # Edit subject's data
+app.router.add_route('DELETE', "/subject/{subject_id}",          subjectHandler.delete)                          # Delete a subject
+app.router.add_route('GET',    "/project/{project_id}/events",   subjectHandler.events)                          # Get list of events of the project (allow search parameters)
+app.router.add_route('GET',    "/project/{project_id}/samples",  subjectHandler.samples)                         # Get list of subjects of the subject (allow search parameters)
+app.router.add_route('GET',    "/project/{project_id}/analyses", subjectHandler.samples)                         # Get list of analyses (pipeline and filtering) of the subject (allow search parameters)
+app.router.add_route('GET',    "/project/{project_id}/files",    subjectHandler.files)                           # Get list of files of the subject (allow search parameters)
 
-
-
-
-app.router.add_route('GET',    "/file",                  fileHdl.list)                                            # Get list of all file (allow search parameters)
-app.router.add_route('GET',    "/file/{file_id}",        fileHdl.get)                                             # Get details about a file
-app.router.add_route('PUT',    "/file/{file_id}",        fileHdl.edit)                                            # Edit file's details
-app.router.add_route('DELETE', "/file/{file_id}",        fileHdl.delete)                                          # Delete the file
+app.router.add_route('GET',    "/file",                  fileHdl.list)                                           # Get list of all file (allow search parameters)
+app.router.add_route('GET',    "/file/{file_id}",        fileHdl.get)                                            # Get details about a file
+app.router.add_route('PUT',    "/file/{file_id}",        fileHdl.edit)                                           # Edit file's details
+app.router.add_route('DELETE', "/file/{file_id}",        fileHdl.delete)                                         # Delete the file
 app.router.add_route('POST',   "/file/upload",           fileHdl.tus_upload_init)
 app.router.add_route('OPTIONS',"/file/upload",           fileHdl.tus_config)
 app.router.add_route('HEAD',   "/file/upload/{file_id}", fileHdl.tus_upload_resume)
@@ -185,6 +189,7 @@ app.router.add_route('POST',   "/job/{job_id}/notify", jobHdl.update_status)
 
 # Statics root for direct download
 # FIXME - Routes that should be manages directly by NginX
+app.router.add_static('/error', TEMPLATE_DIR + "/errors/")
 app.router.add_static('/assets', TEMPLATE_DIR)
 app.router.add_static('/dl/db/', DATABASES_DIR)
 app.router.add_static('/dl/pipe/', PIPELINES_DIR)

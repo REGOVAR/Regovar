@@ -31,6 +31,7 @@ def sample_init(self, loading_depth=0):
             - reference_id     : int        : the reference id for this sample
             - status           : enum       : import status values can be : 'empty', 'loading', 'ready', 'error'
             - default_dbuid    : [str]      : list of annotation's databases used in the vcf from where come the sample
+            - filter_description json       : description of the filter used in the vcf. Structure : { "<FilterValue>": "<Description>"}
             - analyses_id      : [int]      : the list of id of analyses that are using this sample
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - subject          : Subject    : Subject data of the linked subject
@@ -96,13 +97,14 @@ def sample_load(self, data):
         cannot be updated with this method. However, you can update project_id and template_id.
     """
     try:
-        if "name"              in data.keys(): self.name              = data['name']
-        if "subject_id"        in data.keys(): self.subject_id        = data['subject_id']
-        if "file_id"           in data.keys(): self.file_id           = data['file_id']
-        if "analyses_ids"      in data.keys(): self.analyses_ids      = data['analyses_ids']
-        if "comment"           in data.keys(): self.comment           = data['comment']
-        if "is_mosaic"         in data.keys(): self.is_mosaic         = data['is_mosaic']
-        if "default_dbuid"     in data.keys(): self.default_dbuid     = data['default_dbuid']
+        if "name"               in data.keys(): self.name               = data['name']
+        if "subject_id"         in data.keys(): self.subject_id         = data['subject_id']
+        if "file_id"            in data.keys(): self.file_id            = data['file_id']
+        if "analyses_ids"       in data.keys(): self.analyses_ids       = data['analyses_ids']
+        if "comment"            in data.keys(): self.comment            = data['comment']
+        if "is_mosaic"          in data.keys(): self.is_mosaic          = data['is_mosaic']
+        if "default_dbuid"      in data.keys(): self.default_dbuid      = data['default_dbuid']
+        if "filter_description" in data.keys(): self.filter_description = data['filter_description']
         # check to reload dynamics properties
         if self.loading_depth > 0:
             self.load_depth(self.loading_depth)
@@ -140,7 +142,7 @@ def sample_count():
 
 
 Sample = Base.classes.sample
-Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "is_mosaic", "default_dbuid", "loading_progress", "reference_id", "status", "subject", "file", "analyses"]
+Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "is_mosaic", "default_dbuid", "filter_description", "loading_progress", "reference_id", "status", "subject", "file", "analyses"]
 Sample.init = sample_init
 Sample.from_id = sample_from_id
 Sample.to_json = sample_to_json

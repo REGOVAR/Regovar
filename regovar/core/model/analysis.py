@@ -22,6 +22,7 @@ def analysis_init(self, loading_depth=0):
             - comment           : str           : an optional comment
             - settings          : json          : null or refer to the template that have been used to init the analysis settings
             - fields            : [str]         : The list of field's id to display
+            - fields_settings   : json          : The settings of the fields in the qregovar client (describe: position, width, etc of fields)
             - filter            : json          : The last current filter to applied
             - order             : [str]         : The list of field's id to used to order result
             - selection         : [str]         : The list of ids of selected variants
@@ -120,6 +121,7 @@ def analysis_load(self, data):
         if "create_date"        in data.keys(): self.create_date        = data['create_date']
         if "update_date"        in data.keys(): self.update_date        = data['update_date']
         if "fields"             in data.keys(): self.fields             = data["fields"]
+        if "fields_settings"    in data.keys(): self.fields_settings    = data["fields_settings"]
         if "filter"             in data.keys(): self.filter             = data["filter"]
         if "selection"          in data.keys(): self.selection          = data["selection"]
         if "order"              in data.keys(): self.order              = data["order"]

@@ -19,8 +19,8 @@ def subject_init(self, loading_depth=0, force=False):
             - firstname     : str           : The firstname
             - lastname      : str           : The lastname
             - sex           : enum          : The sex
-            - birthday      : datetime      : The birthday of the subject
-            - deathday      : datetime      : The dethday of the subject
+            - dateofbirth   : datetime      : The dateofbirth of the subject
+            - dateofdeath   : datetime      : The deathday of the subject
             - update_date   : date          : The last time that the object have been updated
             - jobs_ids      : [int]         : The list of ids of jobs with subject's files as inputs
             - analyses_ids  : [int]         : The list of ids of analyses that are using subject's sample as inputs
@@ -114,8 +114,8 @@ def subject_load(self, data):
         if "firstname" in data.keys(): self.firstname = data['firstname']
         if "lastname" in data.keys(): self.lastname = data['lastname']
         if "sex" in data.keys() and data['sex'] in ["male", "female", "unknow"]: self.sex = data['sex']
-        if "birthday" in data.keys(): self.birthday = data['birthday']
-        if "deathday" in data.keys(): self.deathday = data['deathday']
+        if "dateofbirth" in data.keys(): self.dateofbirth = data['dateofbirth']
+        if "dateofdeath" in data.keys(): self.dateofdeath = data['dateofdeath']
         if "update_date" in data.keys(): self.update_date = data['update_date']
         if "last_activity" in data.keys(): self.last_activity = data['last_activity']
         self.save()
@@ -286,7 +286,7 @@ def subject_get_users(self):
 
 
 Subject = Base.classes.subject
-Subject.public_fields = ["id", "identifiant", "firstname", "lastname", "sex", "comment", "birthday", "deathday", "update_date", "jobs_ids", "samples_ids", "files_ids", "analyses_ids", "jobs", "samples", "analyses", "files", "indicators", "users", "projects_ids", "projects"]
+Subject.public_fields = ["id", "identifiant", "firstname", "lastname", "sex", "comment", "dateofbirth", "dateofdeath", "update_date", "jobs_ids", "samples_ids", "files_ids", "analyses_ids", "jobs", "samples", "analyses", "files", "indicators", "users", "projects_ids", "projects"]
 Subject.init = subject_init
 Subject.from_id = subject_from_id
 Subject.from_ids = subject_from_ids

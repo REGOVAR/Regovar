@@ -77,7 +77,7 @@ CREATE TYPE job_status AS ENUM ('waiting', 'initializing', 'running', 'pause', '
 CREATE TYPE field_type AS ENUM ('int', 'string', 'float', 'enum', 'range', 'bool', 'sequence', 'list', 'sample_array');
 CREATE TYPE annotation_db_type AS ENUM ('site', 'variant', 'transcript');
 CREATE TYPE sample_status AS ENUM ('empty', 'loading', 'ready', 'error');
-CREATE TYPE analysis_status AS ENUM ('empty', 'computing', 'ready', 'error');
+CREATE TYPE analysis_status AS ENUM ('empty', 'waiting', 'computing', 'ready', 'error');
 CREATE TYPE event_type AS ENUM ('info', 'warning', 'error');
 CREATE TYPE sex_type AS ENUM ('male', 'female', 'unknow');
 
@@ -136,8 +136,8 @@ CREATE TABLE subject
     firstname text COLLATE pg_catalog."C",
     lastname text COLLATE pg_catalog."C",
     sex sex_type DEFAULT 'unknow',
-    birthday timestamp without time zone,
-    deathday timestamp without time zone,
+    dateofbirth timestamp without time zone,
+    dateofdeath timestamp without time zone,
     comment text COLLATE pg_catalog."C",
     create_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
@@ -254,6 +254,7 @@ CREATE TABLE public.analysis
     comment text COLLATE pg_catalog."C",
     settings json,
     fields json,
+    fields_settings json,
     filter json,
     "order" json,
     selection json,
@@ -265,8 +266,6 @@ CREATE TABLE public.analysis
     status analysis_status,
     CONSTRAINT analysis_pkey PRIMARY KEY (id)
 );
-
-
 
 
 
@@ -324,6 +323,7 @@ CREATE TABLE public.sample
     reference_id integer,
     status sample_status,
     default_dbuid JSON,
+    filter_description JSON,
     CONSTRAINT sample_pkey PRIMARY KEY (id)
 );
 
@@ -710,12 +710,12 @@ INSERT INTO public.annotation_database(uid, reference_id, name, version, name_ui
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
   ('492f18b60811bf85ce118c0c6a1a5c4a', 1,  'variant_id',       'id',                     'int',          'Variant unique id in the database.', NULL),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 3,  'chr',              'chr',                    'enum',         'Chromosome.', '{"enum": {"1": "1", "2": "2", "3": "3", "4": "4", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9", "10": "10", "11": "11", "12": "12", "13": "13", "14": "14", "15": "15", "16": "16", "17": "17", "18": "18", "19": "19", "20": "20", "21": "21", "22": "22", "23": "X", "24": "Y", "25": "M"}}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 3,  'chr',              'chr',                    'int',          'Chromosome as number : 23=X, 24=Y, 25=M.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 4,  'pos',              'pos',                    'int',          'Position of the variant in the chromosome.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 5,  'ref',              'ref',                    'sequence',     'Reference sequence.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 6,  'alt',              'alt',                    'sequence',     'Alternative sequence of the variant.', NULL),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 10, 's{}_gt',           'GT',                     'sample_array', 'Genotype.', '{"type": "enum", "enum" : ["r/r", "a/a", "r/a", "a1/a2"]}'),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_dp',           'DP',                     'sample_array', 'Depth.', '{"type": "int"}');
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 10, 's{}_gt',           'GT',                     'sample_array', 'Genotype as number : 0="r/r", 1="a/a", 2="r/a", 3="a1/a2"', NULL),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_dp',           'DP',                     'sample_array', 'Depth.', NULL);
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
   ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Is the variant dominant for the sample (single), or for the child (trio).', NULL),

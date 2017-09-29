@@ -7,10 +7,10 @@ import os
 import datetime
 import sqlalchemy
 import subprocess
-#import multiprocessing as mp
 import reprlib
 import gzip
 from pysam import VariantFile
+import json
 
 from core.managers.imports.abstract_import_manager import AbstractImportManager, AbstractTranscriptDataImporter
 from core.framework.common import *
@@ -556,7 +556,7 @@ for i in range(max_thread):
 #def transaction_end(job_id, result):
     #job_in_progress.remove(job_id)
     #if result is Exception or result is None:
-        #core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
+        #core.notify_all(None, data={'action':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
     #else:
         #log("Transaction success")
             
@@ -584,7 +584,7 @@ class VcfManager(AbstractImportManager):
         table = "variant" + db_ref_suffix
         
         sql_pattern1 = "INSERT INTO {0} (chr, pos, ref, alt, is_transition, bin, sample_list) VALUES ({1}, {2}, '{3}', '{4}', {5}, {6}, array[{7}]) ON CONFLICT (chr, pos, ref, alt) DO UPDATE SET sample_list=array_intersect({0}.sample_list, array[{7}])  WHERE {0}.chr={1} AND {0}.pos={2} AND {0}.ref='{3}' AND {0}.alt='{4}';"
-        sql_pattern2 = "INSERT INTO sample_variant" + db_ref_suffix + " (sample_id, variant_id, bin, chr, pos, ref, alt, genotype, depth) SELECT {0}, id, {1}, '{2}', {3}, '{4}', '{5}', '{6}', {7} FROM variant" + db_ref_suffix + " WHERE bin={1} AND chr={2} AND pos={3} AND ref='{4}' AND alt='{5}' ON CONFLICT (sample_id, variant_id) DO NOTHING;"
+        sql_pattern2 = "INSERT INTO sample_variant" + db_ref_suffix + " (sample_id, variant_id, bin, chr, pos, ref, alt, genotype, depth, quality, filter) SELECT {0}, id, {1}, '{2}', {3}, '{4}', '{5}', '{6}', {7}, {8}, '{9}' FROM variant" + db_ref_suffix + " WHERE bin={1} AND chr={2} AND pos={3} AND ref='{4}' AND alt='{5}' ON CONFLICT (sample_id, variant_id) DO NOTHING;"
         
         sql_annot_trx = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, regovar_trx_id, {1}) SELECT id, {3},{4},{5},'{6}','{7}', '{8}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id, regovar_trx_id) DO  NOTHING; " # TODO : do update on conflict
         sql_annot_var = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, {1}) SELECT id, {3},{4},{5},'{6}','{7}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id) DO  NOTHING;"
@@ -612,7 +612,8 @@ class VcfManager(AbstractImportManager):
                         pos, ref, alt = normalise(None, row.pos, row.ref, allele)
                         bin = getMaxUcscBin(pos, pos + len(ref))
                         sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
-                        sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'))
+                        filters = escape_value_for_sql(json.dumps(row.filter.keys()))
+                        sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'), row.qual, filters)
                         count += 1
 
                     # Register variant annotations
@@ -687,13 +688,9 @@ class VcfManager(AbstractImportManager):
                             #count += 1
 
             # split big request to avoid sql out of memory transaction or too long freeze of the server
-            #ipdb.set_trace()
             if count >= 5000:
                 progress = records_current / records_count
-                
-                    
                 count = 0
-                # Model.execute_async(transaction1 + transaction2 + transaction3, transaction_end)
                 transaction = sql_query1 + sql_query2 + sql_query3
                 
                 log("VCF import : line {} (chrm {})".format(records_current, chrm))
@@ -704,7 +701,6 @@ class VcfManager(AbstractImportManager):
                 # note : as we are updating lot of data in the database with several asynch thread
                 #        so to avoid conflict with session, we force sqlachemy to retrieve sample
                 #        that's why we don't use samples collection
-                # ipdb.set_trace()
                 sps = []
                 for sid in samples:
                     sp = Model.Sample.from_id(samples[sid].id)
@@ -712,14 +708,10 @@ class VcfManager(AbstractImportManager):
                     sp.loading_progress = progress
                     sp.status = "loading"
                     sp.save()
-                core.notify_all(None, data={'msg':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : sp.id, 'name' : sp.name} for sp in sps]}})
+                core.notify_all(None, data={'action':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : sp.id, 'name' : sp.name} for sp in sps]}})
                 
-                #Model.execute(transaction)
                 log("VCF iport : enqueue query")
                 queries_queue.put(transaction)
-                #job_id = Model.execute_bw(transaction, transaction_end)
-                #job_in_progress.append(job_id)
-                # log("VCF import : Execute async query, new job_id : {}. Jobs running [{}]".format(job_id, ','.join([job_in_progress])))
                 # Reset query buffers
                 sql_query1 = ""
                 sql_query2 = ""
@@ -739,19 +731,13 @@ class VcfManager(AbstractImportManager):
         for t in workers:
             t.join()
     
-
         # Waiting that all query in the queue was executed
-        log("VCF parsing done : Waiting for sql queries executions")
-        if queries_queue.qsize > 0:
-            queries_queue.join()
-
-
-        log("VCF import : Done")
+        log("VCF parsing done")
+        if not queries_queue.empty():
+            err("Some queued transaction have not been processed !")
 
         # Compute composite variant by sample
         sql_pattern = "UPDATE sample_variant" + db_ref_suffix + " u SET is_composite=TRUE WHERE u.sample_id = {0} AND u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM (SELECT array_agg(v.variant_id) as vids, g.name2 FROM sample_variant" + db_ref_suffix + " v INNER JOIN refgene" + db_ref_suffix + " g ON g.chr=v.chr AND g.txrange @> v.pos WHERE v.sample_id={0} AND v.genotype=2 or v.genotype=3 GROUP BY name2 HAVING count(*) > 1) AS sub)"
-
-
         log("Computing is_composite fields by samples :")
         for sid in samples:
             query = sql_pattern.format(samples[sid].id)
@@ -762,14 +748,17 @@ class VcfManager(AbstractImportManager):
         
         # update sample's progress indicator
         for sid in samples:
-            samples[sid].loading_progress = 1
-            samples[sid].status = "ready"
-            #samples[sid].save()
+            sp = Model.Sample.from_id(samples[sid].id)
+            sp.loading_progress = 1
+            sp.status = "ready"
+            sp.save()
 
-        core.notify_all(None, data={'msg':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
+        core.notify_all(None, data={'action':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
         
-        # When import is done, force refresh of annotations map of the core
-        # TODO : run_until_complete(core.annotations.load_annotation_metadata())
+        
+        
+        # When import is done, check if analysis are waiting for creation and then start wt creation if all sample are ready 
+        # TODO
 
 
 
@@ -793,6 +782,9 @@ class VcfManager(AbstractImportManager):
         vcf_metadata = prepare_vcf_parsing(reference_id, filepath)
         db_ref_suffix= "_" + Model.execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first().table_suffix
 
+        # Maybe new annotations table have been created during the execution of prepare_vcf_parsing
+        # So we force the server to refresh its annotations maping
+        await core.annotations.load_annotation_metadata()
 
         if filepath.endswith(".vcf") or filepath.endswith(".vcf.gz"):
             start = datetime.datetime.now()
@@ -808,6 +800,7 @@ class VcfManager(AbstractImportManager):
                 sample.name = i
                 sample.file_id = file_id
                 sample.reference_id = reference_id
+                sample.filter_description = {filter[0]:filter[1].description for filter in vcf_reader.header.filters.items()}
                 sample.default_dbuid = []
                 for dbname in vcf_metadata["annotations"].keys():
                     if vcf_metadata["annotations"][dbname]:
@@ -819,10 +812,10 @@ class VcfManager(AbstractImportManager):
             
             if len(samples.keys()) == 0 : 
                 war("VCF files without sample cannot be imported in the database.")
-                core.notify_all(None, data={'msg':'import_vcf_error', 'data' : {'file_id' : file_id, 'msg' : "VCF files without sample cannot be imported in the database."}})
+                core.notify_all(None, data={'action':'import_vcf_error', 'data' : {'file_id' : file_id, 'msg' : "VCF files without sample cannot be imported in the database."}})
                 return;
 
-            core.notify_all(None, data={'msg':'import_vcf_start', 'data' : {'file_id' : file_id, 'samples' : [ {'id' : samples[sid].id, 'name' : samples[sid].name} for sid in samples.keys()]}})
+            core.notify_all(None, data={'action':'import_vcf_start', 'data' : {'file_id' : file_id, 'samples' : [ {'id' : samples[sid].id, 'name' : samples[sid].name} for sid in samples.keys()]}})
             # TODO : update sample's progress indicator
 
 

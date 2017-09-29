@@ -32,13 +32,15 @@ class VepImporter(AbstractTranscriptDataImporter):
                 vcf_flag = 'ANN'
                 
             if vcf_flag :
+                reference_name = Model.execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first()[0]
+                
                 data = headers['INFO'][vcf_flag]['description'].split('Format:')
                 self.name = "VEP"
                 self.reference_id = reference_id
                 self.description = data[0].strip()
                 self.columns = [self.normalise_annotation_name(c).title() for c in data[1].strip().split('|')]
                 self.version = headers['VEP'][0].split(' ')[0]
-                self.table_name = self.normalise_annotation_name('{}_{}_{}'.format('VEP', self.version, reference_id))
+                self.table_name = self.normalise_annotation_name('{}_{}_{}'.format('VEP', self.version, reference_name))
                 self.vcf_flag = vcf_flag
                 self.columns_definitions = VepImporter.columns_definitions
                 result = 'Feature' in self.columns
@@ -74,8 +76,8 @@ class VepImporter(AbstractTranscriptDataImporter):
             query += pattern.format(self.table_name, ', '.join(fields))
             query += "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(self.table_name)
             query += "CREATE INDEX {0}_idx_var ON {0} USING btree (bin, chr, pos);".format(self.table_name)
-                
-            # Register annotation
+            
+            # Register annotation DB
             db_uid, pk_uid = Model.execute("SELECT MD5('{0}'), MD5(concat(MD5('{0}'), '{1}'))".format(self.table_name, self.colums_as_pk)).first()
             query += "CREATE INDEX {0}_idx_tid ON {0} USING btree (regovar_trx_id);".format(self.table_name)
             query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, db_pk_field_uid, jointure) VALUES "
@@ -91,7 +93,11 @@ class VepImporter(AbstractTranscriptDataImporter):
                 'transcript',
                 pk_uid)
             query += "INSERT INTO annotation_field (database_uid, ord, name, name_ui, type, description) VALUES "
-            for idx, col_name in enumerate(self.columns_definitions.keys()):
+            
+            # Register annotation Fields
+            fields = [field for field in self.columns_definitions.keys()]
+            fields.sort()
+            for idx, col_name in enumerate(fields):
                 query += "('{0}', {1}, '{2}', '{3}', '{4}', '{5}'),".format(db_uid, idx, col_name, col_name.title(), self.columns_definitions[col_name]["type"], self.escape_value_for_sql(self.columns_definitions[col_name]["description"]))
             Model.execute(query[:-1])
             Model.execute("UPDATE annotation_field SET uid=MD5(concat(database_uid, name)) WHERE uid IS NULL;")
