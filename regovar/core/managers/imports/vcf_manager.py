@@ -724,7 +724,6 @@ class VcfManager(AbstractImportManager):
             queries_queue.put(transaction)
             #Model.execute(transaction)
 
-        ipdb.set_trace()
         # stop workers
         for i in range(max_thread):
             queries_queue.put(None)

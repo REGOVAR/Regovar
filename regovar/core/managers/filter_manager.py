@@ -164,7 +164,6 @@ class FilterEngine:
 
         query = query[:-2] + ");"
         log(" > create wt schema")
-        ipdb.set_trace()
         execute(query.format(wt))
 
 
@@ -173,10 +172,13 @@ class FilterEngine:
 
         # create temp table with id of variants
         query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE TABLE {0}_var (id bigint, trx_count integer); "
-        query += "INSERT INTO {0}_var (id) SELECT DISTINCT variant_id FROM sample_variant{1} WHERE sample_id IN ({2}); "
-        query += "CREATE INDEX {0}_var_idx_id ON {0}_var USING btree (id);"
-
+        execute(query.format(wt))
+        
+        query = "INSERT INTO {0}_var (id) SELECT DISTINCT variant_id FROM sample_variant{1} WHERE sample_id IN ({2}); "
         res = execute(query.format(wt, analysis.db_suffix, ",".join([str(sid) for sid in samples_ids])))
+        
+        query += "CREATE INDEX {0}_var_idx_id ON {0}_var USING btree (id);"
+        execute(query.format(wt))
 
         # set total number of variant for the analysis
         log(" > {} variants found".format(res.rowcount))
@@ -289,7 +291,6 @@ class FilterEngine:
 
 
         # Second loop to execute insert query by trx annotation db
-        ipdb.set_trace()
         for dbuid in annotations_dbs:
             if self.db_map[dbuid]["type"] == "transcript":
                 dbname = "_db_{}".format(dbuid)
@@ -689,6 +690,11 @@ class FilterEngine:
         if analysis is None:
             raise RegovarException("Not able to retrieve analysis with provided id: {}".format(analysis_id))
         if not analysis.status or analysis.status == 'empty':
+            # check if all samples are ready to be use for the creation of the working table
+            for sid in analysis.samples_ids:
+                sample = Sample.from_id(sid)
+                if sample.status != 'ready':
+                    raise RegovarException("Samples of the analysis {} are not ready to be used".format(analysis.id))
             self.create_working_table(analysis)
         elif analysis.status == 'computing':
             raise RegovarException("Analysis {} is not ready to be used: computing progress {} %".format(analysis.id, round(analysis.computing_progress*100, 2)))

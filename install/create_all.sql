@@ -261,6 +261,7 @@ CREATE TABLE public.analysis
     create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     total_variants integer DEFAULT 0,
+    statistics json,
     reference_id integer,
     computing_progress real DEFAULT 0,
     status analysis_status,
