@@ -207,7 +207,16 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
 
 def log(msg):
     global regovar_logger
-    regovar_logger.info(msg)
+    msgs = msg.split('\n')
+    finals = []
+    for m in msgs:
+        finals.append(m[0:200])
+        m = m[200:]
+        while(len(m)>0):
+            finals.append("\t" + m[0:200])
+            m = m[200:]
+    for m in finals:
+        regovar_logger.info(m)
 
 
 def war(msg):

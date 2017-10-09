@@ -139,14 +139,14 @@ class FilterEngine:
             is_rec_hom boolean, \
             is_rec_htzcomp boolean, \
             is_denovo boolean, \
-            is_inherited boolean, \
             is_aut boolean, \
             is_xlk boolean, \
             is_mit boolean, "
         query += ", ".join(["s{}_gt integer".format(i) for i in samples_ids]) + ", "
         query += ", ".join(["s{}_dp integer".format(i) for i in samples_ids]) + ", "
+        query += ", ".join(["s{}_qual real".format(i) for i in samples_ids]) + ", "
+        query += ", ".join(["s{}_filter JSON".format(i) for i in samples_ids]) + ", "
         query += ", ".join(["s{}_is_composite boolean".format(i) for i in samples_ids]) + ", "
-
 
         # Add annotation's columns
         for dbuid in annotations_dbs:
@@ -177,13 +177,12 @@ class FilterEngine:
         query = "INSERT INTO {0}_var (id) SELECT DISTINCT variant_id FROM sample_variant{1} WHERE sample_id IN ({2}); "
         res = execute(query.format(wt, analysis.db_suffix, ",".join([str(sid) for sid in samples_ids])))
         
-        query += "CREATE INDEX {0}_var_idx_id ON {0}_var USING btree (id);"
-        execute(query.format(wt))
-
         # set total number of variant for the analysis
         log(" > {} variants found".format(res.rowcount))
         query = "UPDATE analysis SET total_variants={1} WHERE id={0}".format(analysis.id, res.rowcount)
         
+        query += "CREATE INDEX {0}_var_idx_id ON {0}_var USING btree (id);"
+        execute(query.format(wt))
 
         # Insert variants and their annotations
         q_fields = "is_variant, variant_id, bin, chr, pos, ref, alt, is_transition, sample_tlist"
@@ -205,7 +204,7 @@ class FilterEngine:
     def update_wt_samples_fields(self, analysis, samples_ids):
         wt = "wt_{}".format(analysis.id)
         for sid in samples_ids:
-            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
+            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_qual=_sub.quality, s{2}_filter=_sub.filter s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
 
 
     def update_wt_stats_prefilters(self, analysis, samples_ids, attributes, filters_ids, panels_ids):
@@ -233,6 +232,8 @@ class FilterEngine:
             self.update_wt_compute_prefilter_single(analysis, samples_ids[0], "M")
         elif analysis.settings["trio"]:
             self.update_wt_compute_prefilter_trio(analysis, samples_ids, analysis.settings["trio"])
+            
+        # 
         
 
     def create_wt_variants_indexes(self, analysis, samples_ids):
@@ -242,12 +243,13 @@ class FilterEngine:
         query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(wt)
         query += "".join(["CREATE INDEX {0}_idx_s{1}_gt ON {0} USING btree (s{1}_gt);".format(wt, i) for i in samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_dp ON {0} USING btree (s{1}_dp);".format(wt, i) for i in samples_ids])
+        query += "".join(["CREATE INDEX {0}_idx_s{1}_qual ON {0} USING btree (s{1}_qual);".format(wt, i) for i in samples_ids])
+        #query += "".join(["CREATE INDEX {0}_idx_s{1}_filter ON {0} USING btree (s{1}_filter);".format(wt, i) for i in samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_is_composite ON {0} USING btree (s{1}_is_composite);".format(wt, i) for i in samples_ids])
         query = "CREATE INDEX {0}_idx_is_dom ON {0} USING btree (is_dom);".format(wt)
         query = "CREATE INDEX {0}_idx_is_rec_hom ON {0} USING btree (is_rec_hom);".format(wt)
         query = "CREATE INDEX {0}_idx_is_rec_htzcomp ON {0} USING btree (is_rec_htzcomp);".format(wt)
         query = "CREATE INDEX {0}_idx_is_denovo ON {0} USING btree (is_denovo);".format(wt)
-        query = "CREATE INDEX {0}_idx_is_inherited ON {0} USING btree (is_inherited);".format(wt)
         query = "CREATE INDEX {0}_idx_is_aut ON {0} USING btree (is_aut);".format(wt)
         query = "CREATE INDEX {0}_idx_is_xlk ON {0} USING btree (is_xlk);".format(wt)
         query = "CREATE INDEX {0}_idx_is_mit ON {0} USING btree (is_mit);".format(wt)
@@ -269,13 +271,13 @@ class FilterEngine:
 
         # Insert trx and their annotations
         q_fields  = "is_variant, variant_id, trx_pk_uid, trx_pk_value, bin, chr, pos, ref, alt, is_transition, sample_tlist, sample_tcount, sample_alist, sample_acount, "
-        q_fields += "is_dom, is_rec_hom, is_rec_htzcomp, is_denovo, is_inherited, is_aut, is_xlk, is_mit, "
+        q_fields += "is_dom, is_rec_hom, is_rec_htzcomp, is_denovo, is_aut, is_xlk, is_mit, "
         q_fields += ", ".join(["s{}_gt".format(i) for i in samples_ids]) + ", "
         q_fields += ", ".join(["s{}_dp".format(i) for i in samples_ids]) + ", "
         q_fields += ", ".join(["s{}_is_composite".format(i) for i in samples_ids])
         
         q_select  = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id, _wt.bin, _wt.chr, _wt.pos, _wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, "
-        q_select += "_wt.sample_tcount, _wt.sample_alist, _wt.sample_acount, _wt.is_dom, _wt.is_rec_hom, _wt.is_rec_htzcomp, _wt.is_denovo, _wt.is_inherited, "
+        q_select += "_wt.sample_tcount, _wt.sample_alist, _wt.sample_acount, _wt.is_dom, _wt.is_rec_hom, _wt.is_rec_htzcomp, _wt.is_denovo, "
         q_select += "_wt.is_aut, _wt.is_xlk, _wt.is_mit, "
         q_select += ", ".join(["_wt.s{}_gt".format(i) for i in samples_ids]) + ", "
         q_select += ", ".join(["_wt.s{}_dp".format(i) for i in samples_ids]) + ", "
@@ -382,7 +384,7 @@ class FilterEngine:
         res = execute(query.format(wt, child_id, mother_id, father_id, analysis.db_suffix))
         log(" > is_rec_htzcomp : {} variants".format(res.rowcount))
 
-        # Inherited and denovo are not available for single
+        # Inherited and denovo
         query = "UPDATE {0} SET is_denovo=True WHERE s{1}_gt>0 and s{2}_gt=0 and s{3}_gt=0"
         res = execute(query.format(wt, child_id, mother_id, father_id))
         log(" > is_denovo : {} variants".format(res.rowcount))        
@@ -673,18 +675,97 @@ class FilterEngine:
 
 
 
-    def request(self, analysis_id, mode, filter_json, fields=None, order=None, limit=100, offset=0, count=False):
-        """
 
+    def prepare(self, analysis, filter_json, order=None):
         """
-        # Check parameters: if no field, select by default the first field avalaible to avoir error
-        if fields is None:
-            fields = [next(iter(self.fields_map.keys()))]
-        if type(analysis_id) != int or analysis_id <= 0:
-            analysis_id = None
-        if mode not in ["table", "list"]:
-            mode = "table"
+            Build tmp table for the provided filter/order by parameters
+            set also the total count of variant/transcript
+        """
+        from core.core import core
+        log("---\nPrepare tmp working table for analysis {}".format(analysis.id))
+        progress = {"msg": "filtering_prepare", "start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0}
+        core.notify_all(None, data=progress)
+        # Create schema
+        w_table = 'wt_{}'.format(analysis.id)
+        query = "DROP TABLE IF EXISTS {0}_tmp CASCADE; CREATE TABLE {0}_tmp AS "
+        query += "SELECT ROW_NUMBER() OVER() as page, variant_id, array_agg(trx_pk_value) as trx, count(*) as trx_count{1} FROM {0} WHERE trx_pk_value is not null{2} GROUP BY variant_id{1} ORDER BY {3};"
+        
+        f_fields = "" if order is None else "," + ", ".join(order)
+        f_order = "variant_id" if order is None else ", ".join(order)
+        f_filter = self.parse_filter(analysis, filter_json, order)
+        f_filter = " AND ({0})".format(f_filter) if len(filter_json) > 0 else f_filter
+        query = query.format(w_table, f_fields, f_filter, f_order)
 
+        sql_result = None
+        log("Filter: {0}\nOrder: {1}\nQuery: {2}".format(filter_json, order, query))
+        with Timer() as t:
+            sql_result = execute(query)
+        
+        total_variant = sql_result.rowcount
+        log("Time: {0}\nResults count: {1}".format(t, total_variant))
+        
+        # Save filter data
+        settings = {}
+        try:
+            analysis.filter = filter_json
+            analysis.order = [] if order is None else order
+            analysis.total_variants = total_variant
+            analysis.save()
+        except:
+            err("Not able to save current filter")
+        
+        progress = {"msg": "filtering_prepare", "start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 1}
+        core.notify_all(None, data=progress)
+
+
+
+    def get_variant(self, analysis, fields, limit=100, offset=0):
+        """
+            Return results from current temporary table according to provided fields and pagination information
+            
+        """
+        from core.core import core
+        w_table = 'wt_{}'.format(analysis.id)
+        query = "SELECT ws.variant_id, ws.trx_count, {1} FROM {0}_tmp ws INNER JOIN {0} wt ON ws.variant_id=wt.variant_id WHERE wt.is_variant AND ws.page>={2} ORDER BY ws.page LIMIT {3}"
+        
+        query = query.format(w_table, self.parse_fields(analysis, fields), offset, limit)
+        sql_result = None
+        with Timer() as t:
+            sql_result = execute(query)
+            
+        log("--- Select:\nFrom: {0}\nTo: {1}\nFields: {2}\nQuery: {3}\nTime: {4}".format(offset, limit, fields, query, t))
+        return sql_result
+        
+        
+        
+    def get_trx(self, analysis, fields, variant_id):
+        """
+            Return results from current temporary table according to provided fields and variant
+        """
+        from core.core import core
+        w_table = 'wt_{}'.format(analysis.id)
+        
+        sub_query = "SELECT unnest(trx) FROM {0}_tmp WHERE variant_id={1}".format(w_table, variant_id)
+        query += "SELECT ws.variant_id, wt.trx_pk_value as trx_id, {1} FROM {0} WHERE variant_id={2} AND trx_pk_value IN ({3})"
+        
+        query = query.format(w_table, self.parse_fields(analysis, fields), offset, limit)
+        sql_result = None
+        with Timer() as t:
+            sql_result = execute(query)
+            
+        log("--- Select:\nFrom: {0}\To: {1}\nFields:\n{2}\nQuery:\n{3}\nTime: {4}".format(offset, limit, fields, query, t))
+        return sql_result
+
+
+
+
+    def request(self, analysis_id, filter_json=None, fields=None, order=None, variant_id=None, limit=100, offset=0):
+        """
+            Commont request to manage all different cases
+        """
+        if fields is None or not isinstance(fields, list) or len(fields) == 0:
+            raise RegovarException("You must specify which information must be returned by the query.")
+        
         # Get analysis data and check status if ok to do filtering
         analysis = Analysis.from_id(analysis_id)
         if analysis is None:
@@ -700,149 +781,111 @@ class FilterEngine:
             raise RegovarException("Analysis {} is not ready to be used: computing progress {} %".format(analysis.id, round(analysis.computing_progress*100, 2)))
         elif analysis.status == 'error':
             raise RegovarException("Analysis {} in error: sysadmin must check log on server".format(analysis.id))
-
-
-        # Parse data to generate sql query and retrieve list of needed annotations databases/fields
-        query, field_uids, dbs_uids, sample_ids, filter_ids, attributes = self.build_query(analysis, mode, filter_json, fields, order, limit, offset, count)
-
         
-
-        # Execute query
-        sql_result = None
-        with Timer() as t:
-            sql_result = execute(' '.join(query))
-        log("---\nFields:\n{0}\nFilter:\n{1}\nQuery:\n{2}\nRequest query: {3}".format(fields, filter_json, '\n'.join(query), t))
-
-        # Save filter in analysis settings
-        if not count and analysis_id > 0:
-            settings = {}
-            try:
-                analysis.filter = filter_json
-                analysis.fields = fields
-                analysis.order = [] if order is None else order
-                analysis.save()
-            except:
-                # TODO: log error
-                err("Not able to save current filter")
-
-        # Get result
-        if count:
-            result = sql_result.first()[0]
-        else:
-            result = []
-            with Timer() as t:
-                if sql_result is not None:
-                    for row in sql_result:
-                        entry = {"id" : "{}_{}_{}".format(row.variant_id, row.trx_pk_uid, row.trx_pk_value )}
-                        for f_uid in fields:
-                            # Manage special case for fields splitted by sample
-                            if self.fields_map[f_uid]['name'].startswith('s{}_'):
-                                pattern = "row." + self.fields_map[f_uid]['name']
-                                r = {}
-                                for sid in sample_ids:
-                                    r[sid] = FilterEngine.parse_result(eval(pattern.format(sid)))
-                                entry[f_uid] = r
-                            else:
-                                if self.fields_map[f_uid]['db_name_ui'] == 'Variant':
-                                    entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]['name'])))
-                                else:
-                                    entry[f_uid] = FilterEngine.parse_result(eval("row._{}".format(f_uid)))
-                        result.append(entry)
-            log("Result processing: {0}\nTotal result: {1}".format(t, "-"))
-        return result
-
-
-    def build_query(self, analysis, mode, filter, fields, order=None, limit=100, offset=0, count=False):
-        """
-            This method build the sql query according to the provided parameters, and also build several list  with ids of
-            fields, databases, sample, etc... all information that could be used by the analysis to work.
-        """
-        # Data that will be computed and returned by this method !
-        query = []       # sql queries that correspond to the provided parameters (we will have several queries if need to create temp tables)
-        field_uids = []  # list of annotation field's uids that need to be present in the analysis working table
-        db_uids = []     # list of annotation databases uids used for the analysis
-        sample_ids = []  # list of sample's ids used for the analysis
-        filter_ids = []  # list of saved filter's ids for this analysis
-        attributes = {}  # list of attributes (and their values by sample) defined for this analysis
-
-        # Retrieve sample ids of the analysis
-        for row in execute("select sample_id from analysis_sample where analysis_id={0}".format(analysis.id)):
-            sample_ids.append(str(row.sample_id))
-
-        # Retrieve attributes of the analysis
-        for row in execute("select sample_id, value, name from attribute where analysis_id={0}".format(analysis.id)):
-            if row.name not in attributes.keys():
-                attributes[row.name] = {row.sample_id: row.value}
+        # Prepare wt for specific filter query
+        # if filter_json is None, we assume that we are requesting the current tmp working table formerly prepared
+        if True: #analysis.wt_data["prepare_done"] == False:
+            if filter_json is None:
+                raise RegovarException("Analysis {} is not ready. You need to 'prepare' your filter by providing the filter and ordering parameters before requesting results.".format(analysis.id))
             else:
-                attributes[row.name].update({row.sample_id: row.value})
+                # Need to prepare temp table
+                self.prepare(analysis, filter_json, order)
+                
+        # Get results
+        vmode = variant_id is None
+        if vmode:
+            sql_result = self.get_variant(analysis, fields, limit, offset)
+        else:
+            sql_result = self.get_trx(analysis, fields, variant_id)
+            
+        # Format result
+        result = []
+        
+        with Timer() as t:
+            if sql_result is not None:
+                for row in sql_result:
+                    if vmode:
+                        entry = {"id" : row.variant_id, "trx_count": row.trx_count}
+                    else:
+                        entry = {"id" : "{}_{}".format(row.variant_id, row, row.trx_pk_value)}
+                    for f_uid in fields:
+                        # Manage special case for fields splitted by sample
+                        if self.fields_map[f_uid]['name'].startswith('s{}_'):
+                            pattern = "row." + self.fields_map[f_uid]['name']
+                            r = {}
+                            for sid in analysis.samples_ids:
+                                r[sid] = FilterEngine.parse_result(eval(pattern.format(sid)))
+                            entry[f_uid] = r
+                        else:
+                            if self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Regovar']:
+                                entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]['name'])))
+                            else:
+                                entry[f_uid] = FilterEngine.parse_result(eval("row._{}".format(f_uid)))
+                    result.append(entry)
+        log("Result processing: {0}\n".format(t))
+        
+        
+        
+        return {"wt_total_variants" : analysis.total_variants, "wt_total_results" : 0, "from":0, "to": 0, "results" : result}
 
-        # Init fields uid and db uids with the defaults annotations fields according to the reference (hg19 by example)
-        # for row in execute("SELECT d.uid AS duid, f.uid FROM annotation_database d INNER JOIN annotation_field f ON d.uid=f.database_uid WHERE d.reference_id={} AND d.type='variant'".format(reference_id)):
-        #     if row.duid not in db_uids:
-        #         db_uids.append(row.duid)
-        #     field_uids.append(row.uid)
-
-        # Retrieve saved filter's ids of the analysis - and parse their filter to get list of dbs/fields used by filters
-        for row in execute("select id, filter from filter where analysis_id={0} ORDER BY id ASC".format(analysis.id)):  # ORDER BY is important as a filter can "called" an oldest filter to be build.
-            filter_ids.append(row.id)
-            q, f, d = self.parse_filter(analysis, mode, sample_ids, row.filter, fields, None, None)
-            field_uids = array_merge(field_uids, f)
-            db_uids = array_merge(db_uids, d)
-
-        # Parse the current filter
-        query, f, d = self.parse_filter(analysis, mode, sample_ids, filter, fields, order, limit, offset, count)
-        field_uids = array_merge(field_uids, f)
-        db_uids = array_merge(db_uids, d)
-
-        # return query and all usefulldata about annotations needed to execute the query
-        return query, field_uids, db_uids, sample_ids, filter_ids, attributes
 
 
-    def parse_filter(self, analysis, mode, sample_ids, filters, fields=[], order=None, limit=100, offset=0, count=False):
+    def parse_fields(self, analysis, fields):
         """
-            This method parse the json filter and return the corresponding postgreSQL query, and also the list of fields and databases uid used by the query
-            (thoses databases/fields must be present in the working table to be run succefully the query)
+            Parse the json fields and return the corresponding postgreSQL query
+        """
+        fields_names = []
+        for f_uid in fields:
+            if self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Regovar']:
+                # Manage special case for fields splitted by sample
+                if self.fields_map[f_uid]['name'].startswith('s{}_'):
+                    fields_names.extend(['wt.' + self.fields_map[f_uid]['name'].format(s) for s in analysis.samples_ids])
+                else:
+                    fields_names.append('wt.{}'.format(self.fields_map[f_uid]["name"]))
+            else:
+                fields_names.append('wt._{}'.format(f_uid))
+        return ', '.join(fields_names)
+
+       
+       
+    def parse_order(self, analysis, order):
+        """
+            Parse the json order and return the corresponding postgreSQL query
+        """
+        if order is None or len(order) == 0:
+            return ""
+        
+        orders = []
+        for f_uid in order:
+            asc = 'ASC'
+            if f_uid[0] == '-':
+                f_uid = f_uid[1:]
+                asc = 'DESC'
+            if self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Regovar']:
+                # Manage special case for fields splitted by sample
+                if self.fields_map[f_uid]['name'].startswith('s{}_'):
+                    # TODO : actually, it's not possible to do "order by" on special fields (GT and DP because they are split by sample)
+                    pass
+                else:
+                    orders.append('{} {}'.format(self.fields_map[f_uid]["name"], asc))
+            else:
+                orders.append('_{} {}'.format(f_uid, asc))
+        return ', '.join(orders)
+
+
+
+
+    def parse_filter(self, analysis, filters, order=None):
+        """
+            Parse the json filter and return the corresponding postgreSQL query
         """
         # Init some global variables
         wt = 'wt_{}'.format(analysis.id)
-        query = ""
-        field_uids = []
-        db_uids = []
-        with_trx = False
 
-        # Build SELECT
-        fields_names = []
-        for f_uid in fields:
-            if self.fields_map[f_uid]["db_uid"] not in db_uids:
-                db_uids.append(self.fields_map[f_uid]["db_uid"])
-            field_uids.append(f_uid)
-            if self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Computed']:
-                # Manage special case for fields splitted by sample
-                if self.fields_map[f_uid]['name'].startswith('s{}_'):
-                    # Special case of htz composite that have different maining in trio or solo
-                    if self.fields_map[f_uid]['name'] == "s{}_is_composite" and isinstance(analysis.settings["trio"], dict):
-                        trio = analysis.settings["trio"]
-                        fields_names.append('{}.htz_comp_{}_{}_{}'.format(wt, trio["child"], trio["mother"], trio["father"]))
-                    else:
-                        fields_names.extend(['{}.'.format(wt) + self.fields_map[f_uid]['name'].format(s) for s in sample_ids])
-                else:
-                    fields_names.append('{}.{}'.format(wt, self.fields_map[f_uid]["name"]))
-            else:
-                with_trx = with_trx or self.fields_map[f_uid]["db_type"] == "transcript"
-                fields_names.append('{}._{}'.format(wt, f_uid))
-        q_select = 'variant_id, trx_pk_uid, trx_pk_value{} {}'.format(',' if len(fields_names) > 0 else '', ', '.join(fields_names))
-
-        # Build FROM/JOIN
-        q_from = wt
 
         # Build WHERE
         temporary_to_import = {}
 
-        def check_field_uid(data):
-            if data[0] == 'field':
-                if self.fields_map[data[1]]["db_uid"] not in db_uids:
-                    db_uids.append(self.fields_map[data[1]]["db_uid"])
-                field_uids.append(data[1])
 
         def build_filter(data):
             """ 
@@ -854,21 +897,19 @@ class FilterEngine:
                     return ''
                 return ' (' + FilterEngine.op_map[operator].join([build_filter(f) for f in data[1]]) + ') '
             elif operator in ['==', '!=', '>', '<', '>=', '<=']:
-                # If comparaison with a field, the field MUST BE the first operande
-                if data[1][0] == 'field':
-                    metadata = self.fields_map[data[1][1]]
-                else:
-                    metadata = {"type": "string", "name":""}
-                check_field_uid(data[1])
-                check_field_uid(data[2])
+                # Comparaison with a field: the field MUST BE the first operande
+                if data[1][0] != 'field':
+                    raise RegovarException("Filter json")
+                    pass
+                metadata = self.fields_map[data[1][1]]
+                
+                
                 # Manage special case for fields splitted by sample
                 if metadata['name'].startswith('s{}_'):
-                    return ' (' + ' OR '.join(['{0}{1}{2}'.format(metadata['name'].format(s), FilterEngine.op_map[operator], parse_value(metadata["type"], data[2])) for s in sample_ids]) + ') '
+                    return ' (' + ' OR '.join(['{0}{1}{2}'.format(metadata['name'].format(s), FilterEngine.op_map[operator], parse_value(metadata["type"], data[2])) for s in analysis.samples_ids]) + ') '
                 else:
                     return '{0}{1}{2}'.format(parse_value(metadata["type"], data[1]), FilterEngine.op_map[operator], parse_value(metadata["type"], data[2]))
             elif operator in ['~', '!~']:
-                check_field_uid(data[1])
-                check_field_uid(data[2])
                 return '{0}{1}{2}'.format(parse_value('string', data[1]), FilterEngine.op_map[operator], parse_value('string%', data[2]))
             elif operator in ['IN', 'NOTIN']:
                 tmp_table = get_tmp_table(data[1], data[2])
@@ -878,6 +919,8 @@ class FilterEngine:
                 else:  # if data[1] == 'variant':
                     temporary_to_import[tmp_table]['from'] = " LEFT JOIN {1} ON {0}.bin={1}.bin AND {0}.chr={1}.chr AND {0}.pos={1}.pos AND {0}.ref={1}.ref AND {0}.alt={1}.alt".format(wt, tmp_table)
                 return temporary_to_import[tmp_table]['where']
+
+
 
         def get_tmp_table(mode, data):
             """
@@ -908,6 +951,8 @@ class FilterEngine:
             temporary_to_import[tmp_table_name] = {'query': tmp_table_query + "CREATE INDEX IF NOT EXISTS {0}_idx_var ON {0} USING btree (bin, chr, pos);".format(tmp_table_name)}
             return tmp_table_name
 
+
+
         def parse_value(ftype, data):
             if data[0] == 'field':
                 if self.fields_map[data[1]]["type"] == ftype:
@@ -926,49 +971,17 @@ class FilterEngine:
                     return 'int8range({0}, {1})'.format(data[1], data[2])
             raise RegovarException("FilterEngine.request.parse_value - Unknow type: {0} ({1})".format(ftype, data))
 
-        # q_where = ""
-        # if len(sample_ids) == 1:
-        #     q_where = "{0}.sample_id={1}".format(wt, sample_ids[0])
-        # elif len(sample_ids) > 1:
-        #     q_where = "{0}.sample_id IN ({1})".format(wt, ','.join(sample_ids))
 
-        q_where = build_filter(filters)
-        if q_where is not None and len(q_where.strip()) > 0:
-            q_where = "WHERE " + q_where
+        query = build_filter(filters)
+        if query is not None:
+            query =query.strip()
 
-        # Build FROM/JOIN according to the list of used annotations databases
-        q_from += " ".join([t['from'] for t in temporary_to_import.values()])
 
-        # Build ORDER BY
-        # TODO : actually, it's not possible to do "order by" on special fields (GT and DP because they are split by sample)
-        q_order = ""
-        if order is not None and len(order) > 0:
-            orders = []
+        return query
 
-            for f_uid in order:
-                asc = 'ASC'
-                if f_uid[0] == '-':
-                    f_uid = f_uid[1:]
-                    asc = 'DESC'
-                if self.fields_map[f_uid]['db_name_ui'] == 'Variant':
-                    # Manage special case for fields splitted by sample
-                    if self.fields_map[f_uid]['name'].startswith('s{}_'):
-                        pass
-                    else:
-                        orders.append('{} {}'.format(self.fields_map[f_uid]["name"], asc))
-                else:
-                    orders.append('_{} {}'.format(f_uid, asc))
-            q_order = 'ORDER BY {}'.format(', '.join(orders))
 
-        # build final query
-        query_tpm = [t['query'] for t in temporary_to_import.values()]
-        if count:
-            query_req = "SELECT DISTINCT {0} FROM {1} {2}".format(q_select, q_from, q_where)
-            query = query_tpm + ['SELECT COUNT(*) FROM ({0}) AS sub;'.format(query_req)]
-        else:
-            query_req = "SELECT DISTINCT {0} FROM {1} {2} {3} {4} {5};".format(q_select, q_from, q_where, q_order, 'LIMIT {}'.format(limit) if limit is not None else '', 'OFFSET {}'.format(offset) if offset is not None else '')
-            query = query_tpm + [query_req]
-        return query, field_uids, db_uids
+
+
 
 
     @staticmethod

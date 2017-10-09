@@ -102,38 +102,35 @@ class AnalysisHandler:
 
         
 
-    async def filtering(self, request, count=False):
+    async def filtering(self, request):
         # 1- Retrieve data from request
         data = await request.json()
         if isinstance(data, str): data = json.loads(data)
         analysis_id = request.match_info.get('analysis_id', -1)
+        variant_id = request.match_info.get('variant_id', None)
+        
         filter_json = data["filter"] if "filter" in data else {}
         if isinstance(filter_json, str): filter_json = json.loads(filter_json)
+        
         fields = data["fields"] if "fields" in data else None
         if isinstance(fields, str): fields = json.loads(fields)
+        
         limit = data["limit"] if "limit" in data else 100
         offset = data["offset"] if "offset" in data else 0
-        mode = data["mode"] if "mode" in data else "table"
         order = data["order"] if "order" in data else None
         if isinstance(order, str): order = json.loads(order)
 
         # 2- Check parameters
-        if "mode" in data: mode = data["mode"]
         if limit<0 or limit > RANGE_MAX: limit = 100
         if offset<0: offset = 0
         
         # 3- Execute filtering request
         try:
-            result = core.filters.request(int(analysis_id), mode, filter_json, fields, order, int(limit), int(offset), count)
+            result = core.filters.request(int(analysis_id), filter_json, fields, order, variant_id, int(limit), int(offset))
         except Exception as err:
             return rest_error("Filtering error: " + str(err))
         return rest_success(result)
 
-
-
-
-    async def filtering_count(self, request):
-        return await self.filtering(request, True)
 
 
 

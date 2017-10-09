@@ -158,11 +158,13 @@ app.router.add_route('POST',   "/analysis/{analysis_id}/filter",             ana
 app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.create_update_filter)   # Update filter
 app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.delete_filter)          # Delete a filter
 app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",          analysisHandler.filtering)              # Get result (variants) of the provided filter
-app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/count",    analysisHandler.filtering_count)        # Get total count of result of the provided filter
+app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/{variant_id}", analysisHandler.filtering)          # Get total count of result of the provided filter
+
 app.router.add_route('GET',    "/analysis/{analysis_id}/selection",          analysisHandler.get_selection)          # Get variants data for the provided selection
+# CRUD selection
 app.router.add_route('GET',    "/analysis/{analysis_id}/clear_temps_data",   analysisHandler.clear_temps_data)       # Clear temporary data (to save disk space by example)
 
-app.router.add_route('POST',   "/analysis/{analysis_id}/export/{pipe_id}",   analysisHandler.get_export)             # Export selection of the provided analysis into the requested format
+app.router.add_route('POST',   "/analysis/{analysis_id}/selection/{selection_id}/export/{pipe_id}",   analysisHandler.get_export)             # Export selection of the provided analysis into the requested format
 app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   analysisHandler.get_report)             # Generate report html for the provided analysis+report id
 
 app.router.add_route('GET',    "/search/{query}",                            searchHandler.get)                      # generic research

@@ -710,20 +710,21 @@ INSERT INTO public.annotation_database(uid, reference_id, name, version, name_ui
   ('2c0a7043a9e736eaf14b6614fff102c0', 0, 'wt', '_all_', 'Regovar', 'Regovar computed annotations'        , '',  1, '', 'variant');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 1,  'variant_id',       'id',                     'int',          'Variant unique id in the database.', NULL),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 1,  'variant_id',       'id',                     'int',          'Variant unique ID in the database.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 3,  'chr',              'chr',                    'int',          'Chromosome as number : 23=X, 24=Y, 25=M.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 4,  'pos',              'pos',                    'int',          'Position of the variant in the chromosome.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 5,  'ref',              'ref',                    'sequence',     'Reference sequence.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 6,  'alt',              'alt',                    'sequence',     'Alternative sequence of the variant.', NULL),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 10, 's{}_gt',           'GT',                     'sample_array', 'Genotype as number : 0="r/r", 1="a/a", 2="r/a", 3="a1/a2"', NULL),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_dp',           'DP',                     'sample_array', 'Depth.', NULL);
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 10, 's{}_gt',           'GT',                     'sample_array', 'Genotype as number : 0="r/r", 1="a/a", 2="r/a", 3="a1/a2".', '{"type": "int"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_dp',           'DP',                     'sample_array', 'Depth.', '{"type": "int"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_qual',         'QUAL',                   'sample_array', 'VCF Quality field.', '{"type": "float"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_filter',       'FILTER',                 'sample_array', 'VCF Filter field', '{"type": "enum"}');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
   ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Is the variant dominant for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 2,  'is_rec_hom',       'Recessif homozygous',            'bool',         'Is the variant recessif homozygous for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 3,  'is_rec_htzcomp',   'Recessif compound heterozygous', 'bool',         'Is the variant recessif compound heterozygous for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo',        'De novo',                        'bool',         'Is the variant de novo for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 5,  'is_inherited',     'Inherited',                      'bool',         'Is the variant inherited for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 6,  'is_aut',           'Autosomal',                      'bool',         'Is the variant autosomal for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 7,  'is_xlk',           'X-linked',                       'bool',         'Is the variant X-linked for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 8,  'is_mit',           'Mitochondrial',                  'bool',         'Is the variant mitochondrial for the sample (single), or for the child (trio).', NULL),
