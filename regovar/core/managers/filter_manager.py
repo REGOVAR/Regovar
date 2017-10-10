@@ -728,7 +728,7 @@ class FilterEngine:
         w_table = 'wt_{}'.format(analysis.id)
         query = "SELECT ws.variant_id, ws.trx_count, {1} FROM {0}_tmp ws INNER JOIN {0} wt ON ws.variant_id=wt.variant_id WHERE wt.is_variant AND ws.page>={2} ORDER BY ws.page LIMIT {3}"
         
-        query = query.format(w_table, self.parse_fields(analysis, fields), offset, limit)
+        query = query.format(w_table, self.parse_fields(analysis, fields, "wt."), offset, limit)
         sql_result = None
         with Timer() as t:
             sql_result = execute(query)
@@ -746,14 +746,14 @@ class FilterEngine:
         w_table = 'wt_{}'.format(analysis.id)
         
         sub_query = "SELECT unnest(trx) FROM {0}_tmp WHERE variant_id={1}".format(w_table, variant_id)
-        query += "SELECT ws.variant_id, wt.trx_pk_value as trx_id, {1} FROM {0} WHERE variant_id={2} AND trx_pk_value IN ({3})"
+        query = "SELECT variant_id, trx_pk_value as trx_id, {1} FROM {0} WHERE variant_id={2} AND trx_pk_value IN ({3})"
         
-        query = query.format(w_table, self.parse_fields(analysis, fields), offset, limit)
+        query = query.format(w_table, self.parse_fields(analysis, fields, ""), variant_id, sub_query)
         sql_result = None
         with Timer() as t:
             sql_result = execute(query)
             
-        log("--- Select:\nFrom: {0}\To: {1}\nFields:\n{2}\nQuery:\n{3}\nTime: {4}".format(offset, limit, fields, query, t))
+        log("--- Select trx:\nVariantId: {0}\nTrx count: {1}\nTime: {2}".format(variant_id, sql_result.rowcount, t))
         return sql_result
 
 
@@ -784,12 +784,13 @@ class FilterEngine:
         
         # Prepare wt for specific filter query
         # if filter_json is None, we assume that we are requesting the current tmp working table formerly prepared
-        if True: #analysis.wt_data["prepare_done"] == False:
+        
+        if filter_json:
+            # Need to prepare temp table
+            self.prepare(analysis, filter_json, order)
+        elif not analysis.filter:
             if filter_json is None:
                 raise RegovarException("Analysis {} is not ready. You need to 'prepare' your filter by providing the filter and ordering parameters before requesting results.".format(analysis.id))
-            else:
-                # Need to prepare temp table
-                self.prepare(analysis, filter_json, order)
                 
         # Get results
         vmode = variant_id is None
@@ -805,9 +806,9 @@ class FilterEngine:
             if sql_result is not None:
                 for row in sql_result:
                     if vmode:
-                        entry = {"id" : row.variant_id, "trx_count": row.trx_count}
+                        entry = {"id" : str(row.variant_id), "trx_count": row.trx_count}
                     else:
-                        entry = {"id" : "{}_{}".format(row.variant_id, row, row.trx_pk_value)}
+                        entry = {"id" : "{}_{}".format(row.variant_id, row, row.trx_id)}
                     for f_uid in fields:
                         # Manage special case for fields splitted by sample
                         if self.fields_map[f_uid]['name'].startswith('s{}_'):
@@ -830,7 +831,7 @@ class FilterEngine:
 
 
 
-    def parse_fields(self, analysis, fields):
+    def parse_fields(self, analysis, fields, prefix):
         """
             Parse the json fields and return the corresponding postgreSQL query
         """
@@ -839,11 +840,11 @@ class FilterEngine:
             if self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Regovar']:
                 # Manage special case for fields splitted by sample
                 if self.fields_map[f_uid]['name'].startswith('s{}_'):
-                    fields_names.extend(['wt.' + self.fields_map[f_uid]['name'].format(s) for s in analysis.samples_ids])
+                    fields_names.extend([prefix + self.fields_map[f_uid]['name'].format(s) for s in analysis.samples_ids])
                 else:
-                    fields_names.append('wt.{}'.format(self.fields_map[f_uid]["name"]))
+                    fields_names.append(prefix+'{}'.format(self.fields_map[f_uid]["name"]))
             else:
-                fields_names.append('wt._{}'.format(f_uid))
+                fields_names.append(prefix+'_{}'.format(f_uid))
         return ', '.join(fields_names)
 
        

@@ -109,7 +109,7 @@ class AnalysisHandler:
         analysis_id = request.match_info.get('analysis_id', -1)
         variant_id = request.match_info.get('variant_id', None)
         
-        filter_json = data["filter"] if "filter" in data else {}
+        filter_json = data["filter"] if "filter" in data else None
         if isinstance(filter_json, str): filter_json = json.loads(filter_json)
         
         fields = data["fields"] if "fields" in data else None
