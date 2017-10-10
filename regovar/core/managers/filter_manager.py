@@ -693,7 +693,7 @@ class FilterEngine:
         f_fields = "" if order is None else "," + ", ".join(order)
         f_order = "variant_id" if order is None else ", ".join(order)
         f_filter = self.parse_filter(analysis, filter_json, order)
-        f_filter = " AND ({0})".format(f_filter) if len(filter_json) > 0 else f_filter
+        f_filter = " AND ({0})".format(f_filter) if len(filter_json[1]) > 0 else f_filter
         query = query.format(w_table, f_fields, f_filter, f_order)
 
         sql_result = None
@@ -793,7 +793,7 @@ class FilterEngine:
                 raise RegovarException("Analysis {} is not ready. You need to 'prepare' your filter by providing the filter and ordering parameters before requesting results.".format(analysis.id))
                 
         # Get results
-        vmode = variant_id is None
+        vmode = variant_id is None or variant_id == ""
         if vmode:
             sql_result = self.get_variant(analysis, fields, limit, offset)
         else:
@@ -900,7 +900,7 @@ class FilterEngine:
             elif operator in ['==', '!=', '>', '<', '>=', '<=']:
                 # Comparaison with a field: the field MUST BE the first operande
                 if data[1][0] != 'field':
-                    raise RegovarException("Filter json")
+                    raise RegovarException("Comparaison operator MUST have field as left operande.")
                     pass
                 metadata = self.fields_map[data[1][1]]
                 
@@ -908,6 +908,8 @@ class FilterEngine:
                 # Manage special case for fields splitted by sample
                 if metadata['name'].startswith('s{}_'):
                     return ' (' + ' OR '.join(['{0}{1}{2}'.format(metadata['name'].format(s), FilterEngine.op_map[operator], parse_value(metadata["type"], data[2])) for s in analysis.samples_ids]) + ') '
+                elif metadata["type"] == "list":
+                    return '{2}{1} ANY({0})'.format(parse_value(metadata["type"], data[1]), FilterEngine.op_map[operator], parse_value(metadata["type"], data[2]))
                 else:
                     return '{0}{1}{2}'.format(parse_value(metadata["type"], data[1]), FilterEngine.op_map[operator], parse_value(metadata["type"], data[2]))
             elif operator in ['~', '!~']:
@@ -964,7 +966,7 @@ class FilterEngine:
             if data[0] == 'value':
                 if ftype in ['int', 'float', 'enum', 'bool', 'sample_array']:
                     return str(data[1])
-                elif ftype in ['string', 'sequence']:
+                elif ftype in ['string', 'list', 'sequence']:
                     return "'{0}'".format(data[1])
                 elif ftype == 'string%':
                     return "'%%{0}%%'".format(data[1])
