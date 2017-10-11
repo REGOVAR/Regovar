@@ -808,7 +808,7 @@ class FilterEngine:
                     if vmode:
                         entry = {"id" : str(row.variant_id), "trx_count": row.trx_count}
                     else:
-                        entry = {"id" : "{}_{}".format(row.variant_id, row, row.trx_id)}
+                        entry = {"id" : "{}_{}".format(row.variant_id, row.trx_id)}
                     for f_uid in fields:
                         # Manage special case for fields splitted by sample
                         if self.fields_map[f_uid]['name'].startswith('s{}_'):

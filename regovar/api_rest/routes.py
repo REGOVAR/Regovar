@@ -35,6 +35,7 @@ analysisHandler = AnalysisHandler()
 sampleHandler = SampleHandler()
 variantHandler = VariantHandler()
 searchHandler = SearchHandler()
+adminHandler = AdminHandler()
 
 
 # Create a auth ticket mechanism that expires after SESSION_MAX_DURATION seconds (default is 86400s = 24h), and has a randomly generated secret. 
@@ -170,7 +171,7 @@ app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   ana
 app.router.add_route('GET',    "/search/{query}",                            searchHandler.get)                      # generic research
 
 
-
+app.router.add_route('GET',    "/admin/stats",                               adminHandler.stats)                   # generic research
 
 
 

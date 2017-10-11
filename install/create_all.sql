@@ -429,24 +429,6 @@ CREATE TABLE public.project_subject
     CONSTRAINT ps_pkey PRIMARY KEY (project_id, subject_id)
 );
 
-
-
-CREATE TABLE public.user_project_sharing
-(
-    project_id integer NOT NULL,
-    user_id integer NOT NULL,
-    write_authorisation boolean,
-    CONSTRAINT ups_pkey PRIMARY KEY (project_id, user_id)
-);
-
-CREATE TABLE public.user_subject_sharing
-(
-    subject_id integer NOT NULL,
-    user_id integer NOT NULL,
-    write_authorisation boolean,
-    CONSTRAINT uss_pkey PRIMARY KEY (subject_id, user_id)
-);
-
 CREATE TABLE public.project_file
 (
     project_id integer NOT NULL,
@@ -460,6 +442,7 @@ CREATE TABLE public.subject_file
     file_id integer NOT NULL,
     CONSTRAINT sf_pkey PRIMARY KEY (subject_id, file_id)
 );
+
 
 
 
@@ -504,38 +487,6 @@ CREATE TABLE public.subject_indicator
 -- --------------------------------------------
 -- SHARING SERVER TABLES
 -- --------------------------------------------
-
-CREATE TABLE public.bug
-(
-    id serial NOT NULL,
-    title text COLLATE pg_catalog."C" NOT NULL,
-    description text COLLATE pg_catalog."C",
-    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    vote integer DEFAULT 0,
-    status text DEFAULT 'new',
-    github_issue text,
-    CONSTRAINT bug_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.bug_vote
-(
-    bug_id integer NOT NULL,
-    user_id integer NOT NULL,
-    CONSTRAINT bug_vote_pkey PRIMARY KEY (bug_id, user_id)
-);
-CREATE TABLE public.devtask
-(
-    id serial NOT NULL,
-    title text COLLATE pg_catalog."C" NOT NULL,
-    description text COLLATE pg_catalog."C",
-    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    progress_label text,
-    progress_value real,
-    type text DEFAULT 'new',
-    CONSTRAINT devtask_pkey PRIMARY KEY (id)
-);
-
 
 
 -- panels shared

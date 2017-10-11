@@ -46,6 +46,7 @@ class Core:
         self.projects = ProjectManager()
         self.events = EventManager()
         self.subjects = SubjectManager()
+        self.admin = AdminManager()
 
 
         # method handler to notify all
