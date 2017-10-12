@@ -374,48 +374,48 @@ SubjectFile.save = sf_save
 
 
 
-# =====================================================================================================================
-# SUBJECT USERS associations
-# =====================================================================================================================
-def uss_get_auth(subject_id, user_id):
-    uss = session().query(UserSubjectSharing).filter_by(subject_id=subject_id, user_id=user_id).first()
-    if uss : 
-        return uss.write_authorisation
-    return None
+## =====================================================================================================================
+## SUBJECT USERS associations
+## =====================================================================================================================
+#def uss_get_auth(subject_id, user_id):
+    #uss = session().query(UserSubjectSharing).filter_by(subject_id=subject_id, user_id=user_id).first()
+    #if uss : 
+        #return uss.write_authorisation
+    #return None
 
 
-def uss_set(subject_id, user_id, write_authorisation):
-    """
-        Create or update the sharing option between subject and user
-    """
-    # Get or create the association
-    uss = session().query(UserSubjectSharing).filter_by(subject_id=subject_id, user_id=user_id).first()
-    if not uss: uss = UserSubjectSharing()
+#def uss_set(subject_id, user_id, write_authorisation):
+    #"""
+        #Create or update the sharing option between subject and user
+    #"""
+    ## Get or create the association
+    #uss = session().query(UserSubjectSharing).filter_by(subject_id=subject_id, user_id=user_id).first()
+    #if not uss: uss = UserSubjectSharing()
     
-    # Update the association     
-    uss.subject_id=subject_id
-    uss.user_id=user_id
-    uss.write_authorisation=write_authorisation
-    uss.save()
-    return uss
+    ## Update the association     
+    #uss.subject_id=subject_id
+    #uss.user_id=user_id
+    #uss.write_authorisation=write_authorisation
+    #uss.save()
+    #return uss
 
 
 
-def uss_unset(subject_id, user_id):
-    """
-        Delete a the sharing option between the subject and the user
-    """
-    session().query(UserSubjectSharing).filter_by(subject_id=subject_id, user_id=user_id).delete(synchronize_session=False)
+#def uss_unset(subject_id, user_id):
+    #"""
+        #Delete a the sharing option between the subject and the user
+    #"""
+    #session().query(UserSubjectSharing).filter_by(subject_id=subject_id, user_id=user_id).delete(synchronize_session=False)
     
 
 
-def uss_save(self):
-    generic_save(self)
+#def uss_save(self):
+    #generic_save(self)
 
 
-UserSubjectSharing = Base.classes.user_subject_sharing
-UserSubjectSharing.get_auth = uss_get_auth
-UserSubjectSharing.set = uss_set
-UserSubjectSharing.unset = uss_unset
-UserSubjectSharing.save = uss_save
+#UserSubjectSharing = Base.classes.user_subject_sharing
+#UserSubjectSharing.get_auth = uss_get_auth
+#UserSubjectSharing.set = uss_set
+#UserSubjectSharing.unset = uss_unset
+#UserSubjectSharing.save = uss_save
 

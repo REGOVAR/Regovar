@@ -25,7 +25,6 @@ def project_init(self, loading_depth=0, force=False):
             - analyses_ids  : [int]         : The list of ids of analyses that contains the project
             - subjects_ids  : [int]         : The list of ids of subjets associated to the project
             - indicators    : [Indicator]   : The list of Indicator define for this project
-            - users         : [Users]       : The list of Users that can access to the project
             - is_sandbox    : bool          : True if the project is the sandbox of an user; False otherwise
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - jobs          : [Job]         : The list of Job owns by the project
@@ -45,7 +44,6 @@ def project_init(self, loading_depth=0, force=False):
         self.jobs_ids = [j.id for j in self.get_jobs()]
         self.analyses_ids = [a.id for a in self.get_analyses()]
         self.files_ids = [f.id for f in self.get_files()]
-        self.users = self.get_users()
 
         self.jobs = []
         self.analyses = []
@@ -242,29 +240,12 @@ def projects_get_subjects(self, loading_depth=0):
 
 
 
-def projects_get_users(self):
-    """
-        Return the list of users that have access to the project
-    """
-    from core.model.user import User
-    upsl = session().query(UserProjectSharing).filter_by(project_id=self.id).all()
-    users_ids = [u.user_id for u in upsl]
-    result = []
-    for ups in upsl:
-        u = session().query(User).filter_by(id=ups.user_id).first()
-        if u:
-            result.append({"id": u.id, "firstname": u.firstname, "lastname": u.lastname, "write_authorisation": ups.write_authorisation})
-        else:
-            war("User's id ({}) linked to the project ({}), but user doesn't exists.".format(ups.user_id, self.id))
-    return result
-
-
 
 
 
 
 Project = Base.classes.project
-Project.public_fields = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "users", "is_sandbox"]
+Project.public_fields = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "is_sandbox"]
 Project.init = project_init
 Project.from_id = project_from_id
 Project.from_ids = project_from_ids
@@ -279,7 +260,6 @@ Project.get_indicators = projects_get_indicators
 Project.get_analyses = projects_get_analyses
 Project.get_files = projects_get_files
 Project.get_subjects = projects_get_subjects
-Project.get_users = projects_get_users
 
 
 
@@ -372,51 +352,51 @@ ProjectSubject.save = ps_save
 
 
 
-# =====================================================================================================================
-# PROJECT USERS associations
-# =====================================================================================================================
-def ups_get_auth(project_id, user_id):
-    ups = session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).first()
-    if ups : 
-        return ups.write_authorisation
-    return None
+## =====================================================================================================================
+## PROJECT USERS associations
+## =====================================================================================================================
+#def ups_get_auth(project_id, user_id):
+    #ups = session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).first()
+    #if ups : 
+        #return ups.write_authorisation
+    #return None
 
 
-def ups_set(project_id, user_id, write_authorisation):
-    """
-        Create or update the sharing option between project and user
-    """
-    # Get or create the association
-    ups = session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).first()
-    if not ups: ups = UserProjectSharing()
+#def ups_set(project_id, user_id, write_authorisation):
+    #"""
+        #Create or update the sharing option between project and user
+    #"""
+    ## Get or create the association
+    #ups = session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).first()
+    #if not ups: ups = UserProjectSharing()
     
-    # Update the association     
-    ups.project_id=project_id
-    ups.user_id=user_id
-    ups.write_authorisation=write_authorisation
-    ups.save()
-    return ups
+    ## Update the association     
+    #ups.project_id=project_id
+    #ups.user_id=user_id
+    #ups.write_authorisation=write_authorisation
+    #ups.save()
+    #return ups
 
 
 
-def ups_unset(project_id, user_id):
-    """
-        Delete a the sharing option between the project and the user
-    """
-    session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).delete(synchronize_session=False)
+#def ups_unset(project_id, user_id):
+    #"""
+        #Delete a the sharing option between the project and the user
+    #"""
+    #session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).delete(synchronize_session=False)
     
     
 
-def ups_save(self):
-    generic_save(self)
+#def ups_save(self):
+    #generic_save(self)
 
 
 
-UserProjectSharing = Base.classes.user_project_sharing
-UserProjectSharing.get_auth = ups_get_auth
-UserProjectSharing.set = ups_set
-UserProjectSharing.unset = ups_unset
-UserProjectSharing.save = ups_save
+#UserProjectSharing = Base.classes.user_project_sharing
+#UserProjectSharing.get_auth = ups_get_auth
+#UserProjectSharing.set = ups_set
+#UserProjectSharing.unset = ups_unset
+#UserProjectSharing.save = ups_save
 
 
 

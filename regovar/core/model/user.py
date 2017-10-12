@@ -180,14 +180,8 @@ def user_get_projects(self, loading_depth=0):
     """
         Return the list of projects that can access the user
     """
-    from core.model.project import Project, UserProjectSharing
-    ids = session().query(UserProjectSharing).filter_by(user_id=self.id).all()
-    projects = Project.from_ids([i.project_id for i in ids], loading_depth)
-    result = []
-    for p in projects:
-        if not p.is_folder:
-            result.append(p)
-    return result
+    from core.model.project import Project
+    return session().query(Project).filter_by(is_folder=false).all()
 
 
 
@@ -195,9 +189,8 @@ def user_get_subjects(self, loading_depth=0):
     """
         Return the list of subjects that can access the user
     """
-    from core.model.subject import Subject, UserSubjectSharing
-    ids = session().query(UserSubjectSharing).filter_by(user_id=self.id).all()
-    return Subject.from_ids([i.subject_id for i in ids], loading_depth)
+    from core.model.subject import Subject
+    return session().query(Subject).all()
 
 
 
@@ -206,14 +199,11 @@ def user_delete(user_id):
     """
         Delete the user with the provided id in the database
     """
-    from core.model.project import Project, UserProjectSharing
-    from core.model.subject import UserSubjectSharing
+    from core.model.project import Project
     
     u = User.from_id(user_id)
     if u:
         Project.delete(u.sandbox_id)
-        session().query(UserProjectSharing).filter_by(user_id=user_id).delete(synchronize_session=False)
-        session().query(UserSubjectSharing).filter_by(user_id=user_id).delete(synchronize_session=False)
         session().query(User).filter_by(id=user_id).delete(synchronize_session=False)
         
 
