@@ -65,7 +65,7 @@ class FilterEngine:
 
 
 
-    def create_working_table(self, analysis):
+    async def create_working_table(self, analysis):
         # retrieve analysis data
         if analysis is None:
             raise RegovarException("Analysis cannot be null")
@@ -100,7 +100,7 @@ class FilterEngine:
         self.update_wt_samples_fields(analysis, samples_ids)
 
         # compute stats and predefined filter (attributes, panels, trio, ...)
-        self.update_wt_stats_prefilters(analysis, samples_ids, attributes, filters_ids, panels_ids)
+        await self.update_wt_stats_prefilters(analysis, samples_ids, attributes, filters_ids, panels_ids)
 
         # variant's indexes
         self.create_wt_variants_indexes(analysis, samples_ids)
@@ -135,13 +135,13 @@ class FilterEngine:
             sample_tcount integer, \
             sample_alist integer[], \
             sample_acount integer, \
-            is_dom boolean, \
-            is_rec_hom boolean, \
-            is_rec_htzcomp boolean, \
-            is_denovo boolean, \
-            is_aut boolean, \
-            is_xlk boolean, \
-            is_mit boolean, "
+            is_dom boolean DEFAULT False, \
+            is_rec_hom boolean DEFAULT False, \
+            is_rec_htzcomp boolean DEFAULT False, \
+            is_denovo boolean DEFAULT False, \
+            is_aut boolean DEFAULT False, \
+            is_xlk boolean DEFAULT False, \
+            is_mit boolean DEFAULT False, "
         query += ", ".join(["s{}_gt integer".format(i) for i in samples_ids]) + ", "
         query += ", ".join(["s{}_dp integer".format(i) for i in samples_ids]) + ", "
         query += ", ".join(["s{}_qual real".format(i) for i in samples_ids]) + ", "
@@ -207,7 +207,7 @@ class FilterEngine:
             execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_qual=_sub.quality, s{2}_filter=_sub.filter s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
 
 
-    def update_wt_stats_prefilters(self, analysis, samples_ids, attributes, filters_ids, panels_ids):
+    async def update_wt_stats_prefilters(self, analysis, samples_ids, attributes, filters_ids, panels_ids):
         wt = "wt_{}".format(analysis.id)
 
         # Variant occurence stats
@@ -229,7 +229,7 @@ class FilterEngine:
 
         # Predefinied quickfilters
         if len(samples_ids) == 1:
-            self.update_wt_compute_prefilter_single(analysis, samples_ids[0], "M")
+            await self.update_wt_compute_prefilter_single(analysis, samples_ids[0], "M")
         elif analysis.settings["trio"]:
             self.update_wt_compute_prefilter_trio(analysis, samples_ids, analysis.settings["trio"])
             
@@ -315,7 +315,7 @@ class FilterEngine:
 
 
 
-    def update_wt_compute_prefilter_single(self, analysis, sample_id, sex="F"):
+    async def update_wt_compute_prefilter_single(self, analysis, sample_id, sex="F"):
         wt = "wt_{}".format(analysis.id)
 
         # Dominant
@@ -323,17 +323,17 @@ class FilterEngine:
             query = "UPDATE {0} SET is_dom=True WHERE s{1}_gt>1"
         else: # sex == "M"
             query = "UPDATE {0} SET is_dom=True WHERE chr=23 OR s{1}_gt>1"
-        res = execute(query.format(wt, sample_id))
+        res = await execute_aio(query.format(wt, sample_id))
         log(" > is_dom : {} variants".format(res.rowcount))
 
         # Recessif Homozygous
         query = "UPDATE {0} SET is_rec_hom=True WHERE s{1}_gt=1"
-        res = execute(query.format(wt, sample_id))
+        res = await execute_aio(query.format(wt, sample_id))
         log(" > is_rec_hom : {} variants".format(res.rowcount))
 
         # Recessif Heterozygous compoud
         query = "UPDATE {0} SET is_rec_htzcomp=True WHERE s{1}_is_composite"
-        res = execute(query.format(wt, sample_id))
+        res = await execute_aio(query.format(wt, sample_id))
         log(" > is_rec_htzcomp : {} variants".format(res.rowcount))
 
         # Inherited and denovo are not available for single
@@ -341,17 +341,17 @@ class FilterEngine:
 
         # Autosomal
         query = "UPDATE {0} SET is_aut=True WHERE chr<23"
-        res = execute(query.format(wt))
+        res = await execute_aio(query.format(wt))
         log(" > is_aut : {} variants".format(res.rowcount))
 
         # X-Linked
         query = "UPDATE {0} SET is_xlk=True WHERE chr=23"
-        res = execute(query.format(wt))
+        res = await execute_aio(query.format(wt))
         log(" > is_xlk : {} variants".format(res.rowcount))
 
         # Mitochondrial
         query = "UPDATE {0} SET is_mit=True WHERE chr=25"
-        res = execute(query.format(wt))
+        res = await execute_aio(query.format(wt))
         log(" > is_mit : {} variants".format(res.rowcount))
 
 
@@ -719,7 +719,7 @@ class FilterEngine:
 
 
 
-    def get_variant(self, analysis, fields, limit=100, offset=0):
+    async def get_variant(self, analysis, fields, limit=100, offset=0):
         """
             Return results from current temporary table according to provided fields and pagination information
             
@@ -731,14 +731,14 @@ class FilterEngine:
         query = query.format(w_table, self.parse_fields(analysis, fields, "wt."), offset, limit)
         sql_result = None
         with Timer() as t:
-            sql_result = execute(query)
+            sql_result = await execute_aio(query)
             
         log("--- Select:\nFrom: {0}\nTo: {1}\nFields: {2}\nQuery: {3}\nTime: {4}".format(offset, limit, fields, query, t))
         return sql_result
         
         
         
-    def get_trx(self, analysis, fields, variant_id):
+    async def get_trx(self, analysis, fields, variant_id):
         """
             Return results from current temporary table according to provided fields and variant
         """
@@ -751,7 +751,7 @@ class FilterEngine:
         query = query.format(w_table, self.parse_fields(analysis, fields, ""), variant_id, sub_query)
         sql_result = None
         with Timer() as t:
-            sql_result = execute(query)
+            sql_result = await execute_aio(query)
             
         log("--- Select trx:\nVariantId: {0}\nTrx count: {1}\nTime: {2}".format(variant_id, sql_result.rowcount, t))
         return sql_result
@@ -759,7 +759,7 @@ class FilterEngine:
 
 
 
-    def request(self, analysis_id, filter_json=None, fields=None, order=None, variant_id=None, limit=100, offset=0):
+    async def request(self, analysis_id, filter_json=None, fields=None, order=None, variant_id=None, limit=100, offset=0):
         """
             Commont request to manage all different cases
         """
@@ -776,7 +776,7 @@ class FilterEngine:
                 sample = Sample.from_id(sid)
                 if sample.status != 'ready':
                     raise RegovarException("Samples of the analysis {} are not ready to be used".format(analysis.id))
-            self.create_working_table(analysis)
+            await self.create_working_table(analysis)
         elif analysis.status == 'computing':
             raise RegovarException("Analysis {} is not ready to be used: computing progress {} %".format(analysis.id, round(analysis.computing_progress*100, 2)))
         elif analysis.status == 'error':
@@ -795,9 +795,9 @@ class FilterEngine:
         # Get results
         vmode = variant_id is None or variant_id == ""
         if vmode:
-            sql_result = self.get_variant(analysis, fields, limit, offset)
+            sql_result = await self.get_variant(analysis, fields, limit, offset)
         else:
-            sql_result = self.get_trx(analysis, fields, variant_id)
+            sql_result = await self.get_trx(analysis, fields, variant_id)
             
         # Format result
         result = []

@@ -126,7 +126,7 @@ class AnalysisHandler:
         
         # 3- Execute filtering request
         try:
-            result = core.filters.request(int(analysis_id), filter_json, fields, order, variant_id, int(limit), int(offset))
+            result = await core.filters.request(int(analysis_id), filter_json, fields, order, variant_id, int(limit), int(offset))
         except Exception as err:
             return rest_error("Filtering error: " + str(err))
         return rest_success(result)
