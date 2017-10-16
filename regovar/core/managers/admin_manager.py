@@ -21,14 +21,14 @@ class AdminManager:
         disk = self.disk_stats()
         cpu  = self.cpu_stats()
         ram  = self.ram_stat()
-        proc = self.proc_stat()
+        # proc = self.proc_stat()
         
         result = {}
         result.update(db)
         result.update(cpu)
         result.update(ram)
         result.update(disk)
-        result.update(proc)
+        # result.update(proc)
         return result
     
 
@@ -99,8 +99,8 @@ class AdminManager:
         #sql+= "FROM (SELECT DISTINCT table_name FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name) AS _t "
         #sql+= "LEFT JOIN pg_stat_all_tables ON table_name=relname ORDER BY table_name) AS _sub ON table_name=relname "
         #sql+= "ORDER BY pg_total_relation_size(relid) DESC"
-        sql = "SELECT relname as table, pg_total_relation_size(relid) As size, "
-        sql+= "pg_total_relation_size(relid) - pg_relation_size(relid) as externalsize, rowcount as rowcount "
+        sql = "SELECT relname as table, pg_relation_size(relid) As size, "
+        sql+= "pg_total_relation_size(relid) as totalsize, rowcount as rowcount "
         sql+= "FROM pg_catalog.pg_statio_user_tables "
         sql+= "LEFT JOIN ("
         sql+= "SELECT table_name, n_tup_ins - n_tup_del as rowcount "
@@ -113,7 +113,7 @@ class AdminManager:
                 "section" : find_section(row.table),
                 "name"    : row.table,
                 "size"    : row.size,
-                "extsize" : row.externalsize,
+                "totalsize" : row.totalsize,
                 "count"   : row.rowcount,
                 "desc"    : get_description(row.table)
             }

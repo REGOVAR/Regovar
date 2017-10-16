@@ -10,10 +10,15 @@ from core.framework.postgresql import *
 
 def filter_init(self, loading_depth=0):
     """
-        If loading_depth is > 0, children objects will be loaded. Max depth level is 2.
-        Children objects of a filter are :
-            - analysis
-        If loading_depth == 0, children objects are not loaded
+        Init properties of a filter :
+            - id                : int           : the unique id of the filter in the database
+            - analysis_id       : int           : the id of the analysis that owns this analysis
+            - name              : str           : the name of the filter
+            - description       : str           : an optional description
+            - filter            : json          : the json source of the filter
+        If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
+            - analysis          : Analysis         : The list of Job owns by the project
+
     """
     from core.model.analysis import Analysis, AnalysisSample
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
@@ -21,17 +26,12 @@ def filter_init(self, loading_depth=0):
         self.loading_depth = max(self.loading_depth, min(2, loading_depth))
     else:
         self.loading_depth = min(2, loading_depth)
-    self.load_depth(loading_depth)
-            
-
-
-def filter_load_depth(self, loading_depth):
-    from core.model.analysis import Analysis
     if loading_depth > 0:
         try:
             self.analysis = Analysis.from_id(self.analysis_id, self.loading_depth-1)
         except Exception as ex:
             raise RegovarException("Filter data corrupted (id={}).".format(self.id), "", ex)
+
 
 
 
@@ -71,10 +71,9 @@ def filter_load(self, data):
         if "analysis_id" in data.keys(): self.analysis_id = data['analysis_id']
         if "filter"      in data.keys(): self.filter      = data['filter']
         if "description" in data.keys(): self.description = data['description']
-        # check to reload dynamics properties
-        if self.loading_depth > 0:
-            self.load_depth(self.loading_depth)
+        if "total_variants" in data.keys(): self.total_variants = data['total_variants']
         self.save()
+        
     except Exception as err:
         raise RegovarException('Invalid input data to load.', "", err)
     return self
@@ -112,7 +111,6 @@ def filter_new():
 Filter = Base.classes.filter
 Filter.public_fields = ["id", "analysis_id", "name", "filter", "description", "total_variants"]
 Filter.init = filter_init
-Filter.load_depth = filter_load_depth
 Filter.from_id = filter_from_id
 Filter.to_json = filter_to_json
 Filter.load = filter_load

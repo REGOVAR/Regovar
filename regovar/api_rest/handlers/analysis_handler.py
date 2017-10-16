@@ -144,10 +144,11 @@ class AnalysisHandler:
     async def create_update_filter(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
         filter_id = request.match_info.get('filter_id', None)
+        analysis = Analysis.from_id(analysis_id)
         data = await request.json()
         try:
             data.update({"analysis_id": analysis_id })
-            result = core.analyses.create_update_filter(filter_id, data)
+            result = await core.analyses.create_update_filter(filter_id, data)
             return rest_success(result.to_json())
         except Exception as ex:
             return rest_error("Unable to create or update the filter with provided data. " + str(ex))

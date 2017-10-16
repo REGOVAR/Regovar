@@ -258,14 +258,25 @@ class AnalysisManager:
         
 
 
-    def create_update_filter(self, filter_id, data):
+    async def create_update_filter(self, filter_id, data):
         """
             Create or update a filter for the analysis with the provided id.
         """
+        from core.core import core
+        
+        # Save filter
         filter = Filter.from_id(filter_id)
         if not filter:
             filter = Filter.new()
-        filter.load(data)
+        
+        
+        # Update working table if exists
+        analysis = Analysis.from_id(data["analysis_id"])
+        if analysis and analysis.status == "ready":
+            total_variants = await core.filters.update_wt(analysis, "filter_{}".format(filter.id), data["filter"])
+            data.update({"total_variants": total_variants })
+            filter.load(data)
+        
         return filter
 
 

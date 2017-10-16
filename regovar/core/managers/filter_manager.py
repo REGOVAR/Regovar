@@ -719,6 +719,57 @@ class FilterEngine:
 
 
 
+
+    async def update_wt(self, analysis, column, filter_json):
+        """
+            Add of update working table provided boolean's column with variant that match the provided filter
+            Use this method to dynamically Add/Update saved filter or panel filter
+        """
+        from core.core import core
+        log("---\nUpdating working table of analysis {}".format(analysis.id))
+        progress = {"msg": "wt_update", "start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0}
+        core.notify_all(None, data=progress)
+        
+        # Create schema
+        w_table = 'wt_{}'.format(analysis.id)
+        query = "ALTER TABLE {0} ADD COLUMN {1} boolean DEFAULT False; "
+        try:
+            await execute_aio(query.format(w_table, column))
+            log("Column: {0} init".format(column))
+        except RegovarException as ex:
+            query = "UPDATE {0} SET {1}=False; " # force reset to false
+            await execute_aio(query.format(w_table, column))
+            log("Column: {0} already exists -> reset to false".format(column))
+        
+        progress.update({"progress": 0.33})
+        core.notify_all(None, data=progress)
+        
+        # Set filtered data
+        # Note : As trx_pk_value may be null, we cannot use '=' operator and must use 'IS NOT DISTINCT FROM' 
+        #        as two expressions that return 'null' are not considered as equal in SQL
+        query = "UPDATE {0} SET {1}=True FROM (SELECT variant_id, trx_pk_value FROM {0} WHERE {2}) AS _sub WHERE {0}.variant_id=_sub.variant_id AND {0}.trx_pk_value IS NOT DISTINCT FROM _sub.trx_pk_value; " 
+        subq = self.parse_filter(analysis, filter_json, [])
+        query = query.format(w_table, column, subq)
+        sql_result = None
+        log("Filter: {0}\nQuery: {1}".format(filter_json, query))
+        with Timer() as t:
+            sql_result = await execute_aio(query)
+        total_variant = sql_result.rowcount
+        log("Time: {0}\nResults count: {1}".format(t, total_variant))
+        
+        progress.update({"progress": 0.66})
+        core.notify_all(None, data=progress)
+        
+        # Create index
+        query = "CREATE INDEX IF NOT EXISTS idx_{1} ON {0} ({1});"
+        await execute_aio(query.format(w_table, column))
+        log("Index updated: idx_{0}".format(column))
+        
+        progress.update({"progress": 1})
+        core.notify_all(None, data=progress)
+        return total_variant
+
+
     async def get_variant(self, analysis, fields, limit=100, offset=0):
         """
             Return results from current temporary table according to provided fields and pagination information
@@ -818,7 +869,9 @@ class FilterEngine:
                                 r[sid] = FilterEngine.parse_result(eval(pattern.format(sid)))
                             entry[f_uid] = r
                         else:
-                            if self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Regovar']:
+                            if f_uid == "7166ec6d1ce65529ca2800897c47a0a2": # field = pos
+                                entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]['name'])) + 1)
+                            elif self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Regovar']:
                                 entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]['name'])))
                             else:
                                 entry[f_uid] = FilterEngine.parse_result(eval("row._{}".format(f_uid)))
@@ -931,7 +984,7 @@ class FilterEngine:
                     mode: site or variant
                     data: json data about the temp table to create
             """
-            ttable_quer_map = "CREATE TABLE IF NOT EXISTS {0} AS {1}; "
+            ttable_quer_map = "CREATE TEMPORARY TABLE IF NOT EXISTS {0} AS {1}; "
             if data[0] == 'sample':
                 tmp_table_name = "tmp_sample_{0}_{1}".format(data[1], mode)
                 if mode == 'site':
@@ -951,7 +1004,7 @@ class FilterEngine:
                     tmp_table_query = ttable_quer_map.format(tmp_table_name, "SELECT DISTINCT {0}.bin, {0}.chr, {0}.pos FROM {0} WHERE {0}.attr_{1}='{2}'".format(wt, key, value))
                 else:  # if mode = 'variant':
                     tmp_table_query = ttable_quer_map.format(tmp_table_name, "SELECT DISTINCT {0}.bin, {0}.chr, {0}.pos, {0}.ref, {0}.alt FROM {0} WHERE {0}.attr_{1}='{2}'".format(wt, key, value))
-            temporary_to_import[tmp_table_name] = {'query': tmp_table_query + "CREATE INDEX IF NOT EXISTS {0}_idx_var ON {0} USING btree (bin, chr, pos);".format(tmp_table_name)}
+            temporary_to_import[tmp_table_name] = {'query': tmp_table_query } #+ "CREATE INDEX IF NOT EXISTS {0}_idx_var ON {0} USING btree (bin, chr, pos);".format(tmp_table_name)}
             return tmp_table_name
 
 
