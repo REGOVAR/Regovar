@@ -264,20 +264,39 @@ class AnalysisManager:
         """
         from core.core import core
         
-        # Save filter
+        # First need to check that analysis is ready for that
+        analysis = Analysis.from_id(data["analysis_id"])
+        if analysis is None or analysis.status != "ready":
+            raise RegovarException("Not able to create filter for the analysis (id={}). Analysis not in 'ready' state.".format(data["analysis_id"]))
+            
+        # Save filter informations
         filter = Filter.from_id(filter_id)
         if not filter:
             filter = Filter.new()
         
+        filter.load(data)
         
-        # Update working table if exists
-        analysis = Analysis.from_id(data["analysis_id"])
-        if analysis and analysis.status == "ready":
-            total_variants = await core.filters.update_wt(analysis, "filter_{}".format(filter.id), data["filter"])
-            data.update({"total_variants": total_variants })
-            filter.load(data)
-        
+        # Update working table async (if needed)
+        def update_analysis_async(analysis, filter_id, data):
+            from core.model import Filter
+            total_results = core.filters.update_wt(analysis, "filter_{}".format(filter_id), data["filter"])
+            filter = Filter.from_id(filter_id)
+            filter.total_variants = execute("SELECT COUNT(DISTINCT variant_id) FROM wt_{} WHERE filter_{}".format(analysis.id, filter_id)).first()[0]
+            filter.total_results = total_results
+            filter.progress = 1
+            filter.save()
+            core.notify_all(None, data={'action':'filter_update', 'data': filter.to_json()})
+            
+        if "filter" in data.keys():
+            filter.progress = 0
+            filter.save()
+            run_async(update_analysis_async, analysis, filter.id, data)
+    
         return filter
+        
+        
+        
+        
 
 
 

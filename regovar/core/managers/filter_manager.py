@@ -485,7 +485,7 @@ class FilterEngine:
         execute(query)
 
 
-    def update_working_table(self, analysis, sample_ids, field_uids, filter_ids=[], attributes={}):
+    def update_working_table2(self, analysis, sample_ids, field_uids, filter_ids=[], attributes={}):
         """
             Update annotation of the working table of an analysis. The working table shall already exists
         """
@@ -683,8 +683,8 @@ class FilterEngine:
         """
         from core.core import core
         log("---\nPrepare tmp working table for analysis {}".format(analysis.id))
-        progress = {"msg": "filtering_prepare", "start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0}
-        core.notify_all(None, data=progress)
+        progress = {"start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0}
+        core.notify_all(None, data={'action':'filtering_prepare', 'data': progress})
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
         query = "DROP TABLE IF EXISTS {0}_tmp CASCADE; CREATE TABLE {0}_tmp AS "
@@ -714,59 +714,63 @@ class FilterEngine:
         except:
             err("Not able to save current filter")
         
-        progress = {"msg": "filtering_prepare", "start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 1}
-        core.notify_all(None, data=progress)
+        progress.update({"progress": 1})
+        core.notify_all(None, data={'action':'filtering_prepare', 'data': progress})
 
 
 
 
-    async def update_wt(self, analysis, column, filter_json):
+    def update_wt(self, analysis, column, filter_json):
         """
             Add of update working table provided boolean's column with variant that match the provided filter
             Use this method to dynamically Add/Update saved filter or panel filter
+            
+            Note that as we need to run this method async when creating filter (filter_manager.create_update_filter), 
+            we cannot use async (incompatible with mutithread)
         """
         from core.core import core
         log("---\nUpdating working table of analysis {}".format(analysis.id))
-        progress = {"msg": "wt_update", "start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0}
-        core.notify_all(None, data=progress)
+        progress = {"start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0, "column": column}
+        core.notify_all(None, data={'action':'wt_update', 'data': progress})
         
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
         query = "ALTER TABLE {0} ADD COLUMN {1} boolean DEFAULT False; "
         try:
-            await execute_aio(query.format(w_table, column))
+            execute(query.format(w_table, column))
             log("Column: {0} init".format(column))
         except RegovarException as ex:
             query = "UPDATE {0} SET {1}=False; " # force reset to false
-            await execute_aio(query.format(w_table, column))
+            execute(query.format(w_table, column))
             log("Column: {0} already exists -> reset to false".format(column))
         
         progress.update({"progress": 0.33})
-        core.notify_all(None, data=progress)
+        core.notify_all(None, data={'action':'wt_update', 'data': progress})
         
         # Set filtered data
         # Note : As trx_pk_value may be null, we cannot use '=' operator and must use 'IS NOT DISTINCT FROM' 
         #        as two expressions that return 'null' are not considered as equal in SQL
-        query = "UPDATE {0} SET {1}=True FROM (SELECT variant_id, trx_pk_value FROM {0} WHERE {2}) AS _sub WHERE {0}.variant_id=_sub.variant_id AND {0}.trx_pk_value IS NOT DISTINCT FROM _sub.trx_pk_value; " 
+        query = "UPDATE {0} SET {1}=True FROM (SELECT variant_id, trx_pk_value FROM {0} {2}) AS _sub WHERE {0}.variant_id=_sub.variant_id AND {0}.trx_pk_value IS NOT DISTINCT FROM _sub.trx_pk_value; " 
         subq = self.parse_filter(analysis, filter_json, [])
+        subq = "WHERE " + subq if subq else ""
         query = query.format(w_table, column, subq)
         sql_result = None
         log("Filter: {0}\nQuery: {1}".format(filter_json, query))
         with Timer() as t:
-            sql_result = await execute_aio(query)
+            sql_result = execute(query)
         total_variant = sql_result.rowcount
         log("Time: {0}\nResults count: {1}".format(t, total_variant))
         
         progress.update({"progress": 0.66})
-        core.notify_all(None, data=progress)
+        core.notify_all(None, data={'action':'wt_update', 'data': progress})
         
         # Create index
         query = "CREATE INDEX IF NOT EXISTS idx_{1} ON {0} ({1});"
-        await execute_aio(query.format(w_table, column))
+        execute(query.format(w_table, column))
         log("Index updated: idx_{0}".format(column))
         
         progress.update({"progress": 1})
-        core.notify_all(None, data=progress)
+        core.notify_all(None, data={'action':'wt_update', 'data': progress})
         return total_variant
 
 

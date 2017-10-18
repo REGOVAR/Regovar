@@ -157,7 +157,15 @@ class AnalysisHandler:
 
     def delete_filter(self, request):
         filter_id = request.match_info.get('filter_id', -1)
+        # Remove column if exists in the analysis working table
+        filter = Filter.from_id(filter_id)
+        if filter:
+            analysis = Analysis.from_id(filter.analysis_id)
+            if analysis and analysis.status == "ready":
+                execute("ALTER TABLE wt_{} DROP COLUMN IF EXISTS filter_{} CASCADE;".format(analysis.id, filter_id))
+            # delete filter entry in the database
         Filter.delete(filter_id)
+        
         return rest_success()
 
 

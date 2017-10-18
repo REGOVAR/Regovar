@@ -279,6 +279,8 @@ CREATE TABLE public.filter
     description text COLLATE pg_catalog."C",
     filter json,
     total_variants integer,
+    total_results integer,
+    progress real,
     CONSTRAINT filter_pkey PRIMARY KEY (id)
 );
 

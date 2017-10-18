@@ -36,15 +36,17 @@ def init_pg(user, password, host, port, db):
 
 # Connect and map the engine to the database
 Base = automap_base()
-p__db_engine = init_pg(C.DATABASE_USER, C.DATABASE_PWD, C.DATABASE_HOST, C.DATABASE_PORT, C.DATABASE_NAME)
+__db_engine = init_pg(C.DATABASE_USER, C.DATABASE_PWD, C.DATABASE_HOST, C.DATABASE_PORT, C.DATABASE_NAME)
 try:
-    Base.prepare(p__db_engine, reflect=True)
-    Base.metadata.create_all(p__db_engine)
-    Session = sessionmaker(bind=p__db_engine)
+    Base.prepare(__db_engine, reflect=True)
+    Base.metadata.create_all(__db_engine)
+    Session = sessionmaker(bind=__db_engine)
 except Exception as err:
     raise RegovarException("Error occured when initialising database", "", err)
 
-p__db_session = Session()
+
+
+__db_session = Session()
 #p__db_pool = mp.Pool()
 #p__async_job_id = 0
 #p__async_jobs = {}
@@ -52,7 +54,7 @@ p__db_session = Session()
 
 
 
-def p__execute_async(async_job_id, query):
+def __execute_async(async_job_id, query):
     """
         Internal method used to execute query asynchronously
     """
@@ -130,7 +132,7 @@ def get_or_create(session, model, defaults=None, **kwargs):
 def check_session(obj):
     s = Session.object_session(obj)
     if not s :
-        p__db_session.add(obj)
+        __db_session.add(obj)
 
 
 def generic_save(obj):
@@ -140,7 +142,7 @@ def generic_save(obj):
     try:
         s = Session.object_session(obj)
         if not s :
-            s = p__db_session
+            s = __db_session
             s.add(obj)
         obj.update_date = datetime.datetime.now()
         s.commit()
@@ -153,7 +155,7 @@ def generic_count(obj):
         generic method to count how many object in the table
     """
     try:
-        return p__db_session.query(obj).count()
+        return __db_session.query(obj).count()
 
     except Exception as err:
         raise RegovarException("Unable to count how many object in the table", "", err)
@@ -164,7 +166,7 @@ def session():
     """
         Return the current pgsql session (SQLAlchemy)
     """
-    return p__db_session
+    return __db_session
 
 
 def execute(query):
@@ -173,9 +175,9 @@ def execute(query):
     """
     result = None
     try:
-        result = p__db_session.execute(query)
-        p__db_session.commit()
-        #p__db_session.commit() # FIXME : Need a second commit to force session to commit :/ ... strange behavior when we execute(raw_sql) instead of using sqlalchemy's objects as query
+        s = Session()
+        result = s.execute(query)
+        s.commit()
     except Exception as err:
         r = RegovarException(ERR.E100001, "E100001", err)
         log_snippet(query, r)
@@ -191,7 +193,7 @@ def execute(query):
     #"""
     #global p__async_job_id, p__async_jobs, p__db_pool
     #p__async_job_id += 1
-    #t = p__db_pool.apply_async(p__execute_async, args = (p__async_job_id, query,), callback=p__execute_callback)
+    #t = p__db_pool.apply_async(__execute_async, args = (p__async_job_id, query,), callback=p__execute_callback)
     #p__async_jobs[p__async_job_id] = {"task" : t, "callback": callback, "query" : query, "start": datetime.datetime.now}
     #return p__async_job_id
 
@@ -203,7 +205,7 @@ async def execute_aio(query):
     """
     # Execute the query in another thread via coroutine
     loop = asyncio.get_event_loop()
-    futur = loop.run_in_executor(None, p__execute_async, None, query)
+    futur = loop.run_in_executor(None, __execute_async, None, query)
 
     # Aio wait the end of the async task to return result
     result = await futur
