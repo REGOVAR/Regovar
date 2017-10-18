@@ -972,44 +972,18 @@ class FilterEngine:
             elif operator in ['~', '!~']:
                 return '{0}{1}{2}'.format(parse_value('string', data[1]), FilterEngine.op_map[operator], parse_value('string%', data[2]))
             elif operator in ['IN', 'NOTIN']:
-                tmp_table = get_tmp_table(data[1], data[2])
-                temporary_to_import[tmp_table]['where'] = FilterEngine.op_map[operator].format(tmp_table, wt)
-                if data[1] == 'site':
-                    temporary_to_import[tmp_table]['from'] = " LEFT JOIN {1} ON {0}.bin={1}.bin AND {0}.chr={1}.chr AND {0}.pos={1}.pos".format(wt, tmp_table)
-                else:  # if data[1] == 'variant':
-                    temporary_to_import[tmp_table]['from'] = " LEFT JOIN {1} ON {0}.bin={1}.bin AND {0}.chr={1}.chr AND {0}.pos={1}.pos AND {0}.ref={1}.ref AND {0}.alt={1}.alt".format(wt, tmp_table)
-                return temporary_to_import[tmp_table]['where']
+                field = data[1]
+                if field[0] == 'sample':
+                    sql = 'NOT NULL' if operator == 'IN' else 'NULL'
+                    return "s{}_gt IS ".format(field[1]) + sql
+                elif field[0] == 'filter':
+                    sql = '' if operator == 'IN' else 'NOT '
+                    return sql + "filter_{}".format(field[1])
+                elif field[0] == 'attribute':
+                    sql = '' if operator == 'IN' else 'NOT '
+                    return sql + "attr_{}".format(field[1])
 
-
-
-        def get_tmp_table(mode, data):
-            """
-                Parse json data to build temp table for ensemblist operation IN/NOTIN
-                    mode: site or variant
-                    data: json data about the temp table to create
-            """
-            ttable_quer_map = "CREATE TEMPORARY TABLE IF NOT EXISTS {0} AS {1}; "
-            if data[0] == 'sample':
-                tmp_table_name = "tmp_sample_{0}_{1}".format(data[1], mode)
-                if mode == 'site':
-                    tmp_table_query = ttable_quer_map.format(tmp_table_name, "SELECT DISTINCT {0}.bin, {0}.chr, {0}.pos FROM {0} WHERE {0}.s{1}_gt IS NOT NULL".format(wt, data[1]))
-                else:  # if mode = 'variant':
-                    tmp_table_query = ttable_quer_map.format(tmp_table_name, "SELECT DISTINCT {0}.bin, {0}.chr, {0}.pos, {0}.ref, {0}.alt FROM {0} WHERE {0}.s{1}_gt IS NOT NULL".format(wt, data[1]))
-            elif data[0] == 'filter':
-                tmp_table_name = "tmp_filter_{0}".format(data[1])
-                if mode == 'site':
-                    tmp_table_query = ttable_quer_map.format(tmp_table_name, "SELECT DISTINCT {0}.bin, {0}.chr, {0}.pos FROM {0} WHERE {0}.filter_{1}=True".format(wt, data[1]))
-                else:  # if mode = 'variant':
-                    tmp_table_query = ttable_quer_map.format(tmp_table_name, "SELECT DISTINCT {0}.bin, {0}.chr, {0}.pos, {0}.ref, {0}.alt FROM {0} WHERE {0}.filter_{1}=True".format(wt, data[1]))
-            elif data[0] == 'attribute':
-                key, value = data[1].split(':')
-                tmp_table_name = "tmp_attribute_{0}_{1}_{2}_{3}".format(analysis_id, key, value, mode)
-                if mode == 'site':
-                    tmp_table_query = ttable_quer_map.format(tmp_table_name, "SELECT DISTINCT {0}.bin, {0}.chr, {0}.pos FROM {0} WHERE {0}.attr_{1}='{2}'".format(wt, key, value))
-                else:  # if mode = 'variant':
-                    tmp_table_query = ttable_quer_map.format(tmp_table_name, "SELECT DISTINCT {0}.bin, {0}.chr, {0}.pos, {0}.ref, {0}.alt FROM {0} WHERE {0}.attr_{1}='{2}'".format(wt, key, value))
-            temporary_to_import[tmp_table_name] = {'query': tmp_table_query } #+ "CREATE INDEX IF NOT EXISTS {0}_idx_var ON {0} USING btree (bin, chr, pos);".format(tmp_table_name)}
-            return tmp_table_name
+                
 
 
 
