@@ -11,7 +11,6 @@ from core.model.job import Job, MonitoringLog, JobFile
 # Annso import
 from core.model.analysis import Analysis, AnalysisSample
 from core.model.annotation import AnnotationDatabase, AnnotationField
-from core.model.attribute import Attribute
 from core.model.filter import Filter
 from core.model.sample import Sample, SampleVariant
 from core.model.template import Template

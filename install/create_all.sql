@@ -348,6 +348,7 @@ CREATE TABLE public.attribute
     sample_id integer NOT NULL,
     name character varying(255) COLLATE pg_catalog."C" NOT NULL,
     value character varying(255) COLLATE pg_catalog."C",
+    wt_col_id character varying(32) COLLATE pg_catalog."C",
     CONSTRAINT attribute_pkey PRIMARY KEY (analysis_id, sample_id, name)
 );
 

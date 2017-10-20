@@ -34,13 +34,12 @@ def analysis_init(self, loading_depth=0):
             - status            : enum          : The status of the analysis : 'empty', 'computing', 'ready', 'error'
             - filters_ids       : [int]         : The list of ids of filters saved for this analysis
             - samples_ids       : [int]         : The list of ids of samples used for analysis
-            - attributes        : [Attribute]   : The list of attributes defined for this analysis
+            - attributes        : json          : The list of attributes defined for this analysis
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - project           : [Job]         : The list of Job owns by the project
             - samples           : [File]        : The list of File owns by the project
             - filters           : Project       : The parent Project if defined
     """
-    from core.model.attribute import Attribute
     from core.model.project import Project
     from core.model.template import Template
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
@@ -53,7 +52,7 @@ def analysis_init(self, loading_depth=0):
         if not self.filter: self.filter = ANALYSIS_DEFAULT_FILTER
         self.filters_ids = self.get_filters_ids()
         self.samples_ids = AnalysisSample.get_samples_ids(self.id)
-        self.attributes = Attribute.get_attributes(self.id)
+        self.attributes = self.get_attributes()
         
         self.project = None
         self.samples = []
@@ -93,7 +92,7 @@ def analysis_to_json(self, fields=None):
             fields = Sample.public_fields
             if "analyses" in fields : fields.remove("analyses")
             result[f] = [o.to_json(fields) for o in eval("self." + f)]
-        elif f in ["filters", "attributes"] and self.loading_depth>0:
+        elif f in ["filters"] and self.loading_depth>0:
             result[f] = [o.to_json() for o in eval("self." + f)]
         elif f in ["project", "template"] and self.loading_depth>0:
             obj = eval("self." + f)
@@ -111,7 +110,7 @@ def analysis_load(self, data):
     """
         Helper to update several paramters at the same time. Note that dynamics properties (project, template, samples, samples_ids, attributes)
         cannot be updated with this method. However, you can update project_id .
-        To update sample and Attributes you must used dedicated models object : AnalysisSample and Attribute
+        To update sample you must used dedicated models object : AnalysisSample
     """
     settings = False
     try:
@@ -129,6 +128,7 @@ def analysis_load(self, data):
         if "reference_id"       in data.keys(): self.reference_id       = data["reference_id"]
         if "computing_progress" in data.keys(): self.computing_progress = data["computing_progress"]
         if "status"             in data.keys(): self.status             = data["status"] if data["status"] else 'emmpty'
+        if "attributes"         in data.keys(): self.attributes         = data["attributes"]
         if "settings" in data.keys(): 
             # When settings change, need to regenerate working table
             self.settings = data['settings']
@@ -207,6 +207,7 @@ def analysis_new():
     return a
 
 
+
 def analysis_count():
     """
         Return total of Analyses entries in database
@@ -225,6 +226,8 @@ def analysis_get_filters_ids(self):
         result.append(f.id)
     return result
 
+
+
 def analysis_get_filters(self, loading_depth=0):
     """
         Return the list of filters saved in the analysis
@@ -232,30 +235,22 @@ def analysis_get_filters(self, loading_depth=0):
     return session().query(Filter).filter_by(analysis_id=self.id).all()
 
 
-def analysis_get_attributes_ids(self):
+
+def analysis_get_attributes(self):
     """
-        Return the list of attributes defined for the analysis
+        Return the list of attributes saved in the analysis
     """
     result = []
-    attributes = session().query(Attribute).filter_by(analysis_id=self.id).all()
-    for a in attributes:
-        result.append(a.id)
-    return result
-
-
-def analysis_get_attributes(self, loading_depth=0):
-    """
-        Return the list of filters saved in the analysis
-    """
-    result = []
-    attributes = session().query(Attribute).filter_by(analysis_id=self.id).order_by("name, sample_id").all()
+    sql = "SELECT * FROM attribute WHERE analysis_id={} ORDER BY name, sample_id".format(self.id)
+    attributes = execute(sql)
     current_attribute = None
     for a in attributes:
         if current_attribute is None or current_attribute != a.name:
             current_attribute = a.name
-            result.append({"name": a.name, "samples_value": {a.sample_id: a.value}})
+            result.append({"name": a.name, "samples_values": {a.sample_id: {'value': a.value, 'wt_col_id': a.wt_col_id}}})
         else:
-            result[-1]["samples_value"][a.sample_id] = a.value
+            result[-1]["samples_values"][a.sample_id] = {'value': a.value, 'wt_col_id': a.wt_col_id}
+
 
 
 Analysis = Base.classes.analysis

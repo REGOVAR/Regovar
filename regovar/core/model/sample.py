@@ -119,7 +119,7 @@ def sample_delete(sample_id):
     """
         Delete the sample with the provided id in the database
     """
-    # TODO : delete linked filters, sampleSample, Attribute, WorkingTable
+    # TODO : delete linked filters, Attribute, WorkingTable
     session().query(Sample).filter_by(id=sample_id).delete(synchronize_session=False)
 
 

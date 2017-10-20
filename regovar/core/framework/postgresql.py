@@ -222,3 +222,10 @@ async def execute_aio(query):
         #log("Model async query (id:{}) canceled".format(async_job_id))
     #else:
         #war("Model unable to cancel async query (id:{}) because it doesn't exists".format(async_job_id)) 
+
+
+
+def sql_escape(value):
+    if type(value) is str:
+        value = value.replace("'", "''")
+    return value

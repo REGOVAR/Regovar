@@ -202,14 +202,15 @@ class AnalysisManager:
 
         # attributes + values
         if "attributes" in data.keys():
+            ipdb.set_trace()
             # create new attributes
-            pattern = "({0}, {1}, '{2}', '{3}')"
+            pattern = "({0}, {1}, '{2}', '{3}', MD5(CONCAT('{2}', '{3}')))"
             data['attributes'] = [a for a in data['attributes'] if a['name'] != ""]
-            query = ', '.join([pattern.format(analysis_id, sid, att['name'], att['samples_value'][sid]) for att in data['attributes'] for sid in att['samples_value']])
+            query = ', '.join([pattern.format(analysis_id, sid, sql_escape(att['name']), sql_escape(att['samples_values'][sid])) for att in data['attributes'] for sid in att['samples_values']])
             # check if query seems good then apply change
             if query != "":
                 execute("DELETE FROM attribute WHERE analysis_id={}".format(analysis_id))
-                execute("INSERT INTO attribute (analysis_id, sample_id, name, value) VALUES " + query)
+                execute("INSERT INTO attribute (analysis_id, sample_id, name, value, wt_col_id) VALUES " + query)
             else:
                 # TODO: log error
                 pass
