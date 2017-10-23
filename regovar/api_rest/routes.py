@@ -153,7 +153,7 @@ app.router.add_route('GET',    "/analysis",                                  ana
 app.router.add_route('POST',   "/analysis",                                  analysisHandler.new)                    # Create new analysis
 app.router.add_route('GET',    "/analysis/{analysis_id}",                    analysisHandler.get)                    # Get analysis metadata
 app.router.add_route('PUT',    "/analysis/{analysis_id}",                    analysisHandler.update)                 # Save analysis metadata
-app.router.add_route('POST',   "/analysis/{analysis_id}/load/{file_id}",     analysisHandler.load_file)              # TODO : Load a file (vcf and ped supported) to setup the analysis data (variant/annotations/samples)
+#app.router.add_route('POST',   "/analysis/{analysis_id}/load/{file_id}",     analysisHandler.load_file)              # TODO : Load a file (vcf and ped supported) to setup the analysis data (variant/annotations/samples)
 app.router.add_route('GET',    "/analysis/{analysis_id}/filter",             analysisHandler.get_filters)            # Get list of available filter for the provided analysis
 app.router.add_route('POST',   "/analysis/{analysis_id}/filter",             analysisHandler.create_update_filter)   # Create a new filter for the analisis
 app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.create_update_filter)   # Update filter

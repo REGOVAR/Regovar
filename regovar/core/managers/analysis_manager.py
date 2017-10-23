@@ -185,20 +185,21 @@ class AnalysisManager:
             query = query + ', '.join([subquery.format(analysis_id, f['name'], f['filter']) for f in data["filters"]])
             execute(query)
 
+        # Updating dynamicaly samples not supported. it's better for the user to recreate a new analysis
         # samples + nickname
-        if "samples" in data.keys():
-            # create new associations
-            pattern = "({0}, {1}, {2})"
-            query = ', '.join([pattern.format(analysis_id, s['id'], "'{0}'".format(s['nickname']) if 'nickname' in s.keys() else 'NULL') for s in data["samples"]])
-            # check if query seems good then apply change
-            if query != "":
-                # delete old analysis sample associations
-                execute("DELETE FROM analysis_sample WHERE analysis_id={}".format(analysis_id))
-                execute("INSERT INTO analysis_sample (analysis_id, sample_id, nickname) VALUES " + query)
-                self.clear_temps_data(analysis.id)
-            else:
-                # TODO: log error
-                pass
+        #if "samples" in data.keys():
+            ## create new associations
+            #pattern = "({0}, {1}, {2})"
+            #query = ', '.join([pattern.format(analysis_id, s['id'], "'{0}'".format(s['nickname']) if 'nickname' in s.keys() else 'NULL') for s in data["samples"]])
+            ## check if query seems good then apply change
+            #if query != "":
+                ## delete old analysis sample associations
+                #execute("DELETE FROM analysis_sample WHERE analysis_id={}".format(analysis_id))
+                #execute("INSERT INTO analysis_sample (analysis_id, sample_id, nickname) VALUES " + query)
+                #self.clear_temps_data(analysis.id)
+            #else:
+                ## TODO: log error
+                #pass
 
         # attributes + values
         if "attributes" in data.keys():

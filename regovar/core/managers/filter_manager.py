@@ -154,7 +154,8 @@ class FilterEngine:
                 query += "_{} {}, ".format(fuid, self.sql_type_map[self.fields_map[fuid]['type']])
                 
         # Add attribute's columns
-        # TODO
+        for attr in analysis.attributes:
+            query += "attr_{} boolean DEFAULT False, ".format(attr["wt_col_id"])
 
         # Add filter's columns
         # TODO
@@ -219,7 +220,10 @@ class FilterEngine:
         execute(query.format(wt, ",".join([str(i) for i in samples_ids])))
         
         # Attributes
-        # TODO
+        ipdb.set_trace()
+        for attr in analysis.attributes:
+            for sid, attr_value in attr["samples_values"]:
+                execute("UPDATE {0} SET attr_{1}=True WHERE s{2}_gt IS NOT NULL".format(wt, attr_value["wt_col_id"], sid))
 
         # Filter
         # TODO
@@ -246,24 +250,31 @@ class FilterEngine:
         query += "".join(["CREATE INDEX {0}_idx_s{1}_qual ON {0} USING btree (s{1}_qual);".format(wt, i) for i in samples_ids])
         #query += "".join(["CREATE INDEX {0}_idx_s{1}_filter ON {0} USING btree (s{1}_filter);".format(wt, i) for i in samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_is_composite ON {0} USING btree (s{1}_is_composite);".format(wt, i) for i in samples_ids])
-        query = "CREATE INDEX {0}_idx_is_dom ON {0} USING btree (is_dom);".format(wt)
-        query = "CREATE INDEX {0}_idx_is_rec_hom ON {0} USING btree (is_rec_hom);".format(wt)
-        query = "CREATE INDEX {0}_idx_is_rec_htzcomp ON {0} USING btree (is_rec_htzcomp);".format(wt)
-        query = "CREATE INDEX {0}_idx_is_denovo ON {0} USING btree (is_denovo);".format(wt)
-        query = "CREATE INDEX {0}_idx_is_aut ON {0} USING btree (is_aut);".format(wt)
-        query = "CREATE INDEX {0}_idx_is_xlk ON {0} USING btree (is_xlk);".format(wt)
-        query = "CREATE INDEX {0}_idx_is_mit ON {0} USING btree (is_mit);".format(wt)
-        execute(query)
-        log(" > create index for variants random access")
+        query += "CREATE INDEX {0}_idx_is_dom ON {0} USING btree (is_dom);".format(wt)
+        query += "CREATE INDEX {0}_idx_is_rec_hom ON {0} USING btree (is_rec_hom);".format(wt)
+        query += "CREATE INDEX {0}_idx_is_rec_htzcomp ON {0} USING btree (is_rec_htzcomp);".format(wt)
+        query += "CREATE INDEX {0}_idx_is_denovo ON {0} USING btree (is_denovo);".format(wt)
+        query += "CREATE INDEX {0}_idx_is_aut ON {0} USING btree (is_aut);".format(wt)
+        query += "CREATE INDEX {0}_idx_is_xlk ON {0} USING btree (is_xlk);".format(wt)
+        query += "CREATE INDEX {0}_idx_is_mit ON {0} USING btree (is_mit);".format(wt)
 
         # Add indexes on attributes columns
-        # TODO
-
+        attr_done = []
+        for attr in analysis.attributes:
+            for sid, attr_value in attr["samples_values"]:
+                if attr["wt_col_id"] not in attr_done:
+                    attr_done.append(attr["wt_col_id"])
+                    query += "CREATE INDEX {0}_idx_attr_{1} ON {0} USING btree (attr_{1});".format(wt, attr["wt_col_id"])
+                    
         # Add indexes on filter columns
         # TODO
 
         # Add indexes on panel columns
         # TODO
+        
+        log(" > create index for variants random access")
+        execute(query)
+        
 
 
     def insert_wt_trx(self, analysis, samples_ids, annotations_dbs):
