@@ -36,39 +36,6 @@ from api_rest.rest import *
 class SubjectHandler:
 
 
-    def build_tree(parent_id):
-        """
-            Recursive method to build treeview of subject/sample
-        """
-        from core.core import core
-
-        currentLevelSubjects = core.subjects.get(None, {"parent_id": parent_id, "is_sandbox": False}, None, None, None, 1)
-        result = []
-
-        for p in currentLevelSubjects:
-            entry = p.to_json(["id", "name", "comment", "parent_id", "update_date", "create_date", "is_sandbox", "is_folder"])
-
-            if p.is_folder:
-                entry["children"] = SubjectHandler.build_tree(p.id)
-            else:
-                entry["subjects"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.subjects]
-                entry["analyses"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.analyses]
-                entry["analyses"] += [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.jobs]
-
-
-            result.append(entry)
-
-
-        return result
-
-
-
-    def tree(self, request):
-        """
-            Get subjects as tree
-        """
-        return rest_success(SubjectHandler.build_tree(None))
-
 
     def list(self, request):
         """
@@ -86,6 +53,8 @@ class SubjectHandler:
         }
         subjects = core.subjects.get(fields, query, order, offset, limit, depth)
         return rest_success([s.to_json() for s in subjects], range_data)
+
+
         
     
     async def create_or_update(self, request):
@@ -102,7 +71,7 @@ class SubjectHandler:
         	data["id"] = subject_id
         # Create or update the subject
         try:
-            subject = core.subjects.create_or_update(data, 1)
+            subject = core.subjects.create_or_update(data)
         except RegovarException as ex:
             return rest_exception(ex)
         if subject is None:

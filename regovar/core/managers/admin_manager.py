@@ -18,6 +18,7 @@ class AdminManager:
 
     async def stats(self):
         db   = await self.db_stats()
+        db_tpm = await self.db_tmp_stats(db["database"])
         disk = self.disk_stats()
         cpu  = self.cpu_stats()
         ram  = self.ram_stat()
@@ -25,12 +26,27 @@ class AdminManager:
         
         result = {}
         result.update(db)
+        result.update(db_tpm)
         result.update(cpu)
         result.update(ram)
         result.update(disk)
         # result.update(proc)
         return result
     
+
+
+    async def db_tmp_stats(self, db_stats):
+        data = []
+        sql = "SELECT id, status FROM analysis WHERE status = 'ready'"
+        result = await execute_aio(sql)
+        for row in result:
+            size = 0
+            analysis = Analysis.from_id(row.id)
+            for db in db_stats:
+                if db["name"].startswith("wt_{}".format(row.id)):
+                    size += db["totalsize"]
+            data.append({"id" :row.id, "size" : size, "name": analysis.name})
+        return {"database_tmp" : data}
 
     async def db_stats(self):
         """
@@ -72,6 +88,8 @@ class AdminManager:
         # get db infos
         
         def find_section(table_name):
+            if table_name.startswith("wt_"):
+                return "Tmp"
             for suffix in refs.keys():
                 if table_name.endswith("_" + suffix):
                     return refs[suffix]

@@ -91,7 +91,6 @@ app.router.add_route('GET',    "/event/{event_id}", eventHandler.get)           
 app.router.add_route('PUT',    "/event/{event_id}", eventHandler.edit)                                           # Edit event's data
 app.router.add_route('DELETE', "/event/{event_id}", eventHandler.delete)                                         # Delete an event
 
-app.router.add_route('GET',    "/subject/browserTree",           subjectHandler.tree)                            # Get subjects as tree (allow search parameters)
 app.router.add_route('GET',    "/subject",                       subjectHandler.list)                            # Get subjects as list (allow search parameters)
 app.router.add_route('POST',   "/subject",                       subjectHandler.create_or_update)                # Create subjects
 app.router.add_route('GET',    "/subject/{subject_id}",          subjectHandler.get)                             # Get details about a subject

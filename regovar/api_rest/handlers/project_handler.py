@@ -102,7 +102,7 @@ class ProjectHandler:
         	data["id"] = project_id
         # Create or update the project
         try:
-            project = core.projects.create_or_update(data, 1)
+            project = core.projects.create_or_update(data)
         except RegovarException as ex:
             return rest_exception(ex)
         if project is None:

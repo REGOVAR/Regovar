@@ -231,6 +231,7 @@ class AnalysisManager:
         try:
             execute("DROP TABLE IF EXISTS wt_{} CASCADE;".format(analysis_id))
             execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(analysis_id))
+            execute("DROP TABLE IF EXISTS wt_{}_tmp CASCADE".format(analysis_id))
             analysis.status = "empty"
             analysis.save()
         except Exception as ex:

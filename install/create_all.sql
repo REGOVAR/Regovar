@@ -132,7 +132,7 @@ CREATE TABLE public.project
 CREATE TABLE subject
 (
     id serial NOT NULL,
-    identifiant character varying(255) COLLATE pg_catalog."C",
+    identifier character varying(255) COLLATE pg_catalog."C",
     firstname text COLLATE pg_catalog."C",
     lastname text COLLATE pg_catalog."C",
     sex sex_type DEFAULT 'unknow',

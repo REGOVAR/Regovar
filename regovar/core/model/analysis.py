@@ -221,7 +221,7 @@ def analysis_get_filters_ids(self):
         Return the list of filters saved for the analysis
     """
     result = []
-    filters = session().query(Filter).filter_by(analysis_id=self.id).all()
+    filters = session().query(Filter).filter_by(analysis_id=self.id).order_by(Filter.id).all()
     for f in filters:
         result.append(f.id)
     return result
@@ -247,9 +247,11 @@ def analysis_get_attributes(self):
     for a in attributes:
         if current_attribute is None or current_attribute != a.name:
             current_attribute = a.name
-            result.append({"name": a.name, "samples_values": {a.sample_id: {'value': a.value, 'wt_col_id': a.wt_col_id}}})
+            result.append({"name": a.name, "samples_values": {a.sample_id: {'value': a.value, 'wt_col_id': a.wt_col_id}}, "values_map" : {a.value : a.wt_col_id}})
         else:
             result[-1]["samples_values"][a.sample_id] = {'value': a.value, 'wt_col_id': a.wt_col_id}
+            result[-1]["values_map"][a.value] = a.wt_col_id
+    return result
 
 
 
