@@ -136,6 +136,7 @@ CREATE TABLE subject
     firstname text COLLATE pg_catalog."C",
     lastname text COLLATE pg_catalog."C",
     sex sex_type DEFAULT 'unknow',
+    family_number text COLLATE pg_catalog."C",
     dateofbirth timestamp without time zone,
     dateofdeath timestamp without time zone,
     comment text COLLATE pg_catalog."C",
