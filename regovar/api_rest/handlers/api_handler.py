@@ -47,7 +47,7 @@ class ApiHandler:
             "version": VERSION,
             "website" : "http://regovar.org",
             "last_analyses": self.get_last_analyses(),
-            "last_subjects" : [],
+            "last_subjects" : self.get_last_subjects(),
             "last_events": [],
             "references" : [{"id": ref[0], "name": ref[1]} for ref in core.annotations.ref_list.items()],
             "default_reference_id": DEFAULT_REFERENCIAL_ID
@@ -88,6 +88,13 @@ class ApiHandler:
         fields = Analysis.public_fields + ["project"]
         return [r.to_json(fields) for r in result]
     
-    
+    def get_last_subjects(self):
+        """
+            Return last subjects
+        """
+        result = session().query(Subject).order_by(Subject.update_date.desc(), Subject.lastname.asc()).limit(10).all()
+        for res in result: res.init(1)
+        return [r.to_json() for r in result]
+
     
     
