@@ -203,7 +203,6 @@ class AnalysisManager:
 
         # attributes + values
         if "attributes" in data.keys():
-            ipdb.set_trace()
             # create new attributes
             pattern = "({0}, {1}, '{2}', '{3}', MD5(CONCAT('{2}', '{3}')))"
             data['attributes'] = [a for a in data['attributes'] if a['name'] != ""]

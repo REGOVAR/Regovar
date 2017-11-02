@@ -128,7 +128,7 @@ class SearchHandler:
         """
             Return subjects that match the query
         """
-        result = session().query(Subject).filter(or_(Subject.identifiant.ilike("%{0}%".format(query.lower())), Subject.firstname.ilike("%{0}%".format(query.lower())), Subject.lastname.ilike("%{0}%".format(query.lower())))).all()
+        result = session().query(Subject).filter(or_(Subject.identifier.ilike("%{0}%".format(query.lower())), Subject.firstname.ilike("%{0}%".format(query.lower())), Subject.lastname.ilike("%{0}%".format(query.lower())))).all()
         for r in result: r.init(0)
         return [r.to_json() for r in result]
     

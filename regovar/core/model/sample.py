@@ -96,19 +96,28 @@ def sample_load(self, data):
         Helper to update several paramters at the same time. Note that dynamics properties like project and template
         cannot be updated with this method. However, you can update project_id and template_id.
     """
+    from core.model.analysis import Analysis, AnalysisSample
+    from core.model.subject import Subject
+    from core.model.file import File
     try:
+        # update simple properties
         if "name"               in data.keys(): self.name               = data['name']
-        if "subject_id"         in data.keys(): self.subject_id         = data['subject_id']
-        if "file_id"            in data.keys(): self.file_id            = data['file_id']
-        if "analyses_ids"       in data.keys(): self.analyses_ids       = data['analyses_ids']
         if "comment"            in data.keys(): self.comment            = data['comment']
         if "is_mosaic"          in data.keys(): self.is_mosaic          = data['is_mosaic']
         if "default_dbuid"      in data.keys(): self.default_dbuid      = data['default_dbuid']
         if "filter_description" in data.keys(): self.filter_description = data['filter_description']
-        # check to reload dynamics properties
-        if self.loading_depth > 0:
-            self.load_depth(self.loading_depth)
+        if "subject_id"         in data.keys(): self.subject_id         = data['subject_id'] 
+        if "file_id"            in data.keys(): self.file_id            = data['file_id']
+        if "analyses_ids"       in data.keys(): self.analyses_ids       = data['analyses_ids']
+        
+        # save modifications
         self.save()
+
+        # reload dependencies
+        if self.loading_depth > 0:
+            self.subject = Subject.from_id(self.subject_id, self.loading_depth-1)
+            self.file = File.from_id(self.file_id, self.loading_depth-1)
+            self.analyses = AnalysisSample.get_analyses(self.id, self.loading_depth-1)
     except Exception as err:
         raise RegovarException('Invalid input data to load.', "", err)
     return self

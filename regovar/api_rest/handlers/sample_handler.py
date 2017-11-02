@@ -122,7 +122,6 @@ class SampleHandler:
         try:
             samples = await core.samples.import_from_file(file_id, ref_id)
         except Exception as ex:
-            print(ex)
             return rest_error("Import error : enable to import samples. ".format(str(ex)))
         if samples:
             for s in samples:
@@ -140,5 +139,17 @@ class SampleHandler:
     
     
     
-    
+    async def update(self, request):
+        """
+            Update a sample with provided data
+        """
+        sample_id = request.match_info.get('sample_id', -1)
+        data = await request.json()
+        try:
+            sample = Sample.from_id(sample_id, 1)
+            sample.load(data)
+            sample.save()
+        except Exception as ex:
+            return rest_error("Unable to update sample data with provided informations. ".format(str(ex)))
+        return rest_success(sample.to_json())
     

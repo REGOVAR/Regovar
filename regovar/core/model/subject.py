@@ -51,11 +51,11 @@ def subject_init(self, loading_depth=0, force=False):
         self.jobs_ids = []
 
         if len(self.samples_ids) > 0:
-            self.analyses_ids = [r.id for r in execute("SELECT analysis_id FROM analysis_sample WHERE sample_id IN ({})".format(','.join(self.samples_ids)))]
+            self.analyses_ids = [r.analysis_id for r in execute("SELECT analysis_id FROM analysis_sample WHERE sample_id IN ({})".format(','.join([str(i) for i in self.samples_ids])))]
         files_ids = self.files_ids
-        files_ids.extend([r.id for r in execute("SELECT file_id FROM sample WHERE subject_id={}".format(self.id))])
+        files_ids.extend([r.file_id for r in execute("SELECT file_id FROM sample WHERE subject_id={}".format(self.id))])
         if len(files_ids) > 0:
-            self.jobs_ids = [r.id for r in execute("SELECT job_id FROM job_file WHERE file_id IN ({})".format(','.join(files_ids)))]
+            self.jobs_ids = [r.job_id for r in execute("SELECT job_id FROM job_file WHERE file_id IN ({})".format(','.join([str(i) for i in files_ids])))]
         
         self.jobs = []
         self.samples = []
@@ -106,9 +106,9 @@ def subject_to_json(self, fields=None):
         if f in Subject.public_fields:
             if f in ["create_date", "update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
-            elif f in ["jobs", "analyses", "files", "projects", "samples", "indicators"]:
+            elif f in ["jobs", "analyses", "files", "projects", "samples", "indicators"] and hasattr(self, f):
                 result[f] = [o.to_json() for o in eval("self." + f)]
-            else:
+            elif hasattr(self, f):
                 result.update({f: eval("self." + f)})
     return result
 
