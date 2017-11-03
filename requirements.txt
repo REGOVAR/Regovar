@@ -12,3 +12,4 @@ passlib==1.7.1
 aiohttp_security==0.1.0
 aiohttp_session==0.8.0
 cryptography==1.8.1
+psutil==5.3.1
