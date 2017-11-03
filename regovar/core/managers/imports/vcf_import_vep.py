@@ -141,10 +141,16 @@ class VepImporter(AbstractTranscriptDataImporter):
             
             for col_pos, col_name in enumerate(self.columns):
                 try:
-                    col_mapping = self.columns_mapping[col_name]
                     sname = self.normalise_annotation_name(col_name)
-                    fields = [sname]
                     vals = [self.escape_value_for_sql(data[col_pos])]
+                    
+                    col_mapping = self.columns_mapping[sname]
+                    fields = [sname]
+
+                    if not col_mapping and sname not in ['sift', 'polyphen']:
+                        war("Unable to import vcf VEP annotation : {} ({}). No column mapping/definition provided. SKIPPED".format(col_name, ','.join(vals)))
+                        continue
+                    
                     # Manage specials annotations
                     if sname == 'allele':
                         allele = vals[0].strip().strip('-') # When deletion, VEP use '-', but regovar just let empty string.
