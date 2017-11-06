@@ -75,11 +75,13 @@ def pipeline_from_ids(pipeline_ids, loading_depth=0):
     return pipelines
 
 
-def pipeline_to_json(self, fields=None):
+def pipeline_to_json(self, fields=None, loading_depth=0):
     """
         Export the pipeline into json format with only requested fields
     """
     result = {}
+    if loading_depth == 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = ["id", "name", "type", "status", "description", "developers", "installation_date", "version", "pirus_api", "image_file_id", "manifest", "documents"]
     for f in fields:
@@ -87,7 +89,7 @@ def pipeline_to_json(self, fields=None):
             result.update({f: eval("self." + f + ".ctime()")})
         elif f == "jobs":
             if self.jobs and self.loading_depth > 0:
-                result.update({"jobs" : [j.to_json() for j in self.jobs]})
+                result.update({"jobs" : [j.to_json(None, loading_depth-1) for j in self.jobs]})
             else:
                 result.update({"jobs" : self.jobs})
         elif f == "manifest" and self.manifest:
@@ -95,7 +97,7 @@ def pipeline_to_json(self, fields=None):
         elif f == "documents" and self.documents:
             result.update({"documents" : json.loads(self.documents)})
         elif f == "image_file" and self.image_file:
-            result.update({f: self.image_file.to_json()})
+            result.update({f: self.image_file.to_json(None, loading_depth-1)})
         else:
             result.update({f: eval("self." + f)})
     return result

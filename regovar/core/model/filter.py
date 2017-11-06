@@ -29,7 +29,7 @@ def filter_init(self, loading_depth=0):
         self.loading_depth = max(self.loading_depth, min(2, loading_depth))
     else:
         self.loading_depth = min(2, loading_depth)
-    if loading_depth > 0:
+    if self.loading_depth > 0:
         try:
             self.analysis = Analysis.from_id(self.analysis_id, self.loading_depth-1)
         except Exception as ex:
@@ -50,11 +50,13 @@ def filter_from_id(filter_id, loading_depth=0):
 
 
 
-def filter_to_json(self, fields=None):
+def filter_to_json(self, fields=None, loading_depth=0):
     """
         export the filter into json format with only requested fields
     """
     result = {}
+    if loading_depth == 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = Filter.public_fields
     for f in fields:

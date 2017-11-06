@@ -94,11 +94,13 @@ def user_from_credential(login, pwd):
     return None
 
 
-def user_to_json(self, fields=None):
+def user_to_json(self, fields=None, loading_depth=0):
     """
         Export the user into json format with only requested fields
     """
     result = {}
+    if loading_depth == 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = User.public_fields
     for f in fields:  
@@ -106,9 +108,9 @@ def user_to_json(self, fields=None):
             if f in ["update_date", "create_date"]:
                 result.update({f: eval("self." + f + ".isoformat()")})
             elif f in ["sandbox"] and self.loading_depth > 0:
-                result.update({f: eval("self.{}.to_json()".format(f))})
+                result.update({f: eval("self.{}.to_json(None, loading_depth-1)".format(f))})
             elif f in ["projects", "subjects"] and self.loading_depth > 0:
-                result.update({f: [o.to_json() for o in eval("self." + f)]})
+                result.update({f: [o.to_json(None, loading_depth-1) for o in eval("self." + f)]})
             else:
                 result.update({f: eval("self." + f)})
     return result

@@ -77,12 +77,14 @@ def analysis_from_id(analysis_id, loading_depth=0):
 
 
 
-def analysis_to_json(self, fields=None):
+def analysis_to_json(self, fields=None, loading_depth=0):
     """
         export the analysis into json format with only requested fields
     """
     from core.model.sample import Sample
     result = {}
+    if loading_depth == 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = Analysis.public_fields
     for f in fields:
@@ -91,12 +93,12 @@ def analysis_to_json(self, fields=None):
         elif f == "samples":
             fields = Sample.public_fields
             if "analyses" in fields : fields.remove("analyses")
-            result[f] = [o.to_json(fields) for o in eval("self." + f)]
+            result[f] = [o.to_json(fields, loading_depth-1) for o in eval("self." + f)]
         elif f in ["filters"] and self.loading_depth>0:
-            result[f] = [o.to_json() for o in eval("self." + f)]
+            result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
         elif f in ["project", "template"] and self.loading_depth>0:
             obj = eval("self." + f)
-            result[f] = obj.to_json() if obj else None
+            result[f] = obj.to_json(None, loading_depth-1) if obj else None
         else:
             try:
                 result.update({f: eval("self." + f)})
@@ -232,7 +234,9 @@ def analysis_get_filters(self, loading_depth=0):
     """
         Return the list of filters saved in the analysis
     """
-    return session().query(Filter).filter_by(analysis_id=self.id).all()
+    filters = session().query(Filter).filter_by(analysis_id=self.id).all()
+    for f in filters: f.init(loading_depth)
+    return filters
 
 
 

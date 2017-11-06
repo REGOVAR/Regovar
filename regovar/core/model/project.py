@@ -82,11 +82,13 @@ def project_from_ids(project_ids, loading_depth=0):
     return projects
 
 
-def project_to_json(self, fields=None):
+def project_to_json(self, fields=None, loading_depth=0):
     """
         Export the project into json format with only requested fields
     """
     result = {}
+    if loading_depth == 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = Project.public_fields
     for f in fields:
@@ -94,9 +96,9 @@ def project_to_json(self, fields=None):
             if f in ["create_date", "update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
             elif f in ["jobs", "analyses", "files", "indicators"]:
-                result[f] = [o.to_json() for o in eval("self." + f)]
+                result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
             elif f in ["parent"] and self.loading_depth > 0 and self.parent:
-                result[f] = self.parent.to_json()
+                result[f] = self.parent.to_json(None, loading_depth-1)
             else:
                 result.update({f: eval("self." + f)})
     return result

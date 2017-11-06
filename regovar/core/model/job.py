@@ -164,11 +164,13 @@ def job_from_ids(job_ids, loading_depth=0):
     return jobs
 
 
-def job_to_json(self, fields=None):
+def job_to_json(self, fields=None, loading_depth=0):
     """
         Export the job into json format with only requested fields
     """
     result = {}
+    if loading_depth == 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = Job.public_fields
     for f in fields:
@@ -176,9 +178,9 @@ def job_to_json(self, fields=None):
             if f in ["create_date","update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
             elif f in ["inputs", "outputs"]:
-                result.update({f : [i.to_json() for i in eval("self." + f)]})
+                result.update({f : [i.to_json(None, loading_depth-1) for i in eval("self." + f)]})
             elif f == "pipeline" and self.loading_depth > 0:
-                result.update({"pipeline" : self.pipeline.to_json()})
+                result.update({"pipeline" : self.pipeline.to_json(None, loading_depth-1)})
             elif f == "logs":
                 logs = []
                 for l in self.logs:

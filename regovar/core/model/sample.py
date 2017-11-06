@@ -51,7 +51,7 @@ def sample_init(self, loading_depth=0):
         self.subject = None
         self.file = None
         self.analyses = []
-        if loading_depth > 0:
+        if self.loading_depth > 0:
             self.subject = Subject.from_id(self.subject_id, self.loading_depth-1)
             self.file = File.from_id(self.file_id, self.loading_depth-1)
             self.analyses = AnalysisSample.get_analyses(self.id, self.loading_depth-1)
@@ -70,11 +70,13 @@ def sample_from_id(sample_id, loading_depth=0):
 
 
 
-def sample_to_json(self, fields=None):
+def sample_to_json(self, fields=None, loading_depth=0):
     """
         export the sample into json format with only requested fields
     """
     result = {}
+    if loading_depth == 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = Sample.public_fields
     for f in fields:
@@ -83,7 +85,7 @@ def sample_to_json(self, fields=None):
             result[f] = [o.to_json() for o in eval("self." + f)]
         elif f in ["subject", "file"] and self.loading_depth>0:
             if eval("self." + f) :
-                result[f] = eval("self." + f + ".to_json()")
+                result[f] = eval("self." + f + ".to_json(None, loading_depth-1)")
             else:
                 result[f] = None
         else:
