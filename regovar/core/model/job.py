@@ -164,12 +164,12 @@ def job_from_ids(job_ids, loading_depth=0):
     return jobs
 
 
-def job_to_json(self, fields=None, loading_depth=0):
+def job_to_json(self, fields=None, loading_depth=-1):
     """
         Export the job into json format with only requested fields
     """
     result = {}
-    if loading_depth == 0:
+    if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = Job.public_fields

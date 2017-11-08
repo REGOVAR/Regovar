@@ -186,7 +186,10 @@ class FilterEngine:
     def update_wt_samples_fields(self, analysis):
         wt = "wt_{}".format(analysis.id)
         for sid in analysis.samples_ids:
-            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_qual=_sub.quality, s{2}_filter=_sub.filter, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, quality, filter, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
+            # Retrive informations chr-pos-ref-alt dependent
+            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
+            # Retrive informations chr-pos dependent
+            execute("UPDATE {0} SET s{2}_dp=_sub.depth, s{2}_qual=_sub.quality, s{2}_filter=_sub.filter FROM (SELECT chr, pos, depth, quality, filter FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.chr=_sub.chr AND {0}.pos=_sub.pos".format(wt, analysis.db_suffix, sid))
 
 
     async def update_wt_stats_prefilters(self, analysis):

@@ -82,12 +82,12 @@ def project_from_ids(project_ids, loading_depth=0):
     return projects
 
 
-def project_to_json(self, fields=None, loading_depth=0):
+def project_to_json(self, fields=None, loading_depth=-1):
     """
         Export the project into json format with only requested fields
     """
     result = {}
-    if loading_depth == 0:
+    if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = Project.public_fields

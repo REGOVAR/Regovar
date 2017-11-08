@@ -95,23 +95,26 @@ def subject_from_ids(subject_ids, loading_depth=0):
     return subjects
 
 
-def subject_to_json(self, fields=None, loading_depth=0):
+def subject_to_json(self, fields=None, loading_depth=-1):
     """
         Export the subject into json format with only requested fields
     """
     result = {}
-    if loading_depth == 0:
+    if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = Subject.public_fields
     for f in fields:
         if f in Subject.public_fields:
-            if f in ["create_date", "update_date"] :
-                result.update({f: eval("self." + f + ".isoformat()")})
-            elif f in ["jobs", "analyses", "files", "projects", "samples", "indicators"] and hasattr(self, f):
-                result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
+            if f in ["create_date", "update_date"]:
+                result[f] = eval("self." + f + ".isoformat()")
+            elif f in ["jobs", "analyses", "files", "projects", "samples", "indicators"]:
+                if hasattr(self, f) and len(eval("self." + f)) > 0 and loading_depth > 0:
+                    result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
+                else : 
+                    result[f] = []
             elif hasattr(self, f):
-                result.update({f: eval("self." + f)})
+                result[f] = eval("self." + f)
     return result
 
 

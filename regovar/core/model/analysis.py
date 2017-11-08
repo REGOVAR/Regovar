@@ -20,7 +20,7 @@ def analysis_init(self, loading_depth=0):
             - project_id        : int           : the id of the project that owns this analysis
             - name              : str           : the name of the analysis
             - comment           : str           : an optional comment
-            - settings          : json          : null or refer to the template that have been used to init the analysis settings
+            - settings          : json          : parameters used to init the analysis
             - fields            : [str]         : The list of field's id to display
             - fields_settings   : json          : The settings of the fields in the qregovar client (describe: position, width, etc of fields)
             - filter            : json          : The last current filter to applied
@@ -36,12 +36,11 @@ def analysis_init(self, loading_depth=0):
             - samples_ids       : [int]         : The list of ids of samples used for analysis
             - attributes        : json          : The list of attributes defined for this analysis
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
-            - project           : [Job]         : The list of Job owns by the project
-            - samples           : [File]        : The list of File owns by the project
-            - filters           : Project       : The parent Project if defined
+            - project           : Project       : The that own the analysis
+            - samples           : [Sample]      : The list of samples owns by the analysis
+            - filters           : [Filter]      : The list of Filter created in the analysis
     """
     from core.model.project import Project
-    from core.model.template import Template
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     # Avoid recursion infinit loop
     if hasattr(self, "loading_depth") and self.loading_depth >= loading_depth:
@@ -77,26 +76,27 @@ def analysis_from_id(analysis_id, loading_depth=0):
 
 
 
-def analysis_to_json(self, fields=None, loading_depth=0):
+def analysis_to_json(self, fields=None, loading_depth=-1):
     """
-        export the analysis into json format with only requested fields
+        export the analysis into json format
+        - fields lazy loading
+        - custom recursive depth loading (max 2)
     """
     from core.model.sample import Sample
     result = {}
-    if loading_depth == 0:
+    if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = Analysis.public_fields
     for f in fields:
         if f == "create_date" or f == "update_date":
             result.update({f: eval("self." + f + ".isoformat()")})
-        elif f == "samples":
-            fields = Sample.public_fields
-            if "analyses" in fields : fields.remove("analyses")
-            result[f] = [o.to_json(fields, loading_depth-1) for o in eval("self." + f)]
-        elif f in ["filters"] and self.loading_depth>0:
-            result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
-        elif f in ["project", "template"] and self.loading_depth>0:
+        elif f in ["samples", "filters"]:
+            if hasattr(self, f) and len(eval("self." + f)) > 0 and loading_depth > 0:
+                result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
+            else:
+                result[f] = None
+        elif f in ["project"] and loading_depth>0:
             obj = eval("self." + f)
             result[f] = obj.to_json(None, loading_depth-1) if obj else None
         else:
@@ -110,7 +110,7 @@ def analysis_to_json(self, fields=None, loading_depth=0):
 
 def analysis_load(self, data):
     """
-        Helper to update several paramters at the same time. Note that dynamics properties (project, template, samples, samples_ids, attributes)
+        Helper to update several paramters at the same time. Note that dynamics properties (project, samples, samples_ids, attributes)
         cannot be updated with this method. However, you can update project_id .
         To update sample you must used dedicated models object : AnalysisSample
     """

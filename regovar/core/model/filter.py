@@ -50,12 +50,12 @@ def filter_from_id(filter_id, loading_depth=0):
 
 
 
-def filter_to_json(self, fields=None, loading_depth=0):
+def filter_to_json(self, fields=None, loading_depth=-1):
     """
         export the filter into json format with only requested fields
     """
     result = {}
-    if loading_depth == 0:
+    if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = Filter.public_fields

@@ -182,7 +182,7 @@ def prepare_vcf_parsing(reference_id, filename):
     
 
 
-def normalise(self, pos, ref, alt):
+def normalise(pos, ref, alt):
     """
         Normalise given (position, ref and alt) from VCF into Database format
             - Assuming that position in VCF are 1-based (0-based in Database)
@@ -192,23 +192,24 @@ def normalise(self, pos, ref, alt):
     # to be consistent with UCSC databases we convert it into 0-based
     pos -= 1
     
-    if ref==alt:
-        return pos, ref, alt
-    
     if ref is None:
         ref = ''
     if alt is None:
         alt = ''
+
+    # TRIM Disabled because change chr-pos for the alleles of the same variant (and then, chr-pos tests will failled to retrieved all alleles a unique variant)
+    # if ref==alt:
+    #     return pos, ref, alt
     # trim left
-    while len(ref) > 0 and len(alt) > 0 and ref[0]==alt[0] :
-        ref = ref[1:]
-        alt = alt[1:]
-        pos += 1
+    # while len(ref) > 0 and len(alt) > 0 and ref[0]==alt[0] :
+    #     ref = ref[1:]
+    #     alt = alt[1:]
+    #     pos += 1
     # trim right
-    if len(ref) == len(alt):
-        while ref[-1:]==alt[-1:]:
-            ref = ref[0:-1]
-            alt = alt[0:-1]
+    # if len(ref) == len(alt):
+    #     while ref[-1:]==alt[-1:]:
+    #         ref = ref[0:-1]
+    #         alt = alt[0:-1]
     return pos, ref, alt
 
 
@@ -609,7 +610,7 @@ class VcfManager(AbstractImportManager):
                 sp = row.samples.get(sn)
                 if (len(sp.alleles) > 0):
                     for allele in sp.alleles:
-                        pos, ref, alt = normalise(None, row.pos, row.ref, allele)
+                        pos, ref, alt = normalise(row.pos, row.ref, allele)
                         bin = getMaxUcscBin(pos, pos + len(ref))
                         sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
                         filters = escape_value_for_sql(json.dumps(row.filter.keys()))
@@ -623,69 +624,6 @@ class VcfManager(AbstractImportManager):
                             sql_query3 += vep_query
                             count += vep_count
 
-                    #pos, ref, alt = AbstractTranscriptDataImporter.normalise(None, row.pos, row.ref, sp.alleles[1])
-                    #if pos is not None and alt != ref :
-                        #bin = getMaxUcscBin(pos, pos + len(ref))
-                        #sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
-                        #sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'))
-                        #count += 1
-
-            
-
-                                
-                    #elif metadata['type'] == 'multiple_annotation': 
-                        ## Flag is set, we have to parse specified info fields (use by VEP and SnpEff by example)
-                        ## By transcript (row.info is a list of annotation. Inside we shall find, transcript and allele information to be able to save data for the current variant)
-                        #for info in row.info[metadata['flag']]:
-                            #data = info.split('|')
-                            #q_fields = []
-                            #q_values = []
-                            #allele   = ""
-                            #trx_pk = "NULL"
-                            #for col_pos, col_name in enumerate(metadata['columns']):
-                                #if col_pos >= len(data):
-                                    ## With EFF, ERROR/WARNING columns can be optional
-                                    #continue
-                                #q_fields.append(metadata['db_map'][col_name]['name'])
-                                #val = escape_value_for_sql(data[col_pos])
-                                
-                                #if col_name == 'Allele':
-                                    #allele = val.strip().strip("-")
-                                #if col_name == metadata['db_pk_field']:
-                                    #trx_pk = val.strip()
-
-                                #q_values.append('\'{}\''.format(val) if val != '' and val is not None else 'NULL')
-
-                            #pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
-                            ## print(pos, ref, alt, allele)
-                            #if pos is not None and alt==allele and len(q_fields) > 0:
-                                ## print("ok")
-                                #sql_query3 += sql_annot_trx.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
-                                #count += 1
-                            #pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[1])
-                            ## print(pos, ref, alt, allele)
-                            #if pos is not None and alt==allele and len(q_fields) > 0:
-                                ## print("ok")
-                                #sql_query3 += sql_annot_trx.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt, trx_pk)
-                                #count += 1
-                    #elif metadata['type'] == 'column_annotation': 
-                        #q_fields = []
-                        #q_values = []
-                        ## No flag, but column, we have to parse column to retrieve variant's annotations
-                        #for col_name in metadata['columns']:
-                            #if metadata['prefix'] + col_name in row.info.keys():
-                                #data = row.info[metadata['prefix'] + col_name]
-                                #if isinstance(data, tuple): data = ', '.join([str(v) for v in data])
-                                #q_fields.append(metadata['db_map'][col_name]['name'])
-                                #val = escape_value_for_sql(data)
-
-                                #q_values.append('\'{}\''.format(val) if val != '' and val is not None else 'NULL')
-
-                        #pos, ref, alt = normalize(row.pos, row.ref, sp.alleles[0])
-                        #if pos is not None and len(q_fields) > 0:
-                            ## print("ok")
-                            #sql_query3 += sql_annot_var.format(metadata['table'], ','.join(q_fields), ','.join(q_values), bin, chrm, pos, ref, alt)
-                            #count += 1
 
             # split big request to avoid sql out of memory transaction or too long freeze of the server
             if count >= 5000:
@@ -722,7 +660,6 @@ class VcfManager(AbstractImportManager):
         transaction = sql_query1 + sql_query2 + sql_query3
         if transaction:
             queries_queue.put(transaction)
-            #Model.execute(transaction)
 
         # stop workers
         for i in range(max_thread):

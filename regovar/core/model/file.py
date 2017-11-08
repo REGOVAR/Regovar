@@ -60,12 +60,12 @@ def file_from_ids(file_ids, loading_depth=0):
     return files
 
 
-def file_to_json(self, fields=None, loading_depth=0):
+def file_to_json(self, fields=None, loading_depth=-1):
     """
         Export the file into json format with requested fields
     """
     result = {}
-    if loading_depth == 0:
+    if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = ["id", "name", "type", "size", "upload_offset", "status", "create_date", "update_date", "tags", "job_source_id", "jobs_ids"]

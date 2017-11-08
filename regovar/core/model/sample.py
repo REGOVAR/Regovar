@@ -70,21 +70,23 @@ def sample_from_id(sample_id, loading_depth=0):
 
 
 
-def sample_to_json(self, fields=None, loading_depth=0):
+def sample_to_json(self, fields=None, loading_depth=-1):
     """
-        export the sample into json format with only requested fields
+        export the sample into json format
+        - fields lazy loading
+        - custom recursive depth loading (max 2)
     """
     result = {}
-    if loading_depth == 0:
+    if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = Sample.public_fields
     for f in fields:
         
-        if f in ["analyses"] and self.loading_depth>0:
-            result[f] = [o.to_json() for o in eval("self." + f)]
-        elif f in ["subject", "file"] and self.loading_depth>0:
-            if eval("self." + f) :
+        if f in ["analyses"] and hasattr(self, f) and loading_depth>0:
+            result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
+        elif f in ["subject", "file"]:
+            if hasattr(self, f) and eval("self." + f) and loading_depth>0:
                 result[f] = eval("self." + f + ".to_json(None, loading_depth-1)")
             else:
                 result[f] = None

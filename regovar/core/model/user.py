@@ -94,12 +94,12 @@ def user_from_credential(login, pwd):
     return None
 
 
-def user_to_json(self, fields=None, loading_depth=0):
+def user_to_json(self, fields=None, loading_depth=-1):
     """
         Export the user into json format with only requested fields
     """
     result = {}
-    if loading_depth == 0:
+    if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = User.public_fields

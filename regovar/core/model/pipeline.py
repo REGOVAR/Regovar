@@ -75,12 +75,12 @@ def pipeline_from_ids(pipeline_ids, loading_depth=0):
     return pipelines
 
 
-def pipeline_to_json(self, fields=None, loading_depth=0):
+def pipeline_to_json(self, fields=None, loading_depth=-1):
     """
         Export the pipeline into json format with only requested fields
     """
     result = {}
-    if loading_depth == 0:
+    if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = ["id", "name", "type", "status", "description", "developers", "installation_date", "version", "pirus_api", "image_file_id", "manifest", "documents"]

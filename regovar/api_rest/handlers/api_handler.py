@@ -10,6 +10,7 @@ import aiohttp_jinja2
 import datetime
 import time
 import uuid
+import requests
 
 import aiohttp_security
 from aiohttp_session import get_session
@@ -41,7 +42,14 @@ class ApiHandler:
 
     def welcom(self, request):
         
-        return rest_success({
+        # Retrieve github informations
+        response = requests.get("https://api.github.com/repos/REGOVAR/QRegovar/milestones")
+        data = False
+        if response.ok:
+            data = json.loads(response.content.decode())
+
+
+        result = {
             "api_url": HOST_P,
             "title": "Regovar Service API",
             "version": VERSION,
@@ -50,9 +58,10 @@ class ApiHandler:
             "last_subjects" : self.get_last_subjects(),
             "last_events": [],
             "references" : [{"id": ref[0], "name": ref[1]} for ref in core.annotations.ref_list.items()],
-            "default_reference_id": DEFAULT_REFERENCIAL_ID
-                
-        })
+            "default_reference_id": DEFAULT_REFERENCIAL_ID,
+            "milestones" : data
+        }
+        return rest_success(result)
 
 
 
