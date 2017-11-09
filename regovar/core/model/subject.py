@@ -110,10 +110,7 @@ def subject_to_json(self, fields=None, loading_depth=-1):
                 result[f] = eval("self." + f + ".isoformat()")
             elif f in ["jobs", "analyses", "files", "projects", "samples", "indicators"]:
                 if hasattr(self, f) and len(eval("self." + f)) > 0 and loading_depth > 0:
-                    # result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]  # PYTHON ERROR : loading_depth is not define :(
-                    result[f] = []
-                    for o in eval("self." + f):
-                        result[f].append(o.to_json(None, loading_depth-1))
+                    result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
                 else :                           
                     result[f] = []
             elif hasattr(self, f):

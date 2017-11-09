@@ -11,7 +11,7 @@ import datetime
 import time
 
 
-from aiohttp import web, MultiDict
+from aiohttp import web
 from urllib.parse import parse_qsl
 
 from config import *
@@ -38,7 +38,7 @@ class AnalysisHandler:
         """
         # Generic processing of the get query
         fields, query, order, offset, limit = process_generic_get(request.query_string, Analysis.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,

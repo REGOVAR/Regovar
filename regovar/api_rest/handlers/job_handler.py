@@ -15,7 +15,7 @@ import uuid
 import subprocess
 
 
-from aiohttp import web, MultiDict
+from aiohttp import web
 from urllib.parse import parse_qsl
 
 
@@ -35,7 +35,7 @@ class JobHandler:
 
     def list(self, request):
         fields, query, order, offset, limit = process_generic_get(request.query_string, Job.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('sublvl', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -76,7 +76,8 @@ class JobHandler:
             with open(path, 'br') as content_file:
                 file = content_file.read()
         return web.Response(
-            headers=MultiDict({'Content-Disposition': 'Attachment; filename='+filename}),
+            # TODO: creating header as Multidict no more exists with aio>1.1
+            #headers=MultiDict({'Content-Disposition': 'Attachment; filename='+filename}),
             body=file
         )
 

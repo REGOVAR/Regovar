@@ -83,8 +83,11 @@ def sample_to_json(self, fields=None, loading_depth=-1):
         fields = Sample.public_fields
     for f in fields:
         
-        if f in ["analyses"] and hasattr(self, f) and loading_depth>0:
-            result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
+        if f in ["analyses"]:
+            if hasattr(self, f) and len(eval("self." + f)) > 0 and loading_depth > 0:
+                result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
+            else :                           
+                result[f] = []
         elif f in ["subject", "file"]:
             if hasattr(self, f) and eval("self." + f) and loading_depth>0:
                 result[f] = eval("self." + f + ".to_json(None, loading_depth-1)")

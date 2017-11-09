@@ -12,7 +12,7 @@ import datetime
 import time
 
 
-from aiohttp import web, MultiDict
+from aiohttp import web
 from urllib.parse import parse_qsl
 
 from config import *
@@ -43,7 +43,7 @@ class SubjectHandler:
         """
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Subject.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -112,7 +112,7 @@ class SubjectHandler:
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Subject.public_fields)
         subject_id = request.match_info.get('subject_id', -1)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -131,7 +131,7 @@ class SubjectHandler:
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Subject.public_fields)
         subject_id = request.match_info.get('subject_id', -1)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -149,7 +149,7 @@ class SubjectHandler:
         """
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Subject.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -170,7 +170,7 @@ class SubjectHandler:
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Subject.public_fields)
         subject_id = request.match_info.get('subject_id', -1)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
