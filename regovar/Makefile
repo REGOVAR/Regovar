@@ -17,7 +17,7 @@ list_db:
         SELECT table_name, n_tup_ins - n_tup_del as rowcount  \
         FROM (SELECT DISTINCT table_name FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name) AS _t  \
         LEFT JOIN pg_stat_all_tables ON table_name=relname ORDER BY table_name) AS _sub ON table_name=relname \
-    ORDER BY pg_total_relation_size(relid) DESC"
+    ORDER BY table_name ASC"
 
 
 

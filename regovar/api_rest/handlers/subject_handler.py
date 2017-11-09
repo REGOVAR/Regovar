@@ -87,7 +87,7 @@ class SubjectHandler:
         subject = Subject.from_id(subject_id, 1)
         if not subject:
             return rest_error("Unable to find the subject (id={})".format(subject_id))
-        return rest_success(subject.to_json(Subject.public_fields))
+        return rest_success(subject.to_json())
         
     
     
@@ -101,7 +101,7 @@ class SubjectHandler:
         subject = core.Subject.delete(subject_id, 1)
         if not subject:
             return rest_error("Unable to delete the subject (id={})".format(subject_id))
-        return rest_success(subject.to_json(Subject.public_fields))
+        return rest_success(subject.to_json())
     
     
     

@@ -196,20 +196,19 @@ def normalise(pos, ref, alt):
         ref = ''
     if alt is None:
         alt = ''
-
-    # TRIM Disabled because change chr-pos for the alleles of the same variant (and then, chr-pos tests will failled to retrieved all alleles a unique variant)
-    # if ref==alt:
-    #     return pos, ref, alt
+    # ref/ref special case
+    if ref==alt:
+        return pos, ref, alt
     # trim left
-    # while len(ref) > 0 and len(alt) > 0 and ref[0]==alt[0] :
-    #     ref = ref[1:]
-    #     alt = alt[1:]
-    #     pos += 1
+    while len(ref) > 0 and len(alt) > 0 and ref[0]==alt[0] :
+        ref = ref[1:]
+        alt = alt[1:]
+        pos += 1
     # trim right
-    # if len(ref) == len(alt):
-    #     while ref[-1:]==alt[-1:]:
-    #         ref = ref[0:-1]
-    #         alt = alt[0:-1]
+    if len(ref) == len(alt):
+        while ref[-1:]==alt[-1:]:
+            ref = ref[0:-1]
+            alt = alt[0:-1]
     return pos, ref, alt
 
 
