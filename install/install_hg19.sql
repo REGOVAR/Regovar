@@ -28,8 +28,10 @@ CREATE TABLE sample_variant_hg19
     ref text NOT NULL,
     alt text NOT NULL,
     variant_id bigint,
+    variant_vcf_line bigint,
     genotype integer,
     depth integer,
+    depth_alt integer,
     quality real,
     filter JSON,
     infos character varying(255)[][] COLLATE pg_catalog."C",
@@ -91,7 +93,7 @@ WITH (
 );
 
 
-COPY import_refgene_hg19 FROM '/var/regovar/pirus/databases/hg19/refGene.txt' DELIMITER E'\t' CSV;
+COPY import_refgene_hg19 FROM '/var/regovar/databases/hg19/refGene.txt' DELIMITER E'\t' CSV;
 
 
 
