@@ -122,10 +122,10 @@ class SampleHandler:
         try:
             samples = await core.samples.import_from_file(file_id, ref_id)
         except Exception as ex:
-            return rest_error("Import error : enable to import samples. ".format(str(ex)))
+            return rest_error("Import error : Unable to import samples.", ex=ex)
         if samples:
             for s in samples:
-                if params["subject_id"]: 
+                if hasattr(params, "subject_id") and params["subject_id"]: 
                     s.subject_id = params["subject_id"]
                 else:
                     # TODO: create new empty subject and associate it to the sample

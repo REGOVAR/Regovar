@@ -28,7 +28,7 @@ CREATE TABLE sample_variant_hg19
     ref text NOT NULL,
     alt text NOT NULL,
     variant_id bigint,
-    variant_vcf_line bigint,
+    vcf_line bigint,
     genotype integer,
     depth integer,
     depth_alt integer,

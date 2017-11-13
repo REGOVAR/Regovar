@@ -64,8 +64,11 @@ class SampleManager:
                 reference_id=analysis.reference_id
         # Only import from VCF is supported for samples
         print ("Using import manager {}. {}".format(VcfManager.metadata["name"],VcfManager.metadata["description"]))
-        result = await VcfManager.import_data(file_id, reference_id=reference_id)
-        
+        try:
+            result = await VcfManager.import_data(file_id, reference_id=reference_id)
+        except Exception as ex:
+            msg = "Error occured when caling: core.samples.import_from_file > VcfManager.import_data(file_id={}, ref_id={}).".format(file_id, reference_id)
+            raise RegovarException(msg, exception=ex)
         # if analysis_id set, associate it to sample
         if result and result["success"]:
             samples = [result["samples"][s] for s in result["samples"].keys()]
@@ -78,3 +81,7 @@ class SampleManager:
             return [result["samples"][s] for s in result["samples"].keys()]
         
         return False # TODO raise error
+    
+    
+    
+    

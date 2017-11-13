@@ -91,6 +91,9 @@ class FilterEngine:
 
         # trx's indexes
         self.create_wt_trx_indexes(analysis)
+        
+        # TODO: Restore is_selected state for var/trx a
+        
 
         # Update count stat of the analysis
         query = "UPDATE analysis SET status='ready', computing_progress=1 WHERE id={}".format(analysis.id)
@@ -104,6 +107,9 @@ class FilterEngine:
         query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE TABLE {0} (\
             is_variant boolean DEFAULT False, \
             variant_id bigint, \
+            vcf_line bigint, \
+            is_selected boolean DEFAULT False, \
+            regovar_score smallint, \
             bin integer, \
             chr integer, \
             pos bigint, \
@@ -125,6 +131,7 @@ class FilterEngine:
             is_mit boolean DEFAULT False, "
         query += ", ".join(["s{}_gt integer".format(i) for i in analysis.samples_ids]) + ", "
         query += ", ".join(["s{}_dp integer".format(i) for i in analysis.samples_ids]) + ", "
+        query += ", ".join(["s{}_dp_alt integer".format(i) for i in analysis.samples_ids]) + ", "
         query += ", ".join(["s{}_qual real".format(i) for i in analysis.samples_ids]) + ", "
         query += ", ".join(["s{}_filter JSON".format(i) for i in analysis.samples_ids]) + ", "
         query += ", ".join(["s{}_is_composite boolean".format(i) for i in analysis.samples_ids]) + ", "
@@ -154,21 +161,21 @@ class FilterEngine:
         wt = "wt_{}".format(analysis.id)
 
         # create temp table with id of variants
-        query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE TABLE {0}_var (id bigint, trx_count integer); "
+        query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE TABLE {0}_var (id bigint, vcf_line bigint); "
         execute(query.format(wt))
         
-        query = "INSERT INTO {0}_var (id) SELECT DISTINCT variant_id FROM sample_variant{1} WHERE sample_id IN ({2}); "
+        query = "INSERT INTO {0}_var (id, vcf_line) SELECT DISTINCT variant_id, vcf_line FROM sample_variant{1} WHERE sample_id IN ({2}); "
         res = execute(query.format(wt, analysis.db_suffix, ",".join([str(sid) for sid in analysis.samples_ids])))
         
         # set total number of variant for the analysis
         log(" > {} variants found".format(res.rowcount))
         query = "UPDATE analysis SET total_variants={1} WHERE id={0};".format(analysis.id, res.rowcount)
-        query += "CREATE INDEX {0}_var_idx_id ON {0}_var USING btree (id);"
+        #query += "CREATE INDEX {0}_var_idx_id ON {0}_var USING btree (id);"
         execute(query.format(wt))
 
         # Insert variants and their annotations
-        q_fields = "is_variant, variant_id, bin, chr, pos, ref, alt, is_transition, sample_tlist"
-        q_select = "True, _vids.id, _var.bin, _var.chr, _var.pos, _var.ref, _var.alt, _var.is_transition, _var.sample_list"
+        q_fields = "is_variant, variant_id, vcf_line, regovar_score, bin, chr, pos, ref, alt, is_transition, sample_tlist"
+        q_select = "True, _vids.id, _vids.vcf_line, _var.regovar_score, _var.bin, _var.chr, _var.pos, _var.ref, _var.alt, _var.is_transition, _var.sample_list"
         q_from   = "{0}_var _vids LEFT JOIN variant{1} _var ON _vids.id=_var.id".format(wt, analysis.db_suffix)
 
         for dbuid in analysis.settings["annotations_db"]:
@@ -181,15 +188,22 @@ class FilterEngine:
         # execute query
         query = "INSERT INTO {0} ({1}) SELECT {2} FROM {3};".format(wt, q_fields, q_select, q_from)
         execute(query)
-
+        
+        # Create index on variant_id and vcf_line 
+        log(" > create variants index")
+        query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(wt)
+        query += "CREATE INDEX {0}_idx_vcfline ON {0} USING btree (vcf_line);".format(wt)
+        execute(query)
+        
 
     def update_wt_samples_fields(self, analysis):
+        log(" > import samples informations")
         wt = "wt_{}".format(analysis.id)
         for sid in analysis.samples_ids:
             # Retrive informations chr-pos-ref-alt dependent
-            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
-            # Retrive informations chr-pos dependent
-            execute("UPDATE {0} SET s{2}_dp=_sub.depth, s{2}_qual=_sub.quality, s{2}_filter=_sub.filter FROM (SELECT chr, pos, depth, quality, filter FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.chr=_sub.chr AND {0}.pos=_sub.pos".format(wt, analysis.db_suffix, sid))
+            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_dp_alt=_sub.depth_alt, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, depth_alt, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
+            # Retrive informations vcf'line dependent (= chr-pos without trimming)
+            execute("UPDATE {0} SET s{2}_qual=_sub.quality, s{2}_filter=_sub.filter FROM (SELECT vcf_line, chr, pos, quality, filter FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.vcf_line=_sub.vcf_line".format(wt, analysis.db_suffix, sid))
 
 
     async def update_wt_stats_prefilters(self, analysis):
@@ -216,21 +230,21 @@ class FilterEngine:
         # TODO
 
         # Predefinied quickfilters
-        if len(analysis.samples_ids) == 1:
-            await self.update_wt_compute_prefilter_single(analysis, analysis.samples_ids[0], "M")
-        elif analysis.settings["trio"]:
+        if analysis.settings["trio"]:
             self.update_wt_compute_prefilter_trio(analysis, analysis.samples_ids, analysis.settings["trio"])
-            
-        # 
+        else:
+            for sid in analysis.samples_ids:
+                await self.update_wt_compute_prefilter_single(analysis, sid)
+        
         
 
     def create_wt_variants_indexes(self, analysis):
         wt = "wt_{}".format(analysis.id)
 
         # Common indexes for variants
-        query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(wt)
-        query += "".join(["CREATE INDEX {0}_idx_s{1}_gt ON {0} USING btree (s{1}_gt);".format(wt, i) for i in analysis.samples_ids])
+        query = "".join(["CREATE INDEX {0}_idx_s{1}_gt ON {0} USING btree (s{1}_gt);".format(wt, i) for i in analysis.samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_dp ON {0} USING btree (s{1}_dp);".format(wt, i) for i in analysis.samples_ids])
+        query += "".join(["CREATE INDEX {0}_idx_s{1}_dpa ON {0} USING btree (s{1}_dp_alt);".format(wt, i) for i in analysis.samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_qual ON {0} USING btree (s{1}_qual);".format(wt, i) for i in analysis.samples_ids])
         #query += "".join(["CREATE INDEX {0}_idx_s{1}_filter ON {0} USING btree (s{1}_filter);".format(wt, i) for i in analysis.samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_is_composite ON {0} USING btree (s{1}_is_composite);".format(wt, i) for i in analysis.samples_ids])
@@ -263,10 +277,11 @@ class FilterEngine:
         wt = "wt_{}".format(analysis.id)
 
         # Insert trx and their annotations
-        q_fields  = "is_variant, variant_id, trx_pk_uid, trx_pk_value, bin, chr, pos, ref, alt, is_transition, sample_tlist, sample_tcount, sample_alist, sample_acount, "
-        q_fields += "is_dom, is_rec_hom, is_rec_htzcomp, is_denovo, is_aut, is_xlk, is_mit, "
+        q_fields  = "is_variant, variant_id, trx_pk_uid, trx_pk_value, vcf_line, regovar_score, bin, chr, pos, ref, alt, is_transition, "
+        q_fields += "sample_tlist, sample_tcount, sample_alist, sample_acount, is_dom, is_rec_hom, is_rec_htzcomp, is_denovo, is_aut, is_xlk, is_mit, "
         q_fields += ", ".join(["s{}_gt".format(i) for i in analysis.samples_ids]) + ", "
         q_fields += ", ".join(["s{}_dp".format(i) for i in analysis.samples_ids]) + ", "
+        q_fields += ", ".join(["s{}_dp_alt".format(i) for i in analysis.samples_ids]) + ", "
         q_fields += ", ".join(["s{}_qual".format(i) for i in analysis.samples_ids]) + ", "
         q_fields += ", ".join(["s{}_filter".format(i) for i in analysis.samples_ids]) + ", "
         q_fields += ", ".join(["s{}_is_composite".format(i) for i in analysis.samples_ids])
@@ -280,14 +295,16 @@ class FilterEngine:
         # Add panel's columns
         # TODO: foreach analysis.panels_ids
         
-        q_select  = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id, _wt.bin, _wt.chr, _wt.pos, _wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, "
-        q_select += "_wt.sample_tcount, _wt.sample_alist, _wt.sample_acount, _wt.is_dom, _wt.is_rec_hom, _wt.is_rec_htzcomp, _wt.is_denovo, "
-        q_select += "_wt.is_aut, _wt.is_xlk, _wt.is_mit, "
+        q_select  = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id, _wt.vcf_line, _wt.regovar_score, _wt.bin, _wt.chr, _wt.pos, "
+        q_select += "_wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, _wt.sample_tcount, _wt.sample_alist, _wt.sample_acount, _wt.is_dom, _wt.is_rec_hom, "
+        q_select += "_wt.is_rec_htzcomp, _wt.is_denovo, _wt.is_aut, _wt.is_xlk, _wt.is_mit, "
         q_select += ", ".join(["_wt.s{}_gt".format(i) for i in analysis.samples_ids]) + ", "
         q_select += ", ".join(["_wt.s{}_dp".format(i) for i in analysis.samples_ids]) + ", "
+        q_select += ", ".join(["_wt.s{}_dp_alt".format(i) for i in analysis.samples_ids]) + ", "
         q_select += ", ".join(["_wt.s{}_qual".format(i) for i in analysis.samples_ids]) + ", "
         q_select += ", ".join(["_wt.s{}_filter".format(i) for i in analysis.samples_ids]) + ", "
         q_select += ", ".join(["_wt.s{}_is_composite".format(i) for i in analysis.samples_ids])
+        
         # Add attribute's columns
         for attr in analysis.attributes:
             for value, col_id in attr["values_map"].items():
@@ -437,12 +454,13 @@ class FilterEngine:
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
         query = "DROP TABLE IF EXISTS {0}_tmp CASCADE; CREATE TABLE {0}_tmp AS "
-        query += "SELECT ROW_NUMBER() OVER() as page, variant_id, array_agg(trx_pk_value) as trx, count(*) as trx_count{1} FROM {0} WHERE trx_pk_value is not null{2} GROUP BY variant_id{1} ORDER BY {3};"
+        query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, array_remove(array_agg(trx_pk_value), NULL) as trx, count(*) as trx_count{1} FROM {0}{2} GROUP BY variant_id{1};"
         
-        f_fields = "" if order is None else "," + ", ".join(order)
-        f_order = "variant_id" if order is None else ", ".join(order)
+        f_fields = ", chr, pos" if order is None else "," + ", ".join(order)
+        f_order = "chr, pos" if order is None else ", ".join(order)
         f_filter = self.parse_filter(analysis, filter_json, order)
         f_filter = " AND ({0})".format(f_filter) if len(filter_json[1]) > 0 else f_filter
+        if f_filter != "": f_filter = " WHERE " + f_filter
         query = query.format(w_table, f_fields, f_filter, f_order)
 
         sql_result = None

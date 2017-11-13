@@ -37,6 +37,7 @@ def count_vcf_row(filename):
         bashCommand = "z" + bashCommand
     process = subprocess.Popen(bashCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     cmd_out = process.communicate()[0]
+    # returns results
     return int(cmd_out.decode('utf8'))
 
 
@@ -46,13 +47,14 @@ def debug_clear_header(filename):
         EDIT : in fact the problem to be that pysam do not support some kind of compression, so this command 
         is still used to rezip the vcf in a supported format.
     """
-    bashCommand = "grep -v '^##GVCFBlock' {} | gzip --best > /var/regovar/downloads/tmp_workaround".format(filename)
+    bashCommand = "grep -v '^##GVCFBlock' {0} > {0}.regovar_import".format(filename)
     if filename.endswith("gz"):
         bashCommand = "z" + bashCommand
     process = subprocess.Popen(bashCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    bashCommand = "mv /var/regovar/downloads/tmp_workaround  {} ".format(filename)
-    process = subprocess.Popen(bashCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
+    #bashCommand = "mv /var/regovar/downloads/tmp_workaround  {} ".format(filename)
+    #process = subprocess.Popen(bashCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process.wait()
+    return "{}.regovar_import".format(filename)
 
 
 def prepare_vcf_parsing(reference_id, filename):
@@ -61,15 +63,17 @@ def prepare_vcf_parsing(reference_id, filename):
         and stored in the database
     """
     # Extract headers
-    debug_clear_header(filename)
+    filename = debug_clear_header(filename)
 
+    hcount = 0
     headers = {}
     samples = []
     _op = open
-    if filename.endswith('gz') or filename.endswith('zip'):
-        _op = gzip.open
+    #if filename.endswith('gz') or filename.endswith('zip'):
+        #_op = gzip.open
     with _op(filename) as f:
         for line in f:
+            hcount += 1
             if _op != open:
                 line = line.decode()
             if line.startswith('##'):
@@ -91,6 +95,7 @@ def prepare_vcf_parsing(reference_id, filename):
             elif line.startswith('#'):
                 samples = line[1:].strip().split('\t')[9:]
             else :
+                hcount -= 1
                 break;
 
     # Check for VEP
@@ -153,17 +158,16 @@ def prepare_vcf_parsing(reference_id, filename):
         #}
 
 
-
-
     # Retrieve extension
     file_type = os.path.split(filename)[1].split('.')[-1]
-    if not 'vcf' in file_type :
-        file_type += os.path.split(filename)[1].split('.')[-2] + "."
+    if not ('vcf' in file_type or 'gvcf' in file_type) :
+        file_type = "{}.{}".format(os.path.split(filename)[1].split('.')[-2], file_type)
 
     # Return result
     result = {
         'vcf_version' : headers['fileformat'][0],
         'name'  : os.path.split(filename)[1],
+        'header_count': hcount,
         'count' : count_vcf_row(filename),
         'size'  : os.path.getsize(filename),
         'type'  : file_type,
@@ -373,6 +377,12 @@ def normalize_chr(chrm):
 def normalize_gt(infos):
     """
         Normalize GT sample informatin from VCF format into Database format
+        -50: err
+        -1: None (variant don't have this variant)
+         0: ref/ref
+         1: alt/alt
+         2: ref/alt
+         3: alt1/alt2
     """
     gt = get_info(infos, 'GT')
     if gt != 'NULL':
@@ -389,7 +399,7 @@ def normalize_gt(infos):
             else :
                 return '3'
         log ("unknow : " + str(infos['GT']) )
-    return -1
+    return -50
 
 
 def get_alt(alt):
@@ -581,10 +591,11 @@ class VcfManager(AbstractImportManager):
         # parsing vcf file
         records_count = vcf_metadata['count']
         records_current = 0
+        vcf_line = vcf_metadata['header_count']
         table = "variant" + db_ref_suffix
         
         sql_pattern1 = "INSERT INTO {0} (chr, pos, ref, alt, is_transition, bin, sample_list) VALUES ({1}, {2}, '{3}', '{4}', {5}, {6}, array[{7}]) ON CONFLICT (chr, pos, ref, alt) DO UPDATE SET sample_list=array_intersect({0}.sample_list, array[{7}])  WHERE {0}.chr={1} AND {0}.pos={2} AND {0}.ref='{3}' AND {0}.alt='{4}';"
-        sql_pattern2 = "INSERT INTO sample_variant" + db_ref_suffix + " (sample_id, variant_id, bin, chr, pos, ref, alt, genotype, depth, quality, filter) SELECT {0}, id, {1}, '{2}', {3}, '{4}', '{5}', '{6}', {7}, {8}, '{9}' FROM variant" + db_ref_suffix + " WHERE bin={1} AND chr={2} AND pos={3} AND ref='{4}' AND alt='{5}' ON CONFLICT (sample_id, variant_id) DO NOTHING;"
+        sql_pattern2 = "INSERT INTO sample_variant" + db_ref_suffix + " (sample_id, variant_id, vcf_line, bin, chr, pos, ref, alt, genotype, depth, depth_alt, quality, filter) SELECT {0}, id, {1}, {2}, '{3}', {4}, '{5}', '{6}', '{7}', {8}, {9}, {10}, '{11}' FROM variant" + db_ref_suffix + " WHERE bin={2} AND chr={3} AND pos={4} AND ref='{5}' AND alt='{6}' ON CONFLICT (sample_id, variant_id) DO NOTHING;"
         
         sql_annot_trx = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, regovar_trx_id, {1}) SELECT id, {3},{4},{5},'{6}','{7}', '{8}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id, regovar_trx_id) DO  NOTHING; " # TODO : do update on conflict
         sql_annot_var = "INSERT INTO {0} (variant_id, bin,chr,pos,ref,alt, {1}) SELECT id, {3},{4},{5},'{6}','{7}', {2} FROM variant" + db_ref_suffix + " WHERE bin={3} AND chr={4} AND pos={5} AND ref='{6}' AND alt='{7}' ON CONFLICT (variant_id) DO  NOTHING;"
@@ -596,32 +607,52 @@ class VcfManager(AbstractImportManager):
         
         for row in vcf_reader: 
             records_current += 1 
+            vcf_line += 1
             #log("> {} : {}".format(records_current, count))
             #if records_current == 14356:
                 #ipdb.set_trace()
                     
             # TODO : update sample's progress indicator
             
-            # Register variant and variant/sample associations
+            
             chrm = normalize_chr(str(row.chrom))
-            samples_array = ','.join([str(samples[s].id) for s in row.samples])
-            for sn in row.samples:
-                sp = row.samples.get(sn)
-                if (len(sp.alleles) > 0):
-                    for allele in sp.alleles:
-                        pos, ref, alt = normalise(row.pos, row.ref, allele)
-                        bin = getMaxUcscBin(pos, pos + len(ref))
-                        sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
-                        filters = escape_value_for_sql(json.dumps(row.filter.keys()))
-                        sql_query2 += sql_pattern2.format(samples[sn].id, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'), row.qual, filters)
-                        count += 1
-
-                    # Register variant annotations
-                    for ann_name, importer in vcf_metadata['annotations'].items():
-                        if importer:
-                            vep_query, vep_count = importer.import_annotations(sql_annot_trx, bin, chrm, pos, ref, alt, row.info)
-                            sql_query3 += vep_query
-                            count += vep_count
+            
+            for allele in row.alleles:
+                pos, ref, alt = normalise(row.pos, row.ref, allele)
+                bin = getMaxUcscBin(pos, pos + len(ref))
+                
+                # get list of sample that have this variant (chr-pos-ref-alt)
+                samples_array = []
+                for sn in row.samples:
+                    sp = row.samples.get(sn)
+                    if allele in sp.alleles:
+                        samples_array.append(samples[sp.name].id)
+                if len(samples_array) == 0: continue
+                # save variant
+                samples_array = ','.join([str(s) for s in samples_array])
+                sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
+                        
+                # Register variant/sample associations
+                for sn in row.samples:
+                    sp = row.samples.get(sn)
+                    filters = escape_value_for_sql(json.dumps(row.filter.keys()))
+                    count += 1
+                    if allele in sp.alleles:
+                        # Get allelic depth if exists (AD field)
+                        depth_alt = sp["AD"][sp.alleles.index(allele)] if "AD" in sp.keys() else 'NULL'
+                        sql_query2 += sql_pattern2.format(samples[sn].id, vcf_line, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'), depth_alt, row.qual, filters)
+                    else:
+                        # save that the sample HAVE NOT this variant
+                        sql_query2 += sql_pattern2.format(samples[sn].id, vcf_line, bin, chrm, pos, ref, alt, -1, 0, 0, row.qual, filters)
+                
+                # Register variant annotations
+                for ann_name, importer in vcf_metadata['annotations'].items():
+                    if importer:
+                        vep_query, vep_count = importer.import_annotations(sql_annot_trx, bin, chrm, pos, ref, alt, row.info)
+                        sql_query3 += vep_query
+                        count += vep_count
+                        
+                            
 
 
             # split big request to avoid sql out of memory transaction or too long freeze of the server
@@ -629,7 +660,6 @@ class VcfManager(AbstractImportManager):
                 progress = records_current / records_count
                 count = 0
                 transaction = sql_query1 + sql_query2 + sql_query3
-                
                 log("VCF import : line {} (chrm {})".format(records_current, chrm))
                 log("VCF import : Execute sync query {}/{} ({}%)".format(records_current, records_count, round(progress * 100, 2)))
                 
@@ -707,21 +737,23 @@ class VcfManager(AbstractImportManager):
             Return the list of sample that have been added.
         """
         from core.core import core
-        
         file = Model.File.from_id(file_id)
         filepath = file.path
         reference_id = kargs["reference_id"]
         start_0 = datetime.datetime.now()
         job_in_progress = []
 
+        
         vcf_metadata = prepare_vcf_parsing(reference_id, filepath)
         db_ref_suffix= "_" + Model.execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first().table_suffix
 
         # Maybe new annotations table have been created during the execution of prepare_vcf_parsing
         # So we force the server to refresh its annotations maping
+        
         await core.annotations.load_annotation_metadata()
 
         if filepath.endswith(".vcf") or filepath.endswith(".vcf.gz"):
+            filepath += ".regovar_import" # a tmp file have been created by prepare_vcf_parsing() method to avoid pysam unsupported file format.
             start = datetime.datetime.now()
             
             # Create vcf parser

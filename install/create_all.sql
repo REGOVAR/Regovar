@@ -666,14 +666,17 @@ INSERT INTO public.annotation_database(uid, reference_id, name, version, name_ui
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
   ('492f18b60811bf85ce118c0c6a1a5c4a', 1,  'variant_id',       'id',                     'int',          'Variant unique ID in the database.', NULL),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 2,  'vcf_line',         'vcf line',               'int',          'Corresponding line in the VCF file.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 3,  'chr',              'chr',                    'int',          'Chromosome as number : 23=X, 24=Y, 25=M.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 4,  'pos',              'pos',                    'int',          'Position of the variant in the chromosome.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 5,  'ref',              'ref',                    'sequence',     'Reference sequence.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 6,  'alt',              'alt',                    'sequence',     'Alternative sequence of the variant.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 10, 's{}_gt',           'GT',                     'sample_array', 'Genotype as number : 0="r/r", 1="a/a", 2="r/a", 3="a1/a2".', '{"type": "int"}'),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_dp',           'DP',                     'sample_array', 'Depth.', '{"type": "int"}'),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_qual',         'QUAL',                   'sample_array', 'VCF Quality field.', '{"type": "float"}'),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_filter',       'FILTER',                 'sample_array', 'VCF Filter field', '{"type": "enum"}');
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 12, 's{}_dp_alt',       'DP alt',                 'sample_array', 'Allelic depth.', '{"type": "int"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 13, 's{}_qual',         'QUAL',                   'sample_array', 'VCF Quality field.', '{"type": "float"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 14, 's{}_filter',       'FILTER',                 'sample_array', 'VCF Filter field', '{"type": "enum"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 50, 'regovar_score',    'Regovar Pred',           'enum',         'Regovar users annotation.', '{"type": "enum", "values": ["Artifact", "Yes", "No"] "Why not"]}');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
   ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Is the variant dominant for the sample (single), or for the child (trio).', NULL),

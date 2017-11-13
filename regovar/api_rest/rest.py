@@ -52,7 +52,7 @@ def rest_success(response_data=None, pagination_data=None):
 
 
 
-def rest_error(message:str="Unknow error", code:str="", error_id:str=""):
+def rest_error(message:str="Unknow error", code:str="", error_id:str="", ex:RegovarException=None):
     """ 
         Build the REST error response
         :param message:         The short "friendly user" error message
@@ -67,6 +67,7 @@ def rest_error(message:str="Unknow error", code:str="", error_id:str=""):
         "error_url":    ERROR_ROOT_URL + code,
         "error_id":     error_id
     }
+    if ex: results["exception"] = str(ex)
     return web.json_response(results)
 
 
