@@ -488,6 +488,10 @@ CREATE TABLE public.subject_indicator
 
 
 
+
+
+
+
 -- --------------------------------------------
 -- SHARING SERVER TABLES
 -- --------------------------------------------

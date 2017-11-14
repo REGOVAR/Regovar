@@ -454,19 +454,19 @@ class FilterEngine:
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
         query = "DROP TABLE IF EXISTS {0}_tmp CASCADE; CREATE TABLE {0}_tmp AS "
-        query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, array_remove(array_agg(trx_pk_value), NULL) as trx, count(*) as trx_count{1} FROM {0}{2} GROUP BY variant_id{1};"
+        query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, array_remove(array_agg(trx_pk_value), NULL) as trx, count(*)-1 as trx_count{1} FROM {0}{2} GROUP BY variant_id{1};"
         
         f_fields = ", chr, pos" if order is None else "," + ", ".join(order)
         f_order = "chr, pos" if order is None else ", ".join(order)
         f_filter = self.parse_filter(analysis, filter_json, order)
-        f_filter = " AND ({0})".format(f_filter) if len(filter_json[1]) > 0 else f_filter
-        if f_filter != "": f_filter = " WHERE " + f_filter
+        f_filter = " WHERE {0}".format(f_filter) if len(filter_json[1]) > 0 else ""
         query = query.format(w_table, f_fields, f_filter, f_order)
 
         sql_result = None
         log("Filter: {0}\nOrder: {1}\nQuery: {2}".format(filter_json, order, query))
         with Timer() as t:
             sql_result = execute(query)
+            execute("CREATE INDEX {0}_tmp_page ON {0}_tmp USING btree (page);".format(w_table))
         
         total_variant = sql_result.rowcount
         log("Time: {0}\nResults count: {1}".format(t, total_variant))

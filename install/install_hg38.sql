@@ -72,8 +72,8 @@ DROP TABLE IF EXISTS import_refgene_hg38;
 CREATE TABLE import_refgene_hg38
 (
   bin integer,
-  name character varying(255),
-  chrom character varying(255),
+  name character varying(255) COLLATE pg_catalog."C",
+  chrom character varying(255) COLLATE pg_catalog."C",
   strand character(1),
   txstart bigint,
   txend bigint,
@@ -83,9 +83,9 @@ CREATE TABLE import_refgene_hg38
   exonstarts text,
   exonends text,
   score bigint,
-  name2 character varying(255),
-  cdsstartstat character varying(255),
-  cdsendstat character varying(255),
+  name2 character varying(255) COLLATE pg_catalog."C",
+  cdsstartstat character varying(255) COLLATE pg_catalog."C",
+  cdsendstat character varying(255) COLLATE pg_catalog."C",
   exonframes text
 )
 WITH (
@@ -115,7 +115,7 @@ CREATE TABLE refgene_hg38
   cdsrange int8range,
   exoncount int,
   trxcount int,
-  name2 character varying(255)
+  name2 character varying(255) COLLATE pg_catalog."C"
 )
 WITH (
   OIDS=FALSE
@@ -127,7 +127,7 @@ DROP TABLE IF EXISTS refgene_trx_hg38;
 CREATE TABLE refgene_trx_hg38
 (
   bin integer NOT NULL,
-  name character varying(255),
+  name character varying(255) COLLATE pg_catalog."C",
   chr integer,
   strand character(1),
   txstart bigint,
@@ -138,9 +138,9 @@ CREATE TABLE refgene_trx_hg38
   cdsrange int8range,
   exoncount int,
   score bigint,
-  name2 character varying(255),
-  cdsstartstat character varying(255),
-  cdsendstat character varying(255)
+  name2 character varying(255) COLLATE pg_catalog."C",
+  cdsstartstat character varying(255) COLLATE pg_catalog."C",
+  cdsendstat character varying(255) COLLATE pg_catalog."C"
 )
 WITH (
   OIDS=FALSE
