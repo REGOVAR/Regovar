@@ -16,3 +16,4 @@ from core.managers.variant_manager import VariantManager
 from core.managers.event_manager import EventManager
 from core.managers.subject_manager import SubjectManager
 from core.managers.admin_manager import AdminManager
+from core.managers.phenotype_manager import PhenotypeManager

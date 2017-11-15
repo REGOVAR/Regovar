@@ -29,18 +29,19 @@ def notify_all_print(self, data):
 
 class Core:
     def __init__(self):
-        # Pirus part (Pipeline and job management)
+        # Pipeline and job management (Pirus part)
         self.files = FileManager()
         self.pipelines = PipelineManager()
         self.jobs = JobManager()
         self.container_managers = {}
         self.container_managers["lxd"] = LxdManager()
-        # Annso part (Annotations and variant management)
+        # Annotations and variant management (Annso part)
         self.analyses = AnalysisManager()
         self.samples = SampleManager()
         self.variants = VariantManager()
         self.annotations = AnnotationManager()
         self.filters = FilterEngine()
+        self.phenotypes = PhenotypeManager()
         # Regovar Part (User, project, SLI management)
         self.users = UserManager()
         self.projects = ProjectManager()

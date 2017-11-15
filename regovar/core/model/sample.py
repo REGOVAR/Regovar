@@ -1,4 +1,4 @@
-#!env/python3
+    #!env/python3
 # coding: utf-8
 import os
 
@@ -28,6 +28,8 @@ def sample_init(self, loading_depth=0):
             - subject_id       : int        : the id of the subject linked to this sample
             - file_id          : int        : the id of the file (vcf) from which the sample have been extracted
             - loading_progress : float      : progress (from 0 to 1) of the import of the sample
+            - update_date      : date       : The last time that the object have been updated
+            - create_date      : date       : The datetime when the object have been created
             - reference_id     : int        : the reference id for this sample
             - status           : enum       : import status values can be : 'empty', 'loading', 'ready', 'error'
             - default_dbuid    : [str]      : list of annotation's databases used in the vcf from where come the sample
@@ -82,8 +84,9 @@ def sample_to_json(self, fields=None, loading_depth=-1):
     if fields is None:
         fields = Sample.public_fields
     for f in fields:
-        
-        if f in ["analyses"]:
+        if f in ["create_date", "update_date"]:
+            result[f] = eval("self." + f + ".isoformat()")
+        elif f in ["analyses"]:
             if hasattr(self, f) and len(eval("self." + f)) > 0 and loading_depth > 0:
                 result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
             else :                           
@@ -116,6 +119,7 @@ def sample_load(self, data):
         if "subject_id"         in data.keys(): self.subject_id         = data['subject_id'] 
         if "file_id"            in data.keys(): self.file_id            = data['file_id']
         if "analyses_ids"       in data.keys(): self.analyses_ids       = data['analyses_ids']
+        if "update_date"        in data.keys(): self.update_date        = data['update_date']
         
         # save modifications
         self.save()
@@ -158,7 +162,7 @@ def sample_count():
 
 
 Sample = Base.classes.sample
-Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "is_mosaic", "default_dbuid", "filter_description", "loading_progress", "reference_id", "status", "subject", "file", "analyses"]
+Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "create_date", "update_date", "is_mosaic", "default_dbuid", "filter_description", "loading_progress", "reference_id", "status", "subject", "file", "analyses"]
 Sample.init = sample_init
 Sample.from_id = sample_from_id
 Sample.to_json = sample_to_json

@@ -2,6 +2,7 @@
 # coding: utf-8
 import ipdb
 import os
+import hashlib
 import datetime
 import logging
 import uuid
@@ -9,9 +10,10 @@ import time
 import asyncio
 import subprocess
 import re
+import json
 
 
-from config import LOG_DIR
+from config import LOG_DIR, CACHE_DIR, CACHE_EXPIRATION_SECONDS
 
 
 
@@ -71,6 +73,10 @@ def notify_all(msg):
         Default delegate used by the core for notification.
     """
     print(str(msg))
+
+
+
+
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -154,6 +160,36 @@ def array_merge(array1, array2):
 
 
 
+
+def get_cache(uri):
+    """
+        Return the cached json corresponding to the uri if exists; None otherwise
+    """
+    cache_file = CACHE_DIR + "/" + hashlib.md5(uri.encode('utf-8')).hexdigest()
+    if os.path.exists(cache_file):
+        s=os.stat(cache_file)
+        date = datetime.datetime.utcfromtimestamp(s.st_ctime)
+        ellapsed = datetime.datetime.now() - date
+        if ellapsed.total_seconds() < CACHE_EXPIRATION_SECONDS:
+            # Return result as json
+            with open(cache_file, 'r') as f:
+                return json.loads(f.read())
+        else:
+            # Too old, remove cache entry
+            os.remove(cache_file)
+    return None
+
+
+def set_cache(uri, data):
+    """
+        Put the data in the cache
+    """
+    if not uri or not data: return
+    cache_file = CACHE_DIR + "/" + hashlib.md5(uri.encode('utf-8')).hexdigest()
+    with open(cache_file, 'w') as f:
+        f.write(json.dumps(data))
+        f.close()
+    
 
 
 

@@ -34,6 +34,7 @@ annotationHandler = AnnotationDBHandler()
 analysisHandler = AnalysisHandler()
 sampleHandler = SampleHandler()
 variantHandler = VariantHandler()
+hpoHandler = PhenotypeHandler()
 searchHandler = SearchHandler()
 adminHandler = AdminHandler()
 
@@ -126,8 +127,11 @@ app.router.add_route('GET',    "/job/{job_id}/cancel",     jobHdl.cancel)
 app.router.add_route('GET',    "/job/{job_id}/monitoring", jobHdl.monitoring)
 app.router.add_route('GET',    "/job/{job_id}/finalize",   jobHdl.finalize)
 
-app.router.add_route('GET',    "/db",     dbHdl.get)
+app.router.add_route('GET',    "/db",       dbHdl.get)
 app.router.add_route('GET',    "/db/{ref}", dbHdl.get)
+
+app.router.add_route('POST',   "/hpo/search",   hpoHandler.search)
+app.router.add_route('GET',    "/hpo/{hpo_id}", hpoHandler.get)
 
 
 
@@ -160,6 +164,8 @@ app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}", ana
 app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.delete_filter)          # Delete a filter
 app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",          analysisHandler.filtering)              # Get result (variants) of the provided filter
 app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/{variant_id}", analysisHandler.filtering)          # Get total count of result of the provided filter
+#app.router.add_route('GET',    "/analysis/{analysis_id}/select/{variant_id}", analysisHandler.select)                # Select the variant/trx with the provided id
+#app.router.add_route('GET',    "/analysis/{analysis_id}/unselect/{variant_id}", analysisHandler.select)              # Select the variant/trx with the provided id
 
 app.router.add_route('GET',    "/analysis/{analysis_id}/selection",          analysisHandler.get_selection)          # Get variants data for the provided selection
 # CRUD selection

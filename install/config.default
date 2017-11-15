@@ -40,6 +40,7 @@ DATABASES_DIR = "/var/regovar/databases"
 PIPELINES_DIR = "/var/regovar/pipelines"
 JOBS_DIR = "/var/regovar/jobs"
 
+CACHE_EXPIRATION_SECONDS = 2592000 # 30 days = 60*60*24*30
 
 
 
