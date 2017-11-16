@@ -441,7 +441,7 @@ class FilterEngine:
 
 
 
-    def prepare(self, analysis, filter_json, order=None):
+    def prepare(self, analysis, filter_json, order=[]):
         """
             Build tmp table for the provided filter/order by parameters
             set also the total count of variant/transcript
@@ -450,20 +450,21 @@ class FilterEngine:
         log("---\nPrepare tmp working table for analysis {}".format(analysis.id))
         progress = {"start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0}
         core.notify_all(None, data={'action':'filtering_prepare', 'data': progress})
+        if order and len(order) == 0: order = None
 
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
         query = "DROP TABLE IF EXISTS {0}_tmp CASCADE; CREATE TABLE {0}_tmp AS "
         query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, array_remove(array_agg(trx_pk_value), NULL) as trx, count(*)-1 as trx_count{1} FROM {0}{2} GROUP BY variant_id{1};"
         
-        f_fields = ", chr, pos" if order is None else "," + ", ".join(order)
-        f_order = "chr, pos" if order is None else ", ".join(order)
+        f_fields = ", " + ", ".join([self.parse_order_field(analysis, f) for f in  order]) if order else ", chr, pos"
+        f_order  = ", ".join(["{}{}".format(self.parse_order_field(analysis, f), " DESC" if f[0] == "-" else "") for f in  order]) if order else "chr, pos"
         f_filter = self.parse_filter(analysis, filter_json, order)
         f_filter = " WHERE {0}".format(f_filter) if len(filter_json[1]) > 0 else ""
         query = query.format(w_table, f_fields, f_filter, f_order)
 
         sql_result = None
-        log("Filter: {0}\nOrder: {1}\nQuery: {2}".format(filter_json, order, query))
+        log("Filter: {0}\nFields:{1} \nOrder: {2}\nQuery: {3}".format(filter_json, analysis.fields, order, query))
         with Timer() as t:
             sql_result = execute(query)
             execute("CREATE INDEX {0}_tmp_page ON {0}_tmp USING btree (page);".format(w_table))
@@ -475,7 +476,7 @@ class FilterEngine:
         settings = {}
         try:
             analysis.filter = filter_json
-            analysis.order = [] if order is None else order
+            analysis.order = order or []
             analysis.total_variants = total_variant
             analysis.save()
         except:
@@ -673,30 +674,21 @@ class FilterEngine:
 
        
        
-    def parse_order(self, analysis, order):
-        """
-            Parse the json order and return the corresponding postgreSQL query
-        """
-        if order is None or len(order) == 0:
-            return ""
-        
-        orders = []
-        for f_uid in order:
-            asc = 'ASC'
-            if f_uid[0] == '-':
-                f_uid = f_uid[1:]
-                asc = 'DESC'
-            if self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Regovar']:
-                # Manage special case for fields splitted by sample
-                if self.fields_map[f_uid]['name'].startswith('s{}_'):
-                    # TODO : actually, it's not possible to do "order by" on special fields (GT and DP because they are split by sample)
-                    pass
-                else:
-                    orders.append('{} {}'.format(self.fields_map[f_uid]["name"], asc))
-            else:
-                orders.append('_{} {}'.format(f_uid, asc))
-        return ', '.join(orders)
 
+    def parse_order_field(self, analysis, uid):
+        """
+            Return the SQL column name to use for the provided field uid
+        """
+        # Manage case of uid comming from order json (which can prefix uid by "-" for ordering DESC
+        uid = uid[1:] if uid[0] == '-' else uid
+        
+        if self.fields_map[uid]['db_name_ui'] in ['Variant', 'Regovar']:
+            # Manage special case for fields splitted by sample
+            if self.fields_map[uid]['name'].startswith('s{}_'):
+                return self.fields_map[uid]['name'].format(analysis.samples_ids[0])
+            else:
+                return self.fields_map[uid]["name"]
+        return "_" + uid
 
 
 

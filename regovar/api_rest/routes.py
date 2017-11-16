@@ -148,7 +148,6 @@ app.router.add_route('POST',   "/variant", variantHandler.new)                  
 
 app.router.add_route('GET',    "/sample/browse/{ref_id}", sampleHandler.tree)                                        # Get sampleslist for the requested reference
 app.router.add_route('GET',    "/sample", sampleHandler.list)                                                        # Get list of all samples in database
-#app.router.add_route('GET',    "/sample/{ref_id}", sampleHandler.list)                                              # Get list of all samples in database for the provided genome reference
 app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)                                             # Get specific sample's database
 app.router.add_route('GET',    "/sample/import/{file_id}/{ref_id}", sampleHandler.import_from_file)                  # import sample's data from the file (vcf supported)
 app.router.add_route('PUT',    "/sample/{sample_id}", sampleHandler.update)                                          # Update sample informations
@@ -164,8 +163,8 @@ app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}", ana
 app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.delete_filter)          # Delete a filter
 app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",          analysisHandler.filtering)              # Get result (variants) of the provided filter
 app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/{variant_id}", analysisHandler.filtering)          # Get total count of result of the provided filter
-#app.router.add_route('GET',    "/analysis/{analysis_id}/select/{variant_id}", analysisHandler.select)                # Select the variant/trx with the provided id
-#app.router.add_route('GET',    "/analysis/{analysis_id}/unselect/{variant_id}", analysisHandler.select)              # Select the variant/trx with the provided id
+app.router.add_route('GET',    "/analysis/{analysis_id}/select/{variant_id}",    analysisHandler.select)             # Select the variant/trx with the provided id
+app.router.add_route('GET',    "/analysis/{analysis_id}/unselect/{variant_id}",  analysisHandler.unselect)           # Unselect the variant/trx with the provided id
 
 app.router.add_route('GET',    "/analysis/{analysis_id}/selection",          analysisHandler.get_selection)          # Get variants data for the provided selection
 # CRUD selection

@@ -130,7 +130,22 @@ class AnalysisHandler:
         except Exception as err:
             return rest_error("Filtering error: " + str(err))
         return rest_success(result)
-
+    
+    
+    async def select(self, request):
+        analysis_id = request.match_info.get('analysis_id', -1)
+        variant_id = request.match_info.get('variant_id', None)
+        analysis = Analysis.from_id(analysis_id)
+        
+        if not variant_id or not analysis:
+            return rest_error("Analysis or variant not valid")
+        
+        return rest_success()
+    
+    
+    
+    async def unselect(self, request):
+        return rest_success()
 
 
 
