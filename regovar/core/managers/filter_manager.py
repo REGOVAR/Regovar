@@ -164,7 +164,7 @@ class FilterEngine:
         query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE TABLE {0}_var (id bigint, vcf_line bigint); "
         execute(query.format(wt))
         
-        query = "INSERT INTO {0}_var (id, vcf_line) SELECT DISTINCT variant_id, vcf_line FROM sample_variant{1} WHERE sample_id IN ({2}); "
+        query = "INSERT INTO {0}_var (id, vcf_line) SELECT DISTINCT variant_id, vcf_line FROM sample_variant{1} WHERE sample_id IN ({2}) AND ref<>alt; "
         res = execute(query.format(wt, analysis.db_suffix, ",".join([str(sid) for sid in analysis.samples_ids])))
         
         # set total number of variant for the analysis

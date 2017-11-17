@@ -629,24 +629,34 @@ class VcfManager(AbstractImportManager):
                         samples_array.append(samples[sp.name].id)
                 if len(samples_array) == 0: continue
                 # save variant
-                samples_array = ','.join([str(s) for s in samples_array])
+                samples_array = ",".join([str(s) for s in samples_array])
                 sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
                         
                 # Register variant/sample associations
                 for sn in row.samples:
                     sp = row.samples.get(sn)
+                    gt = normalize_gt(sp)
                     filters = escape_value_for_sql(json.dumps(row.filter.keys()))
                     count += 1
                     if allele in sp.alleles:
-                        # Get allelic depth if exists (AD field)
-                        depth_alt = sp["AD"][sp.alleles.index(allele)] if "AD" in sp.keys() else 'NULL'
-                        sql_query2 += sql_pattern2.format(samples[sn].id, vcf_line, bin, chrm, pos, ref, alt, normalize_gt(sp), get_info(sp, 'DP'), depth_alt, row.qual, filters)
+                        if "AD" in sp.keys():
+                            # Get allelic depth if exists (AD field)
+                            depth_alt = sp["AD"][sp.alleles.index(allele)] 
+                        elif "DP4" in sp.keys():
+                            if gt == 0:
+                                depth_alt = sum(sp["DP4"])
+                            else:
+                                depth_alt = sp["DP4"][2] + sp["DP4"][3] if alt != ref else sp["DP4"][0] + sp["DP4"][1]
+                        else :
+                            depth_alt = "NULL"
+                        
+                        sql_query2 += sql_pattern2.format(samples[sn].id, vcf_line, bin, chrm, pos, ref, alt, gt, get_info(sp, "DP"), depth_alt, row.qual, filters)
                     else:
                         # save that the sample HAVE NOT this variant
-                        sql_query2 += sql_pattern2.format(samples[sn].id, vcf_line, bin, chrm, pos, ref, alt, -1, 0, 0, row.qual, filters)
+                        sql_query2 += sql_pattern2.format(samples[sn].id, vcf_line, bin, chrm, pos, ref, alt, -1, get_info(sp, "DP"), "NULL", row.qual, filters)
                 
                 # Register variant annotations
-                for ann_name, importer in vcf_metadata['annotations'].items():
+                for ann_name, importer in vcf_metadata["annotations"].items():
                     if importer:
                         vep_query, vep_count = importer.import_annotations(sql_annot_trx, bin, chrm, pos, ref, alt, row.info)
                         sql_query3 += vep_query
