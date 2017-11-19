@@ -127,10 +127,7 @@ class SampleHandler:
             for s in samples:
                 if hasattr(params, "subject_id") and params["subject_id"]: 
                     s.subject_id = params["subject_id"]
-                else:
-                    # TODO: create new empty subject and associate it to the sample
-                    log("TODO : link sample {} to new empty subject".format(s.id))
-                if params["analysis_id"]: 
+                if hasattr(params, "analysis_id") and params["analysis_id"]: 
                     AnalysisSample.new(s.id, params["analysis_id"])
             return rest_success([s.to_json() for s in samples])
         

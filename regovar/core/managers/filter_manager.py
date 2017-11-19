@@ -549,7 +549,7 @@ class FilterEngine:
         """
         from core.core import core
         w_table = 'wt_{}'.format(analysis.id)
-        query = "SELECT ws.variant_id, ws.trx_count, {1} FROM {0}_tmp ws INNER JOIN {0} wt ON ws.variant_id=wt.variant_id WHERE wt.is_variant AND ws.page>={2} ORDER BY ws.page LIMIT {3}"
+        query = "SELECT ws.variant_id, wt.is_selected, ws.trx_count, {1} FROM {0}_tmp ws INNER JOIN {0} wt ON ws.variant_id=wt.variant_id WHERE wt.is_variant AND ws.page>={2} ORDER BY ws.page LIMIT {3}"
         
         query = query.format(w_table, self.parse_fields(analysis, fields, "wt."), offset, limit)
         sql_result = None
@@ -569,7 +569,7 @@ class FilterEngine:
         w_table = 'wt_{}'.format(analysis.id)
         
         sub_query = "SELECT unnest(trx) FROM {0}_tmp WHERE variant_id={1}".format(w_table, variant_id)
-        query = "SELECT variant_id, trx_pk_value as trx_id, {1} FROM {0} WHERE variant_id={2} AND trx_pk_value IN ({3})"
+        query = "SELECT variant_id, trx_pk_value as trx_id, is_selected, {1} FROM {0} WHERE variant_id={2} AND trx_pk_value IN ({3})"
         
         query = query.format(w_table, self.parse_fields(analysis, fields, ""), variant_id, sub_query)
         sql_result = None
@@ -629,9 +629,9 @@ class FilterEngine:
             if sql_result is not None:
                 for row in sql_result:
                     if vmode:
-                        entry = {"id" : str(row.variant_id), "trx_count": row.trx_count}
+                        entry = {"id" : str(row.variant_id), "is_selected": row.is_selected, "trx_count": row.trx_count}
                     else:
-                        entry = {"id" : "{}_{}".format(row.variant_id, row.trx_id)}
+                        entry = {"id" : "{}_{}".format(row.variant_id, row.trx_id), "is_selected": row.is_selected}
                     for f_uid in fields:
                         # Manage special case for fields splitted by sample
                         if self.fields_map[f_uid]['name'].startswith('s{}_'):

@@ -11,6 +11,7 @@ import asyncio
 import subprocess
 import re
 import json
+import requests
 
 
 from config import LOG_DIR, CACHE_DIR, CACHE_EXPIRATION_SECONDS
@@ -159,6 +160,19 @@ def array_merge(array1, array2):
     return result
 
 
+
+def get_cached_url(url, headers={}):
+    result = get_cache(url)
+
+    if result is None:
+        res = requests.get(url, headers=headers)
+        if res.ok:
+            try:
+                result = json.loads(res.content.decode())
+                set_cache(url, result)
+            except Exception as ex:
+                raise RegovarException("Unable to cache result of the query:" + url, ex)
+    return result
 
 
 def get_cache(uri):

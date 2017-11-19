@@ -98,7 +98,7 @@
                     <li><a data-toggle="tab" href="#db"><i class="glyphicon glyphicon-book"></i> Database</a></li>
                     
                     <li><a data-toggle="tab" href="#annot"><i class="glyphicon glyphicon-tag"></i> Annotations</a></li>
-                    <li><a data-toggle="tab" href="#var"><i class="glyphicon glyphicon-folder-open"></i> Variants</a></li>
+                    <li><a data-toggle="tab" href="#search"><i class="glyphicon glyphicon-search"></i> Search</a></li>
                     <li><a data-toggle="tab" href="#sample"><i class="glyphicon glyphicon glyphicon-tint"></i> Samples</a></li>
                     <li><a data-toggle="tab" href="#analysis"><i class="glyphicon glyphicon-equalizer"></i> Analyses</a></li>
                     
@@ -140,14 +140,29 @@
 
                 <hr/>
                 <h2>Changes log</h2>
-                <h3>0.2.0 [Current]</h3>
+                <h3>0.5.dev [Current]</h3>
+                <ul><li>Search feature and endpoints</li>
+                    <li>Removing "Variant" endpoints (replaced by search)</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.4.dev</h3>
+                <ul><li>HPO integration</li>
+                    <li>Python 3.6</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.3.dev</h3>
+                <ul><li>PostgresSQL 9.6</li>
+                    <li>Subject CRUD implementation</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.2.dev</h3>
                 <ul><li>API online documentation (here you are)</li>
                     <li>Adding Pirus v0.2.0 endpoints</li>
                     <li>Adding Annso v0.2.0 endpoints</li>
                     <li>Rework 0.1.0 existings endpoints to be more complient with core and cli api</li>
                 </ul>
-                <h3>0.1.0</h3>
-                <ul><li>First version of the API with endpoints to manage users and</li>
+                <h3>0.1.dev</h3>
+                <ul><li>First version of the API with endpoints to manage users and authentication</li>
                 </ul>
             </div>
 
@@ -1103,18 +1118,20 @@
 
 
 
-            <!--          -->
-            <!-- VARIANTS -->
-            <!--          -->
-            <div id="var" class="tab-pane fade">
-                <h1>Variants REST api</h1>
-                <p>API to manage regovar's variants database used for dynamic filtering.</p>
+            <!--        -->
+            <!-- SEARCH -->
+            <!--        -->
+            <div id="search" class="tab-pane fade">
+                <h1>Search REST api</h1>
+                <p>API to search amongs all regovar's data and also several public API like HGNC or OMIM.</p>
                 <div class="panel with-nav-tabs panel-default">
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
-                            <li class="active"><a href="#annot_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show</a></li>
-                            <li><a href="#var_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show (analysis context)</a></li>
-                            <!--<li><a href="#var_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> new</a></li>-->
+                            <li class="active"><a href="#search_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> search</a></li>
+                            <li><a href="#search_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> fetch variant</a></li>
+                            <li><a href="#search_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> fetch gene</a></li>
+                            <li><a href="#search_api_04" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> fetch phenotype</a></li>
+                            <!--<li><a href="#search_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> new</a></li>-->
                         </ul>
                     </div>
 
@@ -1122,33 +1139,43 @@
                     <div class="panel-body">
                         <div class="tab-content">
                             <!-- show variant -->
-                            <div class="tab-pane fade in active" id="annot_api_01">
+                            <div class="tab-pane fade in active" id="search_api_01">
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /variant/{ref_id}/{variant_id}</code><br/>
-                                        <i>Return all information about the given variant.</i>
+                                        <code>GET /search/{query}</code><br/>
+                                        <i>Search provided query in following "objects" :<ul>
+                                            <li>variant :   ILIKE "chr:pos ref>alt" || "chr:pos_start-pos_end" || "chr:pos~delta " || "chr:pos"</li>
+                                            <li>project :   ILIKE "%name%"</li>
+                                            <li>analysis :  ILIKE "%name%"</li>
+                                            <li>sample :    ILIKE "%name%"</li>
+                                            <li>subject :   ILIKE "%firstname|lastname|identifiant%"</li>
+                                            <li>file :      ILIKE "%name%"</li>
+                                            <li>gene :      ILIKE "%name%"</li>
+                                            <li>phenotype : ILIKE "%name%" | "HP:id" </li>
+                                            <li>disease :   ILIKE "%name%" | "OMIM:id" | "ORPHA:id"</li>
+                                            <li>user :      ILIKE "%login|firstname|lastname%"</li>
+                                            <li>pipeline :  ILIKE "%name%"</li>
+                                            <li>panel :     ILIKE "%name%"</li></ul></i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
-                                        <code>ref_id</code><br/>
-                                        <i>The id of the reference.</i><br/><br/>
-                                        <code>variant_id</code><br/>
-                                        <i>The id of the variant.</i>
+                                        <code>query</code><br/>
+                                        <i>The query as string.</i><br/><br/>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="var_api_01_query" type="text" placeholder="/variant/{ref_id}/{variant_id}" value="/variant/2/1"/> 
-                                        <button onclick="generic_exec_from_input('var_api_01_query', 'var_result');" class="btn btn-primary">Test it</button>
+                                        <input id="search_api_01_query" type="text" placeholder="/search/{query}" value="/search/e"/> 
+                                        <button onclick="generic_exec_from_input('search_api_01_query', 'search_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- show variant (analysis context) -->
-                            <div class="tab-pane fade" id="var_api_02">
+                            <div class="tab-pane fade" id="search_api_02">
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1170,68 +1197,73 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="var_api_02_query" type="text" placeholder="/variant/{ref_id}/{variant_id}/{analysis_id}" value="/variant/2/1/1"/> 
-                                        <button onclick="generic_exec_from_input('var_api_02_query', 'var_result');" class="btn btn-primary">Test it</button>
+                                        <input id="search_api_02_query" type="text" placeholder="/variant/{ref_id}/{variant_id}/{analysis_id}" value="/variant/2/1/1"/> 
+                                        <button onclick="generic_exec_from_input('search_api_02_query', 'search_result');" class="btn btn-primary">Test it</button>
                                     </div>
                                 </div>
                             </div>
-                            <!-- show annotation database -->
-                            <div class="tab-pane fade" id="var_api_03">
-                                <div class="alert alert-danger">
-                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
-                                </div>
+                            <!-- show variant (analysis context) -->
+                            <div class="tab-pane fade" id="search_api_03">
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>POST /variant</code><br/>
-                                        <i>Import all variant and their annotations provided as json in the POST body into the database.</i>
+                                        <code>GET /variant/{ref_id}/{variant_id}/{analysis_id}</code><br/>
+                                        <i>Return all available information about the given variant + data in the context of the analysis.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
-                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
-                                        <pre>[
-    {
-        sample_id:int, 
-        bin:int, 
-        chr:enum, 
-        pos:int, 
-        ref:str, 
-        samples:[
-        {
-            id:int,
-            alt:str, 
-            dp:int, 
-            gt:enum
-        },
-        ...], 
-        annotations:
-        [
-            {&lt;field_uid&gt;:&lt;field_value&gt;},
-        ...]
-    }, 
-    ...
-]</pre><br/>
-                                        <i>The list of variant and their annotation. Note that annotation database and field must already exists in the database (see annotation api to see how to manage it).</i>
+                                        <code>ref_id</code><br/>
+                                        <i>The id of the reference.</i><br/><br/>
+                                        <code>variant_id</code><br/>
+                                        <i>The id of the variant.</i><br/><br/>
+                                        <code>analysis_id</code><br/>
+                                        <i>The id of the analysis.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        Query : 
-                                        <input id="var_api_03_query" type="text" placeholder="/variant" value="/variant"/><br/>
-                                        Body : <br/>
-                                        <textarea id="var_api_03_body" cols="40" rows="6">{...}</textarea><br/>
-                                        <button onclick="generic_exec_body('var_api_03_query', 'var_api_03_body', 'var_result', 'POST');" class="btn btn-primary">Test it</button>
+                                        <input id="search_api_03_query" type="text" placeholder="/variant/{ref_id}/{variant_id}/{analysis_id}" value="/variant/2/1/1"/> 
+                                        <button onclick="generic_exec_from_input('search_api_03_query', 'search_result');" class="btn btn-primary">Test it</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- show variant (analysis context) -->
+                            <div class="tab-pane fade" id="search_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /variant/{ref_id}/{variant_id}/{analysis_id}</code><br/>
+                                        <i>Return all available information about the given variant + data in the context of the analysis.</i>
                                     </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>ref_id</code><br/>
+                                        <i>The id of the reference.</i><br/><br/>
+                                        <code>variant_id</code><br/>
+                                        <i>The id of the variant.</i><br/><br/>
+                                        <code>analysis_id</code><br/>
+                                        <i>The id of the analysis.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="search_api_04_query" type="text" placeholder="/variant/{ref_id}/{variant_id}/{analysis_id}" value="/variant/2/1/1"/> 
+                                        <button onclick="generic_exec_from_input('search_api_04_query', 'search_result');" class="btn btn-primary">Test it</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <h2>Result</h2>
-                    <button onclick="clear_container('var_result');">Clear</button>
-                    <pre id="var_result"/>
+                    <button onclick="clear_container('search_result');">Clear</button>
+                    <pre id="search_result"/>
                     </pre>
                 </div>
             </div>

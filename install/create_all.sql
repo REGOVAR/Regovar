@@ -655,8 +655,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           'V1.0.0'),
-    ('heavy_client_last_version', 'Oldest complient version of the heavy client',  'V1.0.0'),
+    ('database_version',          'The current version of the database',           '0.5.dev'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
     ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
 
@@ -685,6 +684,7 @@ INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, desc
   ('492f18b60811bf85ce118c0c6a1a5c4a', 50, 'regovar_score',    'Regovar Pred',           'enum',         'Regovar users annotation.', '{"type": "enum", "values": ["Artifact", "Yes", "No"] "Why not"]}');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
+  ('2c0a7043a9e736eaf14b6614fff102c0', 0,  'is_selected',      'Selected',                       'bool',         'Is the variant in the user selection or not.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Is the variant dominant for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 2,  'is_rec_hom',       'Recessif homozygous',            'bool',         'Is the variant recessif homozygous for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 3,  'is_rec_htzcomp',   'Recessif compound heterozygous', 'bool',         'Is the variant recessif compound heterozygous for the sample (single), or for the child (trio).', NULL),

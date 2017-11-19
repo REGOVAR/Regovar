@@ -38,7 +38,6 @@ class Core:
         # Annotations and variant management (Annso part)
         self.analyses = AnalysisManager()
         self.samples = SampleManager()
-        self.variants = VariantManager()
         self.annotations = AnnotationManager()
         self.filters = FilterEngine()
         self.phenotypes = PhenotypeManager()
@@ -47,6 +46,7 @@ class Core:
         self.projects = ProjectManager()
         self.events = EventManager()
         self.subjects = SubjectManager()
+        self.search = SearchManager()
         self.admin = AdminManager()
 
 

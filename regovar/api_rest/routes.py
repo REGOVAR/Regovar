@@ -33,7 +33,6 @@ dbHdl = DatabaseHandler()
 annotationHandler = AnnotationDBHandler()
 analysisHandler = AnalysisHandler()
 sampleHandler = SampleHandler()
-variantHandler = VariantHandler()
 hpoHandler = PhenotypeHandler()
 searchHandler = SearchHandler()
 adminHandler = AdminHandler()
@@ -142,10 +141,6 @@ app.router.add_route('GET',    "/annotation/db/{db_id}", annotationHandler.get_d
 app.router.add_route('GET',    "/annotation/field/{field_id}", annotationHandler.get_field)                          # Get the database details and the list of all its fields
 app.router.add_route('DELETE', "/annotation/db/{db_id}", annotationHandler.delete)                                   # Delete an annotation database with all its fields.
 
-app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}", variantHandler.get)                                 # Get all available information about the given variant
-app.router.add_route('GET',    "/variant/{ref_id}/{variant_id}/{analysis_id}", variantHandler.get)                   # Get all available information about the given variant + data in the context of the analysis
-app.router.add_route('POST',   "/variant", variantHandler.new)                                                       # Import all variant and their annotations provided as json in the POST body into the annso database
-
 app.router.add_route('GET',    "/sample/browse/{ref_id}", sampleHandler.tree)                                        # Get sampleslist for the requested reference
 app.router.add_route('GET',    "/sample", sampleHandler.list)                                                        # Get list of all samples in database
 app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)                                             # Get specific sample's database
@@ -173,7 +168,12 @@ app.router.add_route('GET',    "/analysis/{analysis_id}/clear_temps_data",   ana
 app.router.add_route('POST',   "/analysis/{analysis_id}/selection/{selection_id}/export/{pipe_id}",   analysisHandler.get_export)             # Export selection of the provided analysis into the requested format
 app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   analysisHandler.get_report)             # Generate report html for the provided analysis+report id
 
-app.router.add_route('GET',    "/search/{query}",                            searchHandler.get)                      # generic research
+app.router.add_route('GET',    "/search/{query}",                                     searchHandler.search)          # generic research
+app.router.add_route('GET',    "/search/variant/{ref_id}/{variant_id}",               searchHandler.fetch_variant)   # Get all available information about the given variant
+app.router.add_route('GET',    "/search/variant/{ref_id}/{variant_id}/{analysis_id}", searchHandler.fetch_variant)   # Get all available information about the given variant + data in the context of the analysis
+app.router.add_route('GET',    "/search/gene/{gene_name}",                            searchHandler.fetch_gene)      # Get all available information about the given gene
+app.router.add_route('GET',    "/search/phenotype/{hpo_id}",                          searchHandler.fetch_hpo)       # Get all available information about the given phenotype or disease (HPO/OMIM/ORPHA)
+
 
 
 app.router.add_route('GET',    "/admin/stats",                               adminHandler.stats)                   # generic research
