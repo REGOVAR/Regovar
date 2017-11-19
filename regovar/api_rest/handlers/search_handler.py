@@ -46,7 +46,7 @@ class SearchHandler:
         variant_id = request.match_info.get('variant_id', -1)
         analysis_id = request.match_info.get('analysis_id', None)
 
-        variant = core.variants.get(reference_id, variant_id, analysis_id)
+        variant = core.search.fetch_variant(reference_id, variant_id, analysis_id)
         if variant is None:
             return rest_error('Variant not found')
         return rest_success(variant)

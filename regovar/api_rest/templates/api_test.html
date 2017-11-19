@@ -1179,7 +1179,7 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /variant/{ref_id}/{variant_id}/{analysis_id}</code><br/>
+                                        <code>GET /search/variant/{ref_id}/{variant_id}(/{analysis_id})</code><br/>
                                         <i>Return all available information about the given variant + data in the context of the analysis.</i>
                                     </div>  
                                 </div>
@@ -1191,13 +1191,13 @@
                                         <code>variant_id</code><br/>
                                         <i>The id of the variant.</i><br/><br/>
                                         <code>analysis_id</code><br/>
-                                        <i>The id of the analysis.</i>
+                                        <i>The optional id of the analysis.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="search_api_02_query" type="text" placeholder="/variant/{ref_id}/{variant_id}/{analysis_id}" value="/variant/2/1/1"/> 
+                                        <input id="search_api_02_query" type="text" placeholder="/search/variant/{ref_id}/{variant_id}/{analysis_id}" value="/search/variant/2/1"/> 
                                         <button onclick="generic_exec_from_input('search_api_02_query', 'search_result');" class="btn btn-primary">Test it</button>
                                     </div>
                                 </div>
@@ -1207,25 +1207,21 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /variant/{ref_id}/{variant_id}/{analysis_id}</code><br/>
-                                        <i>Return all available information about the given variant + data in the context of the analysis.</i>
+                                        <code>GET /search/gene/{gene_name}</code><br/>
+                                        <i>Return all available information about the given gene.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
-                                        <code>ref_id</code><br/>
-                                        <i>The id of the reference.</i><br/><br/>
-                                        <code>variant_id</code><br/>
-                                        <i>The id of the variant.</i><br/><br/>
-                                        <code>analysis_id</code><br/>
-                                        <i>The id of the analysis.</i>
+                                        <code>gene_name</code><br/>
+                                        <i>The name of the gene.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="search_api_03_query" type="text" placeholder="/variant/{ref_id}/{variant_id}/{analysis_id}" value="/variant/2/1/1"/> 
+                                        <input id="search_api_03_query" type="text" placeholder="/search/gene/{gene_name}" value="/search/gene/BIRC6"/> 
                                         <button onclick="generic_exec_from_input('search_api_03_query', 'search_result');" class="btn btn-primary">Test it</button>
                                     </div>
                                 </div>
@@ -1235,25 +1231,21 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /variant/{ref_id}/{variant_id}/{analysis_id}</code><br/>
-                                        <i>Return all available information about the given variant + data in the context of the analysis.</i>
+                                        <code>GET /search/phenotype/{hpo_id}</code><br/>
+                                        <i>Return all available information about the given HPO id. HPO id can be of 3 kinds: HPO:{id} for phenotype entries, OMIM:{id} and ORPHA:{id} for disease entries.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
-                                        <code>ref_id</code><br/>
-                                        <i>The id of the reference.</i><br/><br/>
-                                        <code>variant_id</code><br/>
-                                        <i>The id of the variant.</i><br/><br/>
-                                        <code>analysis_id</code><br/>
-                                        <i>The id of the analysis.</i>
+                                        <code>hpo_id</code><br/>
+                                        <i>The id of the phenotype or disease.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="search_api_04_query" type="text" placeholder="/variant/{ref_id}/{variant_id}/{analysis_id}" value="/variant/2/1/1"/> 
+                                        <input id="search_api_04_query" type="text" placeholder="/search/phenotype/{hpo_id}" value="/search/phenotype/hpo_0000145"/> 
                                         <button onclick="generic_exec_from_input('search_api_04_query', 'search_result');" class="btn btn-primary">Test it</button>
                                     </div>
                                 </div>

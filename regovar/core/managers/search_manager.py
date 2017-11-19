@@ -400,7 +400,9 @@ class SearchManager:
                     ]})
                 # Get phenotype associated to the gene
                 hpo_data = core.phenotypes.get(gene)
+                gene_data = self.fetch_gene(gene)
                 result.update(hpo_data)
+                result.update({"gene":gene_data})
                 
             if analysis_id is not None:
                 result.update({"analysis": {"id": analysis_id}})
