@@ -66,17 +66,15 @@ class AnalysisHandler:
 
     async def new(self, request):
         """
-            Creae 
+            Create new analysis
         """
-        # 1- Retrieve data from request
+        # Retrieve data from request
         data = await request.json()
         try:
             
             project_id = data["project_id"]
             name = data["name"]
             ref_id = data["reference_id"]
-            samples = data["samples_ids"] if "samples_ids" in data.keys() else []
-            settings = data["settings"] if "settings" in data.keys() else None
             template_id = data["template_id"] if "template_id" in data.keys() else None
         except Exception as ex:
             return rest_error("Unable to create new analysis. Provided data missing or corrupted. " + str(ex))
@@ -196,14 +194,13 @@ class AnalysisHandler:
 
 
 
-    async def get_selection(self, request):
-        data = await request.json()
+    def get_selection(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
 
         try:
-            result = core.analyses.get_selection(analysis_id, data)
-        except Exception as err:
-            return rest_error("AnalysisHandler.get_selection error: " + str(err))
+            result = core.analyses.get_selection(analysis_id)
+        except Exception as ex:
+            return rest_error("AnalysisHandler.get_selection error", ex)
         return rest_success(result)
 
 
@@ -229,7 +226,7 @@ class AnalysisHandler:
         try:
             await core.analyses.load_file(analysis_id, file_id)
         except Exception as ex:
-            return rest_error("Error occured ! Wrong file: " + str(ex))
+            return rest_error("Error occured ! Wrong file: ",ex)
         return rest_success()
 
 

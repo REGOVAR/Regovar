@@ -357,7 +357,7 @@ def analysissample_delete(analysis_id, sample_id):
         Delete the link between an analysis and a sample
     """
     # TODO : delete linked filters, AnalysisSample, Attribute, WorkingTable
-    session().query(AnalysisSample).filter_by(analysis_id=analysis_id, sample_id=sample_id).delete(synchronize_session=False)
+    session().query(AnalysisSample).filter_by(analysis_id=analysis_id, sample_id=sample_id).delete()
 
 
 AnalysisSample = Base.classes.analysis_sample
@@ -368,6 +368,84 @@ AnalysisSample.get_analyses = analysissample_get_analyses
 AnalysisSample.save = generic_save
 AnalysisSample.new = analysissample_new
 AnalysisSample.delete = analysissample_delete
+
+
+
+
+# =====================================================================================================================
+# ANALYSIS FILE
+# =====================================================================================================================
+AnalysisFile = Base.classes.analysis_file
+
+
+def analysisfile_get_files_ids(analysis_id):
+    """
+        Return the list of file ids of an analysis
+    """
+    return [f.file_id for f in session().query(AnalysisFile).filter_by(analysis_id=analysis_id).all()]
+
+
+def analysisfile_get_analyses_ids(file_id):
+    """
+        Return the list of analyses ids where the file is linked
+    """
+    return [a.analysis_id for a in session().query(AnalysisFile).filter_by(file_id=file_id).all()]
+
+
+def analysisfile_get_files(analysis_id, loading_depth=0):
+    """
+        Return the list of files used in an analysis
+    """
+    from core.model.sample import File
+    files_ids = analysisfile_get_files_ids(analysis_id)
+    result = []
+    if len(files_ids) > 0:
+        files = session().query(File).filter(File.id.in_(files_ids)).all()
+        for f in files:
+            f.init(loading_depth)
+            result.append(f)
+    return result
+
+
+def analysisfile_get_analyses(file_id, loading_depth=0):
+    """
+        Return the list of analyses that have the file
+    """
+    result = []
+    analyses_ids = analysisfile_get_analyses_ids(sample_id)
+    if len(analyses_ids) > 0:
+        analyses = session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
+        for a in analyses:
+            a.init(loading_depth)
+            result.append(a)
+    return result
+
+
+def analysisfile_new(analysis_id, file_id):
+    """
+        Create a new analysis-file association and save it in the database
+    """
+    sf = AnalysisFile(analysis_id=analysis_id, file_id=file_id)
+    sf.save()
+    return sf
+
+
+def analysisfile_delete(analysis_id, file_id):
+    """
+        Delete the link between an analysis and a file
+    """
+    # TODO : delete linked filters, AnalysisFile, Attribute, WorkingTable
+    session().query(AnalysisFile).filter_by(analysis_id=analysis_id, file_id=file_id).delete()
+
+
+AnalysisFile = Base.classes.analysis_file
+AnalysisFile.get_files_ids = analysisfile_get_files_ids
+AnalysisFile.get_analyses_ids = analysisfile_get_analyses_ids
+AnalysisFile.get_files = analysisfile_get_files
+AnalysisFile.get_analyses = analysisfile_get_analyses
+AnalysisFile.save = generic_save
+AnalysisFile.new = analysisfile_new
+AnalysisFile.delete = analysisfile_delete
 
 
 

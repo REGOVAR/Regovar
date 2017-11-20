@@ -449,6 +449,12 @@ CREATE TABLE public.subject_file
     CONSTRAINT sf_pkey PRIMARY KEY (subject_id, file_id)
 );
 
+CREATE TABLE public.analysis_file
+(
+    analysis_id integer NOT NULL,
+    file_id integer NOT NULL,
+    CONSTRAINT analysis_file_pkey PRIMARY KEY (analysis_id, file_id)
+);
 
 
 

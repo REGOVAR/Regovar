@@ -9,7 +9,7 @@ from core.model.pipeline import Pipeline
 from core.model.job import Job, MonitoringLog, JobFile
 
 # Annso import
-from core.model.analysis import Analysis, AnalysisSample
+from core.model.analysis import Analysis, AnalysisSample, AnalysisFile
 from core.model.annotation import AnnotationDatabase, AnnotationField
 from core.model.filter import Filter
 from core.model.sample import Sample, SampleVariant

@@ -400,9 +400,10 @@ class SearchManager:
                     ]})
                 # Get phenotype associated to the gene
                 hpo_data = core.phenotypes.get(gene)
+                if hpo_data: result.update(hpo_data)
+
                 gene_data = self.fetch_gene(gene)
-                result.update(hpo_data)
-                result.update({"gene":gene_data})
+                if gene_data: result.update({"gene":gene_data})
                 
             if analysis_id is not None:
                 result.update({"analysis": {"id": analysis_id}})
@@ -410,13 +411,48 @@ class SearchManager:
         return None
 
 
-    def fetch_gene(self, genename):
+    def fetch_gene(self, genename, ref_id=None):
         # Get gene common information
+        from core.core import core
         query = "http://rest.genenames.org/fetch/symbol/{}".format(genename)
         data = get_cached_url(query, headers={"Accept": "application/json"})
+        if data:
+            data = data['response']['docs'][0]
 
-        # Get gene phenotype/disease related
-        return data['response']['docs'][0]
+            # Get omim data
+            omim = data["omim_id"][0] if "omim_id" in data and len(data["omim_id"]) > 0 else None
+            if omim:
+                omim = get_cached_url("https://api.omim.org/api/entry?mimNumber={}&include=all".format(omim),  headers={"Accept": "application/json", "apiKey": OMIM_API_KEY})
+                omim = omim["omim"]["entryList"][0]["entry"]["textSectionList"][0]["textSection"]["textSectionContent"]
+                data.update({"omim_description": omim})
+
+            # get refgene data
+            query = "SELECT chr, txrange, cdsrange, exoncount, trxcount FROM refgene_{} WHERE name2 ilike '{}'"
+            refgene = []
+            if ref_id:
+                res = execute(query.format(core.annotations.ref_list[ref_id].lower(), genename)).first()
+                refgene.append({
+                    "id": ref_id, 
+                    "name": core.annotations.ref_list[ref_id], 
+                    "start": res.txrange.lower,
+                    "size": res.txrange.upper - res.txrange.lower,
+                    "exon": res.exoncount,
+                    "trx": res.trxcount})
+            else:
+                for ref_id in core.annotations.ref_list.keys():
+                    if ref_id > 0:
+                        suffix = core.annotations.ref_list[ref_id].lower() # execute("SELECT table_suffix FROM reference WHERE id={}".format(ref_id)).first().table_suffix
+                        res = execute(query.format(suffix, genename)).first()
+                        if res:
+                            refgene.append({
+                                "id": ref_id, 
+                                "name": core.annotations.ref_list[ref_id], 
+                                "start": res.txrange.lower,
+                                "size": res.txrange.upper - res.txrange.lower,
+                                "exon": res.exoncount,
+                                "trx": res.trxcount})
+            data.update({"refgene": refgene})
+        return data
 
 
     def fetch_phenotype(self, phenotype_id):

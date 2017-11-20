@@ -169,7 +169,6 @@ class FileManager:
     def from_local(self, path, move=False, metadata={}):
         """ 
             Copy or move a local file on server and create a new Pirus file. Of course the source file shall have good access rights. 
-            TODO : implementation have to be fixed
         """
         if not os.path.isfile(path):
             raise RegovarException("File \"{}\" doesn't exists.".format(path))

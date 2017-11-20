@@ -147,26 +147,23 @@ app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)        
 app.router.add_route('GET',    "/sample/import/{file_id}/{ref_id}", sampleHandler.import_from_file)                  # import sample's data from the file (vcf supported)
 app.router.add_route('PUT',    "/sample/{sample_id}", sampleHandler.update)                                          # Update sample informations
 
-app.router.add_route('GET',    "/analysis",                                  analysisHandler.list)                   # List analyses
-app.router.add_route('POST',   "/analysis",                                  analysisHandler.new)                    # Create new analysis
-app.router.add_route('GET',    "/analysis/{analysis_id}",                    analysisHandler.get)                    # Get analysis metadata
-app.router.add_route('PUT',    "/analysis/{analysis_id}",                    analysisHandler.update)                 # Save analysis metadata
-#app.router.add_route('POST',   "/analysis/{analysis_id}/load/{file_id}",     analysisHandler.load_file)              # TODO : Load a file (vcf and ped supported) to setup the analysis data (variant/annotations/samples)
-app.router.add_route('GET',    "/analysis/{analysis_id}/filter",             analysisHandler.get_filters)            # Get list of available filter for the provided analysis
-app.router.add_route('POST',   "/analysis/{analysis_id}/filter",             analysisHandler.create_update_filter)   # Create a new filter for the analisis
-app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.create_update_filter)   # Update filter
-app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}", analysisHandler.delete_filter)          # Delete a filter
-app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",          analysisHandler.filtering)              # Get result (variants) of the provided filter
-app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/{variant_id}", analysisHandler.filtering)          # Get total count of result of the provided filter
-app.router.add_route('GET',    "/analysis/{analysis_id}/select/{variant_id}",    analysisHandler.select)             # Select the variant/trx with the provided id
-app.router.add_route('GET',    "/analysis/{analysis_id}/unselect/{variant_id}",  analysisHandler.unselect)           # Unselect the variant/trx with the provided id
-
-app.router.add_route('GET',    "/analysis/{analysis_id}/selection",          analysisHandler.get_selection)          # Get variants data for the provided selection
-# CRUD selection
-app.router.add_route('GET',    "/analysis/{analysis_id}/clear_temps_data",   analysisHandler.clear_temps_data)       # Clear temporary data (to save disk space by example)
-
-app.router.add_route('POST',   "/analysis/{analysis_id}/selection/{selection_id}/export/{pipe_id}",   analysisHandler.get_export)             # Export selection of the provided analysis into the requested format
-app.router.add_route('POST',   "/analysis/{analysis_id}/report/{pipe_id}",   analysisHandler.get_report)             # Generate report html for the provided analysis+report id
+app.router.add_route('GET',    "/analysis",                                      analysisHandler.list)                 # List analyses
+app.router.add_route('POST',   "/analysis",                                      analysisHandler.new)                  # Create new analysis
+app.router.add_route('GET',    "/analysis/{analysis_id}",                        analysisHandler.get)                  # Get analysis metadata
+app.router.add_route('PUT',    "/analysis/{analysis_id}",                        analysisHandler.update)               # Save analysis metadata
+#app.router.add_route('POST',   "/analysis/{analysis_id}/load/{file_id}",         analysisHandler.load_file)            # TODO : Load a file (vcf and ped supported) to setup the analysis data (variant/annotations/samples)
+app.router.add_route('GET',    "/analysis/{analysis_id}/filter",                 analysisHandler.get_filters)          # Get list of available filter for the provided analysis
+app.router.add_route('POST',   "/analysis/{analysis_id}/filter",                 analysisHandler.create_update_filter) # Create a new filter for the analisis
+app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}",     analysisHandler.create_update_filter) # Update filter
+app.router.add_route('DELETE', "/analysis/{analysis_id}/filter/{filter_id}",     analysisHandler.delete_filter)        # Delete a filter
+app.router.add_route('POST',   "/analysis/{analysis_id}/filtering",              analysisHandler.filtering)            # Get result (variants) of the provided filter
+app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/{variant_id}", analysisHandler.filtering)            # Get total count of result of the provided filter
+app.router.add_route('GET',    "/analysis/{analysis_id}/select/{variant_id}",    analysisHandler.select)               # Select the variant/trx with the provided id
+app.router.add_route('GET',    "/analysis/{analysis_id}/unselect/{variant_id}",  analysisHandler.unselect)             # Unselect the variant/trx with the provided id
+app.router.add_route('GET',    "/analysis/{analysis_id}/selection",              analysisHandler.get_selection)        # Return list of selected variant (with same columns as set for the current filter)
+app.router.add_route('GET',    "/analysis/{analysis_id}/export/{exporter_name}", analysisHandler.get_export)           # Export selection of the provided analysis into the requested format
+app.router.add_route('GET',    "/analysis/{analysis_id}/report/{exporter_name}", analysisHandler.get_report)           # Generate report html for the provided analysis+report id
+app.router.add_route('GET',    "/analysis/{analysis_id}/clear_temps_data",       analysisHandler.clear_temps_data)     # Clear temporary data (to save disk space by example)
 
 app.router.add_route('GET',    "/search/{query}",                                     searchHandler.search)          # generic research
 app.router.add_route('GET',    "/search/variant/{ref_id}/{variant_id}",               searchHandler.fetch_variant)   # Get all available information about the given variant

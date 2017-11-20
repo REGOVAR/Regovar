@@ -1,7 +1,8 @@
 #!env/python3
 # coding: utf-8
 import ipdb
-
+import os
+from importlib import import_module
 
 import config as C
 from core.framework.common import *
@@ -55,6 +56,13 @@ class Core:
         # to really do a notification. (See how api_rest override this method)
         self.notify_all = notify_all_print
 
+        # module loaded dynamicaly as this part of the server should be heavily customisable. 
+        # Even is there is bug in these module, the server shall works. but the wrong module is unvailable
+        # TODO: manage dynamic reload of modules for better user/sysadmin experience
+        self.exporters = {}
+        self.reporters = {}
+        self.importers = {}
+        self.load_export_managers()
 
 
 
@@ -66,6 +74,28 @@ class Core:
 
 
 
+    def load_export_managers(self):
+        # TODO: clean/unload former exporters if self.exporters is not empty
+        self.exporters = {}
+        # Get modules
+        path = "core/managers/exports/"
+        mods = [f.split(".")[0] for f in os.listdir(path) if not (f.startswith("__") or f.startswith("abstract_"))]
+        
+        for m in mods:
+            try:
+                mod = import_module(path.replace("/", ".") + m)            
+            except Exception as ex:
+                err("Unable to load export module: {}".format(path.replace("/", ".") + m), ex)
+                mod = None
+            if mod:
+                data = mod.Exporter.metadata
+                if data["name"] in self.exporters.keys():
+                    err("Export Manager with the same name ({}) already loaded. Skip.".format(data["name"]))
+                else:
+                    data.update({"mod": mod.Exporter})
+                    self.exporters[data["name"]] = data
+        return self.exporters
+            
 
 
 

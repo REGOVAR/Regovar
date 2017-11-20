@@ -659,6 +659,7 @@ class FilterEngine:
     def parse_fields(self, analysis, fields, prefix):
         """
             Parse the json fields and return the corresponding postgreSQL query
+            /!\ Note: warning when updating, this method is also used by the analysis_manager.get_selection method.
         """
         fields_names = []
         for f_uid in fields:

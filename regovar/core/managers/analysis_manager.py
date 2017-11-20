@@ -265,5 +265,54 @@ class AnalysisManager:
         return output_path
 
 
-    def export(self, analysis_id, export_id, report_data):
-        return "<h1>Your export!</h1>" 
+
+    def get_selection(self, analysis_id):
+        """
+            Return list of selected variant (with same columns as set for the current filter)
+        """
+        from core.core import core
+        
+        analysis = Analysis.from_id(analysis_id)
+        if not analysis:
+            raise RegovarException("Unable to find analysis with the provided id: {}".format(analysis_id))
+        
+        fields = core.filters.parse_fields(analysis, analysis.fields, "")
+        query = "SELECT {} FROM wt_{} WHERE is_selected".format(fields, analysis_id)
+        result = []
+        for row in execute(query):
+            result.append({fid:row[fid] for fid in fields.split(", ")})
+        
+        return result
+    
+    
+    
+    
+    
+    
+    
+    async def export(self, file_id, reference_id, analysis_id=None):
+        from core.managers.imports.vcf_manager import VcfManager
+        # Check ref_id
+        if analysis_id:
+            analysis = Model.Analysis.from_id(analysis_id)
+            if analysis and not reference_id:
+                reference_id=analysis.reference_id
+        # Only import from VCF is supported for samples
+        print ("Using import manager {}. {}".format(VcfManager.metadata["name"],VcfManager.metadata["description"]))
+        try:
+            result = await VcfManager.import_data(file_id, reference_id=reference_id)
+        except Exception as ex:
+            msg = "Error occured when caling: core.samples.import_from_file > VcfManager.import_data(file_id={}, ref_id={}).".format(file_id, reference_id)
+            raise RegovarException(msg, exception=ex)
+        # if analysis_id set, associate it to sample
+        if result and result["success"]:
+            samples = [result["samples"][s] for s in result["samples"].keys()]
+            
+            if analysis_id:
+                for s in samples:
+                    Model.AnalysisSample.new(s.id, analysis_id)
+                    s.init()
+        if result["success"]:
+            return [result["samples"][s] for s in result["samples"].keys()]
+        
+        return False # TODO raise error
