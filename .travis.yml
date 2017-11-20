@@ -1,0 +1,49 @@
+language: python
+python: 3.6
+os: linux
+dist: trusty
+
+addons:
+  postgresql: "9.6"
+
+services:
+  - postgresql
+
+
+
+before_install:
+  - sudo apt update && apt upgrade
+  - sudo apt install -y build-essential libssl-dev libffi-dev python3.6-dev virtualenv libpq-dev libmagickwand-dev python3-venv
+  - mkdir -p /var/regovar/{cache,downloads,files,pipelines,jobs,databases/hg19,databases/hg38}
+  - cd /var/regovar/databases/hg38
+  - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
+  - gunzip refGene.txt.gz
+  - cd /var/regovar/databases/hg19
+  - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz
+  - gunzip refGene.txt.gz
+
+install:
+  - cd 
+  - git clone https://github.com/REGOVAR/Regovar.git ~/Regovar
+  - cd ~/Regovar
+  - virtualenv -p /usr/bin/python3.6 venv
+  - source venv/bin/activate
+
+
+
+before_script:
+  - psql -c 'create database regovar;' -U postgres
+
+script:
+  - cd ~/Regovar 
+  - pip install -r requirements.txt
+  - cd regovar
+  - make init
+  - make install
+  - make uupdate_hpo
+  - make app
+
+
+branches:
+  only:
+    - master
