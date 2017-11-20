@@ -68,17 +68,14 @@ class AnalysisHandler:
         """
             Create new analysis
         """
-        # Retrieve data from request
         data = await request.json()
         try:
-            
             project_id = data["project_id"]
             name = data["name"]
             ref_id = data["reference_id"]
             template_id = data["template_id"] if "template_id" in data.keys() else None
         except Exception as ex:
             return rest_error("Unable to create new analysis. Provided data missing or corrupted. " + str(ex))
-        # Create the analysis 
         analysis = core.analyses.create(name, project_id, ref_id, template_id)
         core.analyses.update(analysis.id, data)
         if not analysis:
@@ -89,7 +86,6 @@ class AnalysisHandler:
 
 
     async def update(self, request):
-        # 1- Retrieve data from request
         analysis_id = request.match_info.get('analysis_id', -1)
         data = await request.json()
         try:
@@ -204,55 +200,12 @@ class AnalysisHandler:
         return rest_success(result)
 
 
-    #async def load_ped(self, request):
-        #ped = await request.content.read()
-        #analysis_id = request.match_info.get('analysis_id', -1)
-        ## write ped file in temporary cache directory
-        #file_path = os.path.join(DOWNLOAD_DIR, "tpm_{}.ped".format(analysis_id))
-        #with open(file_path, "w") as f:
-            #f.write(ped)
-        ## update model
-        #try:
-            #core.analyses.load_ped(file_path)
-        #except Exception as err:
-            #os.remove(file_path)
-            #return rest_error("Error occured ! Wrong Ped file: " + str(err))
-        #os.remove(file_path)
-        #return rest_success(result)
-        
-    async def load_file(self, request):
-        analysis_id = request.match_info.get('analysis_id', -1)
-        file_id = request.match_info.get('file_id', -1)
-        try:
-            await core.analyses.load_file(analysis_id, file_id)
-        except Exception as ex:
-            return rest_error("Error occured ! Wrong file: ",ex)
-        return rest_success()
-
-
-
-    async def get_report(self, request):
-        data = await request.json()
-        analysis_id = request.match_info.get('analysis_id', -1)
-        report_id = request.match_info.get('report_id', -1)
-
-        try:
-            cache_path = core.analyses.report(analysis_id, report_id, data)
-        except Exception as ex:
-            return rest_error("AnalysisHandler.get_report error: " + str(ex))
-
-        # create url to access to the report
-        url = '{0}/cache{1}'.format(HOST_P, cache_path[len(CACHE_DIR):])
-        return rest_success({'url': url})
-
-
 
     async def get_export(self, request):
         """
             Export selection of the requested analysis in the requested format
         """
         # Check query parameter
-        data = await request.json()
         analysis_id = request.match_info.get('analysis_id', -1)
         exporter_name = request.match_info.get('exporter_name', None)
         if exporter_name not in core.exporters.keys():
@@ -263,4 +216,27 @@ class AnalysisHandler:
         except Exception as ex:
             return rest_error("AnalysisHandler.get_export error: ", ex)
         return rest_success(export_file.to_json())
+
+
+
+    async def get_report(self, request):
+        """
+            Generate report for the selection of the requested analysis with the requested report generator
+        """
+        analysis_id = request.match_info.get('analysis_id', -1)
+        report_name = request.match_info.get('report_name', None)
+        if report_name not in core.reporters.keys():
+            return rest_error("Report generator {} doesn't exists.".format(report_name))
+        # export data
+        try:
+            report_file = await core.reporters[report_name]["mod"].generate(analysis_id)
+        except Exception as ex:
+            return rest_error("AnalysisHandler.get_report error: ", ex)
+        return rest_success(report_file.to_json())
+    
+        
+        
+        
+        
+        
 

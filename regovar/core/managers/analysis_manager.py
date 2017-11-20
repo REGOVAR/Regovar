@@ -62,7 +62,6 @@ class AnalysisManager:
     
     
 
-
     def create(self, name, project_id, ref_id, template_id=None):
         """
             Create a new analysis in the database.
@@ -89,13 +88,13 @@ class AnalysisManager:
         return None
 
 
+
     def load(self, analysis_id):
         """
             Load all data about the analysis with the provided id and return result as JSON object.
         """
         analysis = Analysis.from_id(analysis_id, 1)
         return result
-
 
 
 
@@ -161,26 +160,23 @@ class AnalysisManager:
 
 
 
-    #def load_ped(self, analysis_id, file_path):
-    async def load_file(self, analysis_id, file_id):
-        pfile = File.from_id(file_id)
-        if pfile == None:
-            raise RegovarException("Unable to retrieve the file with the provided id : " + file_id)
+    #async def load_file(self, analysis_id, file_id):
+        #pfile = File.from_id(file_id)
+        #if pfile == None:
+            #raise RegovarException("Unable to retrieve the file with the provided id : " + file_id)
         
-        # Importing to the database according to the type (if an import module can manage it)
-        log('Looking for available module to import file data into database.')
-        for m in self.import_modules.values():
-            if pfile.type in m['info']['input']:
-                log('Start import of the file (id={0}) with the module {1} ({2})'.format(file_id, m['info']['name'], m['info']['description']))
-                await m['do'](pfile.id, pfile.path, core)
-                # Reload annotation's databases/fields metadata as some new annot db/fields may have been created during the import
-                await self.annotation_db.load_annotation_metadata()
-                await self.filter.load_annotation_metadata()
-                break
-        
+        ## Importing to the database according to the type (if an import module can manage it)
+        #log('Looking for available module to import file data into database.')
+        #for m in self.import_modules.values():
+            #if pfile.type in m['info']['input']:
+                #log('Start import of the file (id={0}) with the module {1} ({2})'.format(file_id, m['info']['name'], m['info']['description']))
+                #await m['do'](pfile.id, pfile.path, core)
+                ## Reload annotation's databases/fields metadata as some new annot db/fields may have been created during the import
+                #await self.annotation_db.load_annotation_metadata()
+                #await self.filter.load_annotation_metadata()
+                #break
         
         
-
 
     async def create_update_filter(self, filter_id, data):
         """
@@ -220,15 +216,13 @@ class AnalysisManager:
         
         
         
-        
-        
-        
-        
     def update_selection(self, analysis_id, is_selected, variant_ids):
+        """
+            Add or remove variant/trx from the selection of the analysis
+        """
         analysis = Analysis.from_id(analysis_id)
         if not isinstance(variant_ids, list) or not analysis or not analysis.status == 'ready':
             return False
-        
         query = ""
         for vid in variant_ids:
             ids = vid.split("_")
@@ -238,33 +232,8 @@ class AnalysisManager:
                 query += "UPDATE wt_{} SET is_selected={} WHERE variant_id={} AND trx_pk_value='{}'; ".format(analysis.id, is_selected, ids[0], ids[1])
         execute(query)
         return True
-        
-        
-
-
-    def report(self, analysis_id, report_id, report_data):
-        from core.core import core
-        # Working cache folder for the report generator
-        cache = os.path.join(CACHE_DIR, 'reports/', report_id)
-        if not os.path.isdir(cache):
-            os.makedirs(cache)
-
-        # Output path where the report shall be stored
-        output_path = os.path.join(CACHE_DIR, 'reports/{}-{}-{:%Y%m%d.%H%M%S}.{}'.format(analysis_id, report_id, datetime.datetime.now(), report_data['output']))
-
-        try:
-            module = core.report_modules[report_id]
-            module['do'](analysis_id, report_data, cache, output_path, annso)
-        except Exception as error:
-            # TODO: log error
-            err("Error occured: {0}".format(error))
-
-        # Store report in database
-        # Todo
-
-        return output_path
-
-
+    
+    
 
     def get_selection(self, analysis_id):
         """
@@ -287,32 +256,34 @@ class AnalysisManager:
     
     
     
-    
-    
-    
-    async def export(self, file_id, reference_id, analysis_id=None):
-        from core.managers.imports.vcf_manager import VcfManager
-        # Check ref_id
-        if analysis_id:
-            analysis = Model.Analysis.from_id(analysis_id)
-            if analysis and not reference_id:
-                reference_id=analysis.reference_id
-        # Only import from VCF is supported for samples
-        print ("Using import manager {}. {}".format(VcfManager.metadata["name"],VcfManager.metadata["description"]))
-        try:
-            result = await VcfManager.import_data(file_id, reference_id=reference_id)
-        except Exception as ex:
-            msg = "Error occured when caling: core.samples.import_from_file > VcfManager.import_data(file_id={}, ref_id={}).".format(file_id, reference_id)
-            raise RegovarException(msg, exception=ex)
-        # if analysis_id set, associate it to sample
-        if result and result["success"]:
-            samples = [result["samples"][s] for s in result["samples"].keys()]
+    #async def export(self, file_id, reference_id, analysis_id=None):
+        #from core.managers.imports.vcf_manager import VcfManager
+        ## Check ref_id
+        #if analysis_id:
+            #analysis = Model.Analysis.from_id(analysis_id)
+            #if analysis and not reference_id:
+                #reference_id=analysis.reference_id
+        ## Only import from VCF is supported for samples
+        #print ("Using import manager {}. {}".format(VcfManager.metadata["name"],VcfManager.metadata["description"]))
+        #try:
+            #result = await VcfManager.import_data(file_id, reference_id=reference_id)
+        #except Exception as ex:
+            #msg = "Error occured when caling: core.samples.import_from_file > VcfManager.import_data(file_id={}, ref_id={}).".format(file_id, reference_id)
+            #raise RegovarException(msg, exception=ex)
+        ## if analysis_id set, associate it to sample
+        #if result and result["success"]:
+            #samples = [result["samples"][s] for s in result["samples"].keys()]
             
-            if analysis_id:
-                for s in samples:
-                    Model.AnalysisSample.new(s.id, analysis_id)
-                    s.init()
-        if result["success"]:
-            return [result["samples"][s] for s in result["samples"].keys()]
+            #if analysis_id:
+                #for s in samples:
+                    #Model.AnalysisSample.new(s.id, analysis_id)
+                    #s.init()
+        #if result["success"]:
+            #return [result["samples"][s] for s in result["samples"].keys()]
         
-        return False # TODO raise error
+        #return False # TODO raise error
+
+
+
+
+

@@ -61,8 +61,8 @@ class Core:
         # TODO: manage dynamic reload of modules for better user/sysadmin experience
         self.exporters = {}
         self.reporters = {}
-        self.importers = {}
         self.load_export_managers()
+        self.load_report_managers()
 
 
 
@@ -75,6 +75,9 @@ class Core:
 
 
     def load_export_managers(self):
+        """
+            Dynamicaly load export module
+        """
         # TODO: clean/unload former exporters if self.exporters is not empty
         self.exporters = {}
         # Get modules
@@ -95,6 +98,37 @@ class Core:
                     data.update({"mod": mod.Exporter})
                     self.exporters[data["name"]] = data
         return self.exporters
+
+
+
+    def load_report_managers(self):
+        """
+            Dynamicaly load report module
+        """
+        # TODO: clean/unload former reporters if self.reporters is not empty
+        self.reporters = {}
+        # Get modules
+        path = "core/managers/reports/"
+        mods = [f.split(".")[0] for f in os.listdir(path) if not (f.startswith("__") or f.startswith("abstract_"))]
+        
+        for m in mods:
+            try:
+                mod = import_module(path.replace("/", ".") + m)            
+            except Exception as ex:
+                err("Unable to load report module: {}".format(path.replace("/", ".") + m), ex)
+                mod = None
+            if mod:
+                data = mod.Report.metadata
+                if data["name"] in self.exporters.keys():
+                    err("Report Manager with the same name ({}) already loaded. Skip.".format(data["name"]))
+                else:
+                    data.update({"mod": mod.Report})
+                    self.reporters[data["name"]] = data
+        return self.reporters
+            
+            
+            
+            
             
 
 

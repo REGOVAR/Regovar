@@ -151,7 +151,6 @@ app.router.add_route('GET',    "/analysis",                                     
 app.router.add_route('POST',   "/analysis",                                      analysisHandler.new)                  # Create new analysis
 app.router.add_route('GET',    "/analysis/{analysis_id}",                        analysisHandler.get)                  # Get analysis metadata
 app.router.add_route('PUT',    "/analysis/{analysis_id}",                        analysisHandler.update)               # Save analysis metadata
-#app.router.add_route('POST',   "/analysis/{analysis_id}/load/{file_id}",         analysisHandler.load_file)            # TODO : Load a file (vcf and ped supported) to setup the analysis data (variant/annotations/samples)
 app.router.add_route('GET',    "/analysis/{analysis_id}/filter",                 analysisHandler.get_filters)          # Get list of available filter for the provided analysis
 app.router.add_route('POST',   "/analysis/{analysis_id}/filter",                 analysisHandler.create_update_filter) # Create a new filter for the analisis
 app.router.add_route('PUT',    "/analysis/{analysis_id}/filter/{filter_id}",     analysisHandler.create_update_filter) # Update filter
@@ -162,7 +161,7 @@ app.router.add_route('GET',    "/analysis/{analysis_id}/select/{variant_id}",   
 app.router.add_route('GET',    "/analysis/{analysis_id}/unselect/{variant_id}",  analysisHandler.unselect)             # Unselect the variant/trx with the provided id
 app.router.add_route('GET',    "/analysis/{analysis_id}/selection",              analysisHandler.get_selection)        # Return list of selected variant (with same columns as set for the current filter)
 app.router.add_route('GET',    "/analysis/{analysis_id}/export/{exporter_name}", analysisHandler.get_export)           # Export selection of the provided analysis into the requested format
-app.router.add_route('GET',    "/analysis/{analysis_id}/report/{exporter_name}", analysisHandler.get_report)           # Generate report html for the provided analysis+report id
+app.router.add_route('GET',    "/analysis/{analysis_id}/report/{report_name}",   analysisHandler.get_report)           # Generate report html for the provided analysis+report id
 app.router.add_route('GET',    "/analysis/{analysis_id}/clear_temps_data",       analysisHandler.clear_temps_data)     # Clear temporary data (to save disk space by example)
 
 app.router.add_route('GET',    "/search/{query}",                                     searchHandler.search)          # generic research
