@@ -238,8 +238,8 @@ class AnalysisHandler:
 
         try:
             cache_path = core.analyses.report(analysis_id, report_id, data)
-        except Exception as err:
-            return rest_error("AnalysisHandler.get_report error: " + str(err))
+        except Exception as ex:
+            return rest_error("AnalysisHandler.get_report error: " + str(ex))
 
         # create url to access to the report
         url = '{0}/cache{1}'.format(HOST_P, cache_path[len(CACHE_DIR):])
@@ -248,13 +248,19 @@ class AnalysisHandler:
 
 
     async def get_export(self, request):
+        """
+            Export selection of the requested analysis in the requested format
+        """
+        # Check query parameter
         data = await request.json()
         analysis_id = request.match_info.get('analysis_id', -1)
-        export_id = request.match_info.get('export_id', -1)
-
+        exporter_name = request.match_info.get('exporter_name', None)
+        if exporter_name not in core.exporters.keys():
+            return rest_error("Exporter {} doesn't exists.".format(exporter_name))
+        # export data
         try:
-            result = core.analyses.export(analysis_id, export_id, data)
-        except Exception as err:
-            return rest_error("AnalysisHandler.get_export error: " + str(err))
-        return rest_success({"url": "http://your_export."+str(export_id)})
+            export_file = await core.exporters[exporter_name]["mod"].export_data(analysis_id)
+        except Exception as ex:
+            return rest_error("AnalysisHandler.get_export error: ", ex)
+        return rest_success(export_file.to_json())
 

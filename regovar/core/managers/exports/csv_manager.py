@@ -29,6 +29,7 @@ class Exporter(AbstractVariantExportManager):
     async def export_data(analysis_id, **kargs):
         """
             Retrieve selected variant of the given analysis and export them is the requested format
+            Return None or the File object
         """
         from core.core import core
         
@@ -70,7 +71,7 @@ class Exporter(AbstractVariantExportManager):
         # Create file entry and link it to the analysis
         f = core.files.from_local(path, True)
         AnalysisFile.new(analysis_id, f.id)
-        return f.to_json()
+        return f
                 
         
         
