@@ -15,19 +15,12 @@ from core.framework.common import *
 class Exporter(AbstractVariantExportManager): 
     # Description of the export script.
     metadata = {
-        "name" : "Excel", # name of the import manager
-        "description" : "Export variants into an excel file", # short desciption about what it does
+        "name" : "VCF", # name of the import manager
+        "description" : "Export variants into a vcf file", # short desciption about what it does
         "parameters": [
-            {"with_header": {
-                "name": "Header",
-                "desc": "Check if you want columns names in the first row.",
-                "type": "bool",
-                "default": True,
-                "required": False
-            }},
             {"filename": {
                 "name": "Filename",
-                "desc": "You can specify a filename. Otherwise, a name will be generated (\"Selection export YYYY-MM-DD.xlsx\")",
+                "desc": "You can specify a filename. Otherwise, a name will be generated (\"Selection export YYYY-MM-DD.vcf\")",
                 "type": "string",
                 "default": "",
                 "required": False

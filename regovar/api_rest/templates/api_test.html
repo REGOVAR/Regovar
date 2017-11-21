@@ -143,6 +143,7 @@
                 <h3>0.5.dev [Current]</h3>
                 <ul><li>Search feature and endpoints</li>
                     <li>Removing "Variant" endpoints (replaced by search)</li>
+                    <li>Export and Report tools for variant selection</li>
                     <li>Bug fixing</li>
                 </ul>
                 <h3>0.4.dev</h3>
@@ -177,7 +178,7 @@
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#misc_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Config</a></li>
-                            <li><a href="#misc_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Website</a></li>
+                            <li><a href="#misc_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Tools</a></li>
                             <li><a href="#misc_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Api</a></li>
                             <li><a href="#misc_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Welcom</a></li>
                         </ul>
@@ -198,21 +199,20 @@
                                     <div class="col-sm-10"><button onclick="generic_exec_static('/config', 'misc_result');">Test it</button></div>
                                 </div>
                             </div>
-                            <!-- GET home -->
+                            <!-- GET tools -->
                             <div class="tab-pane fade" id="misc_api_02">
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /</code><br/>
-                                        <i>Return the official web page of Regovar.</i>
+                                        <code>GET /config/tools</code><br/>
+                                        <i>Return custom tools deployed on the server. Custom tools can be export and report generator for variant filtering selection.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
-                                    <div class="col-sm-10"><a href="/" target="_blank" class="btn btn-default">Test it</a></div>  
+                                    <div class="col-sm-10"><button onclick="generic_exec_static('/config/tools', 'misc_result');">Test it</button></div>
                                 </div>
                             </div>
-
                             <!-- GET api -->
                             <div class="tab-pane fade" id="misc_api_03">
                                 <div class="row form-group">

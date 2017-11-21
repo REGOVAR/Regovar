@@ -73,6 +73,22 @@ class ApiHandler:
             "pagination_max_range": RANGE_MAX
             })
     
+    def get_tools(self, request):
+        exporters = core.exporters.copy()
+        for t in exporters: 
+            if "mod" in exporters[t]: 
+                exporters[t].pop("mod")
+        reporters = core.reporters.copy()
+        for t in reporters: 
+            if "mod" in reporters[t]: 
+                reporters[t].pop("mod")
+        
+        return rest_success({ "exporters" : exporters, "reporters" : reporters })
+    
+    
+    
+    
+    
     
     @aiohttp_jinja2.template('api_test.html')
     def api(self, request):

@@ -63,6 +63,7 @@ app.on_shutdown.append(on_shutdown)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 app.router.add_route('GET',    "/",       apiHandler.welcom)                                                     # Get "welcom page of the rest API"
 app.router.add_route('GET',    "/config", apiHandler.config)                                                     # Get config of the server
+app.router.add_route('GET',    "/config/tools", apiHandler.get_tools)                                            # Get list of tools deployed on the server (variant export/report generator)
 app.router.add_route('GET',    "/api",    apiHandler.api)                                                        # Get html test api page
 app.router.add_route('GET',    "/ws",     websocket.get)                                                         # Websocket url to use with ws or wss protocol
 

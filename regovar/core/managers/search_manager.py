@@ -99,6 +99,7 @@ class SearchManager:
         return result
 
     def search_variant_pattern_1(self, search):
+        from core.core import core
         result = []
         pattern = re.compile("chr([0-9,x,y,m]+):([0-9]+) ([a,c,g,t]*)>([a,c,g,t]*)")
         res = pattern.search(search.lower())
@@ -128,6 +129,7 @@ class SearchManager:
         return result
     
     def search_variant_pattern_2(self, search):
+        from core.core import core
         result = []
         pattern = re.compile("chr([0-9,x,y,m]+):([0-9]+)-([0-9]+)")
         res = pattern.search(search.lower())
@@ -156,6 +158,7 @@ class SearchManager:
         return result
 
     def search_variant_pattern_3(self, search):
+        from core.core import core
         result = []
         pattern = re.compile("chr([0-9,x,y,m]+):([0-9]+)~([0-9]+)")
         res = pattern.search(search.lower())
@@ -184,6 +187,7 @@ class SearchManager:
         return result
 
     def search_variant_pattern_4(self, search):
+        from core.core import core
         result = []
         pattern = re.compile("chr([0-9,x,y,m]+):([0-9]+)")
         res = pattern.search(search.lower())
