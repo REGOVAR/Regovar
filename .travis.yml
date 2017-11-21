@@ -14,7 +14,8 @@ services:
 before_install:
   - sudo apt update
   - sudo apt install -y build-essential libssl-dev libffi-dev libpq-dev libmagickwand-dev
-  - mkdir -p /var/regovar/{cache,downloads,files,pipelines,jobs,databases/hg19,databases/hg38}
+  - sudo mkdir -p /var/regovar/{cache,downloads,files,pipelines,jobs,databases/hg19,databases/hg38}
+  - sudo chown -R `whoami`:`whoami` /var/regovar
   - cd /var/regovar/databases/hg38
   - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
   - gunzip refGene.txt.gz
