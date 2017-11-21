@@ -206,13 +206,14 @@ class AnalysisHandler:
             Export selection of the requested analysis in the requested format
         """
         # Check query parameter
+        data = await request.json()
         analysis_id = request.match_info.get('analysis_id', -1)
         exporter_name = request.match_info.get('exporter_name', None)
         if exporter_name not in core.exporters.keys():
             return rest_error("Exporter {} doesn't exists.".format(exporter_name))
         # export data
         try:
-            export_file = await core.exporters[exporter_name]["mod"].export_data(analysis_id)
+            export_file = await core.exporters[exporter_name]["mod"].export_data(analysis_id, **data)
         except Exception as ex:
             return rest_error("AnalysisHandler.get_export error: ", ex)
         return rest_success(export_file.to_json())
@@ -223,13 +224,14 @@ class AnalysisHandler:
         """
             Generate report for the selection of the requested analysis with the requested report generator
         """
+        data = await request.json()
         analysis_id = request.match_info.get('analysis_id', -1)
         report_name = request.match_info.get('report_name', None)
         if report_name not in core.reporters.keys():
             return rest_error("Report generator {} doesn't exists.".format(report_name))
         # export data
         try:
-            report_file = await core.reporters[report_name]["mod"].generate(analysis_id)
+            report_file = await core.reporters[report_name]["mod"].generate(analysis_id, **data)
         except Exception as ex:
             return rest_error("AnalysisHandler.get_report error: ", ex)
         return rest_success(report_file.to_json())

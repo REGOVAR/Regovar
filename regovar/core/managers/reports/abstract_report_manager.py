@@ -17,7 +17,7 @@ class AbstractReportManager():
         }
 
     @staticmethod
-    async def generate(analysis_id, **kargs):
+    async def generate(analysis_id, parameters):
         raise NotImplementedError("The abstract method \"generate\" of AbstractReport must be implemented.")
 
 

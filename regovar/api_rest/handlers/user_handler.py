@@ -17,7 +17,6 @@ from aiohttp_security import remember, forget, authorized_userid, permits
 
 import asyncio
 import functools
-import inspect
 from aiohttp import web
 from urllib.parse import parse_qsl
 

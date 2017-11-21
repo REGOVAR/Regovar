@@ -13,7 +13,7 @@ import uuid
 
 import aiohttp_security
 from aiohttp_session import get_session
-from aiohttp_security import remember, forget, authorized_userid, permits
+from aiohttp_security import permits
 
 import asyncio
 import functools

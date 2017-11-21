@@ -9,7 +9,6 @@ import aiohttp
 import aiohttp_jinja2
 import datetime
 import time
-import uuid
 import requests
 
 import aiohttp_security
@@ -94,15 +93,18 @@ class ApiHandler:
     
     
     def get_tools_list(self):
+        result = { "exporters" : [], "reporters" : [] }
         exporters = core.exporters.copy()
         for t in exporters: 
             if "mod" in exporters[t]: 
                 exporters[t].pop("mod")
+            result["exporters"].append(exporters[t])
         reporters = core.reporters.copy()
         for t in reporters: 
             if "mod" in reporters[t]: 
                 reporters[t].pop("mod")
-        return { "exporters" : exporters, "reporters" : reporters }
+            result["reporters"].append(reporters[t])
+        return result
     
     
     def get_last_analyses(self):
@@ -113,6 +115,7 @@ class ApiHandler:
         for res in result: res.init(1)
         fields = Analysis.public_fields + ["project"]
         return [r.to_json(fields) for r in result]
+    
     
     def get_last_subjects(self):
         """

@@ -5,7 +5,6 @@ import ipdb;
 
 import os
 import json
-import aiohttp
 
 import aiohttp_jinja2
 import tarfile

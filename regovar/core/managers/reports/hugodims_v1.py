@@ -26,7 +26,7 @@ class Report(AbstractReportManager):
 
 
     @staticmethod
-    async def generate(analysis_id, **kargs):
+    async def generate(analysis_id, parameters):
         """
             Retrieve selected variant of the given analysis and export them is the requested format
             Return None or the File object
@@ -40,8 +40,8 @@ class Report(AbstractReportManager):
         
         # Check parameters
         filename = "Hugodims report {}.html".format(datetime.datetime.now().date().isoformat())
-        if "filename" in kargs.keys():
-            filename = clean_filename(kargs["filename"])
+        if "filename" in parameters.keys():
+            filename = clean_filename(parameters["filename"])
             filename += "" if filename.endswith(extension) else extension
             
         # Write file
