@@ -12,7 +12,7 @@ services:
 
 
 before_install:
-  - sudo apt update && apt upgrade
+  - sudo apt update
   - sudo apt install -y build-essential libssl-dev libffi-dev python3.6-dev virtualenv libpq-dev libmagickwand-dev python3-venv
   - mkdir -p /var/regovar/{cache,downloads,files,pipelines,jobs,databases/hg19,databases/hg38}
   - cd /var/regovar/databases/hg38
