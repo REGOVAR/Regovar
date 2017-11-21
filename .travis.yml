@@ -12,8 +12,11 @@ services:
 
 
 before_install:
+  - pwd
   - sudo apt update
   - sudo apt install -y build-essential libssl-dev libffi-dev libpq-dev libmagickwand-dev
+
+install:
   - sudo mkdir -p /var/regovar/{cache,downloads,files,pipelines,jobs,databases/hg19,databases/hg38}
   - sudo chown -R `whoami`:`whoami` /var/regovar
   - cd /var/regovar/databases/hg38
@@ -23,13 +26,6 @@ before_install:
   - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz
   - gunzip refGene.txt.gz
 
-install:
-  - cd 
-  - git clone https://github.com/REGOVAR/Regovar.git ~/Regovar
-  - cd ~/Regovar
-  - virtualenv -p /usr/bin/python3.6 venv
-  - source venv/bin/activate
-
 
 
 before_script:
@@ -37,13 +33,13 @@ before_script:
   - psql -c "CREATE DATABASE regovar OWNER regovar;" -U postgres
 
 script:
-  - cd ~/Regovar 
+  - cd REGOVAR/Regovar
   - pip install -r requirements.txt
   - cd regovar
   - make init
   - make install
   - make uupdate_hpo
-  - make app
+  - python tests.py
 
 
 branches:
