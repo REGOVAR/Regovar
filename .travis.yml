@@ -13,7 +13,7 @@ services:
 
 before_install:
   - sudo apt update
-  - sudo apt install -y build-essential libssl-dev libffi-dev python3.6-dev virtualenv libpq-dev libmagickwand-dev python3-venv
+  - sudo apt install -y build-essential libssl-dev libffi-dev libpq-dev libmagickwand-dev
   - mkdir -p /var/regovar/{cache,downloads,files,pipelines,jobs,databases/hg19,databases/hg38}
   - cd /var/regovar/databases/hg38
   - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
@@ -32,7 +32,8 @@ install:
 
 
 before_script:
-  - psql -c 'create database regovar;' -U postgres
+  - psql -c "CREATE USER regovar WITH PASSWORD 'regovar';" -U postgres
+  - psql -c "CREATE DATABASE regovar OWNER regovar;" -U postgres
 
 script:
   - cd ~/Regovar 
