@@ -12,7 +12,6 @@ services:
 
 
 before_install:
-  - pwd
   - sudo apt update
   - sudo apt install -y build-essential libssl-dev libffi-dev libpq-dev libmagickwand-dev
 
@@ -29,17 +28,19 @@ install:
 
 
 before_script:
+  - cd /home/travis/build/REGOVAR/Regovar
   - psql -c "CREATE USER regovar WITH PASSWORD 'regovar';" -U postgres
   - psql -c "CREATE DATABASE regovar OWNER regovar;" -U postgres
 
 script:
-  - cd /home/travis/build/REGOVAR/Regovar
   - pip install -r requirements.txt
   - cd regovar
   - make init
   - make install
   - make update_hpo
-  - python tests.py
+  - psql -U regovar -d regovar -f tests/init_fake_data.sql
+  - pip install blessings
+  - echo "TODO ! python tests.py"
 
 
 branches:

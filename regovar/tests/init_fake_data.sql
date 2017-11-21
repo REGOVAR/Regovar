@@ -16,11 +16,6 @@ INSERT INTO project (name, comment, parent_id, is_folder, is_sandbox) VALUES
     ('P1',         'comment', 5,    False, False),
     ('P2',         'comment', NULL, False, False);
 
-INSERT INTO user_project_sharing (project_id, user_id, write_authorisation) VALUES
-    (5, 3, True),
-    (6, 3, False),
-    (7, 3, True),
-    (7, 4, True);
     
 INSERT INTO indicator (name, description, default_value_id) VALUES
     ('I1', 'description', 2);
@@ -49,11 +44,6 @@ INSERT INTO sample (subject_id, name, is_mosaic, file_id, loading_progress, refe
     (2, 'sp_2', True,  4, 1, 2, 'ready'),
     (3, 'sp_3', True,  4, 1, 2, 'ready');
 
-INSERT INTO user_subject_sharing (subject_id, user_id, write_authorisation) VALUES
-    (1, 3, True),
-    (1, 4, False),
-    (2, 3, True),
-    (2, 4, True);
     
 INSERT INTO subject_file (subject_id, file_id) VALUES
     (1, 1),
@@ -70,6 +60,7 @@ INSERT INTO project_subject (project_id, subject_id) VALUES
     (7, 2),
     (7, 3);
     
+
 --
 -- TEST FILE PIPELINE AND JOB
 --

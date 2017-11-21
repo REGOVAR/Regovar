@@ -57,6 +57,7 @@ class ApiHandler:
             "last_analyses": self.get_last_analyses(),
             "last_subjects" : self.get_last_subjects(),
             "last_events": [],
+            "tools" : self.get_tools_list(),
             "references" : [{"id": ref[0], "name": ref[1]} for ref in core.annotations.ref_list.items()],
             "default_reference_id": DEFAULT_REFERENCIAL_ID,
             "milestones" : data
@@ -74,16 +75,7 @@ class ApiHandler:
             })
     
     def get_tools(self, request):
-        exporters = core.exporters.copy()
-        for t in exporters: 
-            if "mod" in exporters[t]: 
-                exporters[t].pop("mod")
-        reporters = core.reporters.copy()
-        for t in reporters: 
-            if "mod" in reporters[t]: 
-                reporters[t].pop("mod")
-        
-        return rest_success({ "exporters" : exporters, "reporters" : reporters })
+        return rest_success(self.get_tools_list())
     
     
     
@@ -101,7 +93,16 @@ class ApiHandler:
     
     
     
-    
+    def get_tools_list(self):
+        exporters = core.exporters.copy()
+        for t in exporters: 
+            if "mod" in exporters[t]: 
+                exporters[t].pop("mod")
+        reporters = core.reporters.copy()
+        for t in reporters: 
+            if "mod" in reporters[t]: 
+                reporters[t].pop("mod")
+        return { "exporters" : exporters, "reporters" : reporters }
     
     
     def get_last_analyses(self):
