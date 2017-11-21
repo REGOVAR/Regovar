@@ -38,7 +38,7 @@ script:
   - cd regovar
   - make init
   - make install
-  - make uupdate_hpo
+  - make update_hpo
   - python tests.py
 
 
