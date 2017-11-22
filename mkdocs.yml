@@ -11,36 +11,33 @@ markdown_extensions:
 pages:
  - 'ACCUEIL': 'index.md'
  - 'INSTALLATION':
-    - 'Le serveur': 'I. Guide utilisateur/04. Installation/01. Serveur.md'
-    - 'Le client': 'I. Guide utilisateur/04. Installation/02. Client.md'
-    - 'Configuration': 'I. Guide utilisateur/04. Installation/03. Configuration.md'
+    - 'Serveur': 'installation/serveur.md'
+    - 'Client': 'installation/client.md'
+    - 'Configuration': 'installation/configuration.md'
  - 'UTILISATEUR': 
-    - 'Présentation': 'I. Guide utilisateur/02. Presentation.md'
-    - 'Les conceptes de base': 'I. Guide utilisateur/05. Analyses/01. Concepts.md'
-    - 'Analyse - Filtrage dynamique': 'I. Guide utilisateur/05. Analyses/02. Filtrage/01. Vue ensemble.md'
-    - 'Analyse - Pipeline': 'I. Guide utilisateur/05. Analyses/03. Pipeline/01. Vue ensemble.md'
-    - 'FAQ': 'I. Guide utilisateur/05. Analyses/03. Pipeline/01. Vue ensemble.md'
+    - 'Présentation': 'user/presentation.md'
+    - 'Conceptes de base': 'user/concepts.md'
+    - 'Analyse - Filtrage': 'user/filtering.md'
+    - 'Analyse - Pipeline': 'user/pipeline.md'
+    - 'FAQ': 'user/faq.md'
  - 'MAINTENANCE':
-    - 'Du serveur': 'I. Guide utilisateur/06. Maintenance/01. Serveur.md'
-    - 'Du client': 'I. Guide utilisateur/06. Maintenance/02. Client.md'
- - 'DÉVELOPPEUR':
-    - 'Communauté': 'II. Guide developpeur/02. Conventions/01. Community.md'
-    - 'Bonnes pratiques': 'II. Guide developpeur/02. Conventions/02. Bonnes pratiques.md'
-    - 'Architecture': 'II. Guide developpeur/03. Architecture/01. Macro.md'
-    - 'Core': 'II. Guide developpeur/04. Core/01. Vue ensemble.md'
-    - 'Modules personalisables': 'II. Guide developpeur/04. Core/06. Tools.md'
-    - 'Pirus': 'II. Guide developpeur/04. Core/07. Pirus.md'
-    - 'Authentification': 'II. Guide developpeur/05. Rest API/A. Session et authentification.md'
-    - 'Gestion des erreurs': 'II. Guide developpeur/04. Core/A. Errors.md'
+    - 'Serveur': 'maintenance/serveur.md'
+    - 'Client': 'maintenance/client.md'
  - 'TUTORIELS':
-    - 'Filtrage': 
-        - 'Analyser un singleton': 'III. Tutoriels/02. Filtrage/01. Analyser un singleton.md'
-        - 'Analyser un trio E-M-P': 'III. Tutoriels/02. Filtrage/02. Analyser un trio E-M-P.md'
-        - 'Analyser un cas complexe': 'III. Tutoriels/02. Filtrage/03. Analyser un cas complexe.md'
-        - 'Filtrage rapide': 'III. Tutoriels/02. Filtrage/04. Filtrage rapide.md'
-        - 'Filtrage expert': 'III. Tutoriels/02. Filtrage/05. Filtrage expert.md'
-        - 'Sélection de variants': 'III. Tutoriels/02. Filtrage/06. Selection de variant.md'
-    - 'Pipeline': 
-        - 'Créer un pipeline avec LXD': 'III. Tutoriels/03. Pipeline/01. Creer un pipeline avec LXD.md'
+    - 'Filtrage': 'tutorials/filtering.md'
+    - 'Pipeline': 'tutorials/pipeline.md'
+    - 'Autres': 'tutorials/global.md'
+ - 'DÉVELOPPEUR':
+    - 'Communauté': 'developper/community.md'
+    - 'Bonnes pratiques': 'developper/good_practices.md'
+    - 'Architecture': 'developper/architecture.md'
+    - 'Database': 'developper/database.md'
+    - 'Core': 'developper/core.md'
+    - 'Modules personalisables': 'developper/modules.md'
+    - 'Pirus': 'developper/pirus.md'
+    - 'API rest': 'developper/rest.md'
+    - 'API cli': 'developper/cli.md'
+    - 'Authentification': 'developper/authentication.md'
+    - 'Gestion des erreurs': 'developper/errors.md'
     
  
