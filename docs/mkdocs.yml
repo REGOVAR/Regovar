@@ -8,3 +8,14 @@ markdown_extensions:
  - attr_list
  - def_list
  - tables 
+pages:
+- 'Home': 'index.md'
+- 'User Guide':
+    - 'Welcom !': 'user_guide/welcom.md'
+    - 'Presentation': 'user_guide/presentation.md'
+    - 'First steps': 'user_guide/first_steps.md'
+    - 'Analyses':
+        - 'Concepts': 'user_guide/analyses/concepts.md'
+- 'About':
+    - 'License': 'user_guide/installation/configuration.md'
+    - 'Release Notes': 'user_guide/installation/server.md'

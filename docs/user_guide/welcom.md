@@ -1,0 +1,36 @@
+
+# Bienvenue
+
+Regovar est un logiciel libre pour l’analyse de données de séquençage haut débit pour les maladies génétiques rares (mais pas que). Son rôle est de permettre l'analyse et la gestion des données issues des séquenceurs dans le but de faire de la recherche ou du diagnostic, et ce, que l'on soit bioinformaticien, biologiste ou bien clinicien. 
+
+Si vous désirez juste tester l'application, la section [Premiers pas](03.%20Premiers%20pas.md) vous propose une visite guidée du projet en 10 minutes.
+
+Les sections suivantes vous guideront pour l'installation et la configuration aussi bien du [serveur](04.%20Installation%20du%20serveur.md) que du [client](05.%20Installation%20du%20client.md) à utiliser sur votre ordinateur.
+
+Enfin, une série de [tutoriels](../Tutoriels/Tutoriels.md) est disponible pour vous aider sur les sujets complexes ou non de Regovar.
+
+
+Enfin, n'hésitez pas à lire la [présentation](02.%20Presentation.md) pour avoir plus en détails sur le projet, ce qu'il permet de faire et comment.
+
+
+# Sommaire
+* [Présentation générale](02.%20Presentation.md)
+* [Premiers pas](03.%20Premiers%20pas.md)
+* [Tutoriels](../Tutoriels/Tutoriels.md)
+
+
+* [Installation du serveur](04.%20Installation%20du%20serveur.md)
+* [Installation du client](05.%20Installation%20du%20client.md)
+
+
+
+
+
+
+
+
+
+
+
+
+
