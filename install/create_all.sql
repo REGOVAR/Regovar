@@ -255,7 +255,6 @@ CREATE TABLE public.analysis
     comment text COLLATE pg_catalog."C",
     settings json,
     fields json,
-    fields_settings json,
     filter json,
     "order" json,
     selection json,
@@ -427,7 +426,7 @@ CREATE TABLE public.event
 
 
 
-
+/*
 CREATE TABLE public.project_subject
 (
     project_id integer NOT NULL,
@@ -440,7 +439,7 @@ CREATE TABLE public.project_file
     project_id integer NOT NULL,
     file_id integer NOT NULL,
     CONSTRAINT pf_pkey PRIMARY KEY (project_id, file_id)
-);
+);*/
 
 CREATE TABLE public.subject_file
 (
