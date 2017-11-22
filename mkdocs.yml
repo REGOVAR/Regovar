@@ -1,0 +1,24 @@
+site_name: Regovar
+theme: readthedocs
+markdown_extensions:
+ - extra
+ - nl2br
+ - sane_lists
+ - abbr
+ - attr_list
+ - def_list
+ - tables 
+pages:
+ - 'Accueil': 'index.md'
+ - 'Guide utilisateur': 
+    - 'Bienvenue !': 'I. Guide utilisateur/01. Bienvenue.md'
+    - 'Présentation': 'I. Guide utilisateur/02. Presentation.md'
+    - 'Premiers pas': 'I. Guide utilisateur/03. Premiers pas.md'
+ - 'Guide développeur':
+    - 'Bienvenue !': 'II. Guide developpeur/01. Bienvenue.md'
+    - 'Conventions': 'II. Guide developpeur/01. Bienvenue.md'
+    - 'Architecture': 
+        - 'Vue globale': 'II. Guide developpeur/03. Architecture/01. Macro.md'
+        - 'Système': 'II. Guide developpeur/03. Architecture/02. System.md'
+        - 'Applicatif': 'II. Guide developpeur/03. Architecture/03. Applicatif.md'
+ 
