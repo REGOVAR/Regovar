@@ -11,7 +11,7 @@ markdown_extensions:
 pages:
  - 'ACCUEIL': 'index.md'
  - 'INSTALLATION':
-    - 'Serveur': 'installation/serveur.md'
+    - 'Serveur': 'installation/server.md'
     - 'Client': 'installation/client.md'
     - 'Configuration': 'installation/configuration.md'
  - 'UTILISATEUR': 
@@ -21,7 +21,7 @@ pages:
     - 'Analyse - Pipeline': 'user/pipeline.md'
     - 'FAQ': 'user/faq.md'
  - 'MAINTENANCE':
-    - 'Serveur': 'maintenance/serveur.md'
+    - 'Serveur': 'maintenance/server.md'
     - 'Client': 'maintenance/client.md'
  - 'TUTORIELS':
     - 'Filtrage': 'tutorials/filtering.md'
