@@ -130,11 +130,7 @@ CREATE TABLE refgene_trx_hg38
   name character varying(255) COLLATE pg_catalog."C",
   chr integer,
   strand character(1),
-  txstart bigint,
-  txend bigint,
   txrange int8range,
-  cdsstart bigint,
-  cdsend bigint,
   cdsrange int8range,
   exoncount int,
   score bigint,
@@ -201,10 +197,10 @@ WITH (
 --
 -- Migrate imported data to regovar database
 --
-INSERT INTO refgene_trx_hg38(bin, name, chr, strand, txstart, txend, txrange, cdsstart, cdsend, cdsrange, exoncount, score, name2, cdsstartstat, cdsendstat)
+INSERT INTO refgene_trx_hg38(bin, name, chr, strand, txrange, cdsrange, exoncount, score, name2, cdsstartstat, cdsendstat)
 SELECT bin, name, 
   CASE WHEN chrom='chrX' THEN 23 WHEN chrom='chrY' THEN 24 WHEN chrom='chrM' THEN 25 ELSE CAST(substring(chrom from 4) AS INTEGER) END, 
-  strand, txstart, txend, int8range(txstart, txend), cdsstart, cdsend, int8range(cdsstart, cdsend), exoncount, score, name2, cdsstartstat, cdsendstat
+  strand, int8range(txstart, txend), int8range(cdsstart, cdsend), exoncount, score, name2, cdsstartstat, cdsendstat
 FROM import_refgene_hg38
 WHERE char_length(chrom) <= 5;
 
