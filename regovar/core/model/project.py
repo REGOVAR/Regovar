@@ -40,7 +40,7 @@ def project_init(self, loading_depth=0, force=False):
         self.loading_depth = min(2, loading_depth)
     try:
         self.indicators= self.get_indicators()
-        self.subjects_ids = [s.id for s in self.get_subjects_ids()]
+        self.subjects_ids = self.get_subjects_ids()
         self.jobs_ids = [j.id for j in self.get_jobs()]
         self.analyses_ids = [a.id for a in self.get_analyses()]
         self.files_ids = [f.id for f in self.get_files()]
@@ -232,10 +232,10 @@ def projects_get_files(self, loading_depth=0):
 
 
 def projects_get_subjects_ids(self):
-    sql  = "SELECT distinct(t2.id) FROM subject t3 INNER JOIN sample t2 ON t3.id=t2.subject_id "
+    sql  = "SELECT distinct(t3.id) FROM subject t3 INNER JOIN sample t2 ON t3.id=t2.subject_id "
     sql += "INNER JOIN analysis_sample t1 ON t2.id=t1.sample_id INNER JOIN analysis t0 ON t1.analysis_id=t0.id "
-    sql += "WHERE t0.project_id=3"
-    return [r.id for r in execute(sql)]
+    sql += "WHERE t0.project_id={}"
+    return [r.id for r in execute(sql.format(self.id))]
     
 
 
@@ -244,9 +244,7 @@ def projects_get_subjects(self, loading_depth=0):
         Return the list of subjects linked to the project
     """
     from core.model.subject import Subject
-    # Get ids:
-    ids = self.get_subjects_ids()
-    return Subject.from_ids([i.subject_id for i in ids], loading_depth)
+    return Subject.from_ids(self.get_subjects_ids(), loading_depth)
 
 
 

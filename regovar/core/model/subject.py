@@ -46,7 +46,7 @@ def subject_init(self, loading_depth=0, force=False):
         self.indicators= self.get_indicators()
         self.samples_ids = [r.id for r in execute("SELECT id FROM sample WHERE subject_id={}".format(self.id))]
         self.files_ids = [r.id for r in execute("SELECT file_id FROM subject_file WHERE subject_id={}".format(self.id))]
-        self.projects_ids = [r.id for r in execute("SELECT subject_id FROM project_subject WHERE subject_id={}".format(self.id))]
+        self.projects_ids = self.get_projects_ids()
         self.analyses_ids = []
         self.jobs_ids = []
 
@@ -261,14 +261,18 @@ def subject_get_files(self, loading_depth=0):
     return File.from_ids([i.file_id for i in ids], loading_depth)
 
 
+def subject_get_projects_ids(self):
+    sql  = "SELECT distinct(t3.id) FROM project t3 INNER JOIN analysis t2 ON t3.id=t2.project_id "
+    sql += "INNER JOIN analysis_sample t1 ON t2.id=t1.analysis_id INNER JOIN sample t0 ON t1.sample_id=t0.id "
+    sql += "WHERE t0.subject_id={}"
+    return [r.id for r in execute(sql.format(self.id))]
 
 def subject_get_projects(self, loading_depth=0):
     """
         Return the list of projects linked to the subject
     """
-    from core.model.project import Project, ProjectSubject
-    ids = session().query(ProjectSubject).filter_by(subject_id=self.id).all()
-    return Project.from_ids([i.project_id for i in ids], loading_depth)
+    from core.model.project import Project
+    return Project.from_ids(self.get_projects_ids(), loading_depth)
 
 
 
@@ -288,6 +292,7 @@ Subject.count = subject_count
 Subject.get_jobs = subject_get_jobs
 Subject.get_samples = subject_get_samples
 Subject.get_samples_ids = subject_get_samples_ids
+Subject.get_projects_ids = subject_get_projects_ids
 Subject.get_projects = subject_get_projects
 Subject.get_indicators = subject_get_indicators
 Subject.get_analyses = subject_get_analyses
@@ -357,36 +362,3 @@ SubjectFile.save = sf_save
 
 
 
-# =====================================================================================================================
-# SUBJECT Project associations
-# =====================================================================================================================
-
-def sp_set(subject_id, project_id):
-    """
-        Create or update the link between subject and the project
-    """
-    # Get or create the association
-    sf = session().query(SubjectProject).filter_by(subject_id=subject_id, project_id=project_id).first()
-    if not sf: 
-        sf = SubjectProject(subject_id=subject_id, project_id=project_id)
-        sf.save()
-    return sf
-
-
-
-def sp_unset(subject_id, project_id):
-    """
-        Delete a the link between the subject and the file
-    """
-    session().query(SubjectProject).filter_by(subject_id=subject_id, project_id=project_id).delete(synchronize_session=False)
-
-
-
-def sp_save(self):
-    generic_save(self)
-
-
-SubjectProject = Base.classes.project_subject
-SubjectProject.set = sp_set
-SubjectProject.unset = sp_unset
-SubjectProject.save = sp_save
