@@ -40,7 +40,7 @@ def project_init(self, loading_depth=0, force=False):
         self.loading_depth = min(2, loading_depth)
     try:
         self.indicators= self.get_indicators()
-        self.subjects_ids = [s.id for s in self.get_subjects()]
+        self.subjects_ids = [s.id for s in self.get_subjects_ids()]
         self.jobs_ids = [j.id for j in self.get_jobs()]
         self.analyses_ids = [a.id for a in self.get_analyses()]
         self.files_ids = [f.id for f in self.get_files()]
@@ -231,12 +231,21 @@ def projects_get_files(self, loading_depth=0):
 
 
 
+def projects_get_subjects_ids(self):
+    sql  = "SELECT distinct(t2.id) FROM subject t3 INNER JOIN sample t2 ON t3.id=t2.subject_id "
+    sql += "INNER JOIN analysis_sample t1 ON t2.id=t1.sample_id INNER JOIN analysis t0 ON t1.analysis_id=t0.id "
+    sql += "WHERE t0.project_id=3"
+    return [r.id for r in execute(sql)]
+    
+
+
 def projects_get_subjects(self, loading_depth=0):
     """
         Return the list of subjects linked to the project
     """
     from core.model.subject import Subject
-    ids = session().query(ProjectSubject).filter_by(project_id=self.id).all()
+    # Get ids:
+    ids = self.get_subjects_ids()
     return Subject.from_ids([i.subject_id for i in ids], loading_depth)
 
 
@@ -247,7 +256,7 @@ def projects_get_subjects(self, loading_depth=0):
 
 
 Project = Base.classes.project
-Project.public_fields = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "jobs", "analyses", "files", "indicators", "is_sandbox"]
+Project.public_fields = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "subjects_ids", "jobs", "analyses", "files", "indicators", "subjects", "is_sandbox"]
 Project.init = project_init
 Project.from_id = project_from_id
 Project.from_ids = project_from_ids
@@ -262,6 +271,7 @@ Project.get_indicators = projects_get_indicators
 Project.get_analyses = projects_get_analyses
 Project.get_files = projects_get_files
 Project.get_subjects = projects_get_subjects
+Project.get_subjects_ids = projects_get_subjects_ids
 
 
 
@@ -331,74 +341,6 @@ ProjectFile.save = pf_save
 
 
 
-
-# =====================================================================================================================
-# PROJECT SUBJECT associations
-# =====================================================================================================================
-def ps_new(project_id, subject_id):
-    ps = ProjectSubject(project_id=project_id, subject_id=subject_id)
-    ps.save()
-    return ps
-
-
-def ps_save(self):
-    generic_save(self)
-
-
-ProjectSubject = Base.classes.project_subject
-ProjectSubject.new = ps_new
-ProjectSubject.save = ps_save
-
-
-
-
-
-
-## =====================================================================================================================
-## PROJECT USERS associations
-## =====================================================================================================================
-#def ups_get_auth(project_id, user_id):
-    #ups = session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).first()
-    #if ups : 
-        #return ups.write_authorisation
-    #return None
-
-
-#def ups_set(project_id, user_id, write_authorisation):
-    #"""
-        #Create or update the sharing option between project and user
-    #"""
-    ## Get or create the association
-    #ups = session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).first()
-    #if not ups: ups = UserProjectSharing()
-    
-    ## Update the association     
-    #ups.project_id=project_id
-    #ups.user_id=user_id
-    #ups.write_authorisation=write_authorisation
-    #ups.save()
-    #return ups
-
-
-
-#def ups_unset(project_id, user_id):
-    #"""
-        #Delete a the sharing option between the project and the user
-    #"""
-    #session().query(UserProjectSharing).filter_by(project_id=project_id, user_id=user_id).delete(synchronize_session=False)
-    
-    
-
-#def ups_save(self):
-    #generic_save(self)
-
-
-
-#UserProjectSharing = Base.classes.user_project_sharing
-#UserProjectSharing.get_auth = ups_get_auth
-#UserProjectSharing.set = ups_set
-#UserProjectSharing.unset = ups_unset
-#UserProjectSharing.save = ups_save
 
 
 
