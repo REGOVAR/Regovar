@@ -1,17 +1,6 @@
 #!env/python3
 # coding: utf-8
-import ipdb; 
 
-
-import json
-import aiohttp
-import aiohttp_jinja2
-import datetime
-import time
-
-
-from aiohttp import web
-from urllib.parse import parse_qsl
 
 from config import *
 from core.framework.common import *
@@ -29,7 +18,8 @@ from api_rest.rest import *
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 class VariantHandler:
 
-    def get(self, request):
+    @staticmethod
+    def get(request):
         """
             Return all data available for the requested variant in the context of the analysis
         """
@@ -43,15 +33,17 @@ class VariantHandler:
         return rest_success(variant)
 
 
-
-    async def new(self, request):
-        
+    @staticmethod
+    async def new(request):
+        """
+            Create new variant with provided json data (POST)
+        """
         data = await request.json()
         try:
             if "variants" in data.keys():
                 count = 0
-                for v in data["variants"]:
-                    core.variants.new(v)
+                for var in data["variants"]:
+                    core.variants.new(var)
                     count += 1
         except Exception as ex:
             return rest_error("Unable to import variants. {}".format(ex))
