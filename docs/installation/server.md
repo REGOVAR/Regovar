@@ -44,11 +44,11 @@ Les commandes préfixées par '#' sont a exécuter en tant que root.
     $ make init
     => Please, edit the $PWD/config.py file before proceed to the installation with the command 'make install'
     $ make install 
-    $ make uupdate_hpo
+    $ make update_hpo
 ```
 
-### If 'error FATAL peer authentication'
-You need to update the postgresql server config : /etc/postgresql/9.6/main/pg_hba.conf
+### If you get 'error FATAL peer authentication'
+You need to update the postgresql server config to allow "trus connection" : /etc/postgresql/9.6/main/pg_hba.conf
 
 ```
 # "local" is for Unix domain socket connections only
