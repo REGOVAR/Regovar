@@ -273,7 +273,7 @@ class SearchManager:
         """
         # TODO: cache
         result = []
-        query = "http://rest.genenames.org/search/symbol/{}".format(search)
+        query = "http://rest.genenames.org/search/{}".format(search)
         data = get_cache(query)
         if not data: 
             res = requests.get(query, headers={"Accept": "application/json"})

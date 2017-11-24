@@ -1,7 +1,5 @@
 #!env/python3
 # coding: utf-8
-import os
-import json
 
 from core.framework.common import *
 from core.framework.postgresql import *
@@ -33,11 +31,13 @@ def analysis_init(self, loading_depth=0):
             - status            : enum          : The status of the analysis : 'empty', 'computing', 'ready', 'error'
             - filters_ids       : [int]         : The list of ids of filters saved for this analysis
             - samples_ids       : [int]         : The list of ids of samples used for analysis
+            - files_ids         : [int]         : The list of ids of files associated to the analysis (via analysis_file table)
             - attributes        : json          : The list of attributes defined for this analysis
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - project           : Project       : The that own the analysis
             - samples           : [Sample]      : The list of samples owns by the analysis
             - filters           : [Filter]      : The list of Filter created in the analysis
+            - files             : [File]        : The list of File associated to the analysis (via analysis_file table)
     """
     from core.model.project import Project
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
@@ -51,14 +51,17 @@ def analysis_init(self, loading_depth=0):
         self.filters_ids = self.get_filters_ids()
         self.samples_ids = AnalysisSample.get_samples_ids(self.id)
         self.attributes = self.get_attributes()
+        self.files_ids = AnalysisFile.get_files_ids(self.id)
         
         self.project = None
         self.samples = []
         self.filters = []
+        self.files = []
         if self.loading_depth > 0:
             self.project = Project.from_id(self.project_id, self.loading_depth-1)
             self.samples = AnalysisSample.get_samples(self.id, self.loading_depth-1)
             self.filters = self.get_filters(self.loading_depth-1)
+            self.files = AnalysisFile.get_files(self.id, self.loading_depth-1)
     except Exception as ex:
         raise RegovarException("Analysis data corrupted (id={}).".format(self.id), "", ex)
             
@@ -81,35 +84,34 @@ def analysis_to_json(self, fields=None, loading_depth=-1):
         - fields lazy loading
         - custom recursive depth loading (max 2)
     """
-    from core.model.sample import Sample
     result = {}
     if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
         fields = Analysis.public_fields
-    for f in fields:
-        if f == "create_date" or f == "update_date":
-            result.update({f: eval("self." + f + ".isoformat()")})
-        elif f in ["samples", "filters"]:
-            if hasattr(self, f) and len(eval("self." + f)) > 0 and loading_depth > 0:
-                result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
+    for field in fields:
+        if field == "create_date" or field == "update_date":
+            result.update({field: eval("self." + field + ".isoformat()")})
+        elif field in ["samples", "filters", "files"]:
+            if hasattr(self, field) and len(eval("self." + field)) > 0 and loading_depth > 0:
+                result[field] = [o.to_json(None, loading_depth-1) for o in eval("self." + field)]
             else:
-                result[f] = None
-        elif f in ["project"] and loading_depth>0:
-            obj = eval("self." + f)
-            result[f] = obj.to_json(None, loading_depth-1) if obj else None
+                result[field] = None
+        elif field in ["project"] and loading_depth>0:
+            obj = eval("self." + field)
+            result[field] = obj.to_json(None, loading_depth-1) if obj else None
         else:
             try:
-                result.update({f: eval("self." + f)})
+                result.update({field: eval("self." + field)})
             except Exception as ex:
-                err("Analysis.to_json unable to evaluate the value of the field {}. {}".format(f, str(ex)))
+                err("Analysis.to_json unable to evaluate the value of the field {}. {}".format(field, str(ex)))
     return result
     
     
 
 def analysis_load(self, data):
     """
-        Helper to update several paramters at the same time. Note that dynamics properties (project, samples, samples_ids, attributes)
+        Helper to update several paramters at the same time. Note that dynamics properties (project, samples, files, attributes)
         cannot be updated with this method. However, you can update project_id .
         To update sample you must used dedicated models object : AnalysisSample
     """
@@ -129,6 +131,18 @@ def analysis_load(self, data):
         if "computing_progress" in data.keys(): self.computing_progress = data["computing_progress"]
         if "status"             in data.keys(): self.status             = data["status"] if data["status"] else 'emmpty'
         if "attributes"         in data.keys(): self.attributes         = data["attributes"]
+        
+        if "files_ids" in data.keys(): 
+            self.files_ids = data['files_ids']
+            # Remove old
+            for fid in self.files_ids:
+                if fid not in data["files_ids"]:
+                    AnalysisFile.delete(self.id, fid)
+            # Add new samples
+            for fid in data["files_ids"]:
+                if fid not in self.files_ids:
+                    AnalysisFile.new(self.id, sid)
+            
         if "settings" in data.keys(): 
             # When settings change, need to regenerate working table
             self.settings = data['settings']
@@ -170,7 +184,10 @@ def analysis_load(self, data):
 
         # check to reload dynamics properties
         if self.loading_depth > 0:
-            self.load_depth(self.loading_depth)
+            self.project = Project.from_id(self.project_id, self.loading_depth-1)
+            self.samples = AnalysisSample.get_samples(self.id, self.loading_depth-1)
+            self.filters = self.get_filters(self.loading_depth-1)
+            self.files = AnalysisFile.get_files(self.id, self.loading_depth-1)
         self.save()
 
         # FIXME : why sqlalchemy don't care about json settings the first time ?
@@ -178,8 +195,8 @@ def analysis_load(self, data):
             self.settings = settings
             self.save()
         # END FIXME
-    except Exception as err:
-        raise RegovarException('Invalid input data to load.', "", err)
+    except Exception as ex:
+        raise RegovarException('Invalid input data to load.', "", ex)
     return self
 
 
@@ -258,7 +275,7 @@ def analysis_get_attributes(self):
 
 
 Analysis = Base.classes.analysis
-Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "computing_progress", "status"]
+Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "files_ids", "files", "computing_progress", "status"]
 Analysis.init = analysis_init
 Analysis.from_id = analysis_from_id
 Analysis.to_json = analysis_to_json
@@ -394,7 +411,7 @@ def analysisfile_get_files(analysis_id, loading_depth=0):
     """
         Return the list of files used in an analysis
     """
-    from core.model.sample import File
+    from core.model.file import File
     files_ids = analysisfile_get_files_ids(analysis_id)
     result = []
     if len(files_ids) > 0:

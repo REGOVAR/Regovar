@@ -120,6 +120,12 @@ def file_delete(file_id):
         Delete the file with the provided id in the database
     """
     session().query(File).filter_by(id=file_id).delete(synchronize_session=False)
+    # TODO: check and clean all associations
+    # - analysis via analysis_file table
+    # - sample via file_id property
+    # - subject via subject_file table
+    # - pipeline
+    # - job via job_file
 
 
 def file_new():
