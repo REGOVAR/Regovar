@@ -20,7 +20,7 @@ from core.managers import *
 # =====================================================================================================================
 # CORE MAIN OBJECT
 # =====================================================================================================================
-def notify_all_print(self, data):
+def default_notify_all(data):
     """
         Default delegate used by the core for notification.
     """
@@ -48,12 +48,11 @@ class Core:
         self.subjects = SubjectManager()
         self.search = SearchManager()
         self.admin = AdminManager()
-
-
-        # method handler to notify all
+        
+        # Notify all method
         # according to api that will be pluged on the core, this method should be overriden 
-        # to really do a notification. (See how api_rest override this method)
-        self.notify_all = notify_all_print
+        # (See how api_rest override this method in api_rest/rest.py)
+        self.notify_all = default_notify_all
 
         # module loaded dynamicaly as this part of the server should be heavily customisable. 
         # Even is there is bug in these module, the server shall works. but the wrong module is unvailable
@@ -64,6 +63,14 @@ class Core:
         self.load_report_managers()
 
 
+    def notify_all(self, data):
+        """
+            Default delegate used by the core for notification.
+            according to api that will be pluged on the core, this method should be overriden 
+            (See how api_rest override this method in api_rest/rest.py)
+        """
+        print(str(data))
+    
 
     def user_authentication(self, login, pwd):
         """

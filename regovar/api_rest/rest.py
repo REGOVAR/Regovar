@@ -107,7 +107,7 @@ def user_role(role):
 
 
 
-def rest_notify_all(self, data):
+def rest_notify_all(data):
     msg = json.dumps(data)
     if 'action' not in data.keys() or data['action'] != 'hello':
         log ("API_rest Notify All: {0}".format(msg))
@@ -229,7 +229,7 @@ class WebsocketHandler:
 
         WebsocketHandler.socket_list.append((ws, ws_id))
         msg = {'action':'hello', 'data': [[str(_ws[1]) for _ws in WebsocketHandler.socket_list]]}
-        notify_all(None, msg)
+        core.notify_all(msg)
 
         try:
             async for msg in ws:

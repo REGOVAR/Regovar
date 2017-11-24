@@ -298,7 +298,7 @@ class JobManager:
             self.finalize(job.id, asynch)
         # Push notification
         if notify:
-            core.notify_all(data={"action": "job_updated", "data" : [job.to_json()]})
+            core.notify_all({"action": "job_updated", "data" : [job.to_json()]})
 
 
     def __init_job(self, job_id, asynch, auto_notify):

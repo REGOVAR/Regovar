@@ -449,7 +449,7 @@ class FilterEngine:
         from core.core import core
         log("---\nPrepare tmp working table for analysis {}".format(analysis.id))
         progress = {"start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0}
-        core.notify_all(None, data={'action':'filtering_prepare', 'data': progress})
+        core.notify_all({'action':'filtering_prepare', 'data': progress})
         if order and len(order) == 0: order = None
 
         # Create schema
@@ -483,7 +483,7 @@ class FilterEngine:
             err("Not able to save current filter")
         
         progress.update({"progress": 1})
-        core.notify_all(None, data={'action':'filtering_prepare', 'data': progress})
+        core.notify_all({'action':'filtering_prepare', 'data': progress})
 
 
 
@@ -499,7 +499,7 @@ class FilterEngine:
         from core.core import core
         log("---\nUpdating working table of analysis {}".format(analysis.id))
         progress = {"start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0, "column": column}
-        core.notify_all(None, data={'action':'wt_update', 'data': progress})
+        core.notify_all({'action':'wt_update', 'data': progress})
         
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
@@ -513,7 +513,7 @@ class FilterEngine:
             log("Column: {0} already exists -> reset to false".format(column))
         
         progress.update({"progress": 0.33})
-        core.notify_all(None, data={'action':'wt_update', 'data': progress})
+        core.notify_all({'action':'wt_update', 'data': progress})
         
         # Set filtered data
         # Note : As trx_pk_value may be null, we cannot use '=' operator and must use 'IS NOT DISTINCT FROM' 
@@ -530,7 +530,7 @@ class FilterEngine:
         log("Time: {0}\nResults count: {1}".format(t, total_variant))
         
         progress.update({"progress": 0.66})
-        core.notify_all(None, data={'action':'wt_update', 'data': progress})
+        core.notify_all({'action':'wt_update', 'data': progress})
         
         # Create index
         query = "CREATE INDEX IF NOT EXISTS idx_{1} ON {0} ({1});"
@@ -538,7 +538,7 @@ class FilterEngine:
         log("Index updated: idx_{0}".format(column))
         
         progress.update({"progress": 1})
-        core.notify_all(None, data={'action':'wt_update', 'data': progress})
+        core.notify_all({'action':'wt_update', 'data': progress})
         return total_variant
 
 

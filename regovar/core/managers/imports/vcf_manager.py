@@ -566,7 +566,7 @@ for i in range(max_thread):
 #def transaction_end(job_id, result):
     #job_in_progress.remove(job_id)
     #if result is Exception or result is None:
-        #core.notify_all(None, data={'action':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
+        #core.notify_all({'action':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
     #else:
         #log("Transaction success")
             
@@ -685,7 +685,7 @@ class VcfManager(AbstractImportManager):
                     sp.loading_progress = progress
                     sp.status = "loading"
                     sp.save()
-                core.notify_all(None, data={'action':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : sp.id, 'name' : sp.name} for sp in sps]}})
+                core.notify_all({'action':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : sp.id, 'name' : sp.name} for sp in sps]}})
                 
                 log("VCF iport : enqueue query")
                 queries_queue.put(transaction)
@@ -728,7 +728,7 @@ class VcfManager(AbstractImportManager):
             sp.status = "ready"
             sp.save()
 
-        core.notify_all(None, data={'action':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
+        core.notify_all({'action':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Import done without error.', 'samples': [ {'id' : samples[s].id, 'name' : samples[s].name} for s in samples.keys()]}})
         
         
         
@@ -789,10 +789,10 @@ class VcfManager(AbstractImportManager):
             
             if len(samples.keys()) == 0 : 
                 war("VCF files without sample cannot be imported in the database.")
-                core.notify_all(None, data={'action':'import_vcf_error', 'data' : {'file_id' : file_id, 'msg' : "VCF files without sample cannot be imported in the database."}})
+                core.notify_all({'action':'import_vcf_error', 'data' : {'file_id' : file_id, 'msg' : "VCF files without sample cannot be imported in the database."}})
                 return;
 
-            core.notify_all(None, data={'action':'import_vcf_start', 'data' : {'file_id' : file_id, 'samples' : [ {'id' : samples[sid].id, 'name' : samples[sid].name} for sid in samples.keys()]}})
+            core.notify_all({'action':'import_vcf_start', 'data' : {'file_id' : file_id, 'samples' : [ {'id' : samples[sid].id, 'name' : samples[sid].name} for sid in samples.keys()]}})
             # TODO : update sample's progress indicator
 
 
