@@ -147,6 +147,6 @@ class SampleHandler:
             sample.load(data)
             sample.save()
         except Exception as ex:
-            return rest_error("Unable to update sample data with provided informations. ".format(str(ex)))
+            return rest_error("Unable to update sample data with provided informations. {}".format(str(ex)))
         return rest_success(sample.to_json())
     

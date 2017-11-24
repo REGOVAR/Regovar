@@ -107,7 +107,7 @@ def user_role(role):
 
 
 
-def notify_all(self, data):
+def rest_notify_all(self, data):
     msg = json.dumps(data)
     if 'action' not in data.keys() or data['action'] != 'hello':
         log ("API_rest Notify All: {0}".format(msg))
@@ -115,7 +115,7 @@ def notify_all(self, data):
         ws[0].send_str(msg)
 
 # Give to the core the delegate to call to notify all users via websockets
-core.notify_all = notify_all
+core.notify_all = rest_notify_all
 
 
 

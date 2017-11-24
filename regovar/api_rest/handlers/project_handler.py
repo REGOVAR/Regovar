@@ -139,6 +139,7 @@ class ProjectHandler:
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Project.public_fields)
         project_id = request.match_info.get('project_id', -1)
+        user_id = None # TODO: retrieve user id from session
         depth = 0
         # Get range meta data
         range_data = {
@@ -147,7 +148,7 @@ class ProjectHandler:
             "range_total"  : Project.count(),
             "range_max"    : RANGE_MAX,
         }
-        events = core.events.get(fields, query, order, offset, limit, depth)
+        events = core.events.list(user_id, fields, query, order, offset, limit, depth)
         return rest_success([e.to_json() for e in events], range_data)
 
 

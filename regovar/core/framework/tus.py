@@ -41,7 +41,7 @@ class TusFileWrapper:
         # Do something when the upload of a chunk of the file is done. Basicaly : save new offset position in a database
         pass
 
-    def complete(self):
+    def complete(self, checksum=None, checksum_type="md5"):
         # Do something when the upload of the file is finished
         pass
 

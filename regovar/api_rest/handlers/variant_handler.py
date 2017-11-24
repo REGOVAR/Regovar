@@ -54,7 +54,7 @@ class VariantHandler:
                     core.variants.new(v)
                     count += 1
         except Exception as ex:
-            return rest_error("unable to import variants.".format(ex))
+            return rest_error("Unable to import variants. {}".format(ex))
 
         return rest_success(count)
  

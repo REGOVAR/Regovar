@@ -28,9 +28,6 @@ class PhenotypeManager:
     def __init__(self):
         pass
 
-
-    def get(self, hpo_id):
-        pass
     
     def search(self, search):
         """

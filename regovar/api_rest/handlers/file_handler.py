@@ -46,7 +46,7 @@ class FileWrapper (TusFileWrapper):
             self.size = self.file.size
             self.upload_url = "file/upload/" + str(id)
         else:
-            return TusManager.build_response(code=500, body="Unknow id: {}".format(id))
+            raise RegovarException("TUS File wrapper init error : Unknow id: {}".format(id))
 
 
     def save(self):

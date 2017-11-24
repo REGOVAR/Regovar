@@ -70,7 +70,7 @@ class PipelineHandler:
         pipe_id = request.match_info.get('pipe_id', -1)
         pipe = Pipeline.from_id(pipe_id, -1)
         if not pipe:
-            return rest_error("No pipeline with id ".format(pipe_id))
+            return rest_error("No pipeline with id {}".format(pipe_id))
 
         pipe = pipe.to_json(Pipeline.public_fields)
         return rest_success(format_pipeline_json(pipe))

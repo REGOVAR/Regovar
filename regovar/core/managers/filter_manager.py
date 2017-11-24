@@ -316,7 +316,7 @@ class FilterEngine:
         # Add panel's columns
         # TODO: foreach analysis.panels_ids
         
-        q_from   = "{0} _wt".format(wt, analysis.db_suffix)
+        q_from   = "{0} _wt".format(wt)
 
         # first loop over "variant db" in order to set common annotation to trx
         for dbuid in analysis.settings["annotations_db"]:

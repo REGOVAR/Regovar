@@ -116,5 +116,5 @@ class AnnotationManager:
             await self.load_annotation_metadata()
             return True
         except Exception as ex:
-            err("Unable to delete annotation database with uid : ".format(db_uid), ex)
+            err("Unable to delete annotation database with uid : {}".format(db_uid), ex)
             return False

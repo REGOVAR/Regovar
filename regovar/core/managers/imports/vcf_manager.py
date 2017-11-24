@@ -573,10 +573,10 @@ for i in range(max_thread):
             
 class VcfManager(AbstractImportManager):
     metadata = {
-            "name" : "VCF",
-            "input" :  ["vcf", "vcf.gz"],
-            "description" : "Import variants from vcf file"
-        }
+        "name" : "VCF",
+        "input" :  ["vcf", "vcf.gz"],
+        "description" : "Import variants from vcf file"
+    }
 
 
 

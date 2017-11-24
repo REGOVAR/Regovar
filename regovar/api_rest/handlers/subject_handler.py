@@ -110,6 +110,7 @@ class SubjectHandler:
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Subject.public_fields)
         subject_id = request.match_info.get('subject_id', -1)
+        user_id = None # TODO: retrieve user_id from session
         depth = 0
         # Get range meta data
         range_data = {
@@ -118,7 +119,7 @@ class SubjectHandler:
             "range_total"  : Subject.count(),
             "range_max"    : RANGE_MAX,
         }
-        events = core.events.get(fields, query, order, offset, limit, depth)
+        events = core.events.list(user_id, fields, query, order, offset, limit, depth)
         return rest_success([e.to_json() for e in events], range_data)
 
 

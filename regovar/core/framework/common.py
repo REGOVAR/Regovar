@@ -357,12 +357,12 @@ class Timer(object):
         self.secs = self.end - self.start
         self.msecs = self.secs * 1000  # millisecs
         if self.verbose:
-            log(self.msecs, ' ms')
+            log("{} ms".format(self.msecs))
 
     def __str__(self):
         if self.msecs >= 1000:
-            return "{0} s".format(self.secs)
-        return "{0} ms".format(self.msecs)
+            return "{} s".format(self.secs)
+        return "{} ms".format(self.msecs)
 
     def total_ms(self):
         return self.msecs

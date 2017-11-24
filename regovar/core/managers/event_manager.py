@@ -14,7 +14,7 @@ class EventManager:
 
 
 
-    def list(self, user_id, fields=None, query=None, sort=None, offset=None, limit=None, depth=0):
+    def list(self, user_id=None, fields=None, query=None, sort=None, offset=None, limit=None, depth=0):
         """
             Generic method to get events according to provided filtering options
         """

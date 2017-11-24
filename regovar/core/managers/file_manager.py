@@ -149,9 +149,9 @@ class FileManager:
         """
         from core.core import core
         name = clean_filename(os.path.basename(url))
-        file = self.upload_init(name, 0)
+        pfile = self.upload_init(name, 0)
         # get request and write file
-        with open(file.path, "bw+") as f:
+        with open(pfile.path, "bw+") as f:
             try :
                 response = await requests.get(url)
             except Exception as ex:
@@ -160,7 +160,7 @@ class FileManager:
         pfile.size = os.path.getsize(path)
         pfile.save()
         # save file on the database
-        pfile = core.files.upload_finish(file.id)
+        pfile = core.files.upload_finish(pfile.id)
         return rest_success(pfile)
 
 
@@ -195,7 +195,7 @@ class FileManager:
             pfile.status = "checked"
             pfile.save()
         except Exception as ex:
-            raise RegovarException("Error occured when trying to copy/move the file from the provided path : ".format(path), "", ex)
+            raise RegovarException("Error occured when trying to copy/move the file from the provided path : {}".format(path), "", ex)
         return pfile
 
 
