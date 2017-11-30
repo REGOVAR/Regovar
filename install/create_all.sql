@@ -457,42 +457,63 @@ CREATE TABLE public.analysis_file
 
 
 
+
+
+
 CREATE TABLE public.indicator
 (
     id serial NOT NULL,
     name text COLLATE pg_catalog."C" NOT NULL,
     description text COLLATE pg_catalog."C",
-    default_value_id integer,
+    meta JSON,
     CONSTRAINT indicator_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.indicator_value
+CREATE TABLE public.subject_indicator_value
+(
+    subject_id integer NOT NULL,
+    indicator_id integer NOT NULL,
+    value character varying(50) COLLATE pg_catalog."C",
+    CONSTRAINT siv_pkey PRIMARY KEY (subject_id, indicator_id)
+);
+CREATE TABLE public.analysis_indicator_value
+(
+    analysis_id integer NOT NULL,
+    indicator_id integer NOT NULL,
+    value character varying(50) COLLATE pg_catalog."C",
+    CONSTRAINT aiv_pkey PRIMARY KEY (analysis_id, indicator_id)
+);
+CREATE TABLE public.job_indicator_value
+(
+    job_id integer NOT NULL,
+    indicator_id integer NOT NULL,
+    value character varying(50) COLLATE pg_catalog."C",
+    CONSTRAINT jiv_pkey PRIMARY KEY (job_id, indicator_id)
+);
+
+
+
+
+
+CREATE TABLE public.panel
 (
     id serial NOT NULL,
-    indicator_id integer NOT NULL,
+    version character varying(50) COLLATE pg_catalog."C",
     name text COLLATE pg_catalog."C" NOT NULL,
     description text COLLATE pg_catalog."C",
-    style json,
-    CONSTRAINT iv_pkey PRIMARY KEY (id)
+    owner text COLLATE pg_catalog."C",
+    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT panel_pkey PRIMARY KEY (id, version)
 );
-CREATE TABLE public.project_indicator
+CREATE TABLE public.panel_entry
 (
-    indicator_id integer NOT NULL,
-    project_id integer,
-    indicator_value_id integer NOT NULL,
-    CONSTRAINT pi_pkey PRIMARY KEY (indicator_id, project_id)
+    panel_id integer NOT NULL,
+    version character varying(50) COLLATE pg_catalog."C",
+    reference_id integer NOT NULL,
+    meta JSON NOT NULL,
+    label character varying(50) COLLATE pg_catalog."C",
+    range int8range NOT NULL
 );
-CREATE TABLE public.subject_indicator
-(
-    indicator_id integer NOT NULL,
-    subject_id integer,
-    indicator_value_id integer NOT NULL,
-    CONSTRAINT si_pkey PRIMARY KEY (indicator_id, subject_id)
-);
-
-
-
-
-
 
 
 
