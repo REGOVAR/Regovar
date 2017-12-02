@@ -36,6 +36,7 @@ def subject_init(self, loading_depth=0, force=False):
             - files         : [File]        : The list of File owns by the subject
             - projects      : [Project]     : The list of Project that contains this subject
     """
+    from core.model.indicator import Indicator
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     # Avoid recursion infinit loop
     if hasattr(self, "loading_depth") and self.loading_depth >= loading_depth:
@@ -43,7 +44,7 @@ def subject_init(self, loading_depth=0, force=False):
     else:
         self.loading_depth = min(2, loading_depth)
     try:
-        self.indicators= self.get_indicators()
+        self.indicators= Indicator.from_subject_id(self.id)
         self.samples_ids = [r.id for r in execute("SELECT id FROM sample WHERE subject_id={}".format(self.id))]
         self.files_ids = [r.id for r in execute("SELECT file_id FROM subject_file WHERE subject_id={}".format(self.id))]
         self.projects_ids = self.get_projects_ids()
@@ -161,8 +162,8 @@ def subject_delete(subject_id):
     """
         Delete the subject with the provided id in the database
     """
-    session().query(SubjectIndicator).filter_by(subject_id=subject_id).delete(synchronize_session=False)
     session().query(Subject).filter_by(id=subject_id).delete(synchronize_session=False)
+    # TODO: delete indicator
 
 
 def subject_new():
@@ -184,14 +185,6 @@ def subject_count():
 
 
 
-
-def subject_get_indicators(self, loading_depth=0):
-    """
-        Return the list of indicators for the subject
-    """
-    from core.model.indicator import Indicator
-    indicators = session().query(SubjectIndicator).filter_by(subject_id=self.id).all()
-    return indicators
 
 
 def subject_get_samples_ids(self):
@@ -294,32 +287,12 @@ Subject.get_samples = subject_get_samples
 Subject.get_samples_ids = subject_get_samples_ids
 Subject.get_projects_ids = subject_get_projects_ids
 Subject.get_projects = subject_get_projects
-Subject.get_indicators = subject_get_indicators
 Subject.get_analyses = subject_get_analyses
 Subject.get_files = subject_get_files
 
 
 
 
-
-# =====================================================================================================================
-# SUBJECT INDICATOR associations
-# =====================================================================================================================
-def subjectindicator_to_json(self, fields=None):
-    """
-        Export the subject indicator into json format with only requested fields
-    """
-    result = {}
-    if fields is None:
-        fields = ["subject_id", "indicator_id", "indicator_value_id"]
-    for f in fields:
-        result.update({f: eval("self." + f)})
-    return result
-
-
-
-SubjectIndicator = Base.classes.subject_indicator
-SubjectIndicator.to_json = subjectindicator_to_json
 
 
 

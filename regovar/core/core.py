@@ -41,6 +41,7 @@ class Core:
         self.annotations = AnnotationManager()
         self.filters = FilterEngine()
         self.phenotypes = PhenotypeManager()
+        self.panels = PanelManager()
         # Regovar Part (User, project, SLI management)
         self.users = UserManager()
         self.projects = ProjectManager()

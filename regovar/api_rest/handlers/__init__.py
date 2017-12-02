@@ -20,3 +20,4 @@ from api_rest.handlers.event_handler import EventHandler
 from api_rest.handlers.search_handler import SearchHandler
 from api_rest.handlers.admin_handler import AdminHandler
 from api_rest.handlers.phenotype_handler import PhenotypeHandler
+from api_rest.handlers.panel_handler import PanelHandler

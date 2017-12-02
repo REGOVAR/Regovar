@@ -411,14 +411,7 @@ CREATE TABLE public.event
     "date" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     message text COLLATE pg_catalog."C",
     type event_type,
-
-    user_id integer,
-    project_id integer,
-    analysis_id integer,
-    file_id integer,
-    subject_id integer,
-    job_id integer,
-    pipeline_id integer,
+    meta JSON,
     CONSTRAINT event_pkey PRIMARY KEY (id)
 );
 
@@ -509,9 +502,9 @@ CREATE TABLE public.panel_entry
 (
     panel_id integer NOT NULL,
     version character varying(50) COLLATE pg_catalog."C",
-    reference_id integer NOT NULL,
     meta JSON NOT NULL,
     label character varying(50) COLLATE pg_catalog."C",
+    chr int NOT NULL,
     range int8range NOT NULL
 );
 
@@ -581,11 +574,26 @@ CREATE INDEX annotation_field_idx2
   USING btree (uid);
   
   
-  
-  
-  
+CREATE INDEX subject_indicator_idx
+  ON public.subject_indicator_value
+  USING btree
+  (subject_id, indicator_id);
+CREATE INDEX analysis_indicator_idx
+  ON public.analysis_indicator_value
+  USING btree
+  (analysis_id, indicator_id);
+CREATE INDEX job_indicator_idx
+  ON public.job_indicator_value
+  USING btree
+  (job_id, indicator_id);
 
 
+CREATE INDEX panel_entry_idx
+  ON public.panel_entry
+  USING btree
+  (panel_id, version);
+  
+  
 
 
 

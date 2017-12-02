@@ -183,7 +183,7 @@ def user_get_projects(self, loading_depth=0):
         Return the list of projects that can access the user
     """
     from core.model.project import Project
-    return session().query(Project).filter_by(is_folder=false).all()
+    return session().query(Project).filter_by(is_folder=False).all()
 
 
 

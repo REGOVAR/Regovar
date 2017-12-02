@@ -35,6 +35,7 @@ analysisHandler = AnalysisHandler()
 sampleHandler = SampleHandler()
 hpoHandler = PhenotypeHandler()
 searchHandler = SearchHandler()
+panelHandler = PanelHandler()
 adminHandler = AdminHandler()
 
 
@@ -171,9 +172,21 @@ app.router.add_route('GET',    "/search/variant/{ref_id}/{variant_id}/{analysis_
 app.router.add_route('GET',    "/search/gene/{gene_name}",                            searchHandler.fetch_gene)      # Get all available information about the given gene
 app.router.add_route('GET',    "/search/phenotype/{hpo_id}",                          searchHandler.fetch_hpo)       # Get all available information about the given phenotype or disease (HPO/OMIM/ORPHA)
 
+app.router.add_route('GET',    "/panel/search/{query}",       panelHandler.search)             # Search gene and phenotype that match the query (used to help user to populate panel regions)
+app.router.add_route('GET',    "/panel/import/{file_id}",     panelHandler.import_file)        # Import region from a bed file already in database
+app.router.add_route('POST',   "/panel/import",               panelHandler.import_file)        # Import a new file store it on regovar server (as bed) and import as a panel
+
+app.router.add_route('GET',    "/panel",                      panelHandler.list)               # Get list of all panels
+app.router.add_route('POST',   "/panel",                      panelHandler.create_or_update)   # Create a new panel with provided data
+app.router.add_route('GET',    "/panel/{panel_id}",           panelHandler.get)                # Get information about the panel (all its versions)
+app.router.add_route('GET',    "/panel/{panel_id}/{version}", panelHandler.get)                # Get all details about the panel-version (all its entries)
+app.router.add_route('PUT',    "/panel/{panel_id}/{version}", panelHandler.create_or_update)   # Update the panel with provided data
+app.router.add_route('DELETE', "/panel/{panel_id}",           panelHandler.delete)             # Delete panel and all its versions
+app.router.add_route('DELETE', "/panel/{panel_id}/{version}", panelHandler.delete)             # Delete a panel version
 
 
-app.router.add_route('GET',    "/admin/stats",                               adminHandler.stats)                   # generic research
+
+app.router.add_route('GET',    "/admin/stats",                               adminHandler.stats)
 
 
 

@@ -17,3 +17,4 @@ from core.managers.event_manager import EventManager
 from core.managers.subject_manager import SubjectManager
 from core.managers.admin_manager import AdminManager
 from core.managers.phenotype_manager import PhenotypeManager
+from core.managers.panel_manager import PanelManager

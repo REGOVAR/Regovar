@@ -34,7 +34,7 @@ class SearchManager:
 
 
 
-    def search(self, searchQuery):
+    def search(self, search_query):
         """ 
             Search provided query in following "objects" : 
                 - variant :   ILIKE "chr:pos ref>alt" || "chr:pos_start-pos_end" || "chr:pos~delta " || "chr:pos"
@@ -51,18 +51,18 @@ class SearchManager:
                 - panel :     ILIKE "%name%"
             Return list of matching results
         """       
-        variant_res = self.search_variant(searchQuery)
-        project_res = self.search_project(searchQuery)
-        analysis_res = self.search_analysis(searchQuery)
-        sample_res = self.search_sample(searchQuery)
-        subject_res = self.search_subject(searchQuery)
-        file_res = self.search_file(searchQuery)
-        gene_res = self.search_gene(searchQuery)
-        phenotype_res = self.search_phenotype(searchQuery)
-        disease_res = self.search_disease(searchQuery)
-        user_res = self.search_user(searchQuery)
-        pipeline_res = self.search_pipeline(searchQuery)
-        panel_res = self.search_panel(searchQuery)
+        variant_res = self.search_variant(search_query)
+        project_res = self.search_project(search_query)
+        analysis_res = self.search_analysis(search_query)
+        sample_res = self.search_sample(search_query)
+        subject_res = self.search_subject(search_query)
+        file_res = self.search_file(search_query)
+        gene_res = self.search_gene(search_query)
+        phenotype_res = self.search_phenotype(search_query)
+        disease_res = self.search_disease(search_query)
+        user_res = self.search_user(search_query)
+        pipeline_res = self.search_pipeline(search_query)
+        panel_res = self.search_panel(search_query)
         
         result = { 
             "total_result": len(variant_res) + len(project_res) + len(analysis_res) + len(sample_res) + len(subject_res) + len(file_res) + len(gene_res) + len(phenotype_res) + len(disease_res) + len(user_res) + len(pipeline_res) + len(panel_res), 
@@ -79,7 +79,6 @@ class SearchManager:
             "pipeline":  pipeline_res,
             "panel":     panel_res
         }
-
         return result
 
 

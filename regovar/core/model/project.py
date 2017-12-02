@@ -24,7 +24,6 @@ def project_init(self, loading_depth=0, force=False):
             - files_ids     : [int]         : The list of ids of files that contains the project
             - analyses_ids  : [int]         : The list of ids of analyses that contains the project
             - subjects_ids  : [int]         : The list of ids of subjets associated to the project
-            - indicators    : [Indicator]   : The list of Indicator define for this project
             - is_sandbox    : bool          : True if the project is the sandbox of an user; False otherwise
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - jobs          : [Job]         : The list of Job owns by the project
@@ -39,7 +38,6 @@ def project_init(self, loading_depth=0, force=False):
     else:
         self.loading_depth = min(2, loading_depth)
     try:
-        self.indicators= self.get_indicators()
         self.subjects_ids = self.get_subjects_ids()
         self.jobs_ids = [j.id for j in self.get_jobs()]
         self.analyses_ids = [a.id for a in self.get_analyses()]
@@ -95,7 +93,7 @@ def project_to_json(self, fields=None, loading_depth=-1):
         if f in Project.public_fields:
             if f in ["create_date", "update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
-            elif f in ["jobs", "analyses", "files", "indicators"]:
+            elif f in ["jobs", "analyses", "files"]:
                 result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
             elif f in ["parent"] and self.loading_depth > 0 and self.parent:
                 result[f] = self.parent.to_json(None, loading_depth-1)
@@ -122,7 +120,6 @@ def project_load(self, data):
         if "is_folder" in data.keys(): self.is_folder = data['is_folder']
         self.save()
         
-        # TODO : update indicators
         # Update user sharing
         if "users" in data.keys():
             # Delete all associations
@@ -161,7 +158,6 @@ def project_delete(project_id):
     """
         Delete the project with the provided id in the database
     """
-    session().query(ProjectIndicator).filter_by(project_id=project_id).delete(synchronize_session=False)
     session().query(UserProjectSharing).filter_by(project_id=project_id).delete(synchronize_session=False)
     session().query(ProjectFile).filter_by(project_id=project_id).delete(synchronize_session=False)
     session().query(ProjectSubject).filter_by(project_id=project_id).delete(synchronize_session=False)
@@ -199,14 +195,6 @@ def projects_get_jobs(self, loading_depth=0):
     for j in jobs: j.init(loading_depth)
     return jobs
 
-
-def projects_get_indicators(self, loading_depth=0):
-    """
-        Return the list of indicators for the project
-    """
-    from core.model.indicator import Indicator
-    indicators = session().query(ProjectIndicator).filter_by(project_id=self.id).all()
-    return indicators
 
 
 
@@ -254,7 +242,7 @@ def projects_get_subjects(self, loading_depth=0):
 
 
 Project = Base.classes.project
-Project.public_fields = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "subjects_ids", "jobs", "analyses", "files", "indicators", "subjects", "is_sandbox"]
+Project.public_fields = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "subjects_ids", "jobs", "analyses", "files", "subjects", "is_sandbox"]
 Project.init = project_init
 Project.from_id = project_from_id
 Project.from_ids = project_from_ids
@@ -265,7 +253,6 @@ Project.new = project_new
 Project.delete = project_delete
 Project.count = project_count
 Project.get_jobs = projects_get_jobs
-Project.get_indicators = projects_get_indicators
 Project.get_analyses = projects_get_analyses
 Project.get_files = projects_get_files
 Project.get_subjects = projects_get_subjects
@@ -276,25 +263,6 @@ Project.get_subjects_ids = projects_get_subjects_ids
 
 
 
-
-# =====================================================================================================================
-# PROJECT INDICATOR associations
-# =====================================================================================================================
-def projectindicator_to_json(self, fields=None):
-    """
-        Export the project indicator into json format with only requested fields
-    """
-    result = {}
-    if fields is None:
-        fields = ["project_id", "indicator_id", "indicator_value_id"]
-    for f in fields:
-        result.update({f: eval("self." + f)})
-    return result
-
-
-
-ProjectIndicator = Base.classes.project_indicator
-ProjectIndicator.to_json = projectindicator_to_json
 
 
 
