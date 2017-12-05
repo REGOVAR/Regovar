@@ -27,7 +27,7 @@ def panel_init(self, loading_depth=0):
             - create_date : date          : The datetime when the object have been created
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - versions
-              - entries     : [json]      : The list of entries by version of the panel
+              - entries   : [json]        : The list of entries by version of the panel
     """
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     # Avoid recursion infinit loop
@@ -95,6 +95,7 @@ def panel_load(self, data):
         if "versions" in data.keys():
             # It's not allowed to delete or edit formest version. Only possible to add new one
             # TODO
+            ipdb.set_trace()
             pass
 
         # check to reload dynamics properties

@@ -502,10 +502,7 @@ CREATE TABLE public.panel_entry
 (
     panel_id integer NOT NULL,
     version character varying(50) COLLATE pg_catalog."C",
-    meta JSON NOT NULL,
-    label character varying(50) COLLATE pg_catalog."C",
-    chr int NOT NULL,
-    range int8range NOT NULL
+    data JSON NOT NULL
 );
 
 

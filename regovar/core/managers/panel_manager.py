@@ -10,7 +10,7 @@ import json
 from config import *
 from core.framework.common import *
 from core.framework.erreurs_list import ERR
-from core.model import *
+import core.model as Model
 
 
 class PanelManager:
@@ -64,7 +64,7 @@ class PanelManager:
 
         # Get or create the panel
         panel = Model.Panel.from_id(pid, loading_depth) or Model.Panel.new()
-        panel.load(subject_data)
+        panel.load(panel_data)
         return panel
 
 
@@ -79,12 +79,12 @@ class PanelManager:
         disease_res = core.search.search_disease(query)
 
         # For diseases and phenotypes, get corresponding gene
-        for pheno in phenotype_res:
-            res = [r.gene_name for r in execute("SELECT DISTINCT gene_name FROM hpo_phenotype WHERE hpo_id='{}'".format(pheno["id"]))]
-            pheno.update({"genes": res})
-        for disease in disease_res:
-            res = [r.gene_name for r in execute("SELECT DISTINCT gene_name FROM hpo_disease WHERE disease_id='{}'".format(pheno["id"]))]
-            disease.update({"genes": res})
+        #for pheno in phenotype_res:
+            #res = [r.gene_name for r in execute("SELECT DISTINCT gene_name FROM hpo_phenotype WHERE hpo_id='{}'".format(pheno["id"]))]
+            #pheno.update({"genes": res})
+        #for disease in disease_res:
+            #res = [r.gene_name for r in execute("SELECT DISTINCT gene_name FROM hpo_disease WHERE disease_id='{}'".format(pheno["id"]))]
+            #disease.update({"genes": res})
         
         # Format result
         result = { 

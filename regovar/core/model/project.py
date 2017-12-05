@@ -21,7 +21,6 @@ def project_init(self, loading_depth=0, force=False):
             - is_folder     : bool          : True if it's a folder, False if it's a project
             - update_date   : date          : The last time that the object have been updated
             - jobs_ids      : [int]         : The list of ids of jobs that contains the project
-            - files_ids     : [int]         : The list of ids of files that contains the project
             - analyses_ids  : [int]         : The list of ids of analyses that contains the project
             - subjects_ids  : [int]         : The list of ids of subjets associated to the project
             - is_sandbox    : bool          : True if the project is the sandbox of an user; False otherwise
@@ -29,7 +28,6 @@ def project_init(self, loading_depth=0, force=False):
             - jobs          : [Job]         : The list of Job owns by the project
             - analyses      : [Analysis]    : The list of Analysis owns by the project
             - subjects      : [Subject]     : The list of Subjects linked to this project
-            - files         : [File]        : The list of File owns by the project
             - parent        : Project       : The parent Project if defined
     """
     # Avoid recursion infinit loop
@@ -41,18 +39,15 @@ def project_init(self, loading_depth=0, force=False):
         self.subjects_ids = self.get_subjects_ids()
         self.jobs_ids = [j.id for j in self.get_jobs()]
         self.analyses_ids = [a.id for a in self.get_analyses()]
-        self.files_ids = [f.id for f in self.get_files()]
 
         self.jobs = []
         self.analyses = []
-        self.files = []
         self.subjects = []
         self.parent = None
         if self.loading_depth > 0:
             self.parent = Project.from_id(self.parent_id, self.loading_depth-1)
             self.jobs = self.get_jobs(self.loading_depth-1)
             self.analyses = self.get_analyses(self.loading_depth-1)
-            self.files = self.get_files(self.loading_depth-1)
             self.subjects = self.get_subjects(self.loading_depth-1)
     except Exception as ex:
         raise RegovarException("Project data corrupted (id={}).".format(self.id), "", ex)
@@ -93,7 +88,7 @@ def project_to_json(self, fields=None, loading_depth=-1):
         if f in Project.public_fields:
             if f in ["create_date", "update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
-            elif f in ["jobs", "analyses", "files"]:
+            elif f in ["jobs", "analyses", "subjects"]:
                 result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
             elif f in ["parent"] and self.loading_depth > 0 and self.parent:
                 result[f] = self.parent.to_json(None, loading_depth-1)
@@ -131,15 +126,7 @@ def project_load(self, data):
                     UserProjectSharing.set(self.id, u["id"], u["write_authorisation"])
                 else:
                     err("")
-        
-        # update files linkeds
-        if "files_ids" in data.keys():
-            # Delete all associations
-            session().query(ProjectFile).filter_by(project_id=self.id).delete(synchronize_session=False)
-            # Create new associations
-            self.files_ids = data["files_ids"]
-            for fid in data["files_ids"]:
-                ProjectFile.set(self.id, fid)
+    
         
         # TODO : update 
 
@@ -159,7 +146,6 @@ def project_delete(project_id):
         Delete the project with the provided id in the database
     """
     session().query(UserProjectSharing).filter_by(project_id=project_id).delete(synchronize_session=False)
-    session().query(ProjectFile).filter_by(project_id=project_id).delete(synchronize_session=False)
     session().query(ProjectSubject).filter_by(project_id=project_id).delete(synchronize_session=False)
     session().query(Project).filter_by(id=project_id).delete(synchronize_session=False)
     # TODO : delete analyses and job linked to the project ? that means also deleting outputs files of these jobs
@@ -209,14 +195,6 @@ def projects_get_analyses(self, loading_depth=0):
 
 
 
-def projects_get_files(self, loading_depth=0):
-    """
-        Return the list of files linked to the project
-    """
-    from core.model.file import File
-    ids = session().query(ProjectFile).filter_by(project_id=self.id).all()
-    return File.from_ids([i.file_id for i in ids], loading_depth)
-
 
 
 def projects_get_subjects_ids(self):
@@ -242,7 +220,7 @@ def projects_get_subjects(self, loading_depth=0):
 
 
 Project = Base.classes.project
-Project.public_fields = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "files_ids", "analyses_ids", "subjects_ids", "jobs", "analyses", "files", "subjects", "is_sandbox"]
+Project.public_fields = ["id", "name", "comment", "parent_id", "parent", "is_folder", "create_date", "update_date", "jobs_ids", "analyses_ids", "subjects_ids", "jobs", "analyses", "subjects", "is_sandbox"]
 Project.init = project_init
 Project.from_id = project_from_id
 Project.from_ids = project_from_ids
@@ -254,7 +232,6 @@ Project.delete = project_delete
 Project.count = project_count
 Project.get_jobs = projects_get_jobs
 Project.get_analyses = projects_get_analyses
-Project.get_files = projects_get_files
 Project.get_subjects = projects_get_subjects
 Project.get_subjects_ids = projects_get_subjects_ids
 
@@ -264,46 +241,6 @@ Project.get_subjects_ids = projects_get_subjects_ids
 
 
 
-
-
-
-# =====================================================================================================================
-# PROJECT FILES associations
-# =====================================================================================================================
-def pf_new(project_id, file_id):
-    pf = ProjectFile(project_id=project_id, file_id=file_id)
-    pf.save()
-    return pf
-
-def pf_set(project_id, file_id):
-    """
-        Create or update the link between project and the file
-    """
-    # Get or create the association
-    pf = session().query(ProjectFile).filter_by(project_id=project_id, file_id=file_id).first()
-    if not pf: 
-        pf = ProjectFile(project_id=project_id, file_id=file_id)
-        pf.save()
-    return pf
-
-
-
-def pf_unset(project_id, file_id):
-    """
-        Delete a the link between the project and the file
-    """
-    session().query(ProjectFile).filter_by(project_id=project_id, file_id=file_id).delete(synchronize_session=False)
-
-
-
-def pf_save(self):
-    generic_save(self)
-
-
-ProjectFile = Base.classes.project_file
-ProjectFile.set = pf_set
-ProjectFile.unset = pf_unset
-ProjectFile.save = pf_save
 
 
 

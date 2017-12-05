@@ -61,6 +61,8 @@ class ApiHandler:
             "default_reference_id": DEFAULT_REFERENCIAL_ID,
             "milestones" : data
         }
+
+        print(result)
         return rest_success(result)
 
 
@@ -112,7 +114,7 @@ class ApiHandler:
             Return last analyses
         """
         result = session().query(Analysis).order_by(Analysis.update_date.desc(), Analysis.name.asc()).limit(10).all()
-        for res in result: res.init(1)
+        for res in result: res.init(0)
         fields = Analysis.public_fields + ["project"]
         return [r.to_json(fields) for r in result]
     
@@ -122,7 +124,7 @@ class ApiHandler:
             Return last subjects
         """
         result = session().query(Subject).order_by(Subject.update_date.desc(), Subject.lastname.asc()).limit(10).all()
-        for res in result: res.init(1)
+        for res in result: res.init(0)
         return [r.to_json() for r in result]
 
     

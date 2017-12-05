@@ -18,7 +18,7 @@ from core.model.variant import Variant
 
 # Regovar import
 from core.model.user import User
-from core.model.project import Project, ProjectFile
+from core.model.project import Project
 from core.model.event import Event
 from core.model.indicator import Indicator
 from core.model.subject import Subject, SubjectFile
