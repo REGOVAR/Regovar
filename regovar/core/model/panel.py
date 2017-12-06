@@ -26,8 +26,7 @@ def panel_init(self, loading_depth=0):
             - update_date : date          : The last time that the object have been updated
             - create_date : date          : The datetime when the object have been created
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
-            - versions
-              - entries   : [json]        : The list of entries by version of the panel
+            - versions    : [json]        : The list of entries by version of the panel
     """
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     # Avoid recursion infinit loop
@@ -36,7 +35,7 @@ def panel_init(self, loading_depth=0):
     else:
         self.loading_depth = min(2, loading_depth)
     try:
-        self.versions = self.versions = self.get_versions(self.loading_depth-1)
+        self.versions = self.versions = self.get_versions()
     except Exception as ex:
         raise RegovarException("Panel data corrupted (id={}).".format(self.id), "", ex)
 
@@ -69,14 +68,22 @@ def panel_to_json(self, fields=None, loading_depth=-1):
         Export the panel into json format with only requested fields
     """
     result = {}
-    if loading_depth < 0:
-        loading_depth = self.loading_depth
     if fields is None:
         fields = Panel.public_fields
     for f in fields:
         if f in Panel.public_fields:
             if f in ["create_date", "update_date"]:
                 result[f] = eval("self." + f + ".isoformat()")
+            elif f in ["versions"]:
+                versions = []
+                for v in self.versions:
+                    versions.append({
+                        "version": v["version"], 
+                        "comment": v["comment"], 
+                        "entries": v["entries"], 
+                        "create_date": v["create_date"].isoformat(), 
+                        "update_date": v["update_date"].isoformat()})
+                result[f] = versions
             elif hasattr(self, f):
                 result[f] = eval("self." + f)
     return result
@@ -89,17 +96,34 @@ def panel_load(self, data):
         if "description" in data.keys(): self.description = data['description']
         if "owner" in data.keys(): self.owner = data['owner']
         if "update_date" in data.keys(): self.update_date = data['update_date']
+        if "shared" in data.keys(): self.shared = data['shared']
         self.save()
         
-        # update versions
-        if "versions" in data.keys():
-            # It's not allowed to delete or edit formest version. Only possible to add new one
-            # TODO
-            ipdb.set_trace()
-            pass
+        # update or create version (can be done for one version at time)
+        if "version" in data.keys() and "entries" in data.keys():
+            version =data["version"]
+            sql = "INSERT INTO panel_entry (panel_id, version, data, update_date) VALUES ({0}, '{1}', '{2}', CURRENT_TIMESTAMP) ON CONFLICT (panel_id, version) DO UPDATE SET data='{2}', update_date=CURRENT_TIMESTAMP  WHERE panel_entry.panel_id={0} AND panel_entry.version='{1}';"
+            execute(sql.format(self.id, sql_escape(version), json.dumps(data['entries'])))
 
-        # check to reload dynamics properties
-        self.init(self.loading_depth)
+            # Update optional comment
+            if "comment" in data.keys():
+                comment = sql_escape(data['comment'])
+                execute("UPDATE panel_entry SET data='{2}' WHERE panel_id={0} AND version='{1}';".format(self.id, sql_escape(version), comment))
+
+            # Update internal collection
+            for v in self.versions:
+                if v["version"] == version:
+                    v["update_date"] = datetime.datetime.now()
+                    v["entries"] = data["entries"]
+
+                    # Check if version is also updated 
+                    # (as it's also a part of the id, "version" is for the current or former version, and "new_version" for the updated name of the former version)
+                    if "new_version" in data.keys():
+                        v["version"] = data["new_version"]
+                        execute("UPDATE TABLE panel_entry SET version='{2}' WHERE panel_id={0} AND version='{1}'".format(self.id, sql_escape(version), sql_escape(v["version"])))
+
+            # Reload version from db
+            self.versions = self.get_versions()
     except Exception as ex:
         raise RegovarException('Panel error', ex)
     return self
@@ -113,8 +137,8 @@ def panel_delete(panel_id):
     """
         Delete the panel with the provided id in the database
     """
+    execute("DELETE * FROM panel_entry WHERE panel_id={0}".format(self.id))
     session().query(Panel).filter_by(id=panel_id).delete(synchronize_session=False)
-    # TODO: delete entries
 
 
 def panel_new():
@@ -135,20 +159,31 @@ def panel_count():
 
 
 
+def panel_get_versions(self):
+    """
+        Return list of all version defined for the panel.
+    """
+    result = []
+    for row in execute("SELECT * from panel_entry WHERE panel_id={} ORDER BY create_date DESC".format(self.id)):
+        result.append({"version": row.version, "comment": row.comment, "entries": row.data, "create_date": row.create_date, "update_date": row.update_date})
+    return result
+
 
 
 Panel = Base.classes.panel
-Panel.public_fields = ["id", "versions", "name", "description", "owner", "create_date", "update_date"]
+Panel.public_fields = ["id", "versions", "name", "description", "owner", "create_date", "update_date", "shared"]
 
 
 Panel.init = panel_init
 Panel.from_id = panel_from_id
 Panel.from_ids = panel_from_ids
 Panel.to_json = panel_to_json
+Panel.load = panel_load
 Panel.save = panel_save
 Panel.delete = panel_delete
 Panel.new = panel_new
 Panel.count = panel_count
+Panel.get_versions = panel_get_versions
 
 
 

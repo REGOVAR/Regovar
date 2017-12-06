@@ -2384,9 +2384,6 @@
                             </div>
                             <!-- new panel -->
                             <div class="tab-pane fade" id="panel_api_03">
-                                <div class="alert alert-danger">
-                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
-                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2398,18 +2395,15 @@
                                     <div class="col-sm-2"><b>Body</b></div>
                                     <div class="col-sm-10">
                                         <pre>{
-    "date":datetime, 
-    "message":str, 
-    "type":enum, 
-    "user_id":int,
-    "project_id":int,
-    "analysis_id":int,
-    "file_id":int,
-    "panel_id":int,
-    "job_id":int,
-    "pipeline_id":int
+    "name": str, 
+    "description": str, 
+    "owner": str,
+    "shared": bool, 
+    "version": str,
+    "entries": json,
+    "comment": str
 }</pre><br/>
-                                        <i>The only mandatory fields are <code>date</code> and <code>message</code>.</i>
+                                        <i>The only mandatory fields are <code>name</code> and <code>version</code>.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
@@ -2418,16 +2412,20 @@
                                         Query : 
                                         <input id="panel_api_03_query" type="text" placeholder="/panel" value="/panel"/><br/>
                                         Body : <br/>
-                                        <textarea id="panel_api_03_body" cols="40" rows="6">{...}</textarea><br/>
+                                        <textarea id="panel_api_03_body" cols="40" rows="6">{
+    "name": "Test Panel", 
+    "description": "Test", 
+    "shared": false, 
+    "version": "v3",
+    "owner": "Pr Olivier",
+    "entries": [{}]
+}</textarea><br/>
                                         <button onclick="generic_exec_body('panel_api_03_query', 'panel_api_03_body', 'panel_result', 'POST');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- update panel -->
                             <div class="tab-pane fade" id="panel_api_04">
-                                <div class="alert alert-danger">
-                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
-                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2446,17 +2444,17 @@
                                     <div class="col-sm-2"><b>Body</b></div>
                                     <div class="col-sm-10">
                                         <pre>{
-    "date":datetime, 
-    "message":str, 
-    "type":enum, 
-    "user_id":int,
-    "project_id":int,
-    "analysis_id":int,
-    "file_id":int,
-    "panel_id":int,
-    "job_id":int,
-    "pipeline_id":int
+    "name": str, 
+    "description": str, 
+    "owner": str,
+    "shared": bool, 
+    "version": str,
+    "new_version": str,
+    "entries": json,
+    "comment": str
 }</pre><br/>
+                                        <i>The only mandatory fields are <code>name</code> and <code>version</code>.<br/>
+                                        If you want to also update the name of the version, you have to put the former version name in the field <code>version</code> and put the new version name in the field <code>new_version</code>.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">

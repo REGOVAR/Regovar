@@ -490,19 +490,23 @@ CREATE TABLE public.job_indicator_value
 CREATE TABLE public.panel
 (
     id serial NOT NULL,
-    version character varying(50) COLLATE pg_catalog."C",
-    name text COLLATE pg_catalog."C" NOT NULL,
+    name text COLLATE pg_catalog."C",
     description text COLLATE pg_catalog."C",
     owner text COLLATE pg_catalog."C",
     create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT panel_pkey PRIMARY KEY (id, version)
+    shared boolean DEFAULT False,
+    CONSTRAINT panel_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.panel_entry
 (
     panel_id integer NOT NULL,
     version character varying(50) COLLATE pg_catalog."C",
-    data JSON NOT NULL
+    comment text COLLATE pg_catalog."C",
+    data JSON NOT NULL,
+    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT panel_entry_pkey PRIMARY KEY (panel_id, version)
 );
 
 
