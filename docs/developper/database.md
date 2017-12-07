@@ -6,4 +6,4 @@
 * Les classes pythons correspondant aux tables SQL se trouvent dans `regovar/core/model/`
 
 ## Schema
-![Database schema of Regovar](https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/assets/img/db_schema.png)
+[![Database schema of Regovar](https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/assets/img/db_schema.png)](https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/assets/img/db_schema.png)
