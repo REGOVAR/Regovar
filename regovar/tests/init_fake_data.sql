@@ -3,6 +3,11 @@
 -- Fake reference
 --
 INSERT INTO reference(id, name, table_suffix) VALUES (1, 'Hg19', 'hg19');
+DROP TABLE IF EXISTS variant_hg19 CASCADE;
+DROP TABLE IF EXISTS sample_variant_hg19 CASCADE;
+DROP TABLE IF EXISTS refgene_hg19 CASCADE;
+DROP TABLE IF EXISTS refgene_trx_hg19 CASCADE;
+
 CREATE TABLE variant_hg19
 (
     id bigserial NOT NULL,
