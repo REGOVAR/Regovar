@@ -1,5 +1,3 @@
-# Les bonnes pratiques
-
 
 ## Github et les tickets
 ###Création ticket
@@ -24,16 +22,18 @@
 
 
 ## Documentation
- * Il est important de bien documenter le code. Chaque fonction et chaque classe doit avoir un commentaire en-tête (python : entre triple """) (C++ avec commentaire //! ou /\*! \*/).
- * Penser aussi à mettre à jour la documentation en ligne une fois que vous avez terminé ce que vous avez commencé. Ne pas hésiter à mettre un ticket GitHub pour ne pas oublier de faire la traduction dans les autres langues si vous ne le faites pas.
- * Si vous créez de nouvelles erreurs, [se référer à la documentation](https://hackmd.io/JwRgzAhgJgbA7DAtCaAGRAWAHAIx4vAMy0RjMmCyzFRBiA==) pour y associer un code et intégrer correctement ces erreurs dans le système mis en place.
+ * Il est important de bien documenter le code. Chaque fonction et chaque classe doit avoir un commentaire en-tête (python : entre triple """) (C++ avec commentaire //! ou /\*! \*/);
+ * Penser aussi à mettre à jour la documentation en ligne une fois que vous avez terminé ce que vous avez commencé. Merci de faire attention à respecter l'organisation et la mise en forme utilisé pour ReadTheDoc;
+ * Ne pas hésiter à mettre un ticket GitHub pour ne pas oublier de faire la traduction dans les autres langues si vous ne le faites pas.
+ * Si vous créez de nouvelles erreurs, se référer à la documentation (ci-dessous) pour y associer un code et intégrer correctement ces erreurs dans le système mis en place.
  
  
 ## Traduction
+Tout le code et les messages du serveur doivent être rédigés en anglais. La traduction se fait uniquement côté client grâce notament aux outils proposés par le framework Qt.
 
 
 ## Tests
-**Tests Unitaires:**
+###Tests Unitaires
  * Pour lancer les TU, il suffit de lancer la commande `make test`;
  * Le code source des tests se trouvent dans le répertoire `regovar/tests`
  * Les fichiers d'inputs utilisés pour les tests se trouvent dans `regovar/tests/inputs`
@@ -42,8 +42,7 @@
    * Les fonctionnalités des managers du core;
 
 
-**Coverage:**
-
+###Coverage
 Nous utilisons le module python `coverage` pour calculer la couverture des tests et générer le rapport au format xml, ensuite on envoie ces données à l'outils `codacy` qui permet de centraliser et de publier l'information via github.
 
 ```
@@ -56,15 +55,14 @@ python-codacy-coverage -r coverage.xml
 ```
 
 
-**Travis:**
-
+###Travis
 Nous utilisons travis qui s'occupe de tester que tout fonctionne correctement après chaque commit sur la branche `master`. Après avoir construit une machine virtuelle répondant aux besoins de Regovar, il exécute le les TU ainsi que la génération du rapport de couverture.
 
 
 
 
 ## Gestion des erreurs
-**Outils du Core:**
+###Outils du Core
  * Vous trouverez dans `regovar/core/framework/common.py` les outils de base:
    * Les logs avec les 3 methodes pour chaque niveau d'alertes : `log`, `war` et `err` (accepte les exceptions en argument);
    * Les logs volumineux avec la méthode `log_snippet`
@@ -75,16 +73,18 @@ Nous utilisons travis qui s'occupe de tester que tout fonctionne correctement ap
    * Il faut pour cela lever une exception de type `RegovarException` en indiquant en paramètre le code d'erreur;
    * Penser à tenir à jour le fichier `regovar/core/framework/errors_list.py` ainsi que les fiches d'aide correspondant à chaque erreur dans le répertoire `regovar/api_rest/templates/errors/`.
 
-**Outils de l'api Rest:**
+###Outils de l'api Rest
  * Dans le fichier `regovar/api_rest/rest.py`;
  * Les methode `rest_error` ou `rest_exception` doivent être systématiquement utilisés pour remonter une erreur aux clients;
  * Ces deux methodes se chargement de formater correctement la réponse json en cas d'échec.
 
 
 ## Convention de codage
-
-**Nomenclature et règles de codage**
+###Nomenclature et règles de codage
 Pour ceux qui connaissent, nous respectons la convention Python [PEP8](https://www.python.org/dev/peps/pep-0008/). Pour ceux qui ont la flemme de tout lire, au moins lire [le résumé par Sam&Max](http://sametmax.com/le-pep8-en-resume/)
 Cependant, nous tolérons les entorses suivantes :
  * sauter plusieurs ligne entre définition de class ou de fonction car ça permet d'avoir un code plus aéré;
  * avoir des lignes de code faisant plus de 80 caractères.
+
+###Organisation du code
+L'organisation du code est normalement suffisament simple et propre pour qu'on puisse facilement s'y repérer. En cas de doute, merci de demander à l'équipe du projet. Pour plus de détails, il est recommandé de lire l'ensemble des documents de la section *DEVELOPPEUR*.
