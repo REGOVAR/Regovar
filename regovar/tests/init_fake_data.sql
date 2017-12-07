@@ -1,3 +1,94 @@
+
+--
+-- Fake reference
+--
+INSERT INTO reference(id, name, table_suffix) VALUES (1, 'Hg19', 'hg19');
+CREATE TABLE variant_hg19
+(
+    id bigserial NOT NULL,
+    bin integer,
+    chr integer,
+    pos bigint NOT NULL,
+    ref text NOT NULL,
+    alt text NOT NULL,
+    is_transition boolean,
+    sample_list integer[],
+    regovar_score smallint,
+    regovar_score_meta JSON,
+    CONSTRAINT variant_hg19_pkey PRIMARY KEY (id),
+    CONSTRAINT variant_hg19_ukey UNIQUE (chr, pos, ref, alt)
+);
+CREATE TABLE sample_variant_hg19
+(
+    sample_id integer NOT NULL,
+    bin integer,
+    chr integer,
+    pos bigint NOT NULL,
+    ref text NOT NULL,
+    alt text NOT NULL,
+    variant_id bigint,
+    vcf_line bigint,
+    genotype integer,
+    depth integer,
+    depth_alt integer,
+    quality real,
+    filter JSON,
+    infos character varying(255)[][] COLLATE pg_catalog."C",
+    mosaic real,
+    is_composite boolean DEFAULT False,
+    CONSTRAINT sample_variant_hg19_pkey PRIMARY KEY (sample_id, chr, pos, ref, alt),
+    CONSTRAINT sample_variant_hg19_ukey UNIQUE (sample_id, variant_id)
+);
+CREATE TABLE refgene_hg19
+(
+  bin integer NOT NULL,
+  chr integer,
+  txrange int8range,
+  cdsrange int8range,
+  exoncount int,
+  trxcount int,
+  name2 character varying(255) COLLATE pg_catalog."C"
+);
+CREATE TABLE refgene_trx_hg19
+(
+  bin integer NOT NULL,
+  name character varying(255) COLLATE pg_catalog."C",
+  chr integer,
+  strand character(1),
+  txrange int8range,
+  cdsrange int8range,
+  exoncount int,
+  score bigint,
+  name2 character varying(255) COLLATE pg_catalog."C",
+  cdsstartstat character varying(255) COLLATE pg_catalog."C",
+  cdsendstat character varying(255) COLLATE pg_catalog."C"
+);
+CREATE INDEX sample_variant_hg19_idx_id
+  ON sample_variant_hg19
+  USING btree
+  (variant_id);
+CREATE INDEX sample_variant_hg19_idx_samplevar
+  ON sample_variant_hg19
+  USING btree
+  (sample_id);
+CREATE INDEX sample_variant_hg19_idx_site
+  ON sample_variant_hg19
+  USING btree
+  (sample_id, bin, chr, pos);
+CREATE INDEX variant_hg19_idx_id
+  ON variant_hg19
+  USING btree
+  (id);
+CREATE INDEX variant_hg19_idx_site
+  ON variant_hg19
+  USING btree
+  (bin, chr, pos);
+
+
+
+
+
+
 --
 -- Fake users
 --
@@ -28,11 +119,6 @@ INSERT INTO project (name, comment, parent_id, is_folder, is_sandbox) VALUES
 
 
 
-
-
-
-
-
 --
 -- Fake subjects and samples
 --
@@ -41,9 +127,9 @@ INSERT INTO subject (identifier, firstname, lastname, sex) VALUES
     ('S2', 'firstname2', 'lastname2', 'female');
     
 INSERT INTO sample (subject_id, name, is_mosaic, file_id, loading_progress, reference_id, status) VALUES
-    (1,    'sp_1', False, 3, 1, 2, 'ready'),
-    (1,    'sp_2', False, 4, 1, 2, 'ready'),
-    (NULL, 'sp_3', True,  1, 1, 2, 'ready');
+    (1,    'sp_1', False, 3, 1, 1, 'ready'),
+    (1,    'sp_2', False, 4, 1, 1, 'ready'),
+    (NULL, 'sp_3', True,  1, 1, 1, 'ready');
 
     
     
@@ -77,6 +163,8 @@ INSERT INTO job_file (job_id, file_id, as_input) VALUES
     (1, 3, True),
     (1, 4, False);
     
+
+
 
 
 
