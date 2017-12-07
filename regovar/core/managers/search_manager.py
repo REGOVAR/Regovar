@@ -342,10 +342,9 @@ class SearchManager:
         """
             Return panel that match the search query
         """
-        #result = session().query(Panel).filter(Panel.name.ilike("%{0}%".format(search))).all()
-        #for p in result: p.init(0)
-        #return [p.to_json() for p in result]
-        return []
+        result = session().query(Panel).filter(or_(Panel.name.ilike("%{0}%".format(search)), Panel.description.ilike("%{0}%".format(search)), Panel.owner.ilike("%{0}%".format(search)))).all()
+        for r in result: r.init()
+        return [r.to_json() for r in result]
 
 
 
