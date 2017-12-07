@@ -34,13 +34,15 @@ before_script:
 
 script:
   - pip install -r requirements.txt
+  - pip install blessings
+  - pip install coverage
+  - pip install codacy-coverage
   - cd regovar
   - make init
   - make install
   - make update_hpo
   - psql -U regovar -d regovar -f tests/init_fake_data.sql
-  - pip install blessings
-  - echo "TODO ! python tests.py"
+  - make test
 
 
 branches:
