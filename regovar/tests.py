@@ -58,7 +58,6 @@ if __name__ == '__main__':
 
     print("Done\n-----\nRunning tests :")
     runner = ColourTextTestRunner(verbosity=2)
-    print("START RUN !!!!!!!!!!!!!!!!!!!!!!!!!")
     runner.run(suiteModel)
     
 
@@ -89,5 +88,5 @@ if __name__ == '__main__':
     #print("Done\n=====\nRunning tests :")
     #runner = ColourTextTestRunner(verbosity=2)
     #runner.run(suiteCore)
-    
+
 sys.exit(0)
