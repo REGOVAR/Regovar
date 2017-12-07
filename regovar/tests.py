@@ -3,23 +3,22 @@
 
 import unittest
 import os
+import sys
 
 
 
-# Pirus part tests
+# import tests
 from tests.model.test_model_user import *
 from tests.model.test_model_project import *
 from tests.model.test_model_subject import *
 from tests.model.test_model_file import *
 from tests.model.test_model_job import *
 from tests.model.test_model_pipeline import *
+
 from tests.core.test_core_filemanager import *
 from tests.core.test_core_pipelinemanager import *
 from tests.core.test_core_jobmanager import *
 from tests.core.test_core_lxdmanager import *
-# Annso part tests
-
-# Regovar part tests
 
 
 from tests.pretty_print import ColourTextTestRunner
@@ -59,8 +58,10 @@ if __name__ == '__main__':
 
     print("Done\n-----\nRunning tests :")
     runner = ColourTextTestRunner(verbosity=2)
+    print("START RUN !!!!!!!!!!!!!!!!!!!!!!!!!")
     runner.run(suiteModel)
     
+
     
     #print("=====\nTEST CORE :")
     #suiteCore = unittest.TestSuite()
@@ -89,3 +90,4 @@ if __name__ == '__main__':
     #runner = ColourTextTestRunner(verbosity=2)
     #runner.run(suiteCore)
     
+sys.exit(0)

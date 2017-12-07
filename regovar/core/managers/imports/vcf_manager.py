@@ -558,7 +558,7 @@ def worker():
         
 # init workers
 for i in range(max_thread):
-    t = Thread(target=worker)
+    t = Thread(target=worker, daemon=True)
     t.start()
     workers.append(t)
 
