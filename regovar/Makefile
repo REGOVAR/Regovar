@@ -54,7 +54,6 @@ test:
 	sed -i.bak 's/^\(\s*DATABASE_NAME\s*=\s*"[^"]\+\)\(".*\)/\1_test\2/' config.py && \
 	coverage run tests.py && \
 	coverage xml && \
-	export CODACY_PROJECT_TOKEN=70841f6b24834786ab525590555e75b0 && \
 	python-codacy-coverage -r coverage.xml && \
 	rm coverage.xml && \
 	mv config.py config.test && \
@@ -64,7 +63,6 @@ test:
 coverage:
 	coverage run regovar_server.py # kill it with ctrl+C
 	coverage xml
-	export CODACY_PROJECT_TOKEN=70841f6b24834786ab525590555e75b0
 	python-codacy-coverage -r coverage.xml
 	rm coverage.xml
 	
