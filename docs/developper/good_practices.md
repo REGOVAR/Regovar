@@ -1,22 +1,22 @@
 
 ## Github et les tickets
-### Création ticket
+###Création ticket
  * De préférence, rédiger les tickets en anglais;
  * Être le plus précis possible sur le problème rencontré, et notament sur comment le reproduire;
  * Laisser les membres du projet (sur github) attribuer les labels, millestones et assignation qu'il convient;
 
-### Travailler à plusieurs
+###Travailler à plusieurs
  * Projet libre et open-source. C'est donc aux développeur de s'assigner eux-même les tickets sur lesquels ils souhaitent travailler;
  * On évite de travailler à plusieurs sur un même ticket afin de limiter les problèmes lors des commits. 
  * Chaque développeur doit se créer sa propre branche (avec pour nom par exemple "MonPseudo-dev") pour travailler. Il pourra ensuite merger avec la branche principale quand il aura terminé;
  * Chaque commit doit avoir un commentaire en anglais (et de préférence utile...).
 
-### Les branches
+###Les branches
  * La branche `master` correspond toujours à la dernière version utilisable du serveur;
  * Quand une version stable est officialisé, on la tag avec son numéro de version officiel;
  * Les développeurs doivent travailler sur leur propre branche et merger avec master seulement quand ils ont terminés.
 
-### Milestones
+###Milestones
  * Attentions, les milestones sont les échéance officieles de Regovar, merci de laisser [Oodnadatta](https://github.com/Oodnadatta) ou [Ikit](https://github.com/ikit) s'en occuper;
  * La prochaine milestone et sa progression sont visible par tout le monde directement via le client officiel [QRegovar](https://github.com/REGOVAR/QRegovar).
 
@@ -33,7 +33,7 @@ Tout le code et les messages du serveur doivent être rédigés en anglais. La t
 
 
 ## Tests
-### Tests Unitaires
+###Tests Unitaires
  * Pour lancer les TU, il suffit de lancer la commande `make test`;
  * Le code source des tests se trouvent dans le répertoire `regovar/tests`
  * Les fichiers d'inputs utilisés pour les tests se trouvent dans `regovar/tests/inputs`
@@ -43,7 +43,7 @@ Tout le code et les messages du serveur doivent être rédigés en anglais. La t
  * A noter que lorsqu'on lance les tests via le makefile, une nouvelle base de donnée est créée afin de ne pas polluer ou corompre la base de donnée utilisé par le développeur.
 
 
-### Coverage
+###Coverage
 Nous utilisons le module python `coverage` pour calculer la couverture des tests et générer le rapport au format xml, ensuite on envoie ces données à l'outils `codacy` qui permet de centraliser et de publier l'information via github.
 
 ```
@@ -56,14 +56,14 @@ python-codacy-coverage -r coverage.xml
 ```
 
 
-### Travis
+###Travis
 Nous utilisons travis qui s'occupe de tester que tout fonctionne correctement après chaque commit sur la branche `master`. Après avoir construit une machine virtuelle répondant aux besoins de Regovar, il exécute pour nous les TU ainsi que la génération du rapport de couverture.
 
 
 
 
 ## Gestion des erreurs
-### Outils du Core
+###Outils du Core
  * Vous trouverez dans `regovar/core/framework/common.py` les outils de base:
      * Les logs avec les 3 methodes pour chaque niveau d'alertes : `log`, `war` et `err` (accepte les exceptions en argument);
      * Les logs volumineux avec la méthode `log_snippet`
@@ -74,7 +74,7 @@ Nous utilisons travis qui s'occupe de tester que tout fonctionne correctement ap
      * Il faut pour cela lever une exception de type `RegovarException` en indiquant en paramètre le code d'erreur;
      * Penser à tenir à jour le fichier `regovar/core/framework/errors_list.py` ainsi que les fiches d'aide correspondant à chaque erreur dans le répertoire `regovar/api_rest/templates/errors/`.
 
-### Outils de l'api Rest
+###Outils de l'api Rest
  * Dans le fichier `regovar/api_rest/rest.py`;
  * Les methode `rest_error` ou `rest_exception` doivent être systématiquement utilisés pour remonter une erreur aux clients;
  * Ces deux methodes se chargement de formater correctement la réponse json en cas d'échec.
