@@ -53,19 +53,11 @@ test:
 	psql -U regovar -d $${database_name}_test -f tests/init_fake_data.sql && \
 	sed -i.bak 's/^\(\s*DATABASE_NAME\s*=\s*"[^"]\+\)\(".*\)/\1_test\2/' config.py && \
 	coverage run tests.py && \
-	coverage xml && \
-	python-codacy-coverage -r coverage.xml && \
-	rm coverage.xml && \
+	coverage report && \
 	mv config.py config.test && \
 	mv config.py.bak config.py && \
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $${database_name}_test"
 	
-coverage:
-	coverage run regovar_server.py # kill it with ctrl+C
-	coverage xml
-	python-codacy-coverage -r coverage.xml
-	rm coverage.xml
 	
-
 
 .PHONY: install app clear 
