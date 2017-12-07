@@ -2,23 +2,23 @@
 
 
 ## Github et les tickets
-**Création ticket**
+###Création ticket
  * De préférence, rédiger les tickets en anglais;
  * Être le plus précis possible sur le problème rencontré, et notament sur comment le reproduire;
  * Laisser les membres du projet (sur github) attribuer les labels, millestones et assignation qu'il convient;
 
-**Travailler à plusieurs**
+###Travailler à plusieurs
  * Projet libre et open-source. C'est donc aux développeur de s'assigner eux-même les tickets sur lesquels ils souhaitent travailler;
  * On évite de travailler à plusieurs sur un même ticket afin de limiter les problèmes lors des commits. 
  * Chaque développeur doit se créer sa propre branche (avec pour nom par exemple "MonPseudo-dev") pour travailler. Il pourra ensuite merger avec la branche principale quand il aura terminé;
  * Chaque commit doit avoir un commentaire en anglais (et de préférence utile...).
 
-**Les branches**
+###Les branches
  * La branche *master* correspond toujours à la dernière version utilisable du serveur;
  * Quand une version stable est officialisé, on la tag avec son numéro de version officiel;
  * Les développeurs doivent travailler sur leur propre branche et merger avec master seulement quand ils ont terminés.
 
-**Milestones**
+###Milestones
  * Attentions, les milestones sont les échéance officieles de Regovar, merci de laisser [Oodnadatta](https://github.com/Oodnadatta) ou [Ikit](https://github.com/ikit) s'en occuper;
  * La prochaine milestone et sa progression sont visible par tout le monde directement via le client officiel [QRegovar](https://github.com/REGOVAR/QRegovar).
 
