@@ -716,7 +716,7 @@ INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, desc
   ('492f18b60811bf85ce118c0c6a1a5c4a', 12, 's{}_dp_alt',       'DP alt',                 'sample_array', 'Allelic depth.', '{"type": "int"}'),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 13, 's{}_qual',         'QUAL',                   'sample_array', 'VCF Quality field.', '{"type": "float"}'),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 14, 's{}_filter',       'FILTER',                 'sample_array', 'VCF Filter field', '{"type": "enum"}'),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 50, 'regovar_score',    'Regovar Pred',           'enum',         'Regovar users annotation.', '{"type": "enum", "values": ["Artifact", "Yes", "No"] "Why not"]}');
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 50, 'regovar_score',    'Regovar Pred',           'enum',         'Regovar users annotation.', '{"type": "enum", "values": ["Artifact", "Yes", "No"]}');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
   ('2c0a7043a9e736eaf14b6614fff102c0', 0,  'is_selected',      'Selected',                       'bool',         'Is the variant in the user selection or not.', NULL),
@@ -738,12 +738,9 @@ UPDATE annotation_field SET uid=MD5(concat(database_uid, name));
 
 
 
-INSERT INTO "indicator" (name) VALUES
-  ('Project basic status');
-INSERT INTO "indicator_value" (indicator_id, name) VALUES
-  (1, 'Open'),
-  (1, 'Idle'),
-  (1, 'Close');
+INSERT INTO "indicator" (name, meta) VALUES
+  ('Ermergency', '{"enum" : ["Burning", "Urgent", "Normal", "Low"], "default": "Normal"}');
+
   
 INSERT INTO "project" (comment, is_sandbox) VALUES
   ('My sandbox', True);

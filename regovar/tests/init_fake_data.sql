@@ -1,5 +1,5 @@
 --
--- TEST PROJECT, INDICATOR AND USER
+-- Fake users
 --
 INSERT INTO "user" (login, email, firstname, lastname, function, location, settings, roles, is_activated, sandbox_id) VALUES
     -- WARNING, Admin user added by default, so, id=1 is already created
@@ -11,55 +11,50 @@ INSERT INTO project (name, comment, parent_id, is_folder, is_sandbox) VALUES
      -- WARNING, Admin user added by default, so, id=1 is already created for the sandbox project of the admin
     ('sandbox U2', 'comment', NULL, False, True),
     ('sandbox U3', 'comment', NULL, False, True),
-    ('sandbox U4', 'comment', NULL, False, True),
+    ('sandbox U4', 'comment', NULL, False, True);
+
+    
+
+
+--
+-- Fake projects
+--
+INSERT INTO project (name, comment, parent_id, is_folder, is_sandbox) VALUES
     ('folder',     'comment', NULL, True,  False),
     ('P1',         'comment', 5,    False, False),
     ('P2',         'comment', NULL, False, False);
 
-    
-INSERT INTO indicator (name, description, default_value_id) VALUES
-    ('I1', 'description', 2);
 
-INSERT INTO indicator_value (indicator_id, name, description, style) VALUES
-    (1, 'I1.1', 'description', '{"icon":"circle", "color":"#FF0000"}'),
-    (1, 'I1.2', 'description', '{"icon":"circle", "color":"#00FF00"}'),
-    (1, 'I1.3', 'description', '{"icon":"circle", "color":"#0000FF"}');
 
-INSERT INTO project_indicator (indicator_id, project_id, indicator_value_id) VALUES
-    (1, 6, 3),
-    (1, 7, 1);
+
+
+
+
 
 
 
 --
--- TEST SAMPLE AND SUBJECT
+-- Fake subjects and samples
 --
-INSERT INTO subject (identifiant, firstname, lastname, sex) VALUES
+INSERT INTO subject (identifier, firstname, lastname, sex) VALUES
     ('S1', 'firstname1', 'lastname1', 'male'),
-    ('S2', 'firstname2', 'lastname2', 'female'),
-    ('S3', NULL, NULL, NULL);
+    ('S2', 'firstname2', 'lastname2', 'female');
     
 INSERT INTO sample (subject_id, name, is_mosaic, file_id, loading_progress, reference_id, status) VALUES
-    (1, 'sp_1', False, 4, 1, 2, 'ready'),
-    (2, 'sp_2', True,  4, 1, 2, 'ready'),
-    (3, 'sp_3', True,  4, 1, 2, 'ready');
+    (1,    'sp_1', False, 3, 1, 2, 'ready'),
+    (1,    'sp_2', False, 4, 1, 2, 'ready'),
+    (NULL, 'sp_3', True,  1, 1, 2, 'ready');
 
     
-INSERT INTO subject_file (subject_id, file_id) VALUES
-    (1, 1),
-    (1, 3),
-    (2, 1);
     
-INSERT INTO subject_indicator (indicator_id, subject_id, indicator_value_id) VALUES
-    (1, 1, 3),
-    (1, 3, 1);
+INSERT INTO subject_indicator_value (subject_id, indicator_id, value) VALUES
+    (1, 1, 'Urgent'),
+    (2, 1, 'Low');
 
-INSERT INTO project_subject (project_id, subject_id) VALUES
-    (6, 1),
-    (6, 2),
-    (7, 2),
-    (7, 3);
-    
+
+
+
+
 
 --
 -- TEST FILE PIPELINE AND JOB
@@ -82,9 +77,6 @@ INSERT INTO job_file (job_id, file_id, as_input) VALUES
     (1, 3, True),
     (1, 4, False);
     
-INSERT INTO project_file (project_id, file_id) VALUES
-    (6, 1),
-    (6, 2);
 
 
 
