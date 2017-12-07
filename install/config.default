@@ -28,7 +28,7 @@ DATABASE_HOST = "localhost"
 DATABASE_PORT = 5432
 DATABASE_USER = "regovar"
 DATABASE_PWD = "regovar"
-DATABASE_NAME = "regovar_test"
+DATABASE_NAME = "regovar"
 DATABASE_POOL_SIZE = 7
 
 
