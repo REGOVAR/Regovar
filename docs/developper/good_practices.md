@@ -12,7 +12,7 @@
  * Chaque commit doit avoir un commentaire en anglais (et de préférence utile...).
 
 ###Les branches
- * La branche *master* correspond toujours à la dernière version utilisable du serveur;
+ * La branche `master` correspond toujours à la dernière version utilisable du serveur;
  * Quand une version stable est officialisé, on la tag avec son numéro de version officiel;
  * Les développeurs doivent travailler sur leur propre branche et merger avec master seulement quand ils ont terminés.
 
@@ -38,8 +38,8 @@ Tout le code et les messages du serveur doivent être rédigés en anglais. La t
  * Le code source des tests se trouvent dans le répertoire `regovar/tests`
  * Les fichiers d'inputs utilisés pour les tests se trouvent dans `regovar/tests/inputs`
  * Les tests doivent couvrir à minima:
-   * L'ensemble des opérations de base (CRUD) du model;
-   * Les fonctionnalités des managers du core;
+     * L'ensemble des opérations de base (CRUD) du model;
+     * Les fonctionnalités des managers du core;
 
 
 ###Coverage
@@ -56,7 +56,7 @@ python-codacy-coverage -r coverage.xml
 
 
 ###Travis
-Nous utilisons travis qui s'occupe de tester que tout fonctionne correctement après chaque commit sur la branche `master`. Après avoir construit une machine virtuelle répondant aux besoins de Regovar, il exécute le les TU ainsi que la génération du rapport de couverture.
+Nous utilisons travis qui s'occupe de tester que tout fonctionne correctement après chaque commit sur la branche `master`. Après avoir construit une machine virtuelle répondant aux besoins de Regovar, il exécute pour nous les TU ainsi que la génération du rapport de couverture.
 
 
 
@@ -64,14 +64,14 @@ Nous utilisons travis qui s'occupe de tester que tout fonctionne correctement ap
 ## Gestion des erreurs
 ###Outils du Core
  * Vous trouverez dans `regovar/core/framework/common.py` les outils de base:
-   * Les logs avec les 3 methodes pour chaque niveau d'alertes : `log`, `war` et `err` (accepte les exceptions en argument);
-   * Les logs volumineux avec la méthode `log_snippet`
-   * La classe RegovarException qui se chargera automatiquement d'écrire les log.
+     * Les logs avec les 3 methodes pour chaque niveau d'alertes : `log`, `war` et `err` (accepte les exceptions en argument);
+     * Les logs volumineux avec la méthode `log_snippet`
+     * La classe RegovarException qui se chargera automatiquement d'écrire les log.
  * Erreurs gérées:
-   * Liste des erreur associées à leur code dans le fichier : `regovar/core/framework/errors_list.py`;
-   * Associer une erreur à un code permet ensuite de remonter et fournir ce code à l'utilisateur non technique qui pourra demander du support ou trouver la doc en ligne concernant cette erreur;
-   * Il faut pour cela lever une exception de type `RegovarException` en indiquant en paramètre le code d'erreur;
-   * Penser à tenir à jour le fichier `regovar/core/framework/errors_list.py` ainsi que les fiches d'aide correspondant à chaque erreur dans le répertoire `regovar/api_rest/templates/errors/`.
+     * Liste des erreur associées à leur code dans le fichier : `regovar/core/framework/errors_list.py`;
+     * Associer une erreur à un code permet ensuite de remonter et fournir ce code à l'utilisateur non technique qui pourra demander du support ou trouver la doc en ligne concernant cette erreur;
+     * Il faut pour cela lever une exception de type `RegovarException` en indiquant en paramètre le code d'erreur;
+     * Penser à tenir à jour le fichier `regovar/core/framework/errors_list.py` ainsi que les fiches d'aide correspondant à chaque erreur dans le répertoire `regovar/api_rest/templates/errors/`.
 
 ###Outils de l'api Rest
  * Dans le fichier `regovar/api_rest/rest.py`;
