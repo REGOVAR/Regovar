@@ -1,12 +1,18 @@
 # Architecture
 
 ## Contexte
+Regovar doit répondre aux exigeances suivantes :
+ * Facile à déployer au sein d'un CHU;
+ * Gratuit : code source déployé;
+ * Facile à maintenir;
+ * Evolutif;
+
 
 ## Vue d'ensemble
 ![Architecture de l'application Regovar](https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/assets/img/archi_system.png)
-* Tout est dans le réseau local du CHU.
-* Les utilisateurs accèdent au serveur régovar via le réseau local du CHU grâce au client Regovar prévu à cet effet.
-* Un système de batch et de dossier partagés entre les séquenceur et le serveur Regovar peut être mis en place pour automatiser la récupération des "RUN" dans l'application Regovar, Des mails peuvent être automatiquement envoyé pour prévenir les biologistes que leurs données sont prêtes à être analysées.
+ * Tout est dans le réseau local du CHU.
+ * Les utilisateurs accèdent au serveur régovar via le réseau local du CHU grâce au client Regovar prévu à cet effet.
+ * Un système de batch et de dossier partagés entre les séquenceur et le serveur Regovar peut être mis en place pour automatiser la récupération des "RUN" dans l'application Regovar, Des mails peuvent être automatiquement envoyé pour prévenir les biologistes que leurs données sont prêtes à être analysées.
 * Selon le même principe, un batch peut être mis en place pour que tout les weekend par exemple les données n'étant plus utilisées depuis un certains temps soient archivés et supprimé du server Regovar afin de libérer de la place. Ces mêmes batchs peuvent surveiller l'état du serveur et envoyer des alertes par mails aux administrateurs si nécessaire.
 * Les batchs ne font qu'utiliser les services proposés par le serveur Regovar afin d'automatiser certaines tâches. L'ensemble de ses tâches (d'ajout et de suppression de données) peuvent être faites manuellement par les utilisateurs.
 
