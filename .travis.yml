@@ -42,8 +42,9 @@ script:
   - make install
   - make update_hpo
   - psql -U regovar -d regovar -f tests/init_fake_data.sql
-  - make test
-
+  - coverage run tests.py
+  - coverage xml
+  - python-codacy-coverage -r coverage.xml
 
 branches:
   only:
