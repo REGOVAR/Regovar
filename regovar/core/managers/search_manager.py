@@ -273,14 +273,7 @@ class SearchManager:
         # TODO: cache
         result = []
         query = "http://rest.genenames.org/search/{}".format(search)
-        data = get_cache(query)
-        if not data: 
-            res = requests.get(query, headers={"Accept": "application/json"})
-            if res.ok:
-                data = json.loads(res.content.decode())
-                set_cache(query, data)
-            else:
-                err("EXTERNAL REQUEST failled: " + query)
+        data = get_cached_url(query, "hgnc_", headers={"Accept": "application/json"})
         
         if data:
             i = 0
@@ -417,17 +410,48 @@ class SearchManager:
         # Get gene common information
         from core.core import core
         query = "http://rest.genenames.org/fetch/symbol/{}".format(genename)
-        data = get_cached_url(query, headers={"Accept": "application/json"})
+        data = get_cached_url(query, "hgnc_", headers={"Accept": "application/json"})
         if data:
+            pubmed= None
+            phenotype = None
             data = data['response']['docs'][0]
 
             # Get omim data
             omim = data["omim_id"][0] if "omim_id" in data and len(data["omim_id"]) > 0 else None
             if omim:
-                omim = get_cached_url("https://api.omim.org/api/entry?mimNumber={}&include=all".format(omim),  headers={"Accept": "application/json", "apiKey": OMIM_API_KEY})
-                omim = omim["omim"]["entryList"][0]["entry"]["textSectionList"][0]["textSection"]["textSectionContent"]
-                data.update({"omim_description": omim})
+                omim = get_cached_url("https://api.omim.org/api/entry?mimNumber={}&include=all".format(omim), "omim_",  headers={"Accept": "application/json", "apiKey": OMIM_API_KEY})
+                omim = omim["omim"]["entryList"][0]["entry"]
+                # Get allelic variant
+                variants = []
+                if "allelicVariantList" in omim and len(omim["allelicVariantList"]) > 0:
+                    variants = [r["allelicVariant"] for r in omim["allelicVariantList"]]
+                    data.update({"omim_variants": variants})
+                # Get phenotype
+                if "geneMap" in omim and "phenotypeMapList" in omim["geneMap"] and len(omim["geneMap"]["phenotypeMapList"]) > 0:
+                    phenotype = []
+                    phenotype = [t["reference"] for t in omim["referenceList"]]
+                    data["phenotype"] = phenotype
 
+                
+            # Get pubmed data
+            pubmed = []
+            # TODO : do it with all default pubmed term set for the current profile
+            query = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&retmode=json&retmax=1000&term=(%22{0}%22%5BAll%20Terms%5D)"
+            pdata = get_cached_url(query.format(genename), "pubmed_")
+            if int(pdata["esearchresult"]["count"]) > 0:
+                pids = [id for id in pdata["esearchresult"]["idlist"]]
+                cache_result = get_cached_pubmed(pids)
+                for pdata in cache_result:
+                    pubmed.append({
+                        "authors": [auth["name"] for auth in pdata["authors"]],
+                        "title": pdata["title"],
+                        "source": pdata["source"] + ", " + pdata["pubdate"],
+                        "fulljournalname" : pdata["fulljournalname"],
+                        "id": pdata["uid"],
+                        "articleUrl":"https://academic.oup.com/hmg/article-lookup/doi/10.1093/hmg/ddl084",
+                    })
+            data["pubmed"] = pubmed
+            
             # get refgene data
             query = "SELECT chr, txrange, cdsrange, exoncount, trxcount FROM refgene_{} WHERE name2 ilike '{}'"
             refgene = []
@@ -454,6 +478,19 @@ class SearchManager:
                                 "exon": res.exoncount,
                                 "trx": res.trxcount})
             data.update({"refgene": refgene})
+
+            # Get phenotype
+            query = "SELECT chr, txrange, cdsrange, exoncount, trxcount FROM refgene_{} WHERE name2 ilike '{}'"
+            refgene = []
+            if ref_id:
+                res = execute(query.format(core.annotations.ref_list[ref_id].lower(), genename)).first()
+                refgene.append({
+                    "id": ref_id, 
+                    "name": core.annotations.ref_list[ref_id], 
+                    "start": res.txrange.lower,
+                    "size": res.txrange.upper - res.txrange.lower,
+                    "exon": res.exoncount,
+                    "trx": res.trxcount})
         return data
 
 

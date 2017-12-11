@@ -169,25 +169,67 @@ def array_merge(array1, array2):
 # =====================================================================================================================
 # CACHE TOOLS
 # =====================================================================================================================
-def get_cached_url(url, headers={}):
-    result = get_cache(url)
+def get_cached_url(url, prefix="", headers={}):
+    """
+        Return cache response if exists, otherwise, execute request and store result in cache before return.
+    """
+    # encrypt url to md5 to avoid problem with special characters
+    uri = prefix + hashlib.md5(url.encode('utf-8')).hexdigest()
+    result = get_cache(uri)
 
     if result is None:
         res = requests.get(url, headers=headers)
         if res.ok:
             try:
                 result = json.loads(res.content.decode())
-                set_cache(url, result)
+                set_cache(uri, result)
             except Exception as ex:
-                raise RegovarException("Unable to cache result of the query:" + url, ex)
+                raise RegovarException("Unable to cache result of the query: " + url, ex)
     return result
+
+
+
+def get_cached_pubmed(ids, headers={}):
+    """
+        Dedicated for pubmed because api allow to retrieve several id in one query.
+    """
+    query = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&rettype=abstract&id={0}"
+    result = {}
+    to_request = []
+    # Get data related to id from cache
+    for pid in ids:
+        res = get_cache("pubmed_" + pid)
+        if res is None:
+            to_request.append(pid)
+        else:
+            result[pid] = res
+    # for ids which didn't had cached data: retrieved it from pubmed website
+    if len(to_request) > 0:
+        query_result = requests.get(query.format(",".join(to_request)), headers=headers)
+        if query_result.ok:
+            try:
+                query_result = json.loads(query_result.content.decode())
+                for key, data in query_result["result"].items():
+                    if key == "uids": continue
+                    set_cache("pubmed_" + key, data)
+                    result[key] = data
+            except Exception as ex:
+                raise RegovarException("Unable to cache result of the query: " + query.format(",".join(to_request)), ex)
+        
+        
+        
+    return [result[pid] for pid in ids]
+
+
+
+
 
 
 def get_cache(uri):
     """
         Return the cached json corresponding to the uri if exists; None otherwise
     """
-    cache_file = CACHE_DIR + "/" + hashlib.md5(uri.encode('utf-8')).hexdigest()
+    cache_file = CACHE_DIR + "/" + uri
     if os.path.exists(cache_file):
         s=os.stat(cache_file)
         date = datetime.datetime.utcfromtimestamp(s.st_ctime)
@@ -207,7 +249,7 @@ def set_cache(uri, data):
         Put the data in the cache
     """
     if not uri or not data: return
-    cache_file = CACHE_DIR + "/" + hashlib.md5(uri.encode('utf-8')).hexdigest()
+    cache_file = CACHE_DIR + "/" + uri
     with open(cache_file, 'w') as f:
         f.write(json.dumps(data))
         f.close()

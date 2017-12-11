@@ -12,7 +12,6 @@ import tarfile
 import datetime
 import time
 import uuid
-import subprocess
 
 
 from aiohttp import web

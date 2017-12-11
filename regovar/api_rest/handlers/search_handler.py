@@ -61,7 +61,7 @@ class SearchHandler:
         try:
             result = core.search.fetch_gene(genename)
         except RegovarException as ex:
-            return rest_error("Error occured while trying to fetch information of the gene + " + genename, e)
+            return rest_error("Error occured while trying to fetch information of the gene + " + genename, ex)
         
         return rest_success(result)
 
