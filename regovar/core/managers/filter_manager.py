@@ -455,7 +455,7 @@ class FilterEngine:
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
         query = "DROP TABLE IF EXISTS {0}_tmp CASCADE; CREATE TABLE {0}_tmp AS "
-        query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, array_remove(array_agg(trx_pk_value), NULL) as trx, count(*)-1 as trx_count{1} FROM {0}{2} GROUP BY variant_id{1};"
+        query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, array_remove(array_agg(trx_pk_value), NULL) as trx, count(trx_pk_value) as trx_count{1} FROM {0}{2} GROUP BY variant_id{1};"
         
         f_fields = ", " + ", ".join([self.parse_order_field(analysis, f) for f in  order]) if order else ", chr, pos"
         f_order  = ", ".join(["{}{}".format(self.parse_order_field(analysis, f), " DESC" if f[0] == "-" else "") for f in  order]) if order else "chr, pos"
