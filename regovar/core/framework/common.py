@@ -189,36 +189,7 @@ def get_cached_url(url, prefix="", headers={}):
 
 
 
-def get_cached_pubmed(ids, headers={}):
-    """
-        Dedicated for pubmed because api allow to retrieve several id in one query.
-    """
-    query = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&rettype=abstract&id={0}"
-    result = {}
-    to_request = []
-    # Get data related to id from cache
-    for pid in ids:
-        res = get_cache("pubmed_" + pid)
-        if res is None:
-            to_request.append(pid)
-        else:
-            result[pid] = res
-    # for ids which didn't had cached data: retrieved it from pubmed website
-    if len(to_request) > 0:
-        query_result = requests.get(query.format(",".join(to_request)), headers=headers)
-        if query_result.ok:
-            try:
-                query_result = json.loads(query_result.content.decode())
-                for key, data in query_result["result"].items():
-                    if key == "uids": continue
-                    set_cache("pubmed_" + key, data)
-                    result[key] = data
-            except Exception as ex:
-                raise RegovarException("Unable to cache result of the query: " + query.format(",".join(to_request)), ex)
-        
-        
-        
-    return [result[pid] for pid in ids]
+
 
 
 

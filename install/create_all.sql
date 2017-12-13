@@ -486,10 +486,9 @@ CREATE TABLE public.job_indicator_value
 
 
 
-
 CREATE TABLE public.panel
 (
-    id serial NOT NULL,
+    id character varying(50) COLLATE pg_catalog."C",
     name text COLLATE pg_catalog."C",
     description text COLLATE pg_catalog."C",
     owner text COLLATE pg_catalog."C",
@@ -500,7 +499,8 @@ CREATE TABLE public.panel
 );
 CREATE TABLE public.panel_entry
 (
-    panel_id integer NOT NULL,
+    id character varying(50) COLLATE pg_catalog."C" NOT NULL,
+    panel_id character varying(50) COLLATE pg_catalog."C" NOT NULL,
     version character varying(50) COLLATE pg_catalog."C",
     comment text COLLATE pg_catalog."C",
     data JSON NOT NULL,

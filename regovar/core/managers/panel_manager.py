@@ -59,7 +59,7 @@ class PanelManager:
         if not isinstance(panel_data, dict): raise RegovarException(ERR.E202002, "E202002")
 
         pid = None
-        if "id" in panel_data.keys():
+        if "id" in panel_data.keys() and panel_data["id"]:
             pid = panel_data["id"]
 
         # Get or create the panel

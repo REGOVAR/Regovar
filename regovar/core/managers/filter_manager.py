@@ -742,6 +742,9 @@ class FilterEngine:
                 elif field[0] == 'attr':
                     sql = '' if operator == 'IN' else 'NOT '
                     return sql + "attr_{}".format(field[1])
+                elif field[0] == 'panel':
+                    sql = '' if operator == 'IN' else 'NOT '
+                    return sql + "panel_{}".format(field[1])
 
                 
 
