@@ -8,12 +8,39 @@ from core.framework.common import *
 from core.framework.postgresql import *
 
 
+
+
+# =====================================================================================================================
+# TOOL
+# =====================================================================================================================
+
+def format_entries(json):
+    result = []
+    for entry in json:
+        fixed = {}
+        if "id" in entry and entry["id"].startswith("HGNC:") and "label" in entry:
+            fixed["id"] = str(entry["id"])
+            fixed["label"] = str(entry["label"])
+        elif "chr" in entry and "start" in entry and "end" in entry:
+            try:
+                fixed["label"] = str(entry["label"])
+                fixed["chr"] = CHR_DB_RMAP[entry["chr"]]
+                fixed["start"] = int(entry["start"])
+                fixed["end"] = int(entry["end"])
+            except ex:
+                raise RegovarException("Unable to create panel with provided data", exception=ex)
+        result.append(fixed)
+    return result
+
+
+
+
+
+
 # =====================================================================================================================
 # PANEL
 # /!\ As SQLAlchemy is not able to automaticaly create class for table with int8range field, we manage it ourself
 # =====================================================================================================================
-
-"id", "version", "name", "description", "owner", "create_date", "update_date", "entries"
 
 
 def panel_init(self, loading_depth=0):
@@ -119,7 +146,9 @@ def panel_load(self, data):
         # else, if only data provided : create new version
         elif "entries" in data.keys():
             version = sql_escape(data["version"]) if "version" in data else ""
+            comment = sql_escape(data["comment"]) if "comment" in data else ""
             entries = json.dumps(data['entries'])
+            entries = format_entries(entries)
             pv_uuid = str(uuid.uuid4())
             sql = "INSERT INTO panel_entry (id, panel_id, version, data, comment, update_date) VALUES ('{3}', '{0}', '{1}', '{2}', '{4}', CURRENT_TIMESTAMP)"
             execute(sql.format(self.id, version, entries, pv_uuid, comment))

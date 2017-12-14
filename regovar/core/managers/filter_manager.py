@@ -227,7 +227,15 @@ class FilterEngine:
         # TODO
 
         # Panels
-        # TODO
+        for panel in analysis.panels:
+            log(" > compute panel {} ({})".format(panel["name"], panel["version"]))
+            sql = "UPDATE {0} SET panel_{1}=True WHERE {2}"
+            sql_where = []
+            where_pattern = "(chr={} AND pos <@ int8range({},{}))"
+            # build test condition for the panel
+            for region in panel["entries"]:
+                sql_where.append(where_pattern.format(region["chr"], region["start"], region["end"]))
+            execute(sql.format(wt, panel["version_id"], ' OR '.join(sql_where)))
 
         # Predefinied quickfilters
         if analysis.settings["trio"]:
