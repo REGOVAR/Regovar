@@ -107,9 +107,9 @@ def subject_to_json(self, fields=None, loading_depth=-1):
         fields = Subject.public_fields
     for f in fields:
         if f in Subject.public_fields:
-            if f in ["create_date", "update_date"]:
+            if f in ["create_date", "update_date", "dateofbirth", "dateofdeath"] and hasattr(self, f) and eval("self." + f):
                 result[f] = eval("self." + f + ".isoformat()")
-            elif f in ["jobs", "analyses", "files", "projects", "samples", "indicators"]:
+            elif f in ["jobs", "analyses", "files", "projects", "samples", "indicators"] and hasattr(self, f):
                 if hasattr(self, f) and len(eval("self." + f)) > 0 and loading_depth > 0:
                     result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
                 else :                           

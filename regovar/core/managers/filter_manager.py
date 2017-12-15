@@ -150,7 +150,8 @@ class FilterEngine:
         # TODO: foreach analysis.filters_ids
 
         # Add panel's columns
-        # TODO: foreach analysis.panels_ids
+        for panel in analysis.panels:
+            query += "panel_{} boolean DEFAULT False, ".format(panel["version_id"].replace("-", "_"))
 
         query = query[:-2] + ");"
         log(" > create wt schema")
@@ -235,7 +236,7 @@ class FilterEngine:
             # build test condition for the panel
             for region in panel["entries"]:
                 sql_where.append(where_pattern.format(region["chr"], region["start"], region["end"]))
-            execute(sql.format(wt, panel["version_id"], ' OR '.join(sql_where)))
+            execute(sql.format(wt, panel["version_id"].replace("-", "_"), ' OR '.join(sql_where)))
 
         # Predefinied quickfilters
         if analysis.settings["trio"]:
@@ -274,7 +275,8 @@ class FilterEngine:
         # TODO
 
         # Add indexes on panel columns
-        # TODO
+        for panel_id in analysis.panels_ids:
+            query += "CREATE INDEX {0}_idx_panel_{1} ON {0} USING btree (panel_{1});".format(wt, panel_id.replace("-", "_"))
         
         log(" > create index for variants random access")
         execute(query)
@@ -301,7 +303,8 @@ class FilterEngine:
         # TODO: foreach analysis.filters_ids
 
         # Add panel's columns
-        # TODO: foreach analysis.panels_ids
+        for panel_id in analysis.panels_ids:
+            q_fields += ", panel_{}".format(panel_id.replace("-", "_"))
         
         q_select  = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id, _wt.vcf_line, _wt.regovar_score, _wt.bin, _wt.chr, _wt.pos, "
         q_select += "_wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, _wt.sample_tcount, _wt.sample_alist, _wt.sample_acount, _wt.is_dom, _wt.is_rec_hom, "
@@ -322,7 +325,8 @@ class FilterEngine:
         # TODO: foreach analysis.filters_ids
 
         # Add panel's columns
-        # TODO: foreach analysis.panels_ids
+        for panel_id in analysis.panels_ids:
+            q_select += ", _wt.panel_{}".format(panel_id.replace("-", "_"))
         
         q_from   = "{0} _wt".format(wt)
 
@@ -752,7 +756,7 @@ class FilterEngine:
                     return sql + "attr_{}".format(field[1])
                 elif field[0] == 'panel':
                     sql = '' if operator == 'IN' else 'NOT '
-                    return sql + "panel_{}".format(field[1])
+                    return sql + "panel_{}".format(field[1].replace("-", "_"))
 
                 
 
@@ -776,7 +780,7 @@ class FilterEngine:
                     return 'int8range({0}, {1})'.format(data[1], data[2])
             raise RegovarException("FilterEngine.request.parse_value - Unknow type: {0} ({1})".format(ftype, data))
 
-
+        ipdb.set_trace()
         query = build_filter(filters)
         if query is not None:
             query =query.strip()
