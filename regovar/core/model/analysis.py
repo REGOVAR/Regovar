@@ -33,6 +33,7 @@ def analysis_init(self, loading_depth=0):
             - samples_ids       : [int]         : The list of ids of samples used for analysis
             - files_ids         : [int]         : The list of ids of files associated to the analysis (via analysis_file table)
             - attributes        : json          : The list of attributes defined for this analysis
+            - fullpath          : [json]        : The list of folder from root to the analyses [{"id":int, "name":str},...]
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - project           : Project       : The that own the analysis
             - samples           : [Sample]      : The list of samples owns by the analysis
@@ -53,6 +54,7 @@ def analysis_init(self, loading_depth=0):
         self.attributes = self.get_attributes()
         self.files_ids = AnalysisFile.get_files_ids(self.id)
         self.panels_ids = self.get_panels_ids()
+        self.fullpath = self.get_fullpath()
         
         self.project = None
         self.samples = []
@@ -99,7 +101,7 @@ def analysis_to_json(self, fields=None, loading_depth=-1):
             if hasattr(self, field) and len(eval("self." + field)) > 0 and loading_depth > 0:
                 result[field] = [o.to_json(None, loading_depth-1) for o in eval("self." + field)]
             else:
-                result[field] = None
+                result[field] = []
         elif field in ["project"] and loading_depth>0:
             obj = eval("self." + field)
             result[field] = obj.to_json(None, loading_depth-1) if obj else None
@@ -311,9 +313,22 @@ def analysis_get_panels(self):
     return result
 
 
+def analaysis_get_fullpath(self):
+    """
+        Return the list of project from the root to the last one where the analysis is stored
+    """
+    from core.model import Project
+    fullpath = []
+    project = Project.from_id(self.project_id)
+    while project is not None:
+        fullpath.insert(0,{"id": project.id, "name":project.name})
+        project = None if not project.parent_id else Project.from_id(project.parent_id)
+    
+    return fullpath
+
 
 Analysis = Base.classes.analysis
-Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "files_ids", "files", "computing_progress", "status", "panels_ids", "panels"]
+Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "files_ids", "files", "computing_progress", "status", "panels_ids", "panels", "fullpath"]
 Analysis.init = analysis_init
 Analysis.from_id = analysis_from_id
 Analysis.to_json = analysis_to_json
@@ -327,7 +342,7 @@ Analysis.get_filters = analysis_get_filters
 Analysis.get_attributes = analysis_get_attributes
 Analysis.get_panels_ids = analysis_get_panels_ids
 Analysis.get_panels = analysis_get_panels
-
+Analysis.get_fullpath = analaysis_get_fullpath
 
 
 

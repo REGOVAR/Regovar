@@ -92,8 +92,13 @@ class FilterEngine:
         # trx's indexes
         self.create_wt_trx_indexes(analysis)
         
+        # Recreate stored filter
+        self.create_wt_stored_filters(analysis)
+        
         # TODO: Restore is_selected state for var/trx a
         
+        # Compute sample's stats (done one time)
+        self.update_wt_samples_stats(analysis)
 
         # Update count stat of the analysis
         query = "UPDATE analysis SET status='ready', computing_progress=1 WHERE id={}".format(analysis.id)
@@ -146,9 +151,6 @@ class FilterEngine:
             for value, col_id in attr["values_map"].items():
                 query += "attr_{} boolean DEFAULT False, ".format(col_id)
 
-        # Add filter's columns
-        # TODO: foreach analysis.filters_ids
-
         # Add panel's columns
         for panel in analysis.panels:
             query += "panel_{} boolean DEFAULT False, ".format(panel["version_id"].replace("-", "_"))
@@ -165,7 +167,7 @@ class FilterEngine:
         query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE TABLE {0}_var (id bigint, vcf_line bigint); "
         execute(query.format(wt))
         
-        query = "INSERT INTO {0}_var (id, vcf_line) SELECT DISTINCT variant_id, vcf_line FROM sample_variant{1} WHERE sample_id IN ({2}) AND ref<>alt; "
+        query = "INSERT INTO {0}_var (id, vcf_line) SELECT DISTINCT variant_id, vcf_line FROM sample_variant{1} WHERE sample_id IN ({2});"
         res = execute(query.format(wt, analysis.db_suffix, ",".join([str(sid) for sid in analysis.samples_ids])))
         
         # set total number of variant for the analysis
@@ -224,9 +226,6 @@ class FilterEngine:
             for sid, attr_data in attr["samples_values"].items():
                 execute("UPDATE {0} SET attr_{1}=True WHERE s{2}_gt IS NOT NULL".format(wt, attr_data["wt_col_id"], sid))
 
-        # Filter
-        # TODO
-
         # Panels
         for panel in analysis.panels:
             log(" > compute panel {} ({})".format(panel["name"], panel["version"]))
@@ -270,10 +269,6 @@ class FilterEngine:
             for value, col_id in attr["values_map"].items():
                 query += "CREATE INDEX {0}_idx_attr_{1} ON {0} USING btree (attr_{1});".format(wt, col_id)
 
-                    
-        # Add indexes on filter columns
-        # TODO
-
         # Add indexes on panel columns
         for panel_id in analysis.panels_ids:
             query += "CREATE INDEX {0}_idx_panel_{1} ON {0} USING btree (panel_{1});".format(wt, panel_id.replace("-", "_"))
@@ -299,8 +294,6 @@ class FilterEngine:
         for attr in analysis.attributes:
             for value, col_id in attr["values_map"].items():
                 q_fields += ", attr_{}".format(col_id)
-        # Add filter's columns
-        # TODO: foreach analysis.filters_ids
 
         # Add panel's columns
         for panel_id in analysis.panels_ids:
@@ -320,9 +313,6 @@ class FilterEngine:
         for attr in analysis.attributes:
             for value, col_id in attr["values_map"].items():
                 q_select += ", _wt.attr_{}".format(col_id)
-
-        # Add filter's columns
-        # TODO: foreach analysis.filters_ids
 
         # Add panel's columns
         for panel_id in analysis.panels_ids:
@@ -449,6 +439,63 @@ class FilterEngine:
         query = "UPDATE {0} SET is_mit=True WHERE chr=25"
         res = execute(query.format(wt))
         log(" > is_mit : {} variants".format(res.rowcount))
+
+
+
+    def create_wt_stored_filters(self, analysis):
+        
+        for flt in analysis.filters:
+            log(" > compute filter {}: {}".format(flt.id, flt.name))
+            self.update_wt(analysis, "filter_{}".format(flt.id), flt.filter)
+    
+
+
+    def update_wt_samples_stats(self, analysis):
+        wt  = "wt_{}".format(analysis.id)
+        
+        with_vep = False
+        
+        # check annotations available to knwo which stats will be computed
+        for dbuid in analysis.settings["annotations_db"]:
+            if self.db_map[dbuid]["name"].upper() == "VEP":
+                with_vep = True
+        
+        
+        for sample in analysis.samples:
+            # skip if not need
+            if sample.stats is not None:
+                continue
+            # Compute simple common stats
+            stats = {
+                "total_variant" : execute("SELECT COUNT(*) FROM sample_variant{} WHERE sample_id={}".format(analysis.db_suffix, sample.id)).first()[0],
+                "total_transcript": execute("SELECT COUNT(*) FROM {} WHERE s{}_gt>0 AND NOT is_variant".format(wt, sample.id)).first()[0],
+                
+                # TODO : this stat can only be computed by the vcf_import manager by checking vcf header
+                "matching_reference": True, 
+                
+                # TODO: OPTIMIZATION : find better way with postgresql sql JSON operators
+                "filter": {fid: execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND s{1}_filter::text LIKE '%{2}%'".format(wt, sample.id, fid)).first()[0] for fid in sample.filter_description.keys()},
+                
+                "sample_total_variant": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>-1 AND is_variant".format(wt, sample.id)).first()[0],
+                "variants_classes": {
+                    "not": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt=-1 AND is_variant".format(wt, sample.id)).first()[0],
+                    "ref": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt=0 AND is_variant".format(wt, sample.id)).first()[0],
+                    "snv": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)=1 AND char_length(alt)=1 AND ref<>alt".format(wt, sample.id)).first()[0],
+                    "mnv": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)<>1 AND char_length(alt)=char_length(ref)".format(wt, sample.id)).first()[0],
+                    "insertion": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)=0 AND char_length(alt)>0".format(wt, sample.id)).first()[0],
+                    "deletion":  execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)>0 AND char_length(alt)=0".format(wt, sample.id)).first()[0],
+                    "others": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)<>char_length(alt) AND char_length(ref)>0 AND char_length(alt)>0".format(wt, sample.id)).first()[0]
+                    }
+                }
+            
+            if with_vep:
+                # consequences = select distinct(unnest(_5803633f01600a2e047aad3ee2faa133)) from wt_5 where s31_gt>0
+                pass
+            
+            # Save stats
+            sample.stats = stats
+            sample.save()
+            
 
 
 
@@ -780,7 +827,6 @@ class FilterEngine:
                     return 'int8range({0}, {1})'.format(data[1], data[2])
             raise RegovarException("FilterEngine.request.parse_value - Unknow type: {0} ({1})".format(ftype, data))
 
-        ipdb.set_trace()
         query = build_filter(filters)
         if query is not None:
             query =query.strip()

@@ -178,8 +178,7 @@ app.router.add_route('POST',   "/panel/import",               panelHandler.impor
 
 app.router.add_route('GET',    "/panel",                      panelHandler.list)               # Get list of all panels
 app.router.add_route('POST',   "/panel",                      panelHandler.create_or_update)   # Create a new panel with provided data
-app.router.add_route('GET',    "/panel/{panel_id}",           panelHandler.get)                # Get information about the panel (all its versions)
-app.router.add_route('GET',    "/panel/{panel_id}/{version}", panelHandler.get)                # Get all details about the panel-version (all its entries)
+app.router.add_route('GET',    "/panel/{panel_id}",           panelHandler.get)                # Get information about the panel
 app.router.add_route('PUT',    "/panel/{panel_id}/{version}", panelHandler.create_or_update)   # Update the panel with provided data
 app.router.add_route('DELETE', "/panel/{panel_id}",           panelHandler.delete)             # Delete panel and all its versions
 app.router.add_route('DELETE', "/panel/{panel_id}/{version}", panelHandler.delete)             # Delete a panel version

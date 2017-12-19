@@ -89,7 +89,10 @@ def project_to_json(self, fields=None, loading_depth=-1):
             if f in ["create_date", "update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
             elif f in ["jobs", "analyses", "subjects"]:
-                result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
+                if hasattr(self, f) and len(eval("self." + f)) > 0 and loading_depth > 0:
+                    result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
+                else :                           
+                    result[f] = []
             elif f in ["parent"] and self.loading_depth > 0 and self.parent:
                 result[f] = self.parent.to_json(None, loading_depth-1)
             else:

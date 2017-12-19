@@ -35,6 +35,7 @@ def sample_init(self, loading_depth=0):
             - default_dbuid    : [str]      : list of annotation's databases used in the vcf from where come the sample
             - filter_description json       : description of the filter used in the vcf. Structure : { "<FilterValue>": "<Description>"}
             - analyses_id      : [int]      : the list of id of analyses that are using this sample
+            - stats            : json       : stats regarding import and quality
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - subject          : Subject    : Subject data of the linked subject
             - file             : File       : File data of the source file 
@@ -120,6 +121,7 @@ def sample_load(self, data):
         if "file_id"            in data.keys(): self.file_id            = data['file_id']
         if "analyses_ids"       in data.keys(): self.analyses_ids       = data['analyses_ids']
         if "update_date"        in data.keys(): self.update_date        = data['update_date']
+        if "stats"              in data.keys(): self.stats              = data['stats']
         
         # save modifications
         self.save()
@@ -162,7 +164,7 @@ def sample_count():
 
 
 Sample = Base.classes.sample
-Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "create_date", "update_date", "is_mosaic", "default_dbuid", "filter_description", "loading_progress", "reference_id", "status", "subject", "file", "analyses"]
+Sample.public_fields = ["id", "name", "comment", "subject_id", "file_id", "analyses_ids", "create_date", "update_date", "is_mosaic", "default_dbuid", "filter_description", "loading_progress", "reference_id", "status", "subject", "file", "analyses", "stats"]
 Sample.init = sample_init
 Sample.from_id = sample_from_id
 Sample.to_json = sample_to_json

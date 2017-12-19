@@ -327,6 +327,7 @@ CREATE TABLE public.sample
     status sample_status,
     default_dbuid JSON,
     filter_description JSON,
+    stats JSON,
     create_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT sample_pkey PRIMARY KEY (id)
