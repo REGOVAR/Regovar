@@ -34,6 +34,7 @@ def analysis_init(self, loading_depth=0):
             - files_ids         : [int]         : The list of ids of files associated to the analysis (via analysis_file table)
             - attributes        : json          : The list of attributes defined for this analysis
             - fullpath          : [json]        : The list of folder from root to the analyses [{"id":int, "name":str},...]
+            - statistics        : json          : Statistics about the analysis
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - project           : Project       : The that own the analysis
             - samples           : [Sample]      : The list of samples owns by the analysis
@@ -135,8 +136,9 @@ def analysis_load(self, data):
         if "total_variants"     in data.keys(): self.total_variants     = data["total_variants"]
         if "reference_id"       in data.keys(): self.reference_id       = data["reference_id"]
         if "computing_progress" in data.keys(): self.computing_progress = data["computing_progress"]
-        if "status"             in data.keys(): self.status             = data["status"] if data["status"] else 'emmpty'
+        if "status"             in data.keys(): self.status             = data["status"] if data["status"] else 'empty'
         if "attributes"         in data.keys(): self.attributes         = data["attributes"]
+        if "statistics"         in data.keys(): self.statistics         = data["statistics"]
         
         if "files_ids" in data.keys(): 
             self.files_ids = data['files_ids']
@@ -328,7 +330,7 @@ def analaysis_get_fullpath(self):
 
 
 Analysis = Base.classes.analysis
-Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "files_ids", "files", "computing_progress", "status", "panels_ids", "panels", "fullpath"]
+Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "files_ids", "files", "computing_progress", "status", "panels_ids", "panels", "fullpath", "statistics"]
 Analysis.init = analysis_init
 Analysis.from_id = analysis_from_id
 Analysis.to_json = analysis_to_json

@@ -106,7 +106,6 @@ class FilterEngine:
         execute(query)
 
 
-
     def create_wt_schema(self, analysis):
         wt = "wt_{}".format(analysis.id)
         query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE TABLE {0} (\
@@ -245,7 +244,6 @@ class FilterEngine:
                 await self.update_wt_compute_prefilter_single(analysis, sid)
         
         
-
     def create_wt_variants_indexes(self, analysis):
         wt = "wt_{}".format(analysis.id)
 
@@ -276,7 +274,6 @@ class FilterEngine:
         log(" > create index for variants random access")
         execute(query)
         
-
 
     def insert_wt_trx(self, analysis):
         wt = "wt_{}".format(analysis.id)
@@ -349,7 +346,6 @@ class FilterEngine:
         pass
 
 
-
     async def update_wt_compute_prefilter_single(self, analysis, sample_id, sex="F"):
         wt = "wt_{}".format(analysis.id)
 
@@ -388,7 +384,6 @@ class FilterEngine:
         query = "UPDATE {0} SET is_mit=True WHERE chr=25"
         res = await execute_aio(query.format(wt))
         log(" > is_mit : {} variants".format(res.rowcount))
-
 
 
     def update_wt_compute_prefilter_trio(self, analysis, samples_ids, trio):
@@ -441,7 +436,6 @@ class FilterEngine:
         log(" > is_mit : {} variants".format(res.rowcount))
 
 
-
     def create_wt_stored_filters(self, analysis):
         
         for flt in analysis.filters:
@@ -449,18 +443,51 @@ class FilterEngine:
             self.update_wt(analysis, "filter_{}".format(flt.id), flt.filter)
     
 
-
     def update_wt_samples_stats(self, analysis):
         wt  = "wt_{}".format(analysis.id)
         
-        with_vep = False
+        with_vep = None
         
         # check annotations available to knwo which stats will be computed
         for dbuid in analysis.settings["annotations_db"]:
-            if self.db_map[dbuid]["name"].upper() == "VEP":
-                with_vep = True
+            if self.db_map[dbuid]["name"].upper().startswith("VEP_"):
+                with_vep = dbuid
         
-        
+        #
+        # Compute stats for all sample 
+        #
+        astats = {
+            "total_variant" : execute("SELECT COUNT(*) FROM {} WHERE is_variant".format(wt)).first()[0],
+            "total_transcript": execute("SELECT COUNT(*) FROM {} WHERE NOT is_variant".format(wt)).first()[0],
+            
+            # TODO: OPTIMIZATION : find better way with postgresql sql JSON operators
+            # "filter": {fid: execute("SELECT COUNT(*) FROM {0} WHERE is_variant AND s{1}_filter::text LIKE '%{2}%'".format(wt, sample.id, fid)).first()[0] for fid in sample.filter_description.keys()},
+            
+            "variants_classes": {
+                "ref": execute("SELECT COUNT(*) FROM {0} WHERE is_variant AND ref=alt".format(wt)).first()[0],
+                "snv": execute("SELECT COUNT(*) FROM {0} WHERE is_variant AND ref<>alt AND char_length(ref)=1 AND char_length(alt)=1".format(wt)).first()[0],
+                "mnv": execute("SELECT COUNT(*) FROM {0} WHERE is_variant AND ref<>alt AND char_length(ref)>1 AND char_length(alt)=char_length(ref)".format(wt)).first()[0],
+                "insertion": execute("SELECT COUNT(*) FROM {0} WHERE is_variant AND char_length(ref)=0 AND char_length(alt)>0".format(wt)).first()[0],
+                "deletion":  execute("SELECT COUNT(*) FROM {0} WHERE is_variant AND char_length(ref)>0 AND char_length(alt)=0".format(wt)).first()[0],
+                "others": execute("SELECT COUNT(*) FROM {0} WHERE is_variant AND char_length(ref)<>char_length(alt) AND char_length(ref)>0 AND char_length(alt)>0".format(wt)).first()[0]
+                }
+            }
+        consequences = []
+        if with_vep:
+            for k, v in self.db_map[with_vep]["fields"].items():
+                if v["name"] == "consequence":
+                    test_field_uid = k
+            consequences = [f[0] for f in execute("SELECT DISTINCT(UNNEST(_{1})) FROM {0} WHERE NOT is_variant ".format(wt, test_field_uid))]
+            vep_consequences = {c: execute("SELECT count(*) FROM {0} WHERE NOT is_variant AND '{2}'=ANY(_{1})".format(wt, test_field_uid, c)).first()[0] for c in consequences}
+            astats.update({"vep_consequences": vep_consequences})
+
+        analysis.statistics = astats
+        analysis.save()
+
+
+        #
+        # Compute stats by sample
+        #
         for sample in analysis.samples:
             # skip if not need
             if sample.stats is not None:
@@ -480,8 +507,8 @@ class FilterEngine:
                 "variants_classes": {
                     "not": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt=-1 AND is_variant".format(wt, sample.id)).first()[0],
                     "ref": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt=0 AND is_variant".format(wt, sample.id)).first()[0],
-                    "snv": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)=1 AND char_length(alt)=1 AND ref<>alt".format(wt, sample.id)).first()[0],
-                    "mnv": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)<>1 AND char_length(alt)=char_length(ref)".format(wt, sample.id)).first()[0],
+                    "snv": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)=1 AND char_length(alt)=1".format(wt, sample.id)).first()[0],
+                    "mnv": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)>1 AND char_length(alt)=char_length(ref)".format(wt, sample.id)).first()[0],
                     "insertion": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)=0 AND char_length(alt)>0".format(wt, sample.id)).first()[0],
                     "deletion":  execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)>0 AND char_length(alt)=0".format(wt, sample.id)).first()[0],
                     "others": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND char_length(ref)<>char_length(alt) AND char_length(ref)>0 AND char_length(alt)>0".format(wt, sample.id)).first()[0]
@@ -489,13 +516,19 @@ class FilterEngine:
                 }
             
             if with_vep:
-                # consequences = select distinct(unnest(_5803633f01600a2e047aad3ee2faa133)) from wt_5 where s31_gt>0
-                pass
+                for k, v in self.db_map[with_vep]["fields"].items():
+                    if v["name"] == "consequence":
+                        test_field_uid = k
+                vep_consequences = {c: execute("SELECT count(*) FROM {0} WHERE NOT is_variant AND s{3}_gt>0 AND '{2}'=ANY(_{1})".format(wt, test_field_uid, c, sample.id)).first()[0] for c in consequences}
+                stats.update({"vep_consequences": vep_consequences})
             
             # Save stats
             sample.stats = stats
             sample.save()
+
             
+
+
 
 
 
