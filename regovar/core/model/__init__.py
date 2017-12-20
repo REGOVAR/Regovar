@@ -12,7 +12,7 @@ from core.model.job import Job, MonitoringLog, JobFile
 from core.model.analysis import Analysis, AnalysisSample, AnalysisFile
 from core.model.annotation import AnnotationDatabase, AnnotationField
 from core.model.filter import Filter
-from core.model.sample import Sample, SampleVariant
+from core.model.sample import Sample
 from core.model.template import Template
 from core.model.variant import Variant
 
