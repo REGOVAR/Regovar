@@ -68,15 +68,14 @@ CREATE INDEX variant_hg38_idx_site
 --
 -- Import csv data
 --
-DROP TABLE IF EXISTS import_refgene_hg38;
 CREATE TABLE import_refgene_hg38
 (
   bin integer,
   name character varying(255) COLLATE pg_catalog."C",
   chrom character varying(255) COLLATE pg_catalog."C",
   strand character(1),
-  txstart bigint,
-  txend bigint,
+  trxstart bigint,
+  trxend bigint,
   cdsstart bigint,
   cdsend bigint,
   exoncount bigint,
@@ -87,9 +86,6 @@ CREATE TABLE import_refgene_hg38
   cdsstartstat character varying(255) COLLATE pg_catalog."C",
   cdsendstat character varying(255) COLLATE pg_catalog."C",
   exonframes text
-)
-WITH (
-  OIDS=FALSE
 );
 
 
@@ -106,87 +102,37 @@ COPY import_refgene_hg38 FROM '/var/regovar/databases/hg38/refGene.txt' DELIMITE
 --
 -- Create regovar tables for refgene data
 --
-DROP TABLE IF EXISTS refgene_hg38;
 CREATE TABLE refgene_hg38
 (
   bin integer NOT NULL,
   chr integer,
-  txrange int8range,
+  trxrange int8range,
   cdsrange int8range,
   exoncount int,
   trxcount int,
   name2 character varying(255) COLLATE pg_catalog."C"
-)
-WITH (
-  OIDS=FALSE
 );
-  
-  
-  
-DROP TABLE IF EXISTS refgene_trx_hg38;
+
 CREATE TABLE refgene_trx_hg38
 (
   bin integer NOT NULL,
   name character varying(255) COLLATE pg_catalog."C",
   chr integer,
   strand character(1),
-  txrange int8range,
+  trxrange int8range,
   cdsrange int8range,
   exoncount int,
   score bigint,
   name2 character varying(255) COLLATE pg_catalog."C",
   cdsstartstat character varying(255) COLLATE pg_catalog."C",
-  cdsendstat character varying(255) COLLATE pg_catalog."C"
-)
-WITH (
-  OIDS=FALSE
+  cdsendstat character varying(255) COLLATE pg_catalog."C",
+  
+  -- We keep these field only for the import. We delete them at the end of this script
+  trxstart bigint,
+  trxend bigint,
+  cdsstart bigint,
+  cdsend bigint
 );
-
-
-
--- DROP TABLE IF EXISTS refgene_exon_hg38;
--- CREATE TABLE refgene_exon_hg38
--- (
---   bin integer NOT NULL,
---   name character varying(255),
---   chr integer,
---   strand character(1),
---   txstart bigint,
---   txend bigint,
---   txrange int8range,
---   cdsstart bigint,
---   cdsend bigint,
---   cdsrange int8range,
---   i_exonstart character varying(255),
---   i_exonend character varying(255),
---   i_exonstarts character varying(10)[],
---   exonpos integer,
---   exoncount int,
---   exonstart bigint,
---   exonend bigint,
---   exonrange int8range,
---   score bigint,
---   name2 character varying(255),
---   cdsstartstat character varying(255),
---   cdsendstat character varying(255)
--- )
--- WITH (
---   OIDS=FALSE
--- );
-
-
--- DROP INDEX IF EXISTS refgene_trx_hg38_id_seq;
--- CREATE SEQUENCE refgene_trx_hg38_id_seq
---   INCREMENT 1
---   MINVALUE 1
---   MAXVALUE 9223372036854775807
---   START 1
---   CACHE 1;
-
--- ALTER TABLE refgene_trx_hg38 ADD txrange int8range;
--- ALTER TABLE refgene_trx_hg38 ADD id integer NOT NULL DEFAULT nextval('refgene_trx_hg38_id_seq'::regclass);
--- ALTER TABLE refgene_trx_hg38 ADD variant_ids integer[][];
-
 
 
 
@@ -197,97 +143,48 @@ WITH (
 --
 -- Migrate imported data to regovar database
 --
-INSERT INTO refgene_trx_hg38(bin, name, chr, strand, txrange, cdsrange, exoncount, score, name2, cdsstartstat, cdsendstat)
+INSERT INTO refgene_trx_hg38 (bin, name, chr, strand, trxrange, cdsrange, exoncount, score, name2, cdsstartstat, cdsendstat, trxstart, trxend, cdsstart, cdsend)
 SELECT bin, name, 
   CASE WHEN chrom='chrX' THEN 23 WHEN chrom='chrY' THEN 24 WHEN chrom='chrM' THEN 25 ELSE CAST(substring(chrom from 4) AS INTEGER) END, 
-  strand, int8range(txstart, txend), int8range(cdsstart, cdsend), exoncount, score, name2, cdsstartstat, cdsendstat
+  strand, int8range(trxstart, trxend), int8range(cdsstart, cdsend), exoncount, score, name2, cdsstartstat, cdsendstat, trxstart, trxend, cdsstart, cdsend
 FROM import_refgene_hg38
 WHERE char_length(chrom) <= 5;
 
-INSERT INTO refgene_hg38 (bin, chr, txrange, cdsrange, exoncount, trxcount, name2)
-SELECT min(bin) AS bin, min(chr) AS chr, int8range(min(txstart), max(txend)) AS txrange, int8range(min(cdsstart), max(cdsend)) AS cdsrange, max(exoncount) AS exoncount, count(*) AS trxcount, name2 
+INSERT INTO refgene_hg38 (bin, chr, trxrange, cdsrange, exoncount, trxcount, name2)
+SELECT min(bin) AS bin, min(chr) AS chr, int8range(min(trxstart), max(trxend)) AS trxrange, int8range(min(cdsstart), max(cdsend)) AS cdsrange, max(exoncount) AS exoncount, count(*) AS trxcount, name2 
 FROM refgene_trx_hg38 GROUP BY name2;
 
--- INSERT INTO refgene_exon_hg38(bin, name, chr, strand, txstart, txend, txrange, cdsstart, cdsend, cdsrange, exoncount, i_exonstart, i_exonend, i_exonstarts, score, name2, cdsstartstat, cdsendstat)
--- SELECT bin, name,
---   CASE WHEN chrom='chrX' THEN 23 WHEN chrom='chrY' THEN 24 WHEN chrom='chrM' THEN 25 ELSE CAST(substring(chrom from 4) AS INTEGER) END,
---   strand, txstart, txend, int8range(txstart, txend), cdsstart, cdsend, int8range(cdsstart, cdsend), exoncount, 
---   unnest(string_to_array(trim(trailing ',' from exonstarts), ',')), 
---   unnest(string_to_array(trim(trailing ',' from exonends), ',')), 
---   string_to_array(trim(trailing ',' from exonstarts), ','), score, name2, cdsstartstat, cdsendstat
--- FROM import_refgene_hg38
--- WHERE char_length(chrom) <= 5;
+-- Remove useless columns
+ALTER TABLE refgene_trx_hg38 DROP COLUMN trxstart;
+ALTER TABLE refgene_trx_hg38 DROP COLUMN trxend;
+ALTER TABLE refgene_trx_hg38 DROP COLUMN cdsstart;
+ALTER TABLE refgene_trx_hg38 DROP COLUMN cdsend;
 
--- UPDATE refgene_exon_hg38 SET 
---   exonstart=CAST(coalesce(i_exonstart, '0') AS integer),
---   exonend  =CAST(coalesce(i_exonend,   '0') AS integer),
---   exonrange=int8range(CAST(coalesce(i_exonstart, '0') AS integer), CAST(coalesce(i_exonend, '0') AS integer)),
---   exonpos  =array_search(CAST(i_exonstart AS character varying(10)), i_exonstarts) ;
-
--- ALTER TABLE refgene_exon_hg38 DROP COLUMN i_exonstart;
--- ALTER TABLE refgene_exon_hg38 DROP COLUMN i_exonend;
--- ALTER TABLE refgene_exon_hg38 DROP COLUMN i_exonstarts;
-
-
-
-
-
-
-  
-  
---
--- Compute/Set additional fields 
---
--- UPDATE refgene_trx_hg38 SET variant_ids=ids
--- FROM (
---     SELECT rg.id as rid, array_agg(v.id) as ids
---     FROM variant_hg38 v
---     LEFT JOIN refgene_trx_hg38 rg ON rg.txrange @> int8(v.pos)
---     GROUP BY rg.id
--- ) as SR
--- WHERE id=rid
 
 
 
 --
 -- Create indexes
 --
-DROP INDEX IF EXISTS refgene_hg38_chrom_txrange_idx;
-CREATE INDEX refgene_hg38_chrom_txrange_idx
+CREATE INDEX refgene_hg38_chrom_trxrange_idx
   ON refgene_hg38
-  USING btree (bin, chr, txrange);
+  USING btree (bin, chr, trxrange);
 
 
-DROP INDEX IF EXISTS refgene_hg38_txrange_idx;
-CREATE INDEX refgene_hg38_txrange_idx
+CREATE INDEX refgene_hg38_trxrange_idx
   ON refgene_hg38
-  USING gist (txrange);
+  USING gist (trxrange);
 
-  
-DROP INDEX IF EXISTS refgene_trx_hg38_chrom_txrange_idx;
-CREATE INDEX refgene_trx_hg38_chrom_txrange_idx
+
+CREATE INDEX refgene_trx_hg38_chrom_trxrange_idx
   ON refgene_trx_hg38
-  USING btree (bin, chr, txrange);
+  USING btree (bin, chr, trxrange);
 
 
-DROP INDEX IF EXISTS refgene_trx_hg38_txrange_idx;
-CREATE INDEX refgene_trx_hg38_txrange_idx
+CREATE INDEX refgene_trx_hg38_trxrange_idx
   ON refgene_trx_hg38
-  USING gist (txrange);
+  USING gist (trxrange);
 
-
-  
-  
--- DROP INDEX IF EXISTS refgene_exon_hg38_chrom_exonange_idx;
--- CREATE INDEX refgene_exon_hg38_chrom_exonange_idx
---   ON refgene_exon_hg38
---   USING btree (bin, chr, exonrange);
--- 
--- 
--- DROP INDEX IF EXISTS refgene_exon_hg38_exonange_idx;
--- CREATE INDEX refgene_exon_hg38_exonange_idx
---   ON refgene_exon_hg38
---   USING gist (exonrange);
 
 
 
@@ -298,7 +195,6 @@ CREATE INDEX refgene_trx_hg38_txrange_idx
 -- dbuid = md5 of refId, annotation db name and annotation db version
 -- 4915f6f892d359e93ac0631fd1e76f7a = SELECT MD5(concat(3, 'refgene_hg38',      '2017-09-24 23:51'))
 -- c721472eed11a0483ced649c0a53e37c = SELECT MD5(concat(3, 'refgene_trx_hg38',  '2017-09-24 23:51'))
--- ce68af55f377bb8bcceb397757655022 = SELECT MD5(concat(3, 'refgene_exon_hg38', '2017-09-24 23:51'))
 
 INSERT INTO annotation_database(uid, reference_id, version, name, name_ui, description, url, ord, update_date, jointure, type) VALUES 
   ('4915f6f892d359e93ac0631fd1e76f7a', 3,
@@ -309,7 +205,7 @@ INSERT INTO annotation_database(uid, reference_id, version, name, name_ui, descr
   'http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz', 
   10, 
   CURRENT_TIMESTAMP, 
-  'refgene_hg38 ON {0}.bin=refgene_hg38.bin AND {0}.chr=refgene_hg38.chr AND refgene_hg38.txrange @> int8({0}.pos)',
+  'refgene_hg38 ON {0}.bin=refgene_hg38.bin AND {0}.chr=refgene_hg38.chr AND refgene_hg38.trxrange @> int8({0}.pos)',
   'site'),
   
   ('c721472eed11a0483ced649c0a53e37c', 3,
@@ -320,24 +216,14 @@ INSERT INTO annotation_database(uid, reference_id, version, name, name_ui, descr
   'http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz', 
   11, 
   CURRENT_TIMESTAMP, 
-  'refgene_trx_hg38 ON {0}.bin=refgene_trx_hg38.bin AND {0}.chr=refgene_trx_hg38.chr AND refgene_trx_hg38.txrange @> int8({0}.pos)',
+  'refgene_trx_hg38 ON {0}.bin=refgene_trx_hg38.bin AND {0}.chr=refgene_trx_hg38.chr AND refgene_trx_hg38.trxrange @> int8({0}.pos)',
   'site');
 
---   ('ce68af55f377bb8bcceb397757655022', id,
---   '2017-09-24 23:51',
---   'refgene_exon_hg38', 
---   'refGene Exons', 
---   'Known human protein-coding and non-protein-coding genes taken from the NCBI RNA reference sequences collection (RefSeq). This database contains all exome regions of the refSeq genes.', 
---   'http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz', 
---   12, 
---   CURRENT_TIMESTAMP, 
---   'refgene_exon_hg38 ON {0}.bin=refgene_trx_hg38.bin AND {0}.chr=refgene_exon_hg38.chr AND refgene_exon_hg38.exonrange @> int8({0}.pos)',
---   'site');
 
 
 
 INSERT INTO annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
-  ('4915f6f892d359e93ac0631fd1e76f7a', 6,  'txrange',       'txrange',      'range',  'Transcription region [start-end].', NULL),
+  ('4915f6f892d359e93ac0631fd1e76f7a', 6,  'trxrange',      'trxrange',     'range',  'Transcription region [start-end].', NULL),
   ('4915f6f892d359e93ac0631fd1e76f7a', 9,  'cdsrange',      'cdsrange',     'range',  'Coding region [start-end].', NULL),
   ('4915f6f892d359e93ac0631fd1e76f7a', 10, 'exoncount',     'exoncount',    'int',    'Number of exons in the gene.', NULL),
   ('4915f6f892d359e93ac0631fd1e76f7a', 10, 'trxcount',      'trxcount',     'int',    'Number of transcript in the gene.', NULL),
@@ -345,9 +231,9 @@ INSERT INTO annotation_field(database_uid, ord, name, name_ui, type, description
   
   ('c721472eed11a0483ced649c0a53e37c', 1,  'name',          'name',         'string', 'Transcript name.', NULL),
   ('c721472eed11a0483ced649c0a53e37c', 3,  'strand',        'strand',       'string', 'Which DNA strand contains the observed alleles.', NULL),
-  ('c721472eed11a0483ced649c0a53e37c', 4,  'txstart',       'txstart',      'int',    'Transcription start position.', NULL),
-  ('c721472eed11a0483ced649c0a53e37c', 5,  'txend',         'txend',        'int',    'Transcription end position.', NULL),
-  ('c721472eed11a0483ced649c0a53e37c', 6,  'txrange',       'txrange',      'range',  'Transcription region [start-end].', NULL),
+  ('c721472eed11a0483ced649c0a53e37c', 4,  'trxstart',      'trxstart',     'int',    'Transcription start position.', NULL),
+  ('c721472eed11a0483ced649c0a53e37c', 5,  'trxend',        'trxend',       'int',    'Transcription end position.', NULL),
+  ('c721472eed11a0483ced649c0a53e37c', 6,  'trxrange',      'trxrange',     'range',  'Transcription region [start-end].', NULL),
   ('c721472eed11a0483ced649c0a53e37c', 7,  'cdsstart',      'cdsstart',     'int',    'Coding region start.', NULL),
   ('c721472eed11a0483ced649c0a53e37c', 8,  'cdsend',        'cdsend',       'int',    'Coding region end.', NULL),
   ('c721472eed11a0483ced649c0a53e37c', 9,  'cdsrange',      'cdsrange',     'range',  'Coding region [start-end].', NULL),
@@ -356,24 +242,7 @@ INSERT INTO annotation_field(database_uid, ord, name, name_ui, type, description
   ('c721472eed11a0483ced649c0a53e37c', 12, 'name2',         'name2',        'string', 'Gene name.', NULL),
   ('c721472eed11a0483ced649c0a53e37c', 13, 'cdsstartstat',  'cdsstartstat', 'string', 'Cds start stat, can be "non", "unk", "incompl" or "cmp1".', NULL),
   ('c721472eed11a0483ced649c0a53e37c', 14, 'cdsendstat',    'cdsendstat',   'string', 'Cds end stat, can be "non", "unk", "incompl" or "cmp1".', NULL);
-
---   ('ce68af55f377bb8bcceb397757655022', 1,  'name',          'name',         'string', 'Transcript name.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 3,  'strand',        'strand',       'string', 'Which DNA strand contains the observed alleles.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 4,  'txstart',       'txstart',      'int',    'Transcription start position.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 5,  'txend',         'txend',        'int',    'Transcription end position.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 6,  'txrange',       'txrange',      'range',  'Transcription region [start-end].', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 7,  'cdsstart',      'cdsstart',     'int',    'Coding region start.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 8,  'cdsend',        'cdsend',       'int',    'Coding region end.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 9,  'cdsrange',      'cdsrange',     'range',  'Coding region [start-end].', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 7,  'exonstart',     'exonstart',    'int',    'Exon start.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 8,  'exonend',       'exonend',      'int',    'Exon end.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 9,  'exonrange',     'exonrange',    'range',  'Exon region [start-end].', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 10, 'exonpos',       'exonpos',      'int',    'Position of the exons in the gene.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 10, 'exoncount',     'exoncount',    'int',    'Number of exons in the gene.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 11, 'score',         'score',        'int',    'Score ?', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 12, 'name2',         'name2',        'string', 'Gene name.', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 13, 'cdsstartstat',  'cdsstartstat', 'string', 'Cds start stat, can be "non", "unk", "incompl" or "cmp1".', NULL),
---   ('ce68af55f377bb8bcceb397757655022', 14, 'cdsendstat',    'cdsendstat',   'string', 'Cds end stat, can be "non", "unk", "incompl" or "cmp1".', NULL);
+  
 
 UPDATE annotation_field SET uid=MD5(concat(database_uid, name));
 DROP TABLE IF EXISTS import_refgene_hg38;

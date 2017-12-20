@@ -2,11 +2,11 @@
 app:
 	python regovar_server.py
 
-clear:
-	rm -rf /var/regovar/regovar/files/*
-	rm -rf /var/regovar/regovar/downloads/*
-	rm -rf /var/regovar/regovar/pipelines/*
-	rm -rf /var/regovar/regovar/jobs/*
+clear_files:
+	rm -rf /var/regovar/files/*
+	rm -rf /var/regovar/downloads/*
+	rm -rf /var/regovar/pipelines/*
+	rm -rf /var/regovar/jobs/*
 	
 
 list_db:
