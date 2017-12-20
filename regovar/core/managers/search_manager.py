@@ -395,7 +395,7 @@ class SearchManager:
         from core.core import core
         ref_name = core.annotations.ref_list[int(reference_id)]
         # query = "SELECT _var.bin as vbin, _var.chr as vchr, _var.pos as vpos, _var.ref as vref, _var.alt as valt, dbnfsp_variant.* FROM (SELECT bin, chr, pos, ref, alt FROM variant_{} WHERE id={}) AS _var LEFT JOIN dbnfsp_variant ON _var.bin=dbnfsp_variant.bin_hg19 AND _var.chr=dbnfsp_variant.chr_hg19 AND _var.pos=dbnfsp_variant.pos_hg19 AND _var.ref=dbnfsp_variant.ref AND _var.alt=dbnfsp_variant.alt"
-        query = "SELECT _var.bin as vbin, _var.chr as vchr, _var.pos as vpos, _var.ref as vref, _var.alt as valt, rg.name2 as genename, _var.sample_list, _var.regovar_score, _var.regovar_score_meta FROM (SELECT bin, chr, pos, ref, alt, sample_list, regovar_score, regovar_score_meta FROM variant_{0} WHERE id={1}) AS _var LEFT JOIN refgene_{0} rg ON rg.bin=_var.bin AND rg.chr=_var.chr AND rg.txrange @> _var.pos"
+        query = "SELECT _var.bin as vbin, _var.chr as vchr, _var.pos as vpos, _var.ref as vref, _var.alt as valt, rg.name2 as genename, _var.sample_list, _var.regovar_score, _var.regovar_score_meta FROM (SELECT bin, chr, pos, ref, alt, sample_list, regovar_score, regovar_score_meta FROM variant_{0} WHERE id={1}) AS _var LEFT JOIN refgene_{0} rg ON rg.bin=_var.bin AND rg.chr=_var.chr AND rg.trxrange @> _var.pos"
         variant = execute(query.format(db_suffix, variant_id)).first()
         if variant:
             chrm = CHR_DB_MAP[variant.vchr]
@@ -499,15 +499,15 @@ class SearchManager:
             data["pubmed"] = pubmed
             
             # get refgene data
-            query = "SELECT chr, txrange, cdsrange, exoncount, trxcount FROM refgene_{} WHERE name2 ilike '{}'"
+            query = "SELECT chr, trxrange, cdsrange, exoncount, trxcount FROM refgene_{} WHERE name2 ilike '{}'"
             refgene = []
             if ref_id:
                 res = execute(query.format(core.annotations.ref_list[ref_id].lower(), genename)).first()
                 refgene.append({
                     "id": ref_id, 
                     "name": core.annotations.ref_list[ref_id], 
-                    "start": res.txrange.lower,
-                    "size": res.txrange.upper - res.txrange.lower,
+                    "start": res.trxrange.lower,
+                    "size": res.trxrange.upper - res.trxrange.lower,
                     "exon": res.exoncount,
                     "trx": res.trxcount})
             else:
@@ -519,14 +519,14 @@ class SearchManager:
                             refgene.append({
                                 "id": ref_id, 
                                 "name": core.annotations.ref_list[ref_id], 
-                                "start": res.txrange.lower,
-                                "size": res.txrange.upper - res.txrange.lower,
+                                "start": res.trxrange.lower,
+                                "size": res.trxrange.upper - res.trxrange.lower,
                                 "exon": res.exoncount,
                                 "trx": res.trxcount})
             data.update({"refgene": refgene})
 
             # Get phenotype
-            query = "SELECT chr, txrange, cdsrange, exoncount, trxcount FROM refgene_{} WHERE name2 ilike '{}'"
+            query = "SELECT chr, trxrange, cdsrange, exoncount, trxcount FROM refgene_{} WHERE name2 ilike '{}'"
             refgene = []
             if ref_id:
                 res = execute(query.format(core.annotations.ref_list[ref_id].lower(), genename)).first()
@@ -534,8 +534,8 @@ class SearchManager:
                   refgene.append({
                       "id": ref_id, 
                       "name": core.annotations.ref_list[ref_id], 
-                      "start": res.txrange.lower,
-                      "size": res.txrange.upper - res.txrange.lower,
+                      "start": res.trxrange.lower,
+                      "size": res.trxrange.upper - res.trxrange.lower,
                       "exon": res.exoncount,
                       "trx": res.trxcount})
         return data

@@ -62,7 +62,6 @@ class ApiHandler:
             "milestones" : data
         }
 
-        print(result)
         return rest_success(result)
 
 
