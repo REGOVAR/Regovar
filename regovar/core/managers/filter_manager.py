@@ -410,7 +410,7 @@ class FilterEngine:
         log(" > is_rec_hom : {} variants".format(res.rowcount))
 
         # Recessif Heterozygous compoud
-        query = "UPDATE {0} u SET is_rec_htzcomp=True WHERE u.variant_id IN ( SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM ( SELECT array_agg(w.variant_id) as vids, g.name2 FROM {0} w  INNER JOIN refgene{4} g ON g.chr=w.chr AND g.txrange @> w.pos  WHERE  s{1}_gt > 1 AND ( (s{2}_gt > 1 AND (s{3}_gt = NULL or s{3}_gt < 2)) OR (s{3}_gt > 1 AND (s{2}_gt = NULL or s{2}_gt < 2))) GROUP BY name2 HAVING count(*) > 1) AS sub )"
+        query = "UPDATE {0} u SET is_rec_htzcomp=True WHERE u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM ( SELECT array_agg(w.variant_id) as vids, g.name2 FROM {0} w  INNER JOIN refgene{4} g ON g.chr=w.chr AND g.trxrange @> w.pos  WHERE  s{1}_gt > 1 AND ( (s{2}_gt > 1 AND (s{3}_gt = NULL or s{3}_gt < 2)) OR (s{3}_gt > 1 AND (s{2}_gt = NULL or s{2}_gt < 2))) GROUP BY name2 HAVING count(*) > 1) AS sub )"
         res = execute(query.format(wt, child_id, mother_id, father_id, analysis.db_suffix))
         log(" > is_rec_htzcomp : {} variants".format(res.rowcount))
 
