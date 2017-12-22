@@ -11,7 +11,7 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import ClauseElement
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from core.framework.common import *
 from core.framework.erreurs_list import *
@@ -40,7 +40,7 @@ __db_engine = init_pg(C.DATABASE_USER, C.DATABASE_PWD, C.DATABASE_HOST, C.DATABA
 try:
     Base.prepare(__db_engine, reflect=True)
     Base.metadata.create_all(__db_engine)
-    Session = sessionmaker(bind=__db_engine)
+    Session = scoped_session(sessionmaker(bind=__db_engine))
 except Exception as err:
     raise RegovarException("Error occured when initialising database", "", err)
 

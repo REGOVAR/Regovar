@@ -546,9 +546,13 @@ def worker():
             break
 
         try:
-            worker_session = Model.Session()
-            result = worker_session.execute(query)
-            worker_session.commit()
+            # Create a Session local to the thread
+            Model.Session()
+            Model.Session.execute(query)
+            # Commit the transaction 
+            Model.Session.commit()
+            # remove the Session
+            Model.Session.remove()
         except Exception as ex:
             r = RegovarException(ERR.E100001, "E100001", ex)
             log_snippet(query, r)
