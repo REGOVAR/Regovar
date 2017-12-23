@@ -1,4 +1,3 @@
-
 DROP TABLE IF EXISTS hpo_phenotype;
 CREATE TABLE hpo_phenotype
 (
@@ -18,8 +17,5 @@ CREATE TABLE hpo_disease
     hpo_label text COLLATE pg_catalog."C"
 ); 
 
-
-COPY hpo_phenotype FROM '/var/regovar/databases/hpo_phenotype.txt' HEADER DELIMITER E'\t' CSV ;
-COPY hpo_disease FROM '/var/regovar/databases/hpo_disease.txt' HEADER DELIMITER E'\t' CSV;
-
-
+\COPY hpo_phenotype FROM '/var/regovar/databases/hpo_phenotype.txt' HEADER DELIMITER E'\t' CSV ;
+\COPY hpo_disease FROM '/var/regovar/databases/hpo_disease.txt' HEADER DELIMITER E'\t' CSV;
