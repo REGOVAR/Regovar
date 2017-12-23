@@ -21,17 +21,20 @@ list_db:
 
 
 
-
+destroy:
+	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
+	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$${database_name}'" ; \
+	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $${database_name}" ; \
+	sudo -u postgres psql -c "CREATE DATABASE $${database_name} OWNER regovar" ;
 
 init:
 	cp ../install/config.default ./config.py
 	echo "Please, edit the $PWD/config.py file before proceed to the installation with the command 'make install'"
 	
-install:
+install: destroy setup
+	
+setup:
 	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
-	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$${database_name}'" ; \
-	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $${database_name}" ; \
-	sudo -u postgres psql -c "CREATE DATABASE $${database_name} OWNER regovar" ; \
 	psql -U regovar -d $$database_name -f ../install/create_all.sql ; \
 	psql -U regovar -d $$database_name -f ../install/install_hg19.sql ; \
 	psql -U regovar -d $$database_name -f ../install/install_hg38.sql ;
