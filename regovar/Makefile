@@ -7,7 +7,12 @@ clear_files:
 	rm -rf /var/regovar/downloads/*
 	rm -rf /var/regovar/pipelines/*
 	rm -rf /var/regovar/jobs/*
-	
+
+destroy:
+	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
+	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$${database_name}'" ; \
+	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $${database_name}" ; \
+	sudo -u postgres psql -c "CREATE DATABASE $${database_name} OWNER regovar" ;
 
 list_db:
 	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
@@ -18,14 +23,6 @@ list_db:
         FROM (SELECT DISTINCT table_name FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name) AS _t  \
         LEFT JOIN pg_stat_all_tables ON table_name=relname ORDER BY table_name) AS _sub ON table_name=relname \
     ORDER BY table_name ASC"
-
-
-
-destroy:
-	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
-	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$${database_name}'" ; \
-	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $${database_name}" ; \
-	sudo -u postgres psql -c "CREATE DATABASE $${database_name} OWNER regovar" ;
 
 init:
 	cp ../install/config.default ./config.py
@@ -39,14 +36,6 @@ setup:
 	psql -U regovar -d $$database_name -f ../install/install_hg19.sql ; \
 	psql -U regovar -d $$database_name -f ../install/install_hg38.sql ;
 	
-update_hpo:
-	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
-	database_path=$$(sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
-	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$${database_name}'" ; \
-	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $$database_path/hpo_disease.txt;  \
-	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $$database_path/hpo_phenotype.txt; \
-	psql -U regovar -d $$database_name -f ../install/update_hpo.sql ;
-
 test:
 	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
 	test -n "$${database_name}" && \
@@ -61,6 +50,12 @@ test:
 	mv config.py.bak config.py && \
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $${database_name}_test"
 	
-	
+update_hpo:
+	database_name=$$(sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
+	database_path=$$(sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py) ; \
+	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$${database_name}'" ; \
+	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $$database_path/hpo_disease.txt;  \
+	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $$database_path/hpo_phenotype.txt; \
+	psql -U regovar -d $$database_name -f ../install/update_hpo.sql ;	
 
-.PHONY: install app clear 
+.PHONY: app clear_files destroy list_db init install setup test update_hpo
