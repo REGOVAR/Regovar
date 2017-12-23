@@ -3,7 +3,7 @@ database_name=$(shell sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' con
 database_path=$(shell sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py)
 
 app:
-	python regovar_server.py
+	python3 regovar_server.py
 
 init:
 	cp ../install/config.default ./config.py
