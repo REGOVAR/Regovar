@@ -16,6 +16,7 @@ from core.managers.imports.abstract_import_manager import AbstractImportManager,
 from core.framework.common import *
 import core.model as Model
 
+from config import *
 from core.managers.imports.vcf_import_vep import VepImporter
 
 
@@ -534,45 +535,34 @@ from queue import Queue
 from threading import Thread
 
 
-queries_queue = Queue(maxsize=0)
-workers = []
-max_thread = 7
+
+
 
 # define bw worker
-def worker():
+def vcf_import_worker(queue, file_id, samples):
     while True:
-        query = queries_queue.get()
+        query = queue.get()
         if query is None:
             break
-
+            
+        session = Model.Session()
         try:
-            # Create a Session local to the thread
-            Model.Session()
-            Model.Session.execute(query)
-            # Commit the transaction 
-            Model.Session.commit()
-            # remove the Session
+            session.execute(query)
+            session.commit()
             Model.Session.remove()
         except Exception as ex:
-            r = RegovarException(ERR.E100001, "E100001", ex)
+            session.rollback()
+            r = RegovarException("E100001", exception=ex)
             log_snippet(query, r)
+            core.notify_all({"action": "import_vcf_error", "data" : {"file_id": file_id, "msg": "Error occured when importing sample." + str(ex), "samples": samples}})
 
-        queries_queue.task_done()
+        queue.task_done()
         
         
-# init workers
-for i in range(max_thread):
-    t = Thread(target=worker, daemon=True)
-    t.start()
-    workers.append(t)
 
 
-#def transaction_end(job_id, result):
-    #job_in_progress.remove(job_id)
-    #if result is Exception or result is None:
-        #core.notify_all({'action':'import_vcf_end', 'data' : {'file_id' : file_id, 'msg' : 'Error occured : ' + str(result)}})
-    #else:
-        #log("Transaction success")
+
+
             
             
 class VcfManager(AbstractImportManager):
@@ -583,10 +573,7 @@ class VcfManager(AbstractImportManager):
     }
 
 
-
-
-    @staticmethod
-    def import_delegate(file_id, vcf_reader, db_ref_suffix, vcf_metadata, samples):
+    def import_delegate(self, file_id, vcf_reader, db_ref_suffix, vcf_metadata, samples):
         """
             This delegate will do the "real" import.
             It will be called by the "import_data" method in a new thread in order to don't block the main thread
@@ -691,8 +678,8 @@ class VcfManager(AbstractImportManager):
                     sp.save()
                 core.notify_all({'action':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : sp.id, 'name' : sp.name} for sp in sps]}})
                 
-                log("VCF iport : enqueue query")
-                queries_queue.put(transaction)
+                log("VCF import : enqueue query")
+                self.queue.put(transaction)
                 # Reset query buffers
                 sql_query1 = ""
                 sql_query2 = ""
@@ -702,17 +689,19 @@ class VcfManager(AbstractImportManager):
         log("VCF import : Execute last async query")
         transaction = sql_query1 + sql_query2 + sql_query3
         if transaction:
-            queries_queue.put(transaction)
+            self.queue.put(transaction)
 
-        # stop workers
-        for i in range(max_thread):
-            queries_queue.put(None)
-        for t in workers:
-            t.join()
+
     
         # Waiting that all query in the queue was executed
         log("VCF parsing done")
-        if not queries_queue.empty():
+        
+        # stop vcf_import_thread_workers
+        for i in range(VCF_IMPORT_MAX_THREAD):
+            self.queue.put(None)
+        for t in self.workers:
+            t.join()
+        if not self.queue.empty():
             err("Some queued transaction have not been processed !")
 
         # Compute composite variant by sample
@@ -742,8 +731,8 @@ class VcfManager(AbstractImportManager):
 
 
 
-    @staticmethod
-    async def import_data(file_id, **kargs):
+
+    async def import_data(self, file_id, **kargs):
         """
             Import samples, variants and annotations from the provided file.
             This method check provided parameters and parse the header of the vcf to get samples and compute the number of line
@@ -796,19 +785,26 @@ class VcfManager(AbstractImportManager):
                 core.notify_all({'action':'import_vcf_error', 'data' : {'file_id' : file_id, 'msg' : "VCF files without sample cannot be imported in the database."}})
                 return;
 
+
+            # tasks queue shared by all thread
+            self.queue = Queue(maxsize=0)
+            # list of worker created to execute multithread tasks
+            self.workers = []
+            
+            # init threading workers
+            for i in range(VCF_IMPORT_MAX_THREAD):
+                t = Thread(target=vcf_import_worker, args=(self.queue, file_id, samples), daemon=True)
+                t.start()
+                self.workers.append(t)
+
+
             core.notify_all({'action':'import_vcf_start', 'data' : {'file_id' : file_id, 'samples' : [ {'id' : samples[sid].id, 'name' : samples[sid].name} for sid in samples.keys()]}})
-            # TODO : update sample's progress indicator
-
-
             records_count = vcf_metadata['count']
             log ("Importing file {0}\n\r\trecords  : {1}\n\r\tsamples  :  ({2}) {3}\n\r\tstart    : {4}".format(filepath, records_count, len(samples.keys()), reprlib.repr([sid for sid in samples.keys()]), start))
-            run_async(VcfManager.import_delegate, file_id, vcf_reader, db_ref_suffix, vcf_metadata, samples)
+            run_async(self.import_delegate, file_id, vcf_reader, db_ref_suffix, vcf_metadata, samples)
         
             return {"success": True, "samples": samples, "records_count": records_count }
         return {"success": False, "error": "File not supported"}
-
-
-
 
 
 
