@@ -5,14 +5,15 @@ database_path=$(shell sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' con
 app:
 	python regovar_server.py
 
-clear_files:
-	rm -rf /var/regovar/files/*
-	rm -rf /var/regovar/downloads/*
-	rm -rf /var/regovar/pipelines/*
-	rm -rf /var/regovar/jobs/*
+init:
+	cp ../install/config.default ./config.py
+	echo "Please, edit the $PWD/config.py file before proceed to the installation with the command 'make install'"
 
-destroy:
+#Database utils
+terminate_queries:
 	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$(database_name)'"
+
+destroy: terminate_queries
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)"
 	sudo -u postgres psql -c "CREATE DATABASE $(database_name) OWNER regovar"
 
@@ -25,17 +26,30 @@ list_db:
         LEFT JOIN pg_stat_all_tables ON table_name=relname ORDER BY table_name) AS _sub ON table_name=relname \
     ORDER BY table_name ASC"
 
-init:
-	cp ../install/config.default ./config.py
-	echo "Please, edit the $PWD/config.py file before proceed to the installation with the command 'make install'"
-	
+#Install
 install: destroy setup
-	
+
 setup:
 	psql -U regovar -d $(database_name) -f ../install/create_all.sql
 	psql -U regovar -d $(database_name) -f ../install/install_hg19.sql
 	psql -U regovar -d $(database_name) -f ../install/install_hg38.sql
+
+#HPO
+install_hpo:
+	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $(database_path)/hpo_disease.txt
+	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
+	psql -U regovar -d $(database_name) -f ../install/update_hpo.sql
 	
+update_hpo: terminate_queries install_hpo
+
+#Clean up
+clear_files:
+	rm -rf /var/regovar/files/*
+	rm -rf /var/regovar/downloads/*
+	rm -rf /var/regovar/pipelines/*
+	rm -rf /var/regovar/jobs/*
+
+#Tests
 test:
 	test -n $(database_name)
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)_test"
@@ -49,10 +63,4 @@ test:
 	mv config.py.bak config.py
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)_test"
 	
-update_hpo:
-	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$(database_name)'"
-	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $(database_path)/hpo_disease.txt
-	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
-	psql -U regovar -d $(database_name) -f ../install/update_hpo.sql
-
-.PHONY: app clear_files destroy list_db init install setup test update_hpo
+.PHONY: app clear_files destroy list_db init install install_hpo setup terminate_queries test update_hpo
