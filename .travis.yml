@@ -36,9 +36,6 @@ before_script:
 script:
   - pip install -r requirements.txt
   - pip install -r requirements-dev.txt
-  - pip install blessings #for Travis
-  - pip install coverage #for Travis
-  - pip install codacy-coverage #for Travis
   - cd regovar
   - make init
   - sed -i 's/^\(\s*DATABASE_NAME\s*=\s*"[^"]\+\)\(".*\)/\1_test\2/' config.py
