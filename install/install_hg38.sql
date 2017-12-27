@@ -89,7 +89,7 @@ CREATE TABLE import_refgene_hg38
 );
 
 
-COPY import_refgene_hg38 FROM '/var/regovar/databases/hg38/refGene.txt' DELIMITER E'\t' CSV;
+\COPY import_refgene_hg38 FROM '/var/regovar/databases/hg38/refGene.txt' DELIMITER E'\t' CSV;
 
 
 
