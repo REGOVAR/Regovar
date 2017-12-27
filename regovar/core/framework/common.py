@@ -48,7 +48,10 @@ def run_async(future, *args):
         Call a "normal" method into another thread 
         (don't block the caller method, but cannot retrieve result)
     """
-    asyncio.get_event_loop().run_in_executor(None, future, *args)
+    try:
+        asyncio.get_event_loop().run_in_executor(None, future, *args)
+    except ex:
+        err("Asynch method failed.", ex) 
 
 
 def exec_cmd(cmd, asynch=False):

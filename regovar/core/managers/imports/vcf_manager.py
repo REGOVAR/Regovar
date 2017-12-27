@@ -544,17 +544,18 @@ def vcf_import_worker(queue, file_id, samples):
         query = queue.get()
         if query is None:
             break
-            
-        session = Model.Session()
-        try:
-            session.execute(query)
-            session.commit()
-            Model.Session.remove()
-        except Exception as ex:
-            session.rollback()
-            r = RegovarException("E100001", exception=ex)
-            log_snippet(query, r)
-            core.notify_all({"action": "import_vcf_error", "data" : {"file_id": file_id, "msg": "Error occured when importing sample." + str(ex), "samples": samples}})
+        
+        Model.execute(query)
+        # session = Model.Session()
+        # try:
+        #     session.execute(query)
+        #     session.commit()
+        #     Model.Session.remove()
+        # except Exception as ex:
+        #     session.rollback()
+        #     r = RegovarException("E100001", exception=ex)
+        #     log_snippet(query, r)
+        #     core.notify_all({"action": "import_vcf_error", "data" : {"file_id": file_id, "msg": "Error occured when importing sample." + str(ex), "samples": samples}})
 
         queue.task_done()
         
@@ -667,16 +668,17 @@ class VcfManager(AbstractImportManager):
                     
                 # update sample's progress indicator
                 # note : as we are updating lot of data in the database with several asynch thread
-                #        so to avoid conflict with session, we force sqlachemy to retrieve sample
-                #        that's why we don't use samples collection
+                #        so to avoid conflict with session, we update data from "manual query"
                 sps = []
-                for sid in samples:
-                    sp = Model.Sample.from_id(samples[sid].id)
-                    sps += [sp]
-                    sp.loading_progress = progress
-                    sp.status = "loading"
-                    sp.save()
-                core.notify_all({'action':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : sp.id, 'name' : sp.name} for sp in sps]}})
+                sql = "UPDATE sample SET loading_progress={} WHERE id IN ({})".format(progress, ",".join([str(samples[sid].id) for sid in samples]))
+                Model.execute(sql)
+                # for sid in samples:
+                #     sp = Model.Sample.from_id(samples[sid].id)
+                #     sps += [sp]
+                #     sp.loading_progress = progress
+                #     sp.status = "loading"
+                #     sp.save()
+                core.notify_all({'action':'import_vcf_processing', 'data' : {'file_id' : file_id, 'status' : 'loading', 'progress': progress, 'samples': [ {'id' : samples[sname].id, 'name' : sname} for sname in samples]}})
                 
                 log("VCF import : enqueue query")
                 self.queue.put(transaction)

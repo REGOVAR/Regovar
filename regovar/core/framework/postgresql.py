@@ -174,14 +174,17 @@ def execute(query):
         Synchrone execution of the query. If error occured, raise RegovarException
     """
     result = None
+    s = Session()
     try:
-        s = Session()
         result = s.execute(query)
         s.commit()
+        Session.remove()        
     except Exception as err:
+        s.rollback()
         r = RegovarException(ERR.E100001, "E100001", err)
         log_snippet(query, r)
         raise r
+    
     return result
 
 

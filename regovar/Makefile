@@ -1,6 +1,6 @@
 
 app:
-	python regovar_server.py
+	python -Wdefault regovar_server.py
 
 clear_files:
 	rm -rf /var/regovar/files/*

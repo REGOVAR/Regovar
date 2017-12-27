@@ -9,6 +9,10 @@ import os
 from config import *
 from core.framework.common import RegovarException, err
 
+
+
+
+
 # Some check before starting the web application
 if not os.path.exists(TEMPLATE_DIR):
     raise RegovarException("ERROR : Templates directory doesn't exists : " + TEMPLATE_DIR)
@@ -19,10 +23,12 @@ if not os.path.exists(TEMP_DIR):
 if not os.path.exists(FILES_DIR):
     raise RegovarException("ERROR : File directory doesn't exists : " + FILES_DIR)
 
-# Load rest of pirus application shall be done after celery init
+
 from aiohttp import web
 from api_rest import *
 
+#if DEBUG:
+#    AbstractEventLoop.set_debug()
 
 
 # Start the pirus server
