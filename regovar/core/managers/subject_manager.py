@@ -28,7 +28,7 @@ class SubjectManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = Model.session()
+        s = Model.Session()
         subjects = s.query(Model.Subject).filter_by(**query).order_by(",".join(order)).limit(limit).offset(offset).all()
         for s in subjects: s.init(depth)
         return subjects

@@ -42,7 +42,7 @@ class FileManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = session()
+        s = Session()
         files = s.query(File).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for f in files: f.init(depth)
         return files
@@ -131,7 +131,7 @@ class FileManager:
         pfile.save()
 
         # Check if the file is an image of a Pipeline. if true, automatically start the install
-        pipeline = session().query(Pipeline).filter_by(image_file_id=pfile.id).first()
+        pipeline = Session().query(Pipeline).filter_by(image_file_id=pfile.id).first()
         if pipeline:
             core.pipelines.install(pipeline.id, pipeline.type)
         # Check if the file is an input of a job, try to start the job

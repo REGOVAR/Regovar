@@ -263,7 +263,7 @@ CREATE TABLE public.analysis
     total_variants integer DEFAULT 0,
     statistics json,
     reference_id integer,
-    computing_progress real DEFAULT 0,
+    computing_progress JSON,
     status analysis_status,
     CONSTRAINT analysis_pkey PRIMARY KEY (id)
 );

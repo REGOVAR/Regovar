@@ -265,7 +265,7 @@ class SearchManager:
         """
             Return projects that match the search query
         """
-        result = session().query(Project).filter(Project.name.ilike("%{0}%".format(search))).all()
+        result = Session().query(Project).filter(Project.name.ilike("%{0}%".format(search))).all()
         for p in result: p.init(0)
         return [p.to_json() for p in result]
     
@@ -275,7 +275,7 @@ class SearchManager:
         """
             Return analyses that match the search query
         """
-        result = session().query(Analysis).filter(Analysis.name.ilike("%{0}%".format(search))).all()
+        result = Session().query(Analysis).filter(Analysis.name.ilike("%{0}%".format(search))).all()
         for res in result: res.init(1)
         fields = Analysis.public_fields + ["project"]
         return [r.to_json(fields) for r in result]
@@ -286,7 +286,7 @@ class SearchManager:
         """
             Return samples that match the search query
         """
-        result = session().query(Sample).filter(Sample.name.ilike("%{0}%".format(search))).all()
+        result = Session().query(Sample).filter(Sample.name.ilike("%{0}%".format(search))).all()
         for r in result: r.init(0)
         return [r.to_json() for r in result]
     
@@ -296,7 +296,7 @@ class SearchManager:
         """
             Return subjects that match the search query
         """
-        result = session().query(Subject).filter(or_(Subject.identifier.ilike("%{0}%".format(search)), Subject.firstname.ilike("%{0}%".format(search)), Subject.lastname.ilike("%{0}%".format(search)))).all()
+        result = Session().query(Subject).filter(or_(Subject.identifier.ilike("%{0}%".format(search)), Subject.firstname.ilike("%{0}%".format(search)), Subject.lastname.ilike("%{0}%".format(search)))).all()
         for r in result: r.init(0)
         return [r.to_json() for r in result]
     
@@ -306,7 +306,7 @@ class SearchManager:
         """
             Return files that match the search query
         """
-        result = session().query(File).filter(File.name.ilike("%{0}%".format(search))).all()
+        result = Session().query(File).filter(File.name.ilike("%{0}%".format(search))).all()
         for r in result: r.init(0)
         return [r.to_json() for r in result]
     
@@ -361,7 +361,7 @@ class SearchManager:
         """
             Return user that match the search query
         """
-        result = session().query(User).filter(or_(User.login.ilike("%{0}%".format(search)), User.firstname.ilike("%{0}%".format(search)), User.lastname.ilike("%{0}%".format(search)))).all()
+        result = Session().query(User).filter(or_(User.login.ilike("%{0}%".format(search)), User.firstname.ilike("%{0}%".format(search)), User.lastname.ilike("%{0}%".format(search)))).all()
         for r in result: r.init(0)
         return [r.to_json() for r in result]
 
@@ -371,7 +371,7 @@ class SearchManager:
         """
             Return pipeline that match the search query
         """
-        result = session().query(Pipeline).filter(Pipeline.name.ilike("%{0}%".format(search))).all()
+        result = Session().query(Pipeline).filter(Pipeline.name.ilike("%{0}%".format(search))).all()
         for p in result: p.init(0)
         return [p.to_json() for p in result]
 
@@ -381,7 +381,7 @@ class SearchManager:
         """
             Return panel that match the search query
         """
-        result = session().query(Panel).filter(or_(Panel.name.ilike("%{0}%".format(search)), Panel.description.ilike("%{0}%".format(search)), Panel.owner.ilike("%{0}%".format(search)))).all()
+        result = Session().query(Panel).filter(or_(Panel.name.ilike("%{0}%".format(search)), Panel.description.ilike("%{0}%".format(search)), Panel.owner.ilike("%{0}%".format(search)))).all()
         for r in result: r.init()
         return [r.to_json() for r in result]
 

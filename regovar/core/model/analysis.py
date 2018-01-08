@@ -27,7 +27,7 @@ def analysis_init(self, loading_depth=0):
             - update_date       : datetime      : The last time that the analysis have been updated
             - total_variants    : int           : The total number of variant in this analysis
             - reference_id      : int           : Refer to the id of the reference used for this analysis
-            - computing_progress: float         : Used when the working table is computed to store the current progress
+            - computing_progress: json          : Used when the working table is computed to store the current progress, error, messages, ...
             - status            : enum          : The status of the analysis : 'empty', 'computing', 'ready', 'error'
             - filters_ids       : [int]         : The list of ids of filters saved for this analysis
             - samples_ids       : [int]         : The list of ids of samples used for analysis
@@ -77,7 +77,7 @@ def analysis_from_id(analysis_id, loading_depth=0):
     """
         Retrieve analysis with the provided id in the database
     """
-    analysis = session().query(Analysis).filter_by(id=analysis_id).first()
+    analysis = Session().query(Analysis).filter_by(id=analysis_id).first()
     if analysis:
         analysis.init(loading_depth)
     return analysis
@@ -153,9 +153,9 @@ def analysis_load(self, data):
             
         if "settings" in data.keys(): 
             # When settings change, need to regenerate working table
-            self.settings = data['settings']
+            self.settings = data["settings"]
             self.status = "empty"
-            self.computing_progress = 0
+            self.computing_progress = None
             execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
             execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(self.id))
 
@@ -170,7 +170,7 @@ def analysis_load(self, data):
                     AnalysisSample.new(self.id, sid)
             # When settings change, need to regenerate working table
             self.status = "empty"
-            self.computing_progress = 0
+            self.computing_progress = None
             execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
             execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(self.id))
 
@@ -214,7 +214,7 @@ def analysis_delete(analysis_id):
         Delete the Analysis with the provided id in the database
     """
     # TODO : delete linked filters, AnalysisSample, Attribute, WorkingTable
-    session().query(Analysis).filter_by(id=analysis_id).delete(synchronize_session=False)
+    Session().query(Analysis).filter_by(id=analysis_id).delete(synchronize_session=False)
 
 
 def analysis_new():
@@ -246,7 +246,7 @@ def analysis_get_filters_ids(self):
         Return the list of filters saved for the analysis
     """
     result = []
-    filters = session().query(Filter).filter_by(analysis_id=self.id).order_by(Filter.id).all()
+    filters = Session().query(Filter).filter_by(analysis_id=self.id).order_by(Filter.id).all()
     for f in filters:
         result.append(f.id)
     return result
@@ -257,7 +257,7 @@ def analysis_get_filters(self, loading_depth=0):
     """
         Return the list of filters saved in the analysis
     """
-    filters = session().query(Filter).filter_by(analysis_id=self.id).all()
+    filters = Session().query(Filter).filter_by(analysis_id=self.id).all()
     for f in filters: f.init(loading_depth)
     return filters
 
@@ -380,14 +380,14 @@ def analysissample_get_samples_ids(analysis_id):
     """
         Return the list of samples ids of an analysis
     """
-    return [s.sample_id for s in session().query(AnalysisSample).filter_by(analysis_id=analysis_id).all()]
+    return [s.sample_id for s in Session().query(AnalysisSample).filter_by(analysis_id=analysis_id).all()]
 
 
 def analysissample_get_analyses_ids(sample_id):
     """
         Return the list of analyses ids where the sample is used
     """
-    return [a.analysis_id for a in session().query(AnalysisSample).filter_by(sample_id=sample_id).all()]
+    return [a.analysis_id for a in Session().query(AnalysisSample).filter_by(sample_id=sample_id).all()]
 
 
 def analysissample_get_samples(analysis_id, loading_depth=0):
@@ -398,7 +398,7 @@ def analysissample_get_samples(analysis_id, loading_depth=0):
     samples_ids = analysissample_get_samples_ids(analysis_id)
     result = []
     if len(samples_ids) > 0:
-        samples = session().query(Sample).filter(Sample.id.in_(samples_ids)).all()
+        samples = Session().query(Sample).filter(Sample.id.in_(samples_ids)).all()
         for s in samples:
             s.init(loading_depth)
             result.append(s)
@@ -412,7 +412,7 @@ def analysissample_get_analyses(sample_id, loading_depth=0):
     result = []
     analyses_ids = analysissample_get_analyses_ids(sample_id)
     if len(analyses_ids) > 0:
-        analyses = session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
+        analyses = Session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
         for a in analyses:
             a.init(loading_depth)
             result.append(a)
@@ -433,7 +433,7 @@ def analysissample_delete(analysis_id, sample_id):
         Delete the link between an analysis and a sample
     """
     # TODO : delete linked filters, AnalysisSample, Attribute, WorkingTable
-    session().query(AnalysisSample).filter_by(analysis_id=analysis_id, sample_id=sample_id).delete()
+    Session().query(AnalysisSample).filter_by(analysis_id=analysis_id, sample_id=sample_id).delete()
 
 
 AnalysisSample = Base.classes.analysis_sample
@@ -458,14 +458,14 @@ def analysisfile_get_files_ids(analysis_id):
     """
         Return the list of file ids of an analysis
     """
-    return [f.file_id for f in session().query(AnalysisFile).filter_by(analysis_id=analysis_id).all()]
+    return [f.file_id for f in Session().query(AnalysisFile).filter_by(analysis_id=analysis_id).all()]
 
 
 def analysisfile_get_analyses_ids(file_id):
     """
         Return the list of analyses ids where the file is linked
     """
-    return [a.analysis_id for a in session().query(AnalysisFile).filter_by(file_id=file_id).all()]
+    return [a.analysis_id for a in Session().query(AnalysisFile).filter_by(file_id=file_id).all()]
 
 
 def analysisfile_get_files(analysis_id, loading_depth=0):
@@ -476,7 +476,7 @@ def analysisfile_get_files(analysis_id, loading_depth=0):
     files_ids = analysisfile_get_files_ids(analysis_id)
     result = []
     if len(files_ids) > 0:
-        files = session().query(File).filter(File.id.in_(files_ids)).all()
+        files = Session().query(File).filter(File.id.in_(files_ids)).all()
         for f in files:
             f.init(loading_depth)
             result.append(f)
@@ -490,7 +490,7 @@ def analysisfile_get_analyses(file_id, loading_depth=0):
     result = []
     analyses_ids = analysisfile_get_analyses_ids(sample_id)
     if len(analyses_ids) > 0:
-        analyses = session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
+        analyses = Session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
         for a in analyses:
             a.init(loading_depth)
             result.append(a)
@@ -511,7 +511,7 @@ def analysisfile_delete(analysis_id, file_id):
         Delete the link between an analysis and a file
     """
     # TODO : delete linked filters, AnalysisFile, Attribute, WorkingTable
-    session().query(AnalysisFile).filter_by(analysis_id=analysis_id, file_id=file_id).delete()
+    Session().query(AnalysisFile).filter_by(analysis_id=analysis_id, file_id=file_id).delete()
 
 
 AnalysisFile = Base.classes.analysis_file

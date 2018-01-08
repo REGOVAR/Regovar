@@ -44,7 +44,7 @@ class AnalysisManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = session()
+        s = Session()
         analyses = s.query(Analysis).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for a in analyses: a.init(depth)
         return analyses
@@ -55,7 +55,7 @@ class AnalysisManager:
         """
             Return the list of filters for the provided analysis
         """
-        s = session()
+        s = Session()
         filters = s.query(Filter).filter_by(analysis_id=analysis_id).order_by("name").all()
         for f in filters: f.init(depth)
         return filters

@@ -44,8 +44,7 @@ class JobManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = session()
-        jobs = s.query(Job).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
+        jobs = Session().query(Job).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for j in jobs: j.init(depth)
         return jobs
 
@@ -284,8 +283,7 @@ class JobManager:
         # Need to do something according to the new status ?
         # Nothing to do for status : "waiting", "initializing", "running", "finalizing"
         if job.status in ["pause", "error", "done", "canceled"]:
-            s = session()
-            next_jobs = s.query(Job).filter_by(status="waiting").order_by("priority").all()
+            next_jobs = Session().query(Job).filter_by(status="waiting").order_by("priority").all()
             if len(next_jobs) > 0:
                 if asynch: 
                     run_async(self.start, (next_jobs[0].id, asynch,))

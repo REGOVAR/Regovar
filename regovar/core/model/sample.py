@@ -67,7 +67,7 @@ def sample_from_id(sample_id, loading_depth=0):
     """
         Retrieve sample with the provided id in the database
     """
-    sample = session().query(Sample).filter_by(id=sample_id).first()
+    sample = Session().query(Sample).filter_by(id=sample_id).first()
     if sample : sample.init(loading_depth)
     return sample
 
@@ -142,7 +142,7 @@ def sample_delete(sample_id):
         Delete the sample with the provided id in the database
     """
     # TODO : delete linked filters, Attribute, WorkingTable
-    session().query(Sample).filter_by(id=sample_id).delete(synchronize_session=False)
+    Session().query(Sample).filter_by(id=sample_id).delete(synchronize_session=False)
 
 
 def sample_new():

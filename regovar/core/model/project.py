@@ -57,7 +57,7 @@ def project_from_id(project_id, loading_depth=0):
     """
         Retrieve project with the provided id in the database
     """
-    project = session().query(Project).filter_by(id=project_id).first()
+    project = Session().query(Project).filter_by(id=project_id).first()
     if project:
         project.init(loading_depth)
     return project
@@ -69,7 +69,7 @@ def project_from_ids(project_ids, loading_depth=0):
     """
     projects = []
     if project_ids and len(project_ids) > 0:
-        projects = session().query(Project).filter(Project.id.in_(project_ids)).all()
+        projects = Session().query(Project).filter(Project.id.in_(project_ids)).all()
         for f in projects:
             f.init(loading_depth)
     return projects
@@ -121,7 +121,7 @@ def project_load(self, data):
         # Update user sharing
         if "users" in data.keys():
             # Delete all associations
-            session().query(UserProjectSharing).filter_by(project_id=self.id).delete(synchronize_session=False)
+            Session().query(UserProjectSharing).filter_by(project_id=self.id).delete(synchronize_session=False)
             # Create new associations
             self.users = data["users"]
             for u in data["users"]:
@@ -148,9 +148,9 @@ def project_delete(project_id):
     """
         Delete the project with the provided id in the database
     """
-    session().query(UserProjectSharing).filter_by(project_id=project_id).delete(synchronize_session=False)
-    session().query(ProjectSubject).filter_by(project_id=project_id).delete(synchronize_session=False)
-    session().query(Project).filter_by(id=project_id).delete(synchronize_session=False)
+    Session().query(UserProjectSharing).filter_by(project_id=project_id).delete(synchronize_session=False)
+    Session().query(ProjectSubject).filter_by(project_id=project_id).delete(synchronize_session=False)
+    Session().query(Project).filter_by(id=project_id).delete(synchronize_session=False)
     # TODO : delete analyses and job linked to the project ? that means also deleting outputs files of these jobs
 
 
@@ -171,7 +171,7 @@ def project_count(count_folder=False, count_sandbox=False):
     kargs = {}
     if not count_folder: kargs["is_folder"] = False
     if not count_sandbox: kargs["is_sandbox"] = False
-    return session().query(Project).filter_by(**kargs).count()
+    return Session().query(Project).filter_by(**kargs).count()
 
 
 
@@ -180,7 +180,7 @@ def projects_get_jobs(self, loading_depth=0):
         Return the list of jobs linked to the project
     """
     from core.model.job import Job
-    jobs = session().query(Job).filter_by(project_id=self.id).all()
+    jobs = Session().query(Job).filter_by(project_id=self.id).all()
     for j in jobs: j.init(loading_depth)
     return jobs
 
@@ -192,7 +192,7 @@ def projects_get_analyses(self, loading_depth=0):
         Return the list of analyses linked to the project
     """
     from core.model.analysis import Analysis
-    analyses = session().query(Analysis).filter_by(project_id=self.id).all()
+    analyses = Session().query(Analysis).filter_by(project_id=self.id).all()
     for a in analyses : a.init(loading_depth)
     return analyses
 

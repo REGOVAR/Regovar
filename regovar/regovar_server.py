@@ -24,12 +24,12 @@ if not os.path.exists(FILES_DIR):
     raise RegovarException("ERROR : File directory doesn't exists : " + FILES_DIR)
 
 
+from asyncio import AbstractEventLoop
 from aiohttp import web
 from api_rest import *
 
-#if DEBUG:
-#    AbstractEventLoop.set_debug()
-
+if DEBUG:
+    logging.basicConfig(level=logging.DEBUG)
 
 # Start the pirus server
 if __name__ == '__main__':

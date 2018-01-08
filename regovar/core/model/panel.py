@@ -75,7 +75,7 @@ def panel_from_id(panel_id, loading_depth=0):
     """
         Retrieve panel with the provided id in the database
     """
-    panel = session().query(Panel).filter_by(id=panel_id).first()
+    panel = Session().query(Panel).filter_by(id=panel_id).first()
     if panel:
         panel.init(loading_depth)
     return panel
@@ -87,7 +87,7 @@ def panel_from_ids(panel_ids, loading_depth=0):
     """
     panels = []
     if panel_ids and len(panel_ids) > 0:
-        panels = session().query(Panel).filter(Panel.id.in_(panel_ids)).all()
+        panels = Session().query(Panel).filter(Panel.id.in_(panel_ids)).all()
         for f in panels:
             f.init(loading_depth)
     return panels
@@ -173,7 +173,7 @@ def panel_delete(panel_id):
         Delete the panel with the provided id in the database
     """
     execute("DELETE * FROM panel_entry WHERE panel_id={0}".format(self.id))
-    session().query(Panel).filter_by(id=panel_id).delete(synchronize_session=False)
+    Session().query(Panel).filter_by(id=panel_id).delete(synchronize_session=False)
 
 
 def panel_new():

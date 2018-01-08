@@ -42,11 +42,11 @@ def filter_from_id(filter_id, loading_depth=0):
     """
         Retrieve Filter with the provided id in the database
     """
-    filter = session().query(Filter).filter_by(id=filter_id).first()
+    filter = Session().query(Filter).filter_by(id=filter_id).first()
     if filter : filter.init(loading_depth)
     return filter
 
-    return __db_session.query(Filter).filter_by(id=filter_id).first()
+    return Session().query(Filter).filter_by(id=filter_id).first()
 
 
 
@@ -91,8 +91,8 @@ def filter_delete(filter_id):
     """
         Delete the filter with the provided id in the database
     """
-    session().query(Filter).filter_by(id=filter_id).delete()
-    session().commit()
+    Session().query(Filter).filter_by(id=filter_id).delete()
+    Session().commit()
     
 
 

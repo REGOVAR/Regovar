@@ -71,7 +71,7 @@ class SampleHandler:
         # TODO : pagination
         # TODO : search parameters
         result = []
-        samples = [s for s in session().query(Sample).filter_by(reference_id=ref_id).order_by(Sample.subject_id).all()]
+        samples = [s for s in Session().query(Sample).filter_by(reference_id=ref_id).order_by(Sample.subject_id).all()]
         current_subject = {"id":-1}
         for s in samples:
             if s.subject_id != current_subject["id"]:

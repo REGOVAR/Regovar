@@ -78,7 +78,7 @@ def subject_from_id(subject_id, loading_depth=0):
     """
         Retrieve subject with the provided id in the database
     """
-    subject = session().query(Subject).filter_by(id=subject_id).first()
+    subject = Session().query(Subject).filter_by(id=subject_id).first()
     if subject:
         subject.init(loading_depth)
     return subject
@@ -90,7 +90,7 @@ def subject_from_ids(subject_ids, loading_depth=0):
     """
     subjects = []
     if subject_ids and len(subject_ids) > 0:
-        subjects = session().query(Subject).filter(Subject.id.in_(subject_ids)).all()
+        subjects = Session().query(Subject).filter(Subject.id.in_(subject_ids)).all()
         for f in subjects:
             f.init(loading_depth)
     return subjects
@@ -138,7 +138,7 @@ def subject_load(self, data):
         # update files linkeds
         if "files_ids" in data.keys():
             # Delete all associations
-            session().query(SubjectFile).filter_by(subject_id=self.id).delete(synchronize_session=False)
+            Session().query(SubjectFile).filter_by(subject_id=self.id).delete(synchronize_session=False)
             # Create new associations
             self.files_ids = data["files_ids"]
             for fid in data["files_ids"]:
@@ -162,7 +162,7 @@ def subject_delete(subject_id):
     """
         Delete the subject with the provided id in the database
     """
-    session().query(Subject).filter_by(id=subject_id).delete(synchronize_session=False)
+    Session().query(Subject).filter_by(id=subject_id).delete(synchronize_session=False)
     # TODO: delete indicator
 
 
@@ -192,7 +192,7 @@ def subject_get_samples_ids(self):
         Return the list of samples id that concerned the subject
     """
     result = []
-    samples = session().query(Sample).filter_by(subject_id=self.id).order_by(Sample.id).all()
+    samples = Session().query(Sample).filter_by(subject_id=self.id).order_by(Sample.id).all()
     for s in samples:
         result.append(s.id)
     return result
@@ -204,14 +204,14 @@ def subject_get_analyses(self, loading_depth=0):
     from core.model.sample import Sample
     from core.model.analysis import Analysis, AnalysisSample
     
-    samples = session().query(Sample).filter_by(subject_id=self.id).all()
+    samples = Session().query(Sample).filter_by(subject_id=self.id).all()
     samples_ids = [s.id for s in samples]
     analyses = []
     if len(samples_ids) > 0:
-        analyses_ids = session().query(AnalysisSample).filter(AnalysisSample.sample_id.in_(samples_ids)).all()
+        analyses_ids = Session().query(AnalysisSample).filter(AnalysisSample.sample_id.in_(samples_ids)).all()
         analyses_ids = [i.analysis_id for i in analyses_ids]
         if len(analyses_ids) > 0:
-            analyses = session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
+            analyses = Session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
     
     for a in analyses: a.init(loading_depth)
     return analyses
@@ -223,7 +223,7 @@ def subject_get_samples(self, loading_depth=0):
         Return the list of samples linked to the subject
     """
     from core.model.sample import Sample
-    samples = session().query(Sample).filter_by(subject_id=self.id).all()
+    samples = Session().query(Sample).filter_by(subject_id=self.id).all()
     for s in samples: s.init(loading_depth)
     return samples
 
@@ -236,7 +236,7 @@ def subject_get_jobs(self, loading_depth=0):
     from core.model.file import File
     from core.model.job import Job, JobFile
     
-    files = session().query(SubjectFile).filter_by(subject_id=self.id).all()
+    files = Session().query(SubjectFile).filter_by(subject_id=self.id).all()
     files_ids = [f.file_id for f in files]
     jobs = []
     for fid in files_ids:
@@ -250,7 +250,7 @@ def subject_get_files(self, loading_depth=0):
         Return the list of files linked to the subject
     """
     from core.model.file import File
-    ids = session().query(SubjectFile).filter_by(subject_id=self.id).all()
+    ids = Session().query(SubjectFile).filter_by(subject_id=self.id).all()
     return File.from_ids([i.file_id for i in ids], loading_depth)
 
 
@@ -306,7 +306,7 @@ def sf_set(subject_id, file_id):
         Create or update the link between subject and the file
     """
     # Get or create the association
-    sf = session().query(SubjectFile).filter_by(subject_id=subject_id, file_id=file_id).first()
+    sf = Session().query(SubjectFile).filter_by(subject_id=subject_id, file_id=file_id).first()
     if not sf: 
         sf = SubjectFile(subject_id=subject_id, file_id=file_id)
         sf.save()
@@ -318,7 +318,7 @@ def sf_unset(subject_id, file_id):
     """
         Delete a the link between the subject and the file
     """
-    session().query(SubjectFile).filter_by(subject_id=subject_id, file_id=file_id).delete(synchronize_session=False)
+    Session().query(SubjectFile).filter_by(subject_id=subject_id, file_id=file_id).delete(synchronize_session=False)
 
 
 

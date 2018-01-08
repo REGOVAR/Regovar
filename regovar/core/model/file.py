@@ -42,7 +42,7 @@ def file_from_id(file_id, loading_depth=0):
     """
         Retrieve file with the provided id in the database
     """
-    file = session().query(File).filter_by(id=file_id).first()
+    file = Session().query(File).filter_by(id=file_id).first()
     if file:
         file.init(loading_depth)
     return file
@@ -54,7 +54,7 @@ def file_from_ids(file_ids, loading_depth=0):
     """
     files = []
     if file_ids and len(file_ids) > 0:
-        files = session().query(File).filter(File.id.in_(file_ids)).all()
+        files = Session().query(File).filter(File.id.in_(file_ids)).all()
         for f in files:
             f.init(loading_depth)
     return files
@@ -119,7 +119,7 @@ def file_delete(file_id):
     """
         Delete the file with the provided id in the database
     """
-    session().query(File).filter_by(id=file_id).delete(synchronize_session=False)
+    Session().query(File).filter_by(id=file_id).delete(synchronize_session=False)
     # TODO: check and clean all associations
     # - analysis via analysis_file table
     # - sample via file_id property

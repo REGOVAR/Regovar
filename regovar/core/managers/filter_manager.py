@@ -65,48 +65,88 @@ class FilterEngine:
 
 
 
-    async def create_working_table(self, analysis):
-        # retrieve analysis data
-        if analysis is None:
-            raise RegovarException("Analysis cannot be null")
-        analysis.db_suffix = "_" + execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix 
-
-        # create wt table
-        self.create_wt_schema(analysis)
-
-        # insert variant
-        self.insert_wt_variants(analysis)
-
-        # set sample's fields (GT, DP, ...)
-        self.update_wt_samples_fields(analysis)
-
-        # compute stats and predefined filter (attributes, panels, trio, ...)
-        await self.update_wt_stats_prefilters(analysis)
-
-        # variant's indexes
-        self.create_wt_variants_indexes(analysis)
-
-        # insert trx annotations
-        self.insert_wt_trx(analysis)
-
-        # trx's indexes
-        self.create_wt_trx_indexes(analysis)
-        
-        # Recreate stored filter
-        self.create_wt_stored_filters(analysis)
-        
-        # TODO: Restore is_selected state for var/trx a
-        
-        # Compute sample's stats (done one time)
-        self.update_wt_samples_stats(analysis)
-
-        # Update count stat of the analysis
-        query = "UPDATE analysis SET status='ready', computing_progress=1 WHERE id={}".format(analysis.id)
-        log(" > wt is ready")
-        execute(query)
+    def create_working_table(self, analysis_id):
+        """
+            This method is called in another thread and will create the working table
+            for the provided analysis_id
+        """
+        # As we are in another thread, we have to work in another sql session to avoid conflics
+        analysis = Analysis.from_id(analysis_id)
 
 
-    def create_wt_schema(self, analysis):
+        try:
+
+            # retrieve analysis data
+            if analysis is None:
+                raise RegovarException("Analysis cannot be null")
+            analysis.db_suffix = "_" + execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix 
+            progress = {"analysis_id": analysis.id, "status": analysis.status, "error_message": "", "log": [
+                {"label": "Creating Working Table", "status": "waiting"},
+                {"label": "Getting variants", "status": "waiting"},
+                {"label": "Getting samples fields", "status": "waiting"},
+                {"label": "Computing predefined filters", "status": "waiting"},
+                {"label": "Computing indexes", "status": "waiting"},
+                {"label": "Gettings annotations", "status": "waiting"},
+                {"label": "Restoring saved filters", "status": "waiting"},
+                {"label": "Restoring selections", "status": "waiting"},
+                {"label": "Restoring variants selection", "status": "skip"},
+                {"label": "Computing analysis statistics", "status": "waiting"},
+            ]}
+
+            # create wt table
+            self.create_wt_schema(analysis, progress)
+
+
+            # insert variant
+            self.insert_wt_variants(analysis, progress)
+
+            # set sample's fields (GT, DP, ...)
+            self.update_wt_samples_fields(analysis, progress)
+
+            # compute stats and predefined filter (attributes, panels, trio, ...)
+            self.update_wt_stats_prefilters(analysis, progress)
+
+            # variant's indexes
+            self.create_wt_variants_indexes(analysis, progress)
+
+            # insert trx annotations
+            self.insert_wt_trx(analysis, progress)
+
+            # trx's indexes # TODO: DO WE NEED IT ?
+            # self.create_wt_trx_indexes(analysis)
+            
+            # Recreate stored filter
+            self.create_wt_stored_filters(analysis, progress)
+            
+            # Restore is_selected state for var/trx a
+            self.update_wt_set_restore_selection(analysis, progress)
+            
+            # Compute sample's stats (done one time)
+            self.update_wt_samples_stats(analysis, progress)
+
+            # Update count stat of the analysis
+            query = "UPDATE analysis SET status='ready' WHERE id={}".format(analysis_id)
+            log(" > wt is ready")
+            execute(query)
+
+        except Exception as ex:
+            err("Error occurend during ASYNCH creation of the working table of the anlysis {}".format(analysis_id), exception=ex)
+            execute("UPDATE analysis SET status='error'")
+            raise ex
+
+
+    def working_table_creation_update_status(self, analysis, progress, step, status, error=None):
+        from core.core import core
+        progress["log"][step]["status"] = status
+        if error:
+            progress["error_message"] += error
+        analysis.computing_progress = progress; analysis.save()
+        core.notify_all({'action':'filtering_creation', 'data': progress})
+
+
+    def create_wt_schema(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 0, "computing")
+
         wt = "wt_{}".format(analysis.id)
         query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE TABLE {0} (\
             is_variant boolean DEFAULT False, \
@@ -157,9 +197,11 @@ class FilterEngine:
         query = query[:-2] + ");"
         log(" > create wt schema")
         execute(query.format(wt))
+        self.working_table_creation_update_status(analysis, progress, 0, "done")
 
 
-    def insert_wt_variants(self, analysis):
+    def insert_wt_variants(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 1, "computing")
         wt = "wt_{}".format(analysis.id)
 
         # create temp table with id of variants
@@ -196,9 +238,11 @@ class FilterEngine:
         query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(wt)
         query += "CREATE INDEX {0}_idx_vcfline ON {0} USING btree (vcf_line);".format(wt)
         execute(query)
+        self.working_table_creation_update_status(analysis, progress, 1, "done")
         
 
-    def update_wt_samples_fields(self, analysis):
+    def update_wt_samples_fields(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 2, "computing")
         log(" > import samples informations")
         wt = "wt_{}".format(analysis.id)
         for sid in analysis.samples_ids:
@@ -206,11 +250,12 @@ class FilterEngine:
             execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_dp_alt=_sub.depth_alt, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, depth_alt, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
             # Retrive informations vcf'line dependent (= chr-pos without trimming)
             execute("UPDATE {0} SET s{2}_qual=_sub.quality, s{2}_filter=_sub.filter FROM (SELECT vcf_line, chr, pos, quality, filter FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.vcf_line=_sub.vcf_line".format(wt, analysis.db_suffix, sid))
+        self.working_table_creation_update_status(analysis, progress, 2, "done")
 
 
-    async def update_wt_stats_prefilters(self, analysis):
+    def update_wt_stats_prefilters(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 3, "computing")
         wt = "wt_{}".format(analysis.id)
-
         # Variant occurence stats
         query = "UPDATE {0} SET \
             sample_tcount=array_length(sample_tlist,1), \
@@ -238,13 +283,16 @@ class FilterEngine:
 
         # Predefinied quickfilters
         if analysis.settings["trio"]:
-            self.update_wt_compute_prefilter_trio(analysis, analysis.samples_ids, analysis.settings["trio"])
+            self.update_wt_compute_prefilter_trio(analysis, analysis.samples_ids, analysis.settings["trio"], progress)
         else:
             for sid in analysis.samples_ids:
-                await self.update_wt_compute_prefilter_single(analysis, sid)
+                # TODO: retrieve sex of sample if subject associated, otherwise, do it with default "Female"
+                self.update_wt_compute_prefilter_single(analysis, sid, "F", progress)
+        self.working_table_creation_update_status(analysis, progress, 3, "done")
         
         
-    def create_wt_variants_indexes(self, analysis):
+    def create_wt_variants_indexes(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 4, "computing")
         wt = "wt_{}".format(analysis.id)
 
         # Common indexes for variants
@@ -273,9 +321,11 @@ class FilterEngine:
         
         log(" > create index for variants random access")
         execute(query)
+        self.working_table_creation_update_status(analysis, progress, 4, "done")
         
 
-    def insert_wt_trx(self, analysis):
+    def insert_wt_trx(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 5, "computing")
         wt = "wt_{}".format(analysis.id)
 
         # Insert trx and their annotations
@@ -339,14 +389,16 @@ class FilterEngine:
                 res = execute(query)
                 log(" > {} trx inserted for {} annotations".format(res.rowcount, self.db_map[dbuid]["name"]))
 
+        self.working_table_creation_update_status(analysis, progress, 5, "done")
 
-    def create_wt_trx_indexes(self, analysis):
+
+    def create_wt_trx_indexes(self, analysis, progress):
         # query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(w_table)
         # query += "CREATE INDEX {0}_idx_var ON {0} USING btree (bin, chr, pos, trx_pk_uid, trx_pk_value);".format(w_table)
         pass
 
 
-    async def update_wt_compute_prefilter_single(self, analysis, sample_id, sex="F"):
+    def update_wt_compute_prefilter_single(self, analysis, sample_id, sex, progress):
         wt = "wt_{}".format(analysis.id)
 
         # Dominant
@@ -354,17 +406,17 @@ class FilterEngine:
             query = "UPDATE {0} SET is_dom=True WHERE s{1}_gt>1"
         else: # sex == "M"
             query = "UPDATE {0} SET is_dom=True WHERE chr=23 OR s{1}_gt>1"
-        res = await execute_aio(query.format(wt, sample_id))
+        res = execute(query.format(wt, sample_id))
         log(" > is_dom : {} variants".format(res.rowcount))
 
         # Recessif Homozygous
         query = "UPDATE {0} SET is_rec_hom=True WHERE s{1}_gt=1"
-        res = await execute_aio(query.format(wt, sample_id))
+        res = execute(query.format(wt, sample_id))
         log(" > is_rec_hom : {} variants".format(res.rowcount))
 
         # Recessif Heterozygous compoud
         query = "UPDATE {0} SET is_rec_htzcomp=True WHERE s{1}_is_composite"
-        res = await execute_aio(query.format(wt, sample_id))
+        res = execute(query.format(wt, sample_id))
         log(" > is_rec_htzcomp : {} variants".format(res.rowcount))
 
         # Inherited and denovo are not available for single
@@ -372,21 +424,21 @@ class FilterEngine:
 
         # Autosomal
         query = "UPDATE {0} SET is_aut=True WHERE chr<23"
-        res = await execute_aio(query.format(wt))
+        res = execute(query.format(wt))
         log(" > is_aut : {} variants".format(res.rowcount))
 
         # X-Linked
         query = "UPDATE {0} SET is_xlk=True WHERE chr=23"
-        res = await execute_aio(query.format(wt))
+        res = execute(query.format(wt))
         log(" > is_xlk : {} variants".format(res.rowcount))
 
         # Mitochondrial
         query = "UPDATE {0} SET is_mit=True WHERE chr=25"
-        res = await execute_aio(query.format(wt))
+        res = execute(query.format(wt))
         log(" > is_mit : {} variants".format(res.rowcount))
 
 
-    def update_wt_compute_prefilter_trio(self, analysis, samples_ids, trio):
+    def update_wt_compute_prefilter_trio(self, analysis, samples_ids, trio, progress):
         wt  = "wt_{}".format(analysis.id)
         sex = trio["child_sex"]
         child_id = trio["child_id"]
@@ -436,14 +488,23 @@ class FilterEngine:
         log(" > is_mit : {} variants".format(res.rowcount))
 
 
-    def create_wt_stored_filters(self, analysis):
+    def create_wt_stored_filters(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 6, "computing")
         
         for flt in analysis.filters:
             log(" > compute filter {}: {}".format(flt.id, flt.name))
             self.update_wt(analysis, "filter_{}".format(flt.id), flt.filter)
+        self.working_table_creation_update_status(analysis, progress, 6, "done")
     
 
-    def update_wt_samples_stats(self, analysis):
+    def update_wt_set_restore_selection(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 7, "computing")
+        # TODO: create sql request from json selection data.
+        self.working_table_creation_update_status(analysis, progress, 7, "done")
+
+
+    def update_wt_samples_stats(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 8, "computing")
         wt  = "wt_{}".format(analysis.id)
         
         with_vep = None
@@ -525,8 +586,8 @@ class FilterEngine:
             # Save stats
             sample.stats = stats
             sample.save()
+        self.working_table_creation_update_status(analysis, progress, 8, "done")
 
-            
 
 
 
@@ -576,8 +637,6 @@ class FilterEngine:
         
         progress.update({"progress": 1})
         core.notify_all({'action':'filtering_prepare', 'data': progress})
-
-
 
 
     def update_wt(self, analysis, column, filter_json):
@@ -650,9 +709,8 @@ class FilterEngine:
             
         log("--- Select:\nFrom: {0}\nTo: {1}\nFields: {2}\nQuery: {3}\nTime: {4}".format(offset, limit, fields, query, t))
         return sql_result
-        
-        
-        
+    
+
     async def get_trx(self, analysis, fields, variant_id):
         """
             Return results from current temporary table according to provided fields and variant
@@ -679,23 +737,28 @@ class FilterEngine:
             Commont request to manage all different cases
         """
         if fields is None or not isinstance(fields, list) or len(fields) == 0:
-            raise RegovarException("You must specify which information must be returned by the query.")
+            raise RegovarException("You must specify which fields shall be returned by the filtering query.")
         
         # Get analysis data and check status if ok to do filtering
         analysis = Analysis.from_id(analysis_id)
         if analysis is None:
             raise RegovarException("Not able to retrieve analysis with provided id: {}".format(analysis_id))
-        if not analysis.status or analysis.status == 'empty':
+        
+        # If need to create working table
+        if not analysis.status or analysis.status == "empty":
             # check if all samples are ready to be use for the creation of the working table
             for sid in analysis.samples_ids:
                 sample = Sample.from_id(sid)
-                if sample.status != 'ready':
+                if sample.status != "ready":
                     raise RegovarException("Samples of the analysis {} are not ready to be used".format(analysis.id))
-            await self.create_working_table(analysis)
-        elif analysis.status == 'computing':
-            raise RegovarException("Analysis {} is not ready to be used: computing progress {} %".format(analysis.id, round(analysis.computing_progress*100, 2)))
-        elif analysis.status == 'error':
-            raise RegovarException("Analysis {} in error: sysadmin must check log on server".format(analysis.id))
+            # Execute the creation of the working table async
+            analysis.status = "computing"
+            analysis.computing_progress = None
+            analysis.save()
+            run_async(self.create_working_table, analysis.id)
+            return {"status": analysis.status, "progress": analysis.computing_progress}
+        elif analysis.status != "ready":
+            return {"status": analysis.status, "progress": analysis.computing_progress}
         
         # Prepare wt for specific filter query
         # if filter_json is None, we assume that we are requesting the current tmp working table formerly prepared
@@ -726,17 +789,17 @@ class FilterEngine:
                         entry = {"id" : "{}_{}".format(row.variant_id, row.trx_id), "is_selected": row.is_selected}
                     for f_uid in fields:
                         # Manage special case for fields splitted by sample
-                        if self.fields_map[f_uid]['name'].startswith('s{}_'):
-                            pattern = "row." + self.fields_map[f_uid]['name']
+                        if self.fields_map[f_uid]["name"].startswith("s{}_"):
+                            pattern = "row." + self.fields_map[f_uid]["name"]
                             r = {}
                             for sid in analysis.samples_ids:
                                 r[sid] = FilterEngine.parse_result(eval(pattern.format(sid)))
                             entry[f_uid] = r
                         else:
                             if f_uid == "7166ec6d1ce65529ca2800897c47a0a2": # field = pos
-                                entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]['name'])) + 1)
-                            elif self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Regovar']:
-                                entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]['name'])))
+                                entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]["name"])) + 1)
+                            elif self.fields_map[f_uid]["db_name_ui"] in ["Variant", "Regovar"]:
+                                entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]["name"])))
                             else:
                                 entry[f_uid] = FilterEngine.parse_result(eval("row._{}".format(f_uid)))
                     result.append(entry)
@@ -744,7 +807,7 @@ class FilterEngine:
         
         
         
-        return {"wt_total_variants" : analysis.total_variants, "wt_total_results" : 0, "from":0, "to": 0, "results" : result}
+        return {"status": "ready", "wt_total_variants" : analysis.total_variants, "wt_total_results" : 0, "from":0, "to": 0, "results" : result}
 
 
 
@@ -755,14 +818,14 @@ class FilterEngine:
         """
         fields_names = []
         for f_uid in fields:
-            if self.fields_map[f_uid]['db_name_ui'] in ['Variant', 'Regovar']:
+            if self.fields_map[f_uid]["db_name_ui"] in ["Variant", "Regovar"]:
                 # Manage special case for fields splitted by sample
-                if self.fields_map[f_uid]['name'].startswith('s{}_'):
-                    fields_names.extend([prefix + self.fields_map[f_uid]['name'].format(s) for s in analysis.samples_ids])
+                if self.fields_map[f_uid]["name"].startswith("s{}_"):
+                    fields_names.extend([prefix + self.fields_map[f_uid]["name"].format(s) for s in analysis.samples_ids])
                 else:
-                    fields_names.append(prefix+'{}'.format(self.fields_map[f_uid]["name"]))
+                    fields_names.append(prefix+"{}".format(self.fields_map[f_uid]["name"]))
             else:
-                fields_names.append(prefix+'_{}'.format(f_uid))
+                fields_names.append(prefix+"_{}".format(f_uid))
         return ', '.join(fields_names)
 
        
@@ -775,10 +838,10 @@ class FilterEngine:
         # Manage case of uid comming from order json (which can prefix uid by "-" for ordering DESC
         uid = uid[1:] if uid[0] == '-' else uid
         
-        if self.fields_map[uid]['db_name_ui'] in ['Variant', 'Regovar']:
+        if self.fields_map[uid]["db_name_ui"] in ["Variant", "Regovar"]:
             # Manage special case for fields splitted by sample
-            if self.fields_map[uid]['name'].startswith('s{}_'):
-                return self.fields_map[uid]['name'].format(analysis.samples_ids[0])
+            if self.fields_map[uid]["name"].startswith("s{}_"):
+                return self.fields_map[uid]["name"].format(analysis.samples_ids[0])
             else:
                 return self.fields_map[uid]["name"]
         return "_" + uid
@@ -790,7 +853,7 @@ class FilterEngine:
             Parse the json filter and return the corresponding postgreSQL query
         """
         # Init some global variables
-        wt = 'wt_{}'.format(analysis.id)
+        wt = "wt_{}".format(analysis.id)
 
 
         # Build WHERE

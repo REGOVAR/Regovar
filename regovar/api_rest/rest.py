@@ -48,6 +48,7 @@ def rest_success(response_data=None, pagination_data=None):
         results = {"success":True, "data":response_data}
     if pagination_data is not None:
         results.update(pagination_data)
+        
     return web.json_response(results)
 
 

@@ -6,6 +6,7 @@ import asyncio
 import sqlalchemy
 #import multiprocessing as mp
 
+import concurrent.futures
 
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy import create_engine
@@ -46,31 +47,28 @@ except Exception as err:
 
 
 
-__db_session = Session()
-#p__db_pool = mp.Pool()
-#p__async_job_id = 0
-#p__async_jobs = {}
 
 
 
 
-def __execute_async(async_job_id, query):
-    """
-        Internal method used to execute query asynchronously
-    """
-    # As execution done in another thread, use also another db session to avoid thread conflicts
-    session = Session()
-    result = None
-    try:
-        result = session.execute(query)
-        session.commit()
-        session.close()
-    except Exception as err:
-        session.close()
-        r = RegovarException(ERR.E100001, "E100001", err)
-        log_snippet(query, r)
-        return (async_job_id, r)
-    return (async_job_id, result)
+
+# def __execute_async(async_job_id, query):
+#     """
+#         Internal method used to execute query asynchronously
+#     """
+#     # As execution done in another thread, use also another db session to avoid thread conflicts
+#     session = Session()
+#     result = None
+#     try:
+#         result = session.execute(query)
+#         session.commit()
+#         session.close()
+#     except Exception as err:
+#         session.close()
+#         r = RegovarException(ERR.E100001, "E100001", err)
+#         log_snippet(query, r)
+#         return (async_job_id, r)
+#     return (async_job_id, result)
 
 
 #def p__execute_callback(result):
@@ -132,7 +130,7 @@ def get_or_create(session, model, defaults=None, **kwargs):
 def check_session(obj):
     s = Session.object_session(obj)
     if not s :
-        __db_session.add(obj)
+        Session().add(obj)
 
 
 def generic_save(obj):
@@ -142,7 +140,7 @@ def generic_save(obj):
     try:
         s = Session.object_session(obj)
         if not s :
-            s = __db_session
+            s = Session()
             s.add(obj)
         obj.update_date = datetime.datetime.now()
         s.commit()
@@ -155,30 +153,24 @@ def generic_count(obj):
         generic method to count how many object in the table
     """
     try:
-        return __db_session.query(obj).count()
+        return Session().query(obj).count()
 
     except Exception as err:
         raise RegovarException("Unable to count how many object in the table", "", err)
     
 
 
-def session():
-    """
-        Return the current pgsql session (SQLAlchemy)
-    """
-    return __db_session
-
 
 def execute(query):
     """
-        Synchrone execution of the query. If error occured, raise RegovarException
+        Synchrone execution of the query in the shared session. If error occured, raise RegovarException
     """
     result = None
     s = Session()
+    if C.DEBUG: print("Execute query :\nSESSION: {}\nQUERY: {}".format(s, query))
     try:
         result = s.execute(query)
-        s.commit()
-        Session.remove()        
+        s.commit() 
     except Exception as err:
         s.rollback()
         r = RegovarException(ERR.E100001, "E100001", err)
@@ -186,6 +178,8 @@ def execute(query):
         raise r
     
     return result
+
+
 
 
 #def execute_bw(query, callback=None):
@@ -206,13 +200,14 @@ async def execute_aio(query):
         execute as coroutine
         Asynchrone execution of the query as coroutine
     """
-    # Execute the query in another thread via coroutine
-    loop = asyncio.get_event_loop()
-    futur = loop.run_in_executor(None, __execute_async, None, query)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        # Execute the query in another thread via coroutine
+        loop = asyncio.get_event_loop()
+        futur = loop.run_in_executor(executor, execute, query)
 
-    # Aio wait the end of the async task to return result
-    result = await futur
-    return result[1]
+        # Aio wait the end of the async task to return result
+        result = await futur
+    return result
 
 
 #def cancel(async_job_id):

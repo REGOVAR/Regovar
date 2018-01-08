@@ -12,10 +12,15 @@ import subprocess
 import re
 import json
 import requests
+import concurrent.futures
 
 
-from config import LOG_DIR, CACHE_DIR, CACHE_EXPIRATION_SECONDS
+from config import LOG_DIR, CACHE_DIR, CACHE_EXPIRATION_SECONDS, DEBUG
 
+
+
+if DEBUG:
+    asyncio.get_event_loop().set_debug(enabled=True)
 
 
 #
@@ -49,9 +54,12 @@ def run_async(future, *args):
         (don't block the caller method, but cannot retrieve result)
     """
     try:
-        asyncio.get_event_loop().run_in_executor(None, future, *args)
-    except ex:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            # Execute the query in another thread via coroutine
+            asyncio.get_event_loop().run_in_executor(None, future, *args)
+    except Exception as ex:
         err("Asynch method failed.", ex) 
+
 
 
 def exec_cmd(cmd, asynch=False):

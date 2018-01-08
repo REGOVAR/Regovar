@@ -48,7 +48,7 @@ class SampleManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = Model.session()
+        s = Model.Session()
         samples = s.query(Model.Sample).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for s in samples: s.init(depth)
         return samples

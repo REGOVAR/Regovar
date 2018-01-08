@@ -546,17 +546,6 @@ def vcf_import_worker(queue, file_id, samples):
             break
         
         Model.execute(query)
-        # session = Model.Session()
-        # try:
-        #     session.execute(query)
-        #     session.commit()
-        #     Model.Session.remove()
-        # except Exception as ex:
-        #     session.rollback()
-        #     r = RegovarException("E100001", exception=ex)
-        #     log_snippet(query, r)
-        #     core.notify_all({"action": "import_vcf_error", "data" : {"file_id": file_id, "msg": "Error occured when importing sample." + str(ex), "samples": samples}})
-
         queue.task_done()
         
         
@@ -671,7 +660,7 @@ class VcfManager(AbstractImportManager):
                 #        so to avoid conflict with session, we update data from "manual query"
                 sps = []
                 sql = "UPDATE sample SET loading_progress={} WHERE id IN ({})".format(progress, ",".join([str(samples[sid].id) for sid in samples]))
-                Model.execute(sql)
+                Model.executeNS(sql)
                 # for sid in samples:
                 #     sp = Model.Sample.from_id(samples[sid].id)
                 #     sps += [sp]
@@ -712,7 +701,7 @@ class VcfManager(AbstractImportManager):
         for sid in samples:
             query = sql_pattern.format(samples[sid].id)
             log(" - sample {}".format(samples[sid].id))
-            Model.execute(query)
+            Model.executeNS(query)
         log("Sample import from VCF Done")
         end = datetime.datetime.now()
         
@@ -765,7 +754,7 @@ class VcfManager(AbstractImportManager):
             vcf_reader = VariantFile(filepath)
 
             # get samples in the VCF 
-            # samples = {i : Model.get_or_create(Model.session(), Model.Sample, name=i)[0] for i in list((vcf_reader.header.samples))}
+            # samples = {i : Model.get_or_create(Model.Session(), Model.Sample, name=i)[0] for i in list((vcf_reader.header.samples))}
             samples = {}
             for i in list((vcf_reader.header.samples)):
                 sample = Model.Sample.new()

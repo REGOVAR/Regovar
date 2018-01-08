@@ -30,8 +30,7 @@ class ProjectManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = Model.session()
-        projects = s.query(Model.Project).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
+        projects = Model.Session().query(Model.Project).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for p in projects: p.init(depth)
         return projects
 

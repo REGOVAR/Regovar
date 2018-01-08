@@ -43,8 +43,7 @@ class PipelineManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = session()
-        pipes = s.query(Pipeline).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
+        pipes = Session().query(Pipeline).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for p in pipes: p.init(depth)
         return pipes
 

@@ -62,7 +62,7 @@ def user_from_id(user_id, loading_depth=0):
     """
         Retrieve user with the provided id in the database
     """
-    user = session().query(User).filter_by(id=user_id).first()
+    user = Session().query(User).filter_by(id=user_id).first()
     if user : user.init(loading_depth)
     return user
 
@@ -73,7 +73,7 @@ def user_from_ids(user_ids, loading_depth=0):
     """
     users = []
     if user_ids and len(user_ids) > 0:
-        users = session().query(User).filter(User.id.in_(user_ids)).all()
+        users = Session().query(User).filter(User.id.in_(user_ids)).all()
         for u in users:
             u.init(loading_depth)
     return users
@@ -83,7 +83,7 @@ def user_from_credential(login, pwd):
     """
         Retrieve File with the provided login+pwd in the database
     """
-    user = session().query(User).filter_by(login=login).first()
+    user = Session().query(User).filter_by(login=login).first()
     if user:
         user.init()
         if user.password is None:
@@ -183,7 +183,7 @@ def user_get_projects(self, loading_depth=0):
         Return the list of projects that can access the user
     """
     from core.model.project import Project
-    return session().query(Project).filter_by(is_folder=False).all()
+    return Session().query(Project).filter_by(is_folder=False).all()
 
 
 
@@ -192,7 +192,7 @@ def user_get_subjects(self, loading_depth=0):
         Return the list of subjects that can access the user
     """
     from core.model.subject import Subject
-    return session().query(Subject).all()
+    return Session().query(Subject).all()
 
 
 
@@ -206,7 +206,7 @@ def user_delete(user_id):
     u = User.from_id(user_id)
     if u:
         Project.delete(u.sandbox_id)
-        session().query(User).filter_by(id=user_id).delete(synchronize_session=False)
+        Session().query(User).filter_by(id=user_id).delete(synchronize_session=False)
         
 
 

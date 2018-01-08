@@ -31,8 +31,7 @@ class PanelManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = Model.session()
-        panels = s.query(Model.Panel).filter_by(**query).order_by(",".join(order)).limit(limit).offset(offset).all()
+        panels = Model.Session().query(Model.Panel).filter_by(**query).order_by(",".join(order)).limit(limit).offset(offset).all()
         for p in panels: p.init(depth)
         return panels
 
