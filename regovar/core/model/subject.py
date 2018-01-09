@@ -14,11 +14,12 @@ def subject_init(self, loading_depth=0, force=False):
     """
         Init properties of a subject :
             - id            : int           : the unique id of the subject in the database
-            - identifier   : str           : the identifier of the subject
+            - identifier    : str           : the identifier of the subject
             - comment       : str           : an optional comment
             - firstname     : str           : The firstname
             - lastname      : str           : The lastname
             - sex           : enum          : The sex
+            - family_number : str           : A custom family number
             - dateofbirth   : datetime      : The dateofbirth of the subject
             - dateofdeath   : datetime      : The deathday of the subject
             - update_date   : date          : The last time that the object have been updated
@@ -126,6 +127,7 @@ def subject_load(self, data):
         if "comment" in data.keys(): self.comment = data['comment']
         if "firstname" in data.keys(): self.firstname = data['firstname']
         if "lastname" in data.keys(): self.lastname = data['lastname']
+        if "family_number" in data.keys(): self.family_number = data['family_number']
         if "sex" in data.keys() and data['sex'] in ["male", "female", "unknow"]: self.sex = data['sex']
         if "dateofbirth" in data.keys(): self.dateofbirth = data['dateofbirth']
         if "dateofdeath" in data.keys(): self.dateofdeath = data['dateofdeath']
@@ -272,7 +274,7 @@ def subject_get_projects(self, loading_depth=0):
 
 
 Subject = Base.classes.subject
-Subject.public_fields = ["id", "identifier", "firstname", "lastname", "sex", "comment", "dateofbirth", "dateofdeath", "create_date", "update_date", "jobs_ids", "samples_ids", "files_ids", "analyses_ids", "projects_ids", "jobs", "samples", "analyses", "files", "indicators", "projects_ids", "projects"]
+Subject.public_fields = ["id", "identifier", "firstname", "lastname", "sex", "comment", "dateofbirth", "dateofdeath", "create_date", "family_number", "update_date", "jobs_ids", "samples_ids", "files_ids", "analyses_ids", "projects_ids", "jobs", "samples", "analyses", "files", "indicators", "projects_ids", "projects"]
 Subject.init = subject_init
 Subject.from_id = subject_from_id
 Subject.from_ids = subject_from_ids
