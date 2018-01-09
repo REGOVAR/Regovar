@@ -660,7 +660,7 @@ class VcfManager(AbstractImportManager):
                 #        so to avoid conflict with session, we update data from "manual query"
                 sps = []
                 sql = "UPDATE sample SET loading_progress={} WHERE id IN ({})".format(progress, ",".join([str(samples[sid].id) for sid in samples]))
-                Model.executeNS(sql)
+                Model.execute(sql)
                 # for sid in samples:
                 #     sp = Model.Sample.from_id(samples[sid].id)
                 #     sps += [sp]
@@ -701,7 +701,7 @@ class VcfManager(AbstractImportManager):
         for sid in samples:
             query = sql_pattern.format(samples[sid].id)
             log(" - sample {}".format(samples[sid].id))
-            Model.executeNS(query)
+            Model.execute(query)
         log("Sample import from VCF Done")
         end = datetime.datetime.now()
         

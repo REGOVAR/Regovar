@@ -167,7 +167,7 @@ def execute(query):
     """
     result = None
     s = Session()
-    if C.DEBUG: print("Execute query :\nSESSION: {}\nQUERY: {}".format(s, query))
+    if C.DEBUG: print("Execute query :\nSESSION: {}\nQUERY: {}".format(s, query[0:1000]+"..."))
     try:
         result = s.execute(query)
         s.commit() 
