@@ -150,7 +150,6 @@ def panel_load(self, data):
             version = sql_escape(data["version"]) if "version" in data else ""
             comment = sql_escape(data["comment"]) if "comment" in data else ""
             
-            ipdb.set_trace()
             entries = format_entries(data['entries'])
             entries = json.dumps(entries)
             pv_uuid = str(uuid.uuid4())
