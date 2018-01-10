@@ -25,11 +25,11 @@ def format_entries(json):
         elif "chr" in entry and "start" in entry and "end" in entry:
             try:
                 fixed["label"] = str(entry["label"])
-                fixed["chr"] = CHR_DB_RMAP[entry["chr"]]
+                fixed["chr"] = CHR_DB_RMAP[str(entry["chr"])]
                 fixed["start"] = int(entry["start"])
                 fixed["end"] = int(entry["end"])
                 result.append(fixed)
-            except ex:
+            except Exception as ex:
                 raise RegovarException("Unable to create panel with provided data", exception=ex)
         
     return result
