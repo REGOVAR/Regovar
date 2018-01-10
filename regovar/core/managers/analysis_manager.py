@@ -205,7 +205,7 @@ class AnalysisManager:
             filter.total_results = total_results
             filter.progress = 1
             filter.save()
-            core.notify_all(None, data={'action':'filter_update', 'data': filter.to_json()})
+            core.notify_all(data={'action':'filter_update', 'data': filter.to_json()})
             
         if "filter" in data.keys():
             filter.progress = 0

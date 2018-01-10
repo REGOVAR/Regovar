@@ -49,50 +49,6 @@ except Exception as err:
 
 
 
-
-
-
-# def __execute_async(async_job_id, query):
-#     """
-#         Internal method used to execute query asynchronously
-#     """
-#     # As execution done in another thread, use also another db session to avoid thread conflicts
-#     session = Session()
-#     result = None
-#     try:
-#         result = session.execute(query)
-#         session.commit()
-#         session.close()
-#     except Exception as err:
-#         session.close()
-#         r = RegovarException(ERR.E100001, "E100001", err)
-#         log_snippet(query, r)
-#         return (async_job_id, r)
-#     return (async_job_id, result)
-
-
-#def p__execute_callback(result):
-    #"""
-        #Internal callback method for asynch query execution. 
-    #"""
-    #job_id = result[0]
-    #result = result[1]
-    ## Storing result in dictionary
-    #p__async_jobs[job_id]['result'] = result
-
-    ## Call callback if defined
-    #if p__async_jobs[job_id]['callback']:
-        #p__async_jobs[job_id]['callback'](job_id, result)
-
-    ## Delete job 
-    #del p__async_jobs[async_job_id]
-
-
-
-
-
-
-
 # =====================================================================================================================
 # MODEL METHODS
 # =====================================================================================================================
@@ -144,8 +100,9 @@ def generic_save(obj):
             s.add(obj)
         obj.update_date = datetime.datetime.now()
         s.commit()
-    except Exception as err:
-        raise RegovarException("Unable to save object in the database", "", err)
+    except Exception as ex:
+        if s: s.rollback()
+        raise RegovarException("Unable to save object in the database", "", ex)
 
 
 def generic_count(obj):
@@ -154,24 +111,31 @@ def generic_count(obj):
     """
     try:
         return Session().query(obj).count()
-
-    except Exception as err:
-        raise RegovarException("Unable to count how many object in the table", "", err)
+    except Exception as ex:
+        Session().rollback()
+        raise RegovarException("Unable to count how many object in the table", "", ex)
     
 
 
 
-def execute(query):
+def execute(query, loop=True):
     """
         Synchrone execution of the query in the shared session. If error occured, raise RegovarException
     """
     result = None
     s = Session()
-    if C.DEBUG: print("Execute query :\nSESSION: {}\nQUERY: {}".format(s, query[0:1000]+"..."))
+    if C.DEBUG and loop: print("Execute query :\nSESSION: {}\nQUERY: {}".format(s, query[0:1000]+"..."))
     try:
         result = s.execute(query)
         s.commit() 
+    except sqlalchemy.exc.InternalError:
+        # May occure if previous request failled and session is in prepared state
+        if loop:
+            print ("LOOPING > Rollback session and Try to execute again the query")
+            s.rollback()
+            execute(query, False)
     except Exception as err:
+        print ("EXCEPTION SQL !!!!")
         s.rollback()
         r = RegovarException(ERR.E100001, "E100001", err)
         log_snippet(query, r)
@@ -180,19 +144,6 @@ def execute(query):
     return result
 
 
-
-
-#def execute_bw(query, callback=None):
-    #"""
-        #Execute in background worker:
-        #Asynchrone execution of the query in an other thread. An optional callback method that take 2 arguments (job_id, query_result) can be set.
-        #This method return a job_id for this request that allow you to cancel it if needed
-    #"""
-    #global p__async_job_id, p__async_jobs, p__db_pool
-    #p__async_job_id += 1
-    #t = p__db_pool.apply_async(__execute_async, args = (p__async_job_id, query,), callback=p__execute_callback)
-    #p__async_jobs[p__async_job_id] = {"task" : t, "callback": callback, "query" : query, "start": datetime.datetime.now}
-    #return p__async_job_id
 
 
 async def execute_aio(query):
@@ -210,16 +161,6 @@ async def execute_aio(query):
     return result
 
 
-#def cancel(async_job_id):
-    #"""
-        #Cancel an asynch job running in the threads pool
-    #"""
-    #if async_job_id in p__async_jobs.keys():
-        #loop = asyncio.get_event_loop()
-        #loop.call_soon_threadsafe(p__async_jobs.keys[async_job_id]["task"].cancel)
-        #log("Model async query (id:{}) canceled".format(async_job_id))
-    #else:
-        #war("Model unable to cancel async query (id:{}) because it doesn't exists".format(async_job_id)) 
 
 
 

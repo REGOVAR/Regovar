@@ -360,6 +360,8 @@ def log_snippet(longmsg, exception: RegovarException=None):
     uid = exception.id if exception else str(uuid.uuid4())
     filename = os.path.join(LOG_DIR,"snippet_{}.log".format(uid))
     with open(filename, 'w+') as f:
+        f.write(exception)
+        f.write("\n\n")
         f.write(longmsg)
     return filename
 

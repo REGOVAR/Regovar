@@ -123,6 +123,7 @@ def analysis_load(self, data):
     """
     from core.model.project import Project
     settings = False
+    need_to_clean_db = False
     try:
         if "name"               in data.keys(): self.name               = data['name']
         if "project_id"         in data.keys(): self.project_id         = data['project_id']
@@ -156,8 +157,8 @@ def analysis_load(self, data):
             self.settings = data["settings"]
             self.status = "empty"
             self.computing_progress = None
-            execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
-            execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(self.id))
+            need_to_clean_db = True
+            
 
         if "samples_ids" in data.keys():
             # Remove old
@@ -171,8 +172,7 @@ def analysis_load(self, data):
             # When settings change, need to regenerate working table
             self.status = "empty"
             self.computing_progress = None
-            execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
-            execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(self.id))
+            need_to_clean_db = True
 
             # If settings empty, init it with informations from samples
             if len(self.settings["annotations_db"]) == 0:
@@ -189,6 +189,9 @@ def analysis_load(self, data):
                 settings["annotations_db"] = dbuids
                 self.settings = settings
 
+        
+        if need_to_clean_db:
+            execute("DROP TABLE IF EXISTS wt_{0} CASCADE; DROP TABLE IF EXISTS wt_{0}_var CASCADE;".format(self.id))
 
         # check to reload dynamics properties
         if self.loading_depth > 0:
