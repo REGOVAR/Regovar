@@ -13,12 +13,12 @@ import uuid
 
 import aiohttp_security
 from aiohttp_session import get_session
-from aiohttp_security import remember, forget, authorized_userid, permits
+from aiohttp_security import permits
 
 import asyncio
 import functools
 import inspect
-from aiohttp import web, MultiDict
+from aiohttp import web
 from urllib.parse import parse_qsl
 
 from config import *
@@ -48,11 +48,12 @@ def rest_success(response_data=None, pagination_data=None):
         results = {"success":True, "data":response_data}
     if pagination_data is not None:
         results.update(pagination_data)
+        
     return web.json_response(results)
 
 
 
-def rest_error(message:str="Unknow error", code:str="", error_id:str=""):
+def rest_error(message:str="Unknow error", code:str="", error_id:str="", ex:RegovarException=None):
     """ 
         Build the REST error response
         :param message:         The short "friendly user" error message
@@ -67,6 +68,7 @@ def rest_error(message:str="Unknow error", code:str="", error_id:str=""):
         "error_url":    ERROR_ROOT_URL + code,
         "error_id":     error_id
     }
+    if ex: results["exception"] = str(ex)
     return web.json_response(results)
 
 
@@ -106,7 +108,7 @@ def user_role(role):
 
 
 
-def notify_all(self, data):
+def rest_notify_all(data):
     msg = json.dumps(data)
     if 'action' not in data.keys() or data['action'] != 'hello':
         log ("API_rest Notify All: {0}".format(msg))
@@ -114,7 +116,7 @@ def notify_all(self, data):
         ws[0].send_str(msg)
 
 # Give to the core the delegate to call to notify all users via websockets
-core.notify_all = notify_all
+core.notify_all = rest_notify_all
 
 
 
@@ -124,11 +126,11 @@ core.notify_all = notify_all
 
 
 def get_query_parameters(query_string, fields_to_retrieve):
-    get_params = MultiDict(parse_qsl(query_string))
+    #get_params = MultiDict(parse_qsl(query_string))
     result = {}
-    for key in fields_to_retrieve:
-        value = get_params.get(key, None)
-        result.update({key: value})
+    #for key in fields_to_retrieve:
+        #value = get_params.get(key, None)
+        #result.update({key: value})
     return result;
 
 
@@ -137,59 +139,60 @@ def get_query_parameters(query_string, fields_to_retrieve):
 
 
 def process_generic_get(query_string, allowed_fields):
-        # 1- retrieve query parameters
-        get_params = MultiDict(parse_qsl(query_string))
-        r_range  = get_params.get('range', "0-" + str(RANGE_DEFAULT))
-        r_fields = get_params.get('fields', None)
-        r_order  = get_params.get('order_by', None)
-        r_sort   = get_params.get('order_sort', None)
-        r_filter = get_params.get('filter', None)
+        ## 1- retrieve query parameters
+        #get_params = MultiDict(parse_qsl(query_string))
+        #r_range  = get_params.get('range', "0-" + str(RANGE_DEFAULT))
+        #r_fields = get_params.get('fields', None)
+        #r_order  = get_params.get('order_by', None)
+        #r_sort   = get_params.get('order_sort', None)
+        #r_filter = get_params.get('filter', None)
 
-        # 2- fields to extract
-        fields = allowed_fields
-        if r_fields is not None:
-            fields = []
-            for f in r_fields.split(','):
-                f = f.strip().lower()
-                if f in allowed_fields:
-                    fields.append(f)
-        if len(fields) == 0:
-            return rest_error("No valid fields provided : " + get_params.get('fields'))
+        ## 2- fields to extract
+        #fields = allowed_fields
+        #if r_fields is not None:
+            #fields = []
+            #for f in r_fields.split(','):
+                #f = f.strip().lower()
+                #if f in allowed_fields:
+                    #fields.append(f)
+        #if len(fields) == 0:
+            #return rest_error("No valid fields provided : " + get_params.get('fields'))
 
-        # 3- Build json query for mongoengine
-        query = {}
-        if r_filter is not None:
-            query = {"$or" : []}
-            for k in fields:
-                query["$or"].append({k : {'$regex': r_filter}})
+        ## 3- Build json query for mongoengine
+        #query = {}
+        #if r_filter is not None:
+            #query = {"$or" : []}
+            #for k in fields:
+                #query["$or"].append({k : {'$regex': r_filter}})
 
-        # 4- Order
-        order = None
-        # if r_sort is not None and r_order is not None:
-        #     r_sort = r_sort.split(',')
-        #     r_order = r_order.split(',')
-        #     if len(r_sort) == len(r_order):
-        #         order = []
-        #         for i in range(0, len(r_sort)):
-        #             f = r_sort[i].strip().lower()
-        #             if f in allowed_fields:
-        #                 if r_order[i] == "desc":
-        #                     f = "-" + f
-        #                 order.append(f)
-        # order = tuple(order)
+        ## 4- Order
+        #order = None
+        ## if r_sort is not None and r_order is not None:
+        ##     r_sort = r_sort.split(',')
+        ##     r_order = r_order.split(',')
+        ##     if len(r_sort) == len(r_order):
+        ##         order = []
+        ##         for i in range(0, len(r_sort)):
+        ##             f = r_sort[i].strip().lower()
+        ##             if f in allowed_fields:
+        ##                 if r_order[i] == "desc":
+        ##                     f = "-" + f
+        ##                 order.append(f)
+        ## order = tuple(order)
 
-        # 5- limit
-        r_range = r_range.split("-")
-        offset=0
-        limit=RANGE_DEFAULT
-        try:
-            offset = int(r_range[0])
-            limit = int(r_range[1])
-        except:
-            return rest_error("No valid range provided : " + get_params.get('range') )
+        ## 5- limit
+        #r_range = r_range.split("-")
+        #offset=0
+        #limit=RANGE_DEFAULT
+        #try:
+            #offset = int(r_range[0])
+            #limit = int(r_range[1])
+        #except:
+            #return rest_error("No valid range provided : " + get_params.get('range') )
 
-        # 6- Return processed data
-        return fields, query, order, offset, limit
+        ## 6- Return processed data
+        #return fields, query, order, offset, limit
+        return [], {}, None, 0, 100
 
 
 
@@ -215,22 +218,23 @@ def process_generic_get(query_string, allowed_fields):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 class WebsocketHandler:
     socket_list = []
+    
     async def get(self, request):
         peername = request.transport.get_extra_info('peername')
         if peername is not None:
             host, port = peername
-
         ws_id = "{}:{}".format(host, port)
+        
         ws = web.WebSocketResponse()
         await ws.prepare(request)
 
         WebsocketHandler.socket_list.append((ws, ws_id))
         msg = {'action':'hello', 'data': [[str(_ws[1]) for _ws in WebsocketHandler.socket_list]]}
-        notify_all(None, msg)
+        core.notify_all(msg)
 
         try:
             async for msg in ws:
-                if msg.tp == aiohttp.MsgType.text:
+                if msg.type == aiohttp.WSMsgType.TEXT:
                     if msg.data == 'close':
                         log ('CLOSE MESSAGE RECEIVED')
                         await ws.close()
@@ -240,8 +244,8 @@ class WebsocketHandler:
                         if data['action'] == 'user_info':
                             log('WebsocketHandler {0} '.format(data['action']))
                             pass
-                        elif msg.tp == aiohttp.MsgType.error:
-                            log('ws connection closed with exception {0}'.format(ws.exception()))
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    log('ws connection closed with exception {0}'.format(ws.exception()))
         finally:
             WebsocketHandler.socket_list.remove((ws, ws_id))
 

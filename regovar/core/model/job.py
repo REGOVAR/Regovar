@@ -106,7 +106,7 @@ def job_init(self, loading_depth=0, force=False):
         self.outputs = []
         self.pipeline = None 
         
-        files = session().query(JobFile).filter_by(job_id=self.id).all()
+        files = Session().query(JobFile).filter_by(job_id=self.id).all()
         job_logs_path = os.path.join(str(self.path), "logs")
         if os.path.exists(job_logs_path) :
             self.logs = [MonitoringLog(os.path.join(job_logs_path, logname)) for logname in os.listdir(job_logs_path) if os.path.isfile(os.path.join(job_logs_path, logname))]
@@ -120,12 +120,12 @@ def job_init(self, loading_depth=0, force=False):
             self.pipeline = Pipeline.from_id(self.pipeline_id, self.loading_depth-1)
         
             if len(self.inputs_ids) > 0:
-                files = session().query(File).filter(File.id.in_(self.inputs_ids)).all()
+                files = Session().query(File).filter(File.id.in_(self.inputs_ids)).all()
                 for f in files:
                     f.init(self.loading_depth-1)
                     self.inputs.append(f)
             if len(self.outputs_ids) > 0:
-                files = session().query(File).filter(File.id.in_(self.outputs_ids)).all()
+                files = Session().query(File).filter(File.id.in_(self.outputs_ids)).all()
                 for f in files:
                     f.init(self.loading_depth-1)
                     self.outputs.append(f)
@@ -146,7 +146,7 @@ def job_from_id(job_id, loading_depth=0):
     """
         Retrieve job with the provided id in the database
     """
-    job = session().query(Job).filter_by(id=job_id).first()
+    job = Session().query(Job).filter_by(id=job_id).first()
     if job:
         job.init(loading_depth)
     return job
@@ -158,17 +158,19 @@ def job_from_ids(job_ids, loading_depth=0):
     """
     jobs = []
     if job_ids and len(job_ids) > 0:
-        jobs = session().query(Job).filter(Job.id.in_(job_ids)).all()
+        jobs = Session().query(Job).filter(Job.id.in_(job_ids)).all()
         for f in jobs:
             f.init(loading_depth)
     return jobs
 
 
-def job_to_json(self, fields=None):
+def job_to_json(self, fields=None, loading_depth=-1):
     """
         Export the job into json format with only requested fields
     """
     result = {}
+    if loading_depth < 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = Job.public_fields
     for f in fields:
@@ -176,9 +178,9 @@ def job_to_json(self, fields=None):
             if f in ["create_date","update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
             elif f in ["inputs", "outputs"]:
-                result.update({f : [i.to_json() for i in eval("self." + f)]})
+                result.update({f : [i.to_json(None, loading_depth-1) for i in eval("self." + f)]})
             elif f == "pipeline" and self.loading_depth > 0:
-                result.update({"pipeline" : self.pipeline.to_json()})
+                result.update({"pipeline" : self.pipeline.to_json(None, loading_depth-1)})
             elif f == "logs":
                 logs = []
                 for l in self.logs:
@@ -206,7 +208,7 @@ def job_load(self, data):
         self.save()
 
         # delete old file/job links
-        session().query(JobFile).filter_by(job_id=self.id).delete(synchronize_session=False)
+        Session().query(JobFile).filter_by(job_id=self.id).delete(synchronize_session=False)
         # create new links
         for fid in self.inputs_ids: JobFile.new(self.id, fid, True)
         for fid in self.outputs_ids: JobFile.new(self.id, fid, False)
@@ -236,8 +238,8 @@ def job_delete(job_id):
     """
         Delete the job with the provided id in the database
     """
-    session().query(Job).filter_by(id=job_id).delete(synchronize_session=False)
-    session().query(JobFile).filter_by(job_id=job_id).delete(synchronize_session=False)
+    Session().query(Job).filter_by(id=job_id).delete(synchronize_session=False)
+    Session().query(JobFile).filter_by(job_id=job_id).delete(synchronize_session=False)
 
 
 def job_new():
@@ -289,7 +291,7 @@ def jobfile_get_jobs(file_id, loading_depth=0):
     result = jobs = []
     jobs_ids = jobfile_get_jobs_ids(file_id)
     if len(jobs_ids) > 0:
-        jobs = session().query(Job).filter(Job.id.in_(jobs_ids)).all()
+        jobs = Session().query(Job).filter(Job.id.in_(jobs_ids)).all()
     for j in jobs:
         j.init(loading_depth)
         result.append(j)
@@ -303,7 +305,7 @@ def jobfile_get_inputs(job_id, loading_depth=0):
     result = files = []
     files_ids = jobfile_get_inputs_ids(job_id)
     if len(files) > 0:
-        files = session().query(File).filter(File.id.in_(files_ids)).all()
+        files = Session().query(File).filter(File.id.in_(files_ids)).all()
     for f in files:
         f.init(loading_depth)
         result.append(f)
@@ -317,7 +319,7 @@ def jobfile_get_outputs(job_id, loading_depth=0):
     result = files = []
     files_ids = jobfile_get_outputs_ids(job_id)
     if len(files) > 0:
-        files = session().query(File).filter(File.id.in_(files_ids)).all()
+        files = Session().query(File).filter(File.id.in_(files_ids)).all()
     for f in files:
         f.init(loading_depth)
         result.append(f)
@@ -329,7 +331,7 @@ def jobfile_get_jobs_ids(file_id):
         Return the list of job's id that are using the file (as input and/or output)
     """
     result = []
-    jobs = session().query(JobFile).filter_by(file_id=file_id).all()
+    jobs = Session().query(JobFile).filter_by(file_id=file_id).all()
     for j in jobs:
         result.append(j.job_id)
     return result
@@ -340,7 +342,7 @@ def jobfile_get_inputs_ids(job_id):
         Return the list of file's id that are used as input for the job
     """
     result = []
-    files = session().query(JobFile).filter_by(job_id=job_id, as_input=True).all()
+    files = Session().query(JobFile).filter_by(job_id=job_id, as_input=True).all()
     for f in files:
         result.append(f.file_id)
     return result
@@ -351,7 +353,7 @@ def jobfile_get_outputs_ids(job_id):
         Return the list of file's id that are used as output for the job
     """
     result = []
-    files = session().query(JobFile).filter_by(job_id=job_id, as_input=False).all()
+    files = Session().query(JobFile).filter_by(job_id=job_id, as_input=False).all()
     for f in files:
         result.append(f.file_id)
     return result

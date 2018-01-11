@@ -2,6 +2,7 @@
 # coding: utf-8
 import ipdb
 import os
+import hashlib
 import datetime
 import logging
 import uuid
@@ -9,10 +10,17 @@ import time
 import asyncio
 import subprocess
 import re
+import json
+import requests
+import concurrent.futures
 
 
-from config import LOG_DIR
+from config import LOG_DIR, CACHE_DIR, CACHE_EXPIRATION_SECONDS, DEBUG
 
+
+
+if DEBUG:
+    asyncio.get_event_loop().set_debug(enabled=True)
 
 
 #
@@ -45,7 +53,13 @@ def run_async(future, *args):
         Call a "normal" method into another thread 
         (don't block the caller method, but cannot retrieve result)
     """
-    asyncio.get_event_loop().run_in_executor(None, future, *args)
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            # Execute the query in another thread via coroutine
+            asyncio.get_event_loop().run_in_executor(None, future, *args)
+    except Exception as ex:
+        err("Asynch method failed.", ex) 
+
 
 
 def exec_cmd(cmd, asynch=False):
@@ -71,6 +85,10 @@ def notify_all(msg):
         Default delegate used by the core for notification.
     """
     print(str(msg))
+
+
+
+
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -158,11 +176,75 @@ def array_merge(array1, array2):
 
 
 
+
+# =====================================================================================================================
+# CACHE TOOLS
+# =====================================================================================================================
+def get_cached_url(url, prefix="", headers={}):
+    """
+        Return cache response if exists, otherwise, execute request and store result in cache before return.
+    """
+    # encrypt url to md5 to avoid problem with special characters
+    uri = prefix + hashlib.md5(url.encode('utf-8')).hexdigest()
+    result = get_cache(uri)
+
+    if result is None:
+        res = requests.get(url, headers=headers)
+        if res.ok:
+            try:
+                result = json.loads(res.content.decode())
+                set_cache(uri, result)
+            except Exception as ex:
+                raise RegovarException("Unable to cache result of the query: " + url, ex)
+    return result
+
+
+
+
+
+
+
+
+
+
+def get_cache(uri):
+    """
+        Return the cached json corresponding to the uri if exists; None otherwise
+    """
+    cache_file = CACHE_DIR + "/" + uri
+    if os.path.exists(cache_file):
+        s=os.stat(cache_file)
+        date = datetime.datetime.utcfromtimestamp(s.st_ctime)
+        ellapsed = datetime.datetime.now() - date
+        if ellapsed.total_seconds() < CACHE_EXPIRATION_SECONDS:
+            # Return result as json
+            with open(cache_file, 'r') as f:
+                return json.loads(f.read())
+        else:
+            # Too old, remove cache entry
+            os.remove(cache_file)
+    return None
+
+
+def set_cache(uri, data):
+    """
+        Put the data in the cache
+    """
+    if not uri or not data: return
+    cache_file = CACHE_DIR + "/" + uri
+    with open(cache_file, 'w') as f:
+        f.write(json.dumps(data))
+        f.close()
+    
+
+
+
+
 # =====================================================================================================================
 # DATA MODEL TOOLS
 # =====================================================================================================================
 CHR_DB_MAP = {1: "1", 2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "10", 11: "11", 12: "12", 13: "13", 14: "14", 15: "15", 16: "16", 17: "17", 18: "18", 19: "19", 20: "20", 21: "21", 22: "22", 23: "X", 24: "Y", 25: "M"}
-CHR_DB_RMAP = {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "11": 11, "12": 12, "13": 13, "14": 14, "15": 15, "16": 16, "17": 17, "18": 18, "19": 19, "20": 20, "21": 21, "22": 22, "X": 23, "Y": 24, "M": 25}
+CHR_DB_RMAP = {"1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "11": 11, "12": 12, "13": 13, "14": 14, "15": 15, "16": 16, "17": 17, "18": 18, "19": 19, "20": 20, "21": 21, "22": 22, "23": 23, "24": 24, "25": 25, "X": 23, "Y": 24, "M": 25}
 
 
 def chr_from_db(chr_value):
@@ -207,7 +289,16 @@ def setup_logger(logger_name, log_file, level=logging.INFO):
 
 def log(msg):
     global regovar_logger
-    regovar_logger.info(msg)
+    msgs = msg.split('\n')
+    finals = []
+    for m in msgs:
+        finals.append(m[0:200])
+        m = m[200:]
+        while(len(m)>0):
+            finals.append("\t" + m[0:200])
+            m = m[200:]
+    for m in finals:
+        regovar_logger.info(m)
 
 
 def war(msg):
@@ -269,6 +360,8 @@ def log_snippet(longmsg, exception: RegovarException=None):
     uid = exception.id if exception else str(uuid.uuid4())
     filename = os.path.join(LOG_DIR,"snippet_{}.log".format(uid))
     with open(filename, 'w+') as f:
+        f.write(exception)
+        f.write("\n\n")
         f.write(longmsg)
     return filename
 
@@ -298,12 +391,12 @@ class Timer(object):
         self.secs = self.end - self.start
         self.msecs = self.secs * 1000  # millisecs
         if self.verbose:
-            log(self.msecs, ' ms')
+            log("{} ms".format(self.msecs))
 
     def __str__(self):
         if self.msecs >= 1000:
-            return "{0} s".format(self.secs)
-        return "{0} ms".format(self.msecs)
+            return "{} s".format(self.secs)
+        return "{} ms".format(self.msecs)
 
     def total_ms(self):
         return self.msecs

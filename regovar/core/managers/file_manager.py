@@ -42,7 +42,7 @@ class FileManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = session()
+        s = Session()
         files = s.query(File).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for f in files: f.init(depth)
         return files
@@ -131,7 +131,7 @@ class FileManager:
         pfile.save()
 
         # Check if the file is an image of a Pipeline. if true, automatically start the install
-        pipeline = session().query(Pipeline).filter_by(image_file_id=pfile.id).first()
+        pipeline = Session().query(Pipeline).filter_by(image_file_id=pfile.id).first()
         if pipeline:
             core.pipelines.install(pipeline.id, pipeline.type)
         # Check if the file is an input of a job, try to start the job
@@ -149,9 +149,9 @@ class FileManager:
         """
         from core.core import core
         name = clean_filename(os.path.basename(url))
-        file = self.upload_init(name, 0)
+        pfile = self.upload_init(name, 0)
         # get request and write file
-        with open(file.path, "bw+") as f:
+        with open(pfile.path, "bw+") as f:
             try :
                 response = await requests.get(url)
             except Exception as ex:
@@ -160,7 +160,7 @@ class FileManager:
         pfile.size = os.path.getsize(path)
         pfile.save()
         # save file on the database
-        pfile = core.files.upload_finish(file.id)
+        pfile = core.files.upload_finish(pfile.id)
         return rest_success(pfile)
 
 
@@ -169,7 +169,6 @@ class FileManager:
     def from_local(self, path, move=False, metadata={}):
         """ 
             Copy or move a local file on server and create a new Pirus file. Of course the source file shall have good access rights. 
-            TODO : implementation have to be fixed
         """
         if not os.path.isfile(path):
             raise RegovarException("File \"{}\" doesn't exists.".format(path))
@@ -196,7 +195,7 @@ class FileManager:
             pfile.status = "checked"
             pfile.save()
         except Exception as ex:
-            raise RegovarException("Error occured when trying to copy/move the file from the provided path : ".format(path), "", ex)
+            raise RegovarException("Error occured when trying to copy/move the file from the provided path : {}".format(path), "", ex)
         return pfile
 
 

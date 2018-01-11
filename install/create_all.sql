@@ -77,7 +77,7 @@ CREATE TYPE job_status AS ENUM ('waiting', 'initializing', 'running', 'pause', '
 CREATE TYPE field_type AS ENUM ('int', 'string', 'float', 'enum', 'range', 'bool', 'sequence', 'list', 'sample_array');
 CREATE TYPE annotation_db_type AS ENUM ('site', 'variant', 'transcript');
 CREATE TYPE sample_status AS ENUM ('empty', 'loading', 'ready', 'error');
-CREATE TYPE analysis_status AS ENUM ('empty', 'computing', 'ready', 'error');
+CREATE TYPE analysis_status AS ENUM ('empty', 'waiting', 'computing', 'ready', 'error');
 CREATE TYPE event_type AS ENUM ('info', 'warning', 'error');
 CREATE TYPE sex_type AS ENUM ('male', 'female', 'unknow');
 
@@ -132,12 +132,13 @@ CREATE TABLE public.project
 CREATE TABLE subject
 (
     id serial NOT NULL,
-    identifiant character varying(255) COLLATE pg_catalog."C",
+    identifier character varying(255) COLLATE pg_catalog."C",
     firstname text COLLATE pg_catalog."C",
     lastname text COLLATE pg_catalog."C",
     sex sex_type DEFAULT 'unknow',
-    birthday timestamp without time zone,
-    deathday timestamp without time zone,
+    family_number text COLLATE pg_catalog."C",
+    dateofbirth timestamp without time zone,
+    dateofdeath timestamp without time zone,
     comment text COLLATE pg_catalog."C",
     create_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
@@ -260,13 +261,12 @@ CREATE TABLE public.analysis
     create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     total_variants integer DEFAULT 0,
+    statistics json,
     reference_id integer,
-    computing_progress real DEFAULT 0,
+    computing_progress JSON,
     status analysis_status,
     CONSTRAINT analysis_pkey PRIMARY KEY (id)
 );
-
-
 
 
 
@@ -279,6 +279,8 @@ CREATE TABLE public.filter
     description text COLLATE pg_catalog."C",
     filter json,
     total_variants integer,
+    total_results integer,
+    progress real,
     CONSTRAINT filter_pkey PRIMARY KEY (id)
 );
 
@@ -324,6 +326,10 @@ CREATE TABLE public.sample
     reference_id integer,
     status sample_status,
     default_dbuid JSON,
+    filter_description JSON,
+    stats JSON,
+    create_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    update_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT sample_pkey PRIMARY KEY (id)
 );
 
@@ -345,6 +351,7 @@ CREATE TABLE public.attribute
     sample_id integer NOT NULL,
     name character varying(255) COLLATE pg_catalog."C" NOT NULL,
     value character varying(255) COLLATE pg_catalog."C",
+    wt_col_id character varying(32) COLLATE pg_catalog."C",
     CONSTRAINT attribute_pkey PRIMARY KEY (analysis_id, sample_id, name)
 );
 
@@ -405,14 +412,7 @@ CREATE TABLE public.event
     "date" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     message text COLLATE pg_catalog."C",
     type event_type,
-
-    user_id integer,
-    project_id integer,
-    analysis_id integer,
-    file_id integer,
-    subject_id integer,
-    job_id integer,
-    pipeline_id integer,
+    meta JSON,
     CONSTRAINT event_pkey PRIMARY KEY (id)
 );
 
@@ -420,7 +420,7 @@ CREATE TABLE public.event
 
 
 
-
+/*
 CREATE TABLE public.project_subject
 (
     project_id integer NOT NULL,
@@ -428,30 +428,12 @@ CREATE TABLE public.project_subject
     CONSTRAINT ps_pkey PRIMARY KEY (project_id, subject_id)
 );
 
-
-
-CREATE TABLE public.user_project_sharing
-(
-    project_id integer NOT NULL,
-    user_id integer NOT NULL,
-    write_authorisation boolean,
-    CONSTRAINT ups_pkey PRIMARY KEY (project_id, user_id)
-);
-
-CREATE TABLE public.user_subject_sharing
-(
-    subject_id integer NOT NULL,
-    user_id integer NOT NULL,
-    write_authorisation boolean,
-    CONSTRAINT uss_pkey PRIMARY KEY (subject_id, user_id)
-);
-
 CREATE TABLE public.project_file
 (
     project_id integer NOT NULL,
     file_id integer NOT NULL,
     CONSTRAINT pf_pkey PRIMARY KEY (project_id, file_id)
-);
+);*/
 
 CREATE TABLE public.subject_file
 (
@@ -460,6 +442,16 @@ CREATE TABLE public.subject_file
     CONSTRAINT sf_pkey PRIMARY KEY (subject_id, file_id)
 );
 
+CREATE TABLE public.analysis_file
+(
+    analysis_id integer NOT NULL,
+    file_id integer NOT NULL,
+    CONSTRAINT analysis_file_pkey PRIMARY KEY (analysis_id, file_id)
+);
+
+
+
+
 
 
 CREATE TABLE public.indicator
@@ -467,33 +459,56 @@ CREATE TABLE public.indicator
     id serial NOT NULL,
     name text COLLATE pg_catalog."C" NOT NULL,
     description text COLLATE pg_catalog."C",
-    default_value_id integer,
+    meta JSON,
     CONSTRAINT indicator_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.indicator_value
+CREATE TABLE public.subject_indicator_value
 (
-    id serial NOT NULL,
+    subject_id integer NOT NULL,
     indicator_id integer NOT NULL,
-    name text COLLATE pg_catalog."C" NOT NULL,
-    description text COLLATE pg_catalog."C",
-    style json,
-    CONSTRAINT iv_pkey PRIMARY KEY (id)
+    value character varying(50) COLLATE pg_catalog."C",
+    CONSTRAINT siv_pkey PRIMARY KEY (subject_id, indicator_id)
 );
-CREATE TABLE public.project_indicator
+CREATE TABLE public.analysis_indicator_value
 (
+    analysis_id integer NOT NULL,
     indicator_id integer NOT NULL,
-    project_id integer,
-    indicator_value_id integer NOT NULL,
-    CONSTRAINT pi_pkey PRIMARY KEY (indicator_id, project_id)
+    value character varying(50) COLLATE pg_catalog."C",
+    CONSTRAINT aiv_pkey PRIMARY KEY (analysis_id, indicator_id)
 );
-CREATE TABLE public.subject_indicator
+CREATE TABLE public.job_indicator_value
 (
+    job_id integer NOT NULL,
     indicator_id integer NOT NULL,
-    subject_id integer,
-    indicator_value_id integer NOT NULL,
-    CONSTRAINT si_pkey PRIMARY KEY (indicator_id, subject_id)
+    value character varying(50) COLLATE pg_catalog."C",
+    CONSTRAINT jiv_pkey PRIMARY KEY (job_id, indicator_id)
 );
 
+
+
+
+CREATE TABLE public.panel
+(
+    id character varying(50) COLLATE pg_catalog."C",
+    name text COLLATE pg_catalog."C",
+    description text COLLATE pg_catalog."C",
+    owner text COLLATE pg_catalog."C",
+    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    shared boolean DEFAULT False,
+    CONSTRAINT panel_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.panel_entry
+(
+    id character varying(50) COLLATE pg_catalog."C" NOT NULL,
+    panel_id character varying(50) COLLATE pg_catalog."C" NOT NULL,
+    version character varying(50) COLLATE pg_catalog."C",
+    comment text COLLATE pg_catalog."C",
+    data JSON NOT NULL,
+    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT panel_entry_pkey PRIMARY KEY (panel_id, version)
+);
 
 
 
@@ -503,38 +518,6 @@ CREATE TABLE public.subject_indicator
 -- --------------------------------------------
 -- SHARING SERVER TABLES
 -- --------------------------------------------
-
-CREATE TABLE public.bug
-(
-    id serial NOT NULL,
-    title text COLLATE pg_catalog."C" NOT NULL,
-    description text COLLATE pg_catalog."C",
-    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    vote integer DEFAULT 0,
-    status text DEFAULT 'new',
-    github_issue text,
-    CONSTRAINT bug_pkey PRIMARY KEY (id)
-);
-CREATE TABLE public.bug_vote
-(
-    bug_id integer NOT NULL,
-    user_id integer NOT NULL,
-    CONSTRAINT bug_vote_pkey PRIMARY KEY (bug_id, user_id)
-);
-CREATE TABLE public.devtask
-(
-    id serial NOT NULL,
-    title text COLLATE pg_catalog."C" NOT NULL,
-    description text COLLATE pg_catalog."C",
-    create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    progress_label text,
-    progress_value real,
-    type text DEFAULT 'new',
-    CONSTRAINT devtask_pkey PRIMARY KEY (id)
-);
-
 
 
 -- panels shared
@@ -593,11 +576,26 @@ CREATE INDEX annotation_field_idx2
   USING btree (uid);
   
   
-  
-  
-  
+CREATE INDEX subject_indicator_idx
+  ON public.subject_indicator_value
+  USING btree
+  (subject_id, indicator_id);
+CREATE INDEX analysis_indicator_idx
+  ON public.analysis_indicator_value
+  USING btree
+  (analysis_id, indicator_id);
+CREATE INDEX job_indicator_idx
+  ON public.job_indicator_value
+  USING btree
+  (job_id, indicator_id);
 
 
+CREATE INDEX panel_entry_idx
+  ON public.panel_entry
+  USING btree
+  (panel_id, version);
+  
+  
 
 
 
@@ -693,8 +691,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           'V1.0.0'),
-    ('heavy_client_last_version', 'Oldest complient version of the heavy client',  'V1.0.0'),
+    ('database_version',          'The current version of the database',           '0.5.dev'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
     ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
 
@@ -709,20 +706,25 @@ INSERT INTO public.annotation_database(uid, reference_id, name, version, name_ui
   ('2c0a7043a9e736eaf14b6614fff102c0', 0, 'wt', '_all_', 'Regovar', 'Regovar computed annotations'        , '',  1, '', 'variant');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 1,  'variant_id',       'id',                     'int',          'Variant unique id in the database.', NULL),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 3,  'chr',              'chr',                    'enum',         'Chromosome.', '{"enum": {"1": "1", "2": "2", "3": "3", "4": "4", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9", "10": "10", "11": "11", "12": "12", "13": "13", "14": "14", "15": "15", "16": "16", "17": "17", "18": "18", "19": "19", "20": "20", "21": "21", "22": "22", "23": "X", "24": "Y", "25": "M"}}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 1,  'variant_id',       'id',                     'int',          'Variant unique ID in the database.', NULL),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 2,  'vcf_line',         'vcf line',               'int',          'Corresponding line in the VCF file.', NULL),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 3,  'chr',              'chr',                    'int',          'Chromosome as number : 23=X, 24=Y, 25=M.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 4,  'pos',              'pos',                    'int',          'Position of the variant in the chromosome.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 5,  'ref',              'ref',                    'sequence',     'Reference sequence.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 6,  'alt',              'alt',                    'sequence',     'Alternative sequence of the variant.', NULL),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 10, 's{}_gt',           'GT',                     'sample_array', 'Genotype.', '{"type": "enum", "enum" : ["r/r", "a/a", "r/a", "a1/a2"]}'),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_dp',           'DP',                     'sample_array', 'Depth.', '{"type": "int"}');
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 10, 's{}_gt',           'GT',                     'sample_array', 'Genotype as number : 0="r/r", 1="a/a", 2="r/a", 3="a1/a2".', '{"type": "int"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_dp',           'DP',                     'sample_array', 'Depth.', '{"type": "int"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 12, 's{}_dp_alt',       'DP alt',                 'sample_array', 'Allelic depth.', '{"type": "int"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 13, 's{}_qual',         'QUAL',                   'sample_array', 'VCF Quality field.', '{"type": "float"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 14, 's{}_filter',       'FILTER',                 'sample_array', 'VCF Filter field', '{"type": "enum"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 50, 'regovar_score',    'Regovar Pred',           'enum',         'Regovar users annotation.', '{"type": "enum", "values": ["Artifact", "Yes", "No"]}');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
+  ('2c0a7043a9e736eaf14b6614fff102c0', 0,  'is_selected',      'Selected',                       'bool',         'Is the variant in the user selection or not.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Is the variant dominant for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 2,  'is_rec_hom',       'Recessif homozygous',            'bool',         'Is the variant recessif homozygous for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 3,  'is_rec_htzcomp',   'Recessif compound heterozygous', 'bool',         'Is the variant recessif compound heterozygous for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo',        'De novo',                        'bool',         'Is the variant de novo for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 5,  'is_inherited',     'Inherited',                      'bool',         'Is the variant inherited for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 6,  'is_aut',           'Autosomal',                      'bool',         'Is the variant autosomal for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 7,  'is_xlk',           'X-linked',                       'bool',         'Is the variant X-linked for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 8,  'is_mit',           'Mitochondrial',                  'bool',         'Is the variant mitochondrial for the sample (single), or for the child (trio).', NULL),
@@ -737,12 +739,9 @@ UPDATE annotation_field SET uid=MD5(concat(database_uid, name));
 
 
 
-INSERT INTO "indicator" (name) VALUES
-  ('Project basic status');
-INSERT INTO "indicator_value" (indicator_id, name) VALUES
-  (1, 'Open'),
-  (1, 'Idle'),
-  (1, 'Close');
+INSERT INTO "indicator" (name, meta) VALUES
+  ('Ermergency', '{"enum" : ["Burning", "Urgent", "Normal", "Low"], "default": "Normal"}');
+
   
 INSERT INTO "project" (comment, is_sandbox) VALUES
   ('My sandbox', True);

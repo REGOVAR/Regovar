@@ -44,7 +44,7 @@ class AnalysisManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = session()
+        s = Session()
         analyses = s.query(Analysis).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for a in analyses: a.init(depth)
         return analyses
@@ -55,13 +55,12 @@ class AnalysisManager:
         """
             Return the list of filters for the provided analysis
         """
-        s = session()
+        s = Session()
         filters = s.query(Filter).filter_by(analysis_id=analysis_id).order_by("name").all()
         for f in filters: f.init(depth)
         return filters
     
     
-
 
     def create(self, name, project_id, ref_id, template_id=None):
         """
@@ -89,78 +88,13 @@ class AnalysisManager:
         return None
 
 
+
     def load(self, analysis_id):
         """
             Load all data about the analysis with the provided id and return result as JSON object.
         """
         analysis = Analysis.from_id(analysis_id, 1)
-        
-        # Check filter and create default if not set
-        #if not analysis.settings:
-            #analysis.settings = '{"fields": [1,3,4,5,6,7,8], "filter":["AND", []]}'
-        
-        #analysis = execute("SELECT a.id, a.name, a.update_date, a.creation_date, a.settings, t.name AS t_name, t.id AS t_id FROM analysis a LEFT JOIN template t ON a.template_id = t.id WHERE a.id = {0}".format(analysis_id)).first()
-        #result = {
-            #"id": analysis.id,
-            #"name": analysis.name,
-            #"update_date": analysis.update_date.ctime() if analysis.update_date is not None else datetime.datetime.now().ctime(),
-            #"creation_date": analysis.creation_date.ctime() if analysis.creation_date is not None else datetime.datetime.now().ctime(),
-            #"template_id": analysis.t_id,
-            #"template_name": analysis.t_name,
-            #"samples": [],
-            #"attributes": [],
-            #"reference_id": 2,  # TODO: reference_id shall be associated to the analysis and retrieved in the database
-            #"filters": {}}
-        #if analysis.settings is not None and analysis.settings.strip() is not "":
-            #result["settings"] = json.loads(analysis.settings)
-        #else:
-            #result["settings"] = '{"fields": [1,3,4,5,6,7,8], "filter":["AND", []]}'
-
-        ## Get predefined filters set for this analysis
-        #query = "SELECT * FROM filter WHERE analysis_id = {0} ORDER BY name ASC;"
-        #for f in execute(query.format(analysis_id)):
-            #result["filters"][f.id] = {"name": f.name, "description": f.description, "filter": json.loads(f.filter)}
-
-        ## Get attributes used for this analysis
-        #query = "SELECT a.sample_id, a.name, a.value \
-            #FROM attribute a \
-            #WHERE a.analysis_id = {0}\
-            #ORDER BY a.name ASC, a.sample_id ASC"
-
-        #current_attribute = None
-        #for r in execute(query.format(analysis_id)):
-            #if current_attribute is None or current_attribute != r.name:
-                #current_attribute = r.name
-                #result["attributes"].append({"name": r.name, "samples_value": {r.sample_id: r.value}})
-            #else:
-                #result["attributes"][-1]["samples_value"][r.sample_id] = r.value
-
-        ## Get Samples used for this analysis
-        #query = "SELECT s.id, s.name, s.comments, s.is_mosaic, asp.nickname, f.id as f_id, f.name as fname, f.create_date \
-            #FROM analysis_sample asp \
-            #LEFT JOIN sample s ON asp.sample_id = s.id \
-            #LEFT JOIN sample_file sf ON s.id = sf.sample_id \
-            #LEFT JOIN file f ON f.id = sf.file_id \
-            #WHERE asp.analysis_id = {0}"
-        #for r in execute(query.format(analysis_id)):
-            #result["samples"].append({
-                #"id": r.id,
-                #"name": r.name,
-                #"comments": r.comments,
-                #"is_mosaic": r.is_mosaic,
-                #"nickname": r.nickname,
-                #"file_id": r.f_id,
-                #"file_name": r.fname,
-                #"create_date": r.create_date.ctime() if r.create_date is not None else datetime.datetime.now().ctime(),
-                #"attributes": {}})
-            #for a in result["attributes"]:
-                #if r.id in a["samples_value"].keys():
-                    #result["samples"][-1]["attributes"][a['name']] = a["samples_value"][r.id]
-                #else:
-                    #result["samples"][-1]["attributes"][a['name']] = ""
-
         return result
-
 
 
 
@@ -185,31 +119,19 @@ class AnalysisManager:
             query = query + ', '.join([subquery.format(analysis_id, f['name'], f['filter']) for f in data["filters"]])
             execute(query)
 
-        # samples + nickname
-        if "samples" in data.keys():
-            # create new associations
-            pattern = "({0}, {1}, {2})"
-            query = ', '.join([pattern.format(analysis_id, s['id'], "'{0}'".format(s['nickname']) if 'nickname' in s.keys() else 'NULL') for s in data["samples"]])
-            # check if query seems good then apply change
-            if query != "":
-                # delete old analysis sample associations
-                execute("DELETE FROM analysis_sample WHERE analysis_id={}".format(analysis_id))
-                execute("INSERT INTO analysis_sample (analysis_id, sample_id, nickname) VALUES " + query)
-                self.clear_temps_data(analysis.id)
-            else:
-                # TODO: log error
-                pass
+        # Updating dynamicaly samples not supported. it's better for the user to recreate a new analysis
+
 
         # attributes + values
         if "attributes" in data.keys():
             # create new attributes
-            pattern = "({0}, {1}, '{2}', '{3}')"
+            pattern = "({0}, {1}, '{2}', '{3}', MD5(CONCAT('{2}', '{3}')))"
             data['attributes'] = [a for a in data['attributes'] if a['name'] != ""]
-            query = ', '.join([pattern.format(analysis_id, sid, att['name'], att['samples_value'][sid]) for att in data['attributes'] for sid in att['samples_value']])
+            query = ', '.join([pattern.format(analysis_id, sid, sql_escape(att['name']), sql_escape(att['samples_values'][sid])) for att in data['attributes'] for sid in att['samples_values']])
             # check if query seems good then apply change
             if query != "":
                 execute("DELETE FROM attribute WHERE analysis_id={}".format(analysis_id))
-                execute("INSERT INTO attribute (analysis_id, sample_id, name, value) VALUES " + query)
+                execute("INSERT INTO attribute (analysis_id, sample_id, name, value, wt_col_id) VALUES " + query)
             else:
                 # TODO: log error
                 pass
@@ -229,6 +151,7 @@ class AnalysisManager:
         try:
             execute("DROP TABLE IF EXISTS wt_{} CASCADE;".format(analysis_id))
             execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(analysis_id))
+            execute("DROP TABLE IF EXISTS wt_{}_tmp CASCADE".format(analysis_id))
             analysis.status = "empty"
             analysis.save()
         except Exception as ex:
@@ -237,61 +160,130 @@ class AnalysisManager:
 
 
 
-    #def load_ped(self, analysis_id, file_path):
-    async def load_file(self, analysis_id, file_id):
-        pfile = File.from_id(file_id)
-        if pfile == None:
-            raise RegovarException("Unable to retrieve the file with the provided id : " + file_id)
+    #async def load_file(self, analysis_id, file_id):
+        #pfile = File.from_id(file_id)
+        #if pfile == None:
+            #raise RegovarException("Unable to retrieve the file with the provided id : " + file_id)
         
-        # Importing to the database according to the type (if an import module can manage it)
-        log('Looking for available module to import file data into database.')
-        for m in self.import_modules.values():
-            if pfile.type in m['info']['input']:
-                log('Start import of the file (id={0}) with the module {1} ({2})'.format(file_id, m['info']['name'], m['info']['description']))
-                await m['do'](pfile.id, pfile.path, core)
-                # Reload annotation's databases/fields metadata as some new annot db/fields may have been created during the import
-                await self.annotation_db.load_annotation_metadata()
-                await self.filter.load_annotation_metadata()
-                break
-        
+        ## Importing to the database according to the type (if an import module can manage it)
+        #log('Looking for available module to import file data into database.')
+        #for m in self.import_modules.values():
+            #if pfile.type in m['info']['input']:
+                #log('Start import of the file (id={0}) with the module {1} ({2})'.format(file_id, m['info']['name'], m['info']['description']))
+                #await m['do'](pfile.id, pfile.path, core)
+                ## Reload annotation's databases/fields metadata as some new annot db/fields may have been created during the import
+                #await self.annotation_db.load_annotation_metadata()
+                #await self.filter.load_annotation_metadata()
+                #break
         
         
 
-
-    def create_update_filter(self, filter_id, data):
+    async def create_update_filter(self, filter_id, data):
         """
             Create or update a filter for the analysis with the provided id.
         """
+        from core.core import core
+        
+        # First need to check that analysis is ready for that
+        analysis = Analysis.from_id(data["analysis_id"])
+        if analysis is None or analysis.status != "ready":
+            raise RegovarException("Not able to create filter for the analysis (id={}). Analysis not in 'ready' state.".format(data["analysis_id"]))
+            
+        # Save filter informations
         filter = Filter.from_id(filter_id)
         if not filter:
             filter = Filter.new()
+        
         filter.load(data)
+        
+        # Update working table async (if needed)
+        def update_analysis_async(analysis, filter_id, data):
+            from core.model import Filter
+            total_results = core.filters.update_wt(analysis, "filter_{}".format(filter_id), data["filter"])
+            filter = Filter.from_id(filter_id)
+            filter.total_variants = execute("SELECT COUNT(DISTINCT variant_id) FROM wt_{} WHERE filter_{}".format(analysis.id, filter_id)).first()[0]
+            filter.total_results = total_results
+            filter.progress = 1
+            filter.save()
+            core.notify_all(data={'action':'filter_update', 'data': filter.to_json()})
+            
+        if "filter" in data.keys():
+            filter.progress = 0
+            filter.save()
+            run_async(update_analysis_async, analysis, filter.id, data)
+    
         return filter
+        
+        
+        
+    def update_selection(self, analysis_id, is_selected, variant_ids):
+        """
+            Add or remove variant/trx from the selection of the analysis
+        """
+        analysis = Analysis.from_id(analysis_id)
+        if not isinstance(variant_ids, list) or not analysis or not analysis.status == 'ready':
+            return False
+        query = ""
+        for vid in variant_ids:
+            ids = vid.split("_")
+            if len(ids) == 1:
+                query += "UPDATE wt_{} SET is_selected={} WHERE variant_id={}; ".format(analysis.id, is_selected, vid)
+            else:
+                query += "UPDATE wt_{} SET is_selected={} WHERE variant_id={} AND trx_pk_value='{}'; ".format(analysis.id, is_selected, ids[0], ids[1])
+        execute(query)
+        return True
+    
+    
 
-
-
-    def report(self, analysis_id, report_id, report_data):
+    def get_selection(self, analysis_id):
+        """
+            Return list of selected variant (with same columns as set for the current filter)
+        """
         from core.core import core
-        # Working cache folder for the report generator
-        cache = os.path.join(CACHE_DIR, 'reports/', report_id)
-        if not os.path.isdir(cache):
-            os.makedirs(cache)
+        
+        analysis = Analysis.from_id(analysis_id)
+        if not analysis:
+            raise RegovarException("Unable to find analysis with the provided id: {}".format(analysis_id))
+        
+        fields = core.filters.parse_fields(analysis, analysis.fields, "")
+        query = "SELECT {} FROM wt_{} WHERE is_selected".format(fields, analysis_id)
+        result = []
+        for row in execute(query):
+            result.append({fid:row[fid] for fid in fields.split(", ")})
+        
+        return result
+    
+    
+    
+    
+    #async def export(self, file_id, reference_id, analysis_id=None):
+        #from core.managers.imports.vcf_manager import VcfManager
+        ## Check ref_id
+        #if analysis_id:
+            #analysis = Model.Analysis.from_id(analysis_id)
+            #if analysis and not reference_id:
+                #reference_id=analysis.reference_id
+        ## Only import from VCF is supported for samples
+        #print ("Using import manager {}. {}".format(VcfManager.metadata["name"],VcfManager.metadata["description"]))
+        #try:
+            #result = await VcfManager.import_data(file_id, reference_id=reference_id)
+        #except Exception as ex:
+            #msg = "Error occured when caling: core.samples.import_from_file > VcfManager.import_data(file_id={}, ref_id={}).".format(file_id, reference_id)
+            #raise RegovarException(msg, exception=ex)
+        ## if analysis_id set, associate it to sample
+        #if result and result["success"]:
+            #samples = [result["samples"][s] for s in result["samples"].keys()]
+            
+            #if analysis_id:
+                #for s in samples:
+                    #Model.AnalysisSample.new(s.id, analysis_id)
+                    #s.init()
+        #if result["success"]:
+            #return [result["samples"][s] for s in result["samples"].keys()]
+        
+        #return False # TODO raise error
 
-        # Output path where the report shall be stored
-        output_path = os.path.join(CACHE_DIR, 'reports/{}-{}-{:%Y%m%d.%H%M%S}.{}'.format(analysis_id, report_id, datetime.datetime.now(), report_data['output']))
-
-        try:
-            module = core.report_modules[report_id]
-            module['do'](analysis_id, report_data, cache, output_path, annso)
-        except Exception as error:
-            # TODO: log error
-            err("Error occured: {0}".format(error))
-
-        # Store report in database
-        # Todo
-
-        return output_path
 
 
-    def export(self, analysis_id, export_id, report_data):
-        return "<h1>Your export!</h1>" 
+
+

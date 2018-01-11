@@ -1,0 +1,43 @@
+site_name: Regovar
+theme: readthedocs
+markdown_extensions:
+ - extra
+ - nl2br
+ - sane_lists
+ - abbr
+ - attr_list
+ - def_list
+ - tables 
+pages:
+ - 'ACCUEIL': 'index.md'
+ - 'INSTALLATION':
+    - 'Serveur': 'installation/server.md'
+    - 'Client': 'installation/client.md'
+    - 'Configuration': 'installation/configuration.md'
+ - 'UTILISATEUR': 
+    - 'Présentation': 'user/presentation.md'
+    - 'Conceptes de base': 'user/concepts.md'
+    - 'Analyse - Filtrage': 'user/filtering.md'
+    - 'Analyse - Pipeline': 'user/pipeline.md'
+    - 'FAQ': 'user/faq.md'
+ - 'MAINTENANCE':
+    - 'Serveur': 'maintenance/server.md'
+    - 'Client': 'maintenance/client.md'
+ - 'TUTORIELS':
+    - 'Filtrage': 'tutorials/filtering.md'
+    - 'Pipeline': 'tutorials/pipeline.md'
+    - 'Autres': 'tutorials/global.md'
+ - 'DÉVELOPPEUR':
+    - 'Communauté': 'developper/community.md'
+    - 'Bonnes pratiques': 'developper/good_practices.md'
+    - 'Architecture': 'developper/architecture.md'
+    - 'Database': 'developper/database.md'
+    - 'Core': 'developper/core.md'
+    - 'Modules personalisables': 'developper/modules.md'
+    - 'Pirus': 'developper/pirus.md'
+    - 'API rest': 'developper/rest.md'
+    - 'API cli': 'developper/cli.md'
+    - 'Authentification': 'developper/authentication.md'
+    - 'Gestion des erreurs': 'developper/errors.md'
+    
+ 

@@ -12,10 +12,9 @@ import tarfile
 import datetime
 import time
 import uuid
-import subprocess
 
 
-from aiohttp import web, MultiDict
+from aiohttp import web
 from urllib.parse import parse_qsl
 
 
@@ -46,7 +45,7 @@ class FileWrapper (TusFileWrapper):
             self.size = self.file.size
             self.upload_url = "file/upload/" + str(id)
         else:
-            return TusManager.build_response(code=500, body="Unknow id: {}".format(id))
+            raise RegovarException("TUS File wrapper init error : Unknow id: {}".format(id))
 
 
     def save(self):
@@ -55,7 +54,7 @@ class FileWrapper (TusFileWrapper):
             f = File.from_id(self.id)
             f.upload_offset=self.upload_offset
             f.save()
-            core.notify_all(self=None, data={"action": "file_upload", "data" : f.to_json()})
+            core.notify_all(data={"action": "file_upload", "data" : f.to_json(["id", "size", "upload_offset", "status"])})
         except Exception as ex:
             return TusManager.build_response(code=500, body="Unexpected error occured: {}".format(ex))
 
@@ -65,7 +64,7 @@ class FileWrapper (TusFileWrapper):
             log ('Upload of the file (id={0}) is complete.'.format(self.id))
             core.files.upload_finish(self.id, checksum, checksum_type)
             f = File.from_id(self.id)
-            core.notify_all(self=None, data={"action": "file_upload", "data" : f.to_json()})
+            core.notify_all(data={"action": "file_upload", "data" : f.to_json()})
         except Exception as ex:
             return TusManager.build_response(code=500, body="Unexpected error occured: {}".format(ex))
 
@@ -106,7 +105,7 @@ class FileHandler:
     def list(self, request):
         # Generic processing of the get query
         fields, query, order, offset, limit = process_generic_get(request.query_string, File.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = request.query["depth"] if "depth" in request.query else 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -166,47 +165,6 @@ class FileHandler:
 
 
 
-
-
-
-
-    #async def dl_file(self, request):        
-        ## 1- Retrieve request parameters
-        #file_id = request.match_info.get('file_id', -1)
-        #pfile = File.from_id(file_id)
-        #if not pfile:
-            #return rest_error("File with id {} doesn't exits.".format(file_id))
-        #file = None
-        #if os.path.isfile(pfile.path):
-            #with open(pfile.path, 'br') as content_file:
-                #file = content_file.read()
-        #return web.Response(
-            #headers=MultiDict({'Content-Disposition': 'Attachment; filename='+pfile.name}),
-            #body=file
-        #)
-
-
-    #async def dl_pipe_file(self, request):
-        ## 1- Retrieve request parameters
-        #pipe_id = request.match_info.get('pipe_id', -1)
-        #filename = request.match_info.get('filename', None)
-        #pipeline = Pipeline.from_id(pipe_id, 1)
-        #if pipeline == None:
-            #return rest_error("No pipeline with id {}".format(pipe_id))
-        #if filename == None:
-            #return rest_error("No filename provided")
-        #path = os.path.join(pipeline.root_path, filename)
-        #file = None
-        #if os.path.isfile(path):
-            #with open(path, 'br') as content_file:
-                #file = content_file.read()
-        #return web.Response(
-            #headers=MultiDict({'Content-Disposition': 'Attachment; filename='+ filename}),
-            #body=file
-        #)
-
-    #async def dl_run_file(self, request):
-        #return rest_success({})
 
 
 

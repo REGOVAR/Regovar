@@ -39,7 +39,7 @@ def template_from_id(template_id, loading_depth=0):
     """
         Retrieve Template with the provided id in the database
     """
-    template = session().query(Template).filter_by(id=template_id).first()
+    template = Session().query(Template).filter_by(id=template_id).first()
     if template:
         template.init(loading_depth)
     return template

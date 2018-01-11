@@ -30,7 +30,7 @@ def pipeline_init(self, loading_depth=0):
     else:
         self.loading_depth = min(2, loading_depth)
 
-    jobs = session().query(Job).filter_by(pipeline_id=self.id).all()
+    jobs = Session().query(Job).filter_by(pipeline_id=self.id).all()
     for j in jobs:
         self.jobs_ids.append(j.id)
     self.load_depth(loading_depth)
@@ -45,7 +45,7 @@ def pipeline_load_depth(self, loading_depth):
             self.image_file = File.from_id(self.image_file_id, self.loading_depth-1)
             self.jobs = []
             if len(self.jobs_ids) > 0:
-                self.jobs = session().query(Job).filter(Job.id.in_(self.jobs_ids)).all()
+                self.jobs = Session().query(Job).filter(Job.id.in_(self.jobs_ids)).all()
                 for j in self.jobs:
                     j.init(loading_depth-1)
         except Exception as err:
@@ -57,7 +57,7 @@ def pipeline_from_id(pipeline_id, loading_depth=0):
     """
         Retrieve pipeline with the provided id in the database
     """
-    pipeline = session().query(Pipeline).filter_by(id=pipeline_id).first()
+    pipeline = Session().query(Pipeline).filter_by(id=pipeline_id).first()
     if pipeline:
         pipeline.init(loading_depth)
     return pipeline
@@ -69,17 +69,19 @@ def pipeline_from_ids(pipeline_ids, loading_depth=0):
     """
     pipelines = []
     if pipeline_ids and len(pipeline_ids) > 0:
-        pipelines = session().query(Pipeline).filter(Pipeline.id.in_(pipeline_ids)).all()
+        pipelines = Session().query(Pipeline).filter(Pipeline.id.in_(pipeline_ids)).all()
         for p in pipelines:
             p.init(loading_depth)
     return pipelines
 
 
-def pipeline_to_json(self, fields=None):
+def pipeline_to_json(self, fields=None, loading_depth=-1):
     """
         Export the pipeline into json format with only requested fields
     """
     result = {}
+    if loading_depth < 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = ["id", "name", "type", "status", "description", "developers", "installation_date", "version", "pirus_api", "image_file_id", "manifest", "documents"]
     for f in fields:
@@ -87,7 +89,7 @@ def pipeline_to_json(self, fields=None):
             result.update({f: eval("self." + f + ".ctime()")})
         elif f == "jobs":
             if self.jobs and self.loading_depth > 0:
-                result.update({"jobs" : [j.to_json() for j in self.jobs]})
+                result.update({"jobs" : [j.to_json(None, loading_depth-1) for j in self.jobs]})
             else:
                 result.update({"jobs" : self.jobs})
         elif f == "manifest" and self.manifest:
@@ -95,7 +97,7 @@ def pipeline_to_json(self, fields=None):
         elif f == "documents" and self.documents:
             result.update({"documents" : json.loads(self.documents)})
         elif f == "image_file" and self.image_file:
-            result.update({f: self.image_file.to_json()})
+            result.update({f: self.image_file.to_json(None, loading_depth-1)})
         else:
             result.update({f: eval("self." + f)})
     return result
@@ -130,8 +132,8 @@ def pipeline_delete(pipeline_id):
         Delete the pipeline with the provided id in the database
     """
     try:
-        session().query(Pipeline).filter_by(id=pipeline_id).delete(synchronize_session=False)
-        session().commit()
+        Session().query(Pipeline).filter_by(id=pipeline_id).delete(synchronize_session=False)
+        Session().commit()
     except Exception as ex:
         err("Unable to remove pipe from database", ex)
 

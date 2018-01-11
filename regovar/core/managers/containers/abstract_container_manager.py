@@ -100,7 +100,7 @@ class AbstractContainerManager():
             raise RegovarException("The abstract method \"monitoring_job\" of PirusManager shall be implemented.")
 
 
-    def finalize_job(self, job):
+    def finalize_job(self, job, asynch=False):
         """
             IMPLEMENTATION REQUIRED
             Clean temp resources created by the container (log shall be kept)

@@ -42,7 +42,7 @@ def file_from_id(file_id, loading_depth=0):
     """
         Retrieve file with the provided id in the database
     """
-    file = session().query(File).filter_by(id=file_id).first()
+    file = Session().query(File).filter_by(id=file_id).first()
     if file:
         file.init(loading_depth)
     return file
@@ -54,30 +54,32 @@ def file_from_ids(file_ids, loading_depth=0):
     """
     files = []
     if file_ids and len(file_ids) > 0:
-        files = session().query(File).filter(File.id.in_(file_ids)).all()
+        files = Session().query(File).filter(File.id.in_(file_ids)).all()
         for f in files:
             f.init(loading_depth)
     return files
 
 
-def file_to_json(self, fields=None):
+def file_to_json(self, fields=None, loading_depth=-1):
     """
         Export the file into json format with requested fields
     """
     result = {}
+    if loading_depth < 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = ["id", "name", "type", "size", "upload_offset", "status", "create_date", "update_date", "tags", "job_source_id", "jobs_ids"]
     for f in fields:
         if f == "create_date" or f == "update_date":
-            result.update({f: eval("self." + f + ".ctime()")})
+            result.update({f: eval("self." + f + ".isoformat()")})
         elif f == "jobs":
             if self.loading_depth == 0:
                 result.update({"jobs" : self.jobs})
             else:
-                result.update({"jobs" : [j.to_json() for j in self.jobs]})
+                result.update({"jobs" : [j.to_json(None, loading_depth-1) for j in self.jobs]})
         elif f == "job_source" and self.loading_depth > 0:
             if self.job_source:
-                result.update({"job_source" : self.job_source.to_json()})
+                result.update({"job_source" : self.job_source.to_json(None, loading_depth-1)})
             else:
                 result.update({"job_source" : self.job_source})
         else:
@@ -117,7 +119,13 @@ def file_delete(file_id):
     """
         Delete the file with the provided id in the database
     """
-    session().query(File).filter_by(id=file_id).delete(synchronize_session=False)
+    Session().query(File).filter_by(id=file_id).delete(synchronize_session=False)
+    # TODO: check and clean all associations
+    # - analysis via analysis_file table
+    # - sample via file_id property
+    # - subject via subject_file table
+    # - pipeline
+    # - job via job_file
 
 
 def file_new():

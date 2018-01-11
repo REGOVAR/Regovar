@@ -14,14 +14,21 @@ from core.framework.postgresql import *
 
 
 Indicator = Base.classes.indicator
-Indicator.public_fields = ["id", "name", "description", "default_value_id"]
+Indicator.public_fields = ["id", "name", "description", "meta"]
 
 
 
 
 
-IndicatorValue = Base.classes.indicator_value
-Indicator.public_fields = ["id", "indicator_id", "name", "description", "style"]
+def indicator_from_analysis_id(analysis_id):
+    return []
 
+def indicator_from_job_id(job_id):
+    return []
 
+def indicator_from_subject_id(subject_id):
+    return []
 
+Indicator.from_analysis_id = indicator_from_analysis_id
+Indicator.from_job_id = indicator_from_job_id
+Indicator.from_subject_id = indicator_from_subject_id

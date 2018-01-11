@@ -32,13 +32,15 @@ class VepImporter(AbstractTranscriptDataImporter):
                 vcf_flag = 'ANN'
                 
             if vcf_flag :
+                reference_name = Model.execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first()[0]
+                
                 data = headers['INFO'][vcf_flag]['description'].split('Format:')
                 self.name = "VEP"
                 self.reference_id = reference_id
                 self.description = data[0].strip()
                 self.columns = [self.normalise_annotation_name(c).title() for c in data[1].strip().split('|')]
                 self.version = headers['VEP'][0].split(' ')[0]
-                self.table_name = self.normalise_annotation_name('{}_{}_{}'.format('VEP', self.version, reference_id))
+                self.table_name = self.normalise_annotation_name('{}_{}_{}'.format('VEP', self.version, reference_name))
                 self.vcf_flag = vcf_flag
                 self.columns_definitions = VepImporter.columns_definitions
                 result = 'Feature' in self.columns
@@ -74,8 +76,8 @@ class VepImporter(AbstractTranscriptDataImporter):
             query += pattern.format(self.table_name, ', '.join(fields))
             query += "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(self.table_name)
             query += "CREATE INDEX {0}_idx_var ON {0} USING btree (bin, chr, pos);".format(self.table_name)
-                
-            # Register annotation
+            
+            # Register annotation DB
             db_uid, pk_uid = Model.execute("SELECT MD5('{0}'), MD5(concat(MD5('{0}'), '{1}'))".format(self.table_name, self.colums_as_pk)).first()
             query += "CREATE INDEX {0}_idx_tid ON {0} USING btree (regovar_trx_id);".format(self.table_name)
             query += "INSERT INTO annotation_database (uid, reference_id, name, version, name_ui, description, ord, type, db_pk_field_uid, jointure) VALUES "
@@ -91,15 +93,30 @@ class VepImporter(AbstractTranscriptDataImporter):
                 'transcript',
                 pk_uid)
             query += "INSERT INTO annotation_field (database_uid, ord, name, name_ui, type, description) VALUES "
-            for idx, col_name in enumerate(self.columns_definitions.keys()):
+            
+            # Register annotation Fields
+            fields = [field for field in self.columns_definitions.keys()]
+            fields.sort()
+            for idx, col_name in enumerate(fields):
                 query += "('{0}', {1}, '{2}', '{3}', '{4}', '{5}'),".format(db_uid, idx, col_name, col_name.title(), self.columns_definitions[col_name]["type"], self.escape_value_for_sql(self.columns_definitions[col_name]["description"]))
             Model.execute(query[:-1])
             Model.execute("UPDATE annotation_field SET uid=MD5(concat(database_uid, name)) WHERE uid IS NULL;")
         
+        # # Pre-process of polyphen/sift vcf columns that are split on 2 columns in regovar db
+        # self.columns = [self.normalise_annotation_name(s) for s in self.columns]
+        # if "sift" in self.columns: 
+        #     self.columns.extend(["sift_pred", "sift_score"])
+        #     self.columns.remove("sift")
+        # if "polyphen" in self.columns: 
+        #     self.columns.extend(["polyphen_pred", "polyphen_score"])
+        #     self.columns.remove("polyphen")
+
         # Retrieve column mapping for column in vcf
+        self.columns = [self.normalise_annotation_name(s) for s in self.columns]
+
         for col in Model.execute("SELECT name, name_ui, type FROM annotation_field WHERE database_uid='{}'".format(db_uid)):
-            if col.name_ui in self.columns:
-                columns_mapping[col.name_ui] = {'name': col.name, 'type': col.type, 'name_ui': col.name_ui}
+            if col.name in self.columns:
+                columns_mapping[col.name] = {'name': col.name, 'type': col.type, 'name_ui': col.name_ui}
         for col in self.columns:
             if col not in columns_mapping.keys():
                 columns_mapping[col] = False
@@ -135,22 +152,27 @@ class VepImporter(AbstractTranscriptDataImporter):
             
             for col_pos, col_name in enumerate(self.columns):
                 try:
-                    col_mapping = self.columns_mapping[col_name]
-                    sname = self.normalise_annotation_name(col_name)
-                    fields = [sname]
                     vals = [self.escape_value_for_sql(data[col_pos])]
+                    
+                    col_mapping = self.columns_mapping[col_name]
+                    fields = [col_name]
+
+                    if not col_mapping and col_name not in ['sift', 'polyphen']:
+                        # war("Unable to import vcf VEP annotation : {} ({}). No column mapping/definition provided. SKIPPED".format(col_name, ','.join(vals)))
+                        continue
+                    
                     # Manage specials annotations
-                    if sname == 'allele':
+                    if col_name == 'allele':
                         allele = vals[0].strip().strip('-') # When deletion, VEP use '-', but regovar just let empty string.
                         success, new_value = self.value_to_regovar_type(vals[0], "string")
                         vals = [new_value]
-                    elif sname == 'feature':
+                    elif col_name == 'feature':
                         trx_pk = vals[0].strip()
                         success, new_value = self.value_to_regovar_type(vals[0], "string")
                         vals = [new_value]
-                    elif sname == 'consequence':
+                    elif col_name == 'consequence':
                         vals = ["ARRAY [{}]".format(",".join(["'{}'".format(self.escape_value_for_sql(v)) for v in data[col_pos].split('&')]))]
-                    elif sname == "sift":
+                    elif col_name == "sift":
                         vals = vals[0].strip().split('(')
                         if len(vals) == 2:
                             fields = ["sift_pred", "sift_score"]
@@ -158,7 +180,7 @@ class VepImporter(AbstractTranscriptDataImporter):
                             vals = [new_value, float(vals[1][:-1])]
                         else:
                             continue
-                    elif sname == "polyphen":
+                    elif col_name == "polyphen":
                         vals = vals[0].strip().split('(')
                         if len(vals) == 2:
                             fields = ["polyphen_pred", "polyphen_score"]
@@ -166,7 +188,7 @@ class VepImporter(AbstractTranscriptDataImporter):
                             vals = [new_value, float(vals[1][:-1])]
                         else:
                             continue
-                    elif sname.endswith('maf'):
+                    elif col_name.endswith('maf'):
                         v = vals[0]
                         vals = [None]
                         v = v.strip().split('&')
@@ -293,6 +315,7 @@ class VepImporter(AbstractTranscriptDataImporter):
         "tsl" :                { "type" : "string", "description" : "Transcript support level. NB: not available for GRCh37"},
         "appris" :             { "type" : "string", "description" : "Annotates alternatively spliced transcripts as primary or alternate based on a range of computational methods. NB: not available for GRCh37"},
         "refseq_match" :       { "type" : "string", "description" : "The RefSeq transcript match status; contains a number of flags indicating whether this RefSeq transcript matches the underlying reference sequence and/or an Ensembl transcript (more information). NB: not available for GRCh37"},
+        "refseq" :             { "type" : "string", "description" : "The RefSeq transcript match"},
         "gene_pheno" :         { "type" : "string", "description" : "Indicates if overlapped gene is associated with a phenotype, disease or trait"},
         "hgvs_offset" :        { "type" : "int",    "description" : "Indicates by how many bases the HGVS notations for this variant have been shifted"},
         "exac_maf" :           { "type" : "float", "description" : "Frequency of existing variant in Exac database"},

@@ -62,7 +62,7 @@ def user_from_id(user_id, loading_depth=0):
     """
         Retrieve user with the provided id in the database
     """
-    user = session().query(User).filter_by(id=user_id).first()
+    user = Session().query(User).filter_by(id=user_id).first()
     if user : user.init(loading_depth)
     return user
 
@@ -73,7 +73,7 @@ def user_from_ids(user_ids, loading_depth=0):
     """
     users = []
     if user_ids and len(user_ids) > 0:
-        users = session().query(User).filter(User.id.in_(user_ids)).all()
+        users = Session().query(User).filter(User.id.in_(user_ids)).all()
         for u in users:
             u.init(loading_depth)
     return users
@@ -83,7 +83,7 @@ def user_from_credential(login, pwd):
     """
         Retrieve File with the provided login+pwd in the database
     """
-    user = session().query(User).filter_by(login=login).first()
+    user = Session().query(User).filter_by(login=login).first()
     if user:
         user.init()
         if user.password is None:
@@ -94,11 +94,13 @@ def user_from_credential(login, pwd):
     return None
 
 
-def user_to_json(self, fields=None):
+def user_to_json(self, fields=None, loading_depth=-1):
     """
         Export the user into json format with only requested fields
     """
     result = {}
+    if loading_depth < 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = User.public_fields
     for f in fields:  
@@ -106,9 +108,9 @@ def user_to_json(self, fields=None):
             if f in ["update_date", "create_date"]:
                 result.update({f: eval("self." + f + ".isoformat()")})
             elif f in ["sandbox"] and self.loading_depth > 0:
-                result.update({f: eval("self.{}.to_json()".format(f))})
+                result.update({f: eval("self.{}.to_json(None, loading_depth-1)".format(f))})
             elif f in ["projects", "subjects"] and self.loading_depth > 0:
-                result.update({f: [o.to_json() for o in eval("self." + f)]})
+                result.update({f: [o.to_json(None, loading_depth-1) for o in eval("self." + f)]})
             else:
                 result.update({f: eval("self." + f)})
     return result
@@ -180,14 +182,8 @@ def user_get_projects(self, loading_depth=0):
     """
         Return the list of projects that can access the user
     """
-    from core.model.project import Project, UserProjectSharing
-    ids = session().query(UserProjectSharing).filter_by(user_id=self.id).all()
-    projects = Project.from_ids([i.project_id for i in ids], loading_depth)
-    result = []
-    for p in projects:
-        if not p.is_folder:
-            result.append(p)
-    return result
+    from core.model.project import Project
+    return Session().query(Project).filter_by(is_folder=False).all()
 
 
 
@@ -195,9 +191,8 @@ def user_get_subjects(self, loading_depth=0):
     """
         Return the list of subjects that can access the user
     """
-    from core.model.subject import Subject, UserSubjectSharing
-    ids = session().query(UserSubjectSharing).filter_by(user_id=self.id).all()
-    return Subject.from_ids([i.subject_id for i in ids], loading_depth)
+    from core.model.subject import Subject
+    return Session().query(Subject).all()
 
 
 
@@ -206,15 +201,12 @@ def user_delete(user_id):
     """
         Delete the user with the provided id in the database
     """
-    from core.model.project import Project, UserProjectSharing
-    from core.model.subject import UserSubjectSharing
+    from core.model.project import Project
     
     u = User.from_id(user_id)
     if u:
         Project.delete(u.sandbox_id)
-        session().query(UserProjectSharing).filter_by(user_id=user_id).delete(synchronize_session=False)
-        session().query(UserSubjectSharing).filter_by(user_id=user_id).delete(synchronize_session=False)
-        session().query(User).filter_by(id=user_id).delete(synchronize_session=False)
+        Session().query(User).filter_by(id=user_id).delete(synchronize_session=False)
         
 
 

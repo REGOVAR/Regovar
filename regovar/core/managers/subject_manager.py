@@ -14,50 +14,55 @@ class SubjectManager:
 
 
 
-    def list(self, user_id, fields=None, query=None, sort=None, offset=None, limit=None, depth=0):
+    def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """
-            Generic method to get subject according to provided filtering options
+            Generic method to get subject data according to provided filtering options
         """
-        # Check parameters
-        fields, query, sort, offset, limit = check_generic_query_parameter(Model.User.public_fields, ['name'], fields, query, sort, offset, limit)
-
-        # Build query
-        result = []
-        sql = "SELECT " + ','.join(fields) + " FROM \"user\""
-
-        # Get result
-        rsql = Model.execute(sql)
-
-        # Get and return result
-        for s in rsql:
-            entry = {}
-            for f in fields:
-                if f == "roles" or f == "settings":
-                    data = eval("s." + f)
-                    if data:
-                        entry.update({f: json.loads(eval("s." + f))})
-                    else:
-                        entry.update({f: None})
-                else:
-                    entry.update({f: eval("s." + f)})
-            result.append(entry)
-        return result
+        if not isinstance(fields, dict):
+            fields = None
+        if query is None:
+            query = {}
+        if order is None:
+            order = ["lastname", "firstname"]
+        if offset is None:
+            offset = 0
+        if limit is None:
+            limit = RANGE_MAX
+        s = Model.Session()
+        subjects = s.query(Model.Subject).filter_by(**query).order_by(",".join(order)).limit(limit).offset(offset).all()
+        for s in subjects: s.init(depth)
+        return subjects
 
 
-    def get(self, subject_id, user_id):
+
+
+    def delete(self, subject_id):
+        """ 
+            Delete the subject
+        """
+        subject = Model.Subject.from_id(subject_id)
+        if not subject: raise RegovarException(ERR.E102001.format(subject_id), "E102001")
         # TODO
-        pass
-
-
-    def edit(self, subject_id, data, user_id):
-        # TODO
-        pass
+        # regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
 
 
 
-    def delete(self, subject_id, user_id):
-        # TODO
-        pass
+
+
+    def create_or_update(self, subject_data, loading_depth=1):
+        """
+            Create or update a subject with provided data.
+        """
+        if not isinstance(subject_data, dict): raise RegovarException(ERR.E202002, "E202002")
+
+        sid = None
+        if "id" in subject_data.keys():
+            sid = subject_data["id"]
+
+        # Get or create the subject
+        subject = Model.Subject.from_id(sid, loading_depth) or Model.Subject.new()
+        subject.load(subject_data)
+        return subject
 
 
 

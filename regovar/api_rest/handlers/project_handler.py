@@ -7,13 +7,9 @@ import ipdb;
 import os
 import json
 import aiohttp
-import aiohttp_jinja2
 import datetime
 import time
 
-
-from aiohttp import web, MultiDict
-from urllib.parse import parse_qsl
 
 from config import *
 from core.framework.common import *
@@ -76,7 +72,7 @@ class ProjectHandler:
         """
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Project.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -102,7 +98,7 @@ class ProjectHandler:
         	data["id"] = project_id
         # Create or update the project
         try:
-            project = core.projects.create_or_update(data, 1)
+            project = core.projects.create_or_update(data)
         except RegovarException as ex:
             return rest_exception(ex)
         if project is None:
@@ -143,7 +139,8 @@ class ProjectHandler:
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Project.public_fields)
         project_id = request.match_info.get('project_id', -1)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        user_id = None # TODO: retrieve user id from session
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -151,7 +148,7 @@ class ProjectHandler:
             "range_total"  : Project.count(),
             "range_max"    : RANGE_MAX,
         }
-        events = core.events.get(fields, query, order, offset, limit, depth)
+        events = core.events.list(user_id, fields, query, order, offset, limit, depth)
         return rest_success([e.to_json() for e in events], range_data)
 
 
@@ -162,7 +159,7 @@ class ProjectHandler:
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Project.public_fields)
         project_id = request.match_info.get('project_id', -1)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -174,13 +171,13 @@ class ProjectHandler:
         return rest_success([s.to_json() for s in subjects], range_data)
     
     
-    def tasks(self, request):
+    def analyses(self, request):
         """
              Get list of tasks (jobs and analyses) of the project (allow search parameters)
         """
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Project.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -201,7 +198,7 @@ class ProjectHandler:
         from core.core import core
         fields, query, order, offset, limit = process_generic_get(request.query_string, Project.public_fields)
         project_id = request.match_info.get('project_id', -1)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,

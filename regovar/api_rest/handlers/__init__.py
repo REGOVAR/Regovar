@@ -15,5 +15,9 @@ from api_rest.handlers.variant_handler import VariantHandler
 from api_rest.handlers.api_handler import ApiHandler
 from api_rest.handlers.user_handler import UserHandler
 from api_rest.handlers.project_handler import ProjectHandler
+from api_rest.handlers.subject_handler import SubjectHandler
 from api_rest.handlers.event_handler import EventHandler
 from api_rest.handlers.search_handler import SearchHandler
+from api_rest.handlers.admin_handler import AdminHandler
+from api_rest.handlers.phenotype_handler import PhenotypeHandler
+from api_rest.handlers.panel_handler import PanelHandler

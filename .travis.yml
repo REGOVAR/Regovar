@@ -1,0 +1,53 @@
+language: python
+python: 3.6
+os: linux
+dist: trusty
+
+addons:
+  postgresql: "9.6"
+
+services:
+  - postgresql
+
+
+
+before_install:
+  - sudo apt update
+  - sudo apt install -y build-essential libssl-dev libffi-dev libpq-dev libmagickwand-dev
+
+install:
+  - sudo adduser postgres sudo
+  - sudo mkdir -p /var/regovar/{cache,downloads,files,pipelines,jobs,databases/hg19,databases/hg38}
+  - sudo chown -R `whoami`:`whoami` /var/regovar
+  - cd /var/regovar/databases/hg38
+  - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
+  - gunzip refGene.txt.gz
+  - cd /var/regovar/databases/hg19
+  - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz
+  - gunzip refGene.txt.gz
+
+
+
+before_script:
+  - cd /home/travis/build/REGOVAR/Regovar
+  - psql -c "CREATE USER regovar WITH PASSWORD 'regovar';" -U postgres
+  - psql -c "CREATE DATABASE regovar_test OWNER regovar;" -U postgres
+
+script:
+  - pip install -r requirements.txt
+  - pip install -r requirements-dev.txt
+  - cd regovar
+  - make init
+  - sed -i 's/^\(\s*DATABASE_NAME\s*=\s*"[^"]\+\)\(".*\)/\1_test\2/' config.py
+  - make install
+  - make update_hpo
+  - psql -U regovar -d regovar_test -f tests/init_fake_data.sql
+  - coverage run tests.py
+  - coverage report
+  - coverage xml
+  - python-codacy-coverage -r coverage.xml
+  
+
+branches:
+  only:
+    - master

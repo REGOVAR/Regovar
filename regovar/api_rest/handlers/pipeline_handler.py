@@ -15,7 +15,7 @@ import uuid
 import subprocess
 
 
-from aiohttp import web, MultiDict
+from aiohttp import web
 from urllib.parse import parse_qsl
 
 
@@ -54,7 +54,7 @@ class PipelineHandler:
 
     def list(self, request):
         fields, query, order, offset, limit = process_generic_get(request.query_string, Pipeline.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('sublvl', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -70,7 +70,7 @@ class PipelineHandler:
         pipe_id = request.match_info.get('pipe_id', -1)
         pipe = Pipeline.from_id(pipe_id, -1)
         if not pipe:
-            return rest_error("No pipeline with id ".format(pipe_id))
+            return rest_error("No pipeline with id {}".format(pipe_id))
 
         pipe = pipe.to_json(Pipeline.public_fields)
         return rest_success(format_pipeline_json(pipe))

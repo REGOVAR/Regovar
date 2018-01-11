@@ -31,7 +31,7 @@ class UserManager:
             offset = 0
         if limit is None:
             limit = RANGE_MAX
-        s = Model.session()
+        s = Model.Session()
         users = s.query(Model.User).filter_by(**query).order_by(order).limit(limit).offset(offset).all()
         for u in users: u.init(depth)
         return users

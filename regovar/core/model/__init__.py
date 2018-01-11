@@ -9,17 +9,17 @@ from core.model.pipeline import Pipeline
 from core.model.job import Job, MonitoringLog, JobFile
 
 # Annso import
-from core.model.analysis import Analysis, AnalysisSample
+from core.model.analysis import Analysis, AnalysisSample, AnalysisFile
 from core.model.annotation import AnnotationDatabase, AnnotationField
-from core.model.attribute import Attribute
 from core.model.filter import Filter
-from core.model.sample import Sample, SampleVariant
+from core.model.sample import Sample
 from core.model.template import Template
 from core.model.variant import Variant
 
 # Regovar import
 from core.model.user import User
-from core.model.project import Project, ProjectIndicator, UserProjectSharing, ProjectFile
+from core.model.project import Project
 from core.model.event import Event
 from core.model.indicator import Indicator
-from core.model.subject import Subject, SubjectIndicator, UserSubjectSharing, SubjectFile
+from core.model.subject import Subject, SubjectFile
+from core.model.panel import Panel

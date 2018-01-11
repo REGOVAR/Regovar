@@ -11,7 +11,7 @@ import datetime
 import time
 
 
-from aiohttp import web, MultiDict
+from aiohttp import web
 from urllib.parse import parse_qsl
 
 from config import *
@@ -71,7 +71,7 @@ class SampleHandler:
         # TODO : pagination
         # TODO : search parameters
         result = []
-        samples = [s for s in session().query(Sample).filter_by(reference_id=ref_id).order_by(Sample.subject_id).all()]
+        samples = [s for s in Session().query(Sample).filter_by(reference_id=ref_id).order_by(Sample.subject_id).all()]
         current_subject = {"id":-1}
         for s in samples:
             if s.subject_id != current_subject["id"]:
@@ -88,7 +88,7 @@ class SampleHandler:
     def list(self, request):
         # Generic processing of the get query
         fields, query, order, offset, limit = process_generic_get(request.query_string, Sample.public_fields)
-        depth = int(MultiDict(parse_qsl(request.query_string)).get('depth', 0))
+        depth = 0
         # Get range meta data
         range_data = {
             "range_offset" : offset,
@@ -122,16 +122,12 @@ class SampleHandler:
         try:
             samples = await core.samples.import_from_file(file_id, ref_id)
         except Exception as ex:
-            print(ex)
-            return rest_error("Import error : enable to import samples. ".format(str(ex)))
+            return rest_error("Import error : Unable to import samples.", ex=ex)
         if samples:
             for s in samples:
-                if params["subject_id"]: 
+                if hasattr(params, "subject_id") and params["subject_id"]: 
                     s.subject_id = params["subject_id"]
-                else:
-                    # TODO: create new empty subject and associate it to the sample
-                    log("TODO : link sample {} to new empty subject".format(s.id))
-                if params["analysis_id"]: 
+                if hasattr(params, "analysis_id") and params["analysis_id"]: 
                     AnalysisSample.new(s.id, params["analysis_id"])
             return rest_success([s.to_json() for s in samples])
         
@@ -140,5 +136,17 @@ class SampleHandler:
     
     
     
-    
+    async def update(self, request):
+        """
+            Update a sample with provided data
+        """
+        sample_id = request.match_info.get('sample_id', -1)
+        data = await request.json()
+        try:
+            sample = Sample.from_id(sample_id, 1)
+            sample.load(data)
+            sample.save()
+        except Exception as ex:
+            return rest_error("Unable to update sample data with provided informations. {}".format(str(ex)))
+        return rest_success(sample.to_json())
     

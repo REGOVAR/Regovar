@@ -21,16 +21,15 @@ import core.model as Model
             
             
 class PedManager(AbstractImportManager)
-    def __init__(self):
-        self.metadata = {
-            "name" : "PED",
-            "input" :  ["ped", "fam"],
-            "description" : "Import sample's attributes from ped file"
-        }
+    metadata = {
+        "name" : "PED",
+        "input" :  ["ped", "fam"],
+        "description" : "Import sample's attributes from ped file"
+    }
 
 
-
-    async def import_data(file_id):
+    @staticmethod
+    async def import_data(file_id, **kargs):
 
         file = Model.File.from_id(file_id)
         filepath = file.path

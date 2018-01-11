@@ -1,7 +1,5 @@
-#!env/python3
+  #!env/python3
 # coding: utf-8
-import os
-import json
 
 from core.framework.common import *
 from core.framework.postgresql import *
@@ -20,7 +18,7 @@ def analysis_init(self, loading_depth=0):
             - project_id        : int           : the id of the project that owns this analysis
             - name              : str           : the name of the analysis
             - comment           : str           : an optional comment
-            - settings          : json          : null or refer to the template that have been used to init the analysis settings
+            - settings          : json          : parameters used to init the analysis
             - fields            : [str]         : The list of field's id to display
             - filter            : json          : The last current filter to applied
             - order             : [str]         : The list of field's id to used to order result
@@ -29,19 +27,21 @@ def analysis_init(self, loading_depth=0):
             - update_date       : datetime      : The last time that the analysis have been updated
             - total_variants    : int           : The total number of variant in this analysis
             - reference_id      : int           : Refer to the id of the reference used for this analysis
-            - computing_progress: float         : Used when the working table is computed to store the current progress
+            - computing_progress: json          : Used when the working table is computed to store the current progress, error, messages, ...
             - status            : enum          : The status of the analysis : 'empty', 'computing', 'ready', 'error'
             - filters_ids       : [int]         : The list of ids of filters saved for this analysis
             - samples_ids       : [int]         : The list of ids of samples used for analysis
-            - attributes        : [Attribute]   : The list of attributes defined for this analysis
+            - files_ids         : [int]         : The list of ids of files associated to the analysis (via analysis_file table)
+            - attributes        : json          : The list of attributes defined for this analysis
+            - fullpath          : [json]        : The list of folder from root to the analyses [{"id":int, "name":str},...]
+            - statistics        : json          : Statistics about the analysis
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
-            - project           : [Job]         : The list of Job owns by the project
-            - samples           : [File]        : The list of File owns by the project
-            - filters           : Project       : The parent Project if defined
+            - project           : Project       : The that own the analysis
+            - samples           : [Sample]      : The list of samples owns by the analysis
+            - filters           : [Filter]      : The list of Filter created in the analysis
+            - files             : [File]        : The list of File associated to the analysis (via analysis_file table)
     """
-    from core.model.attribute import Attribute
     from core.model.project import Project
-    from core.model.template import Template
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     # Avoid recursion infinit loop
     if hasattr(self, "loading_depth") and self.loading_depth >= loading_depth:
@@ -52,15 +52,22 @@ def analysis_init(self, loading_depth=0):
         if not self.filter: self.filter = ANALYSIS_DEFAULT_FILTER
         self.filters_ids = self.get_filters_ids()
         self.samples_ids = AnalysisSample.get_samples_ids(self.id)
-        self.attributes = Attribute.get_attributes(self.id)
+        self.attributes = self.get_attributes()
+        self.files_ids = AnalysisFile.get_files_ids(self.id)
+        self.panels_ids = self.get_panels_ids()
+        self.fullpath = self.get_fullpath()
         
         self.project = None
         self.samples = []
         self.filters = []
+        self.files = []
+        self.panels = []
         if self.loading_depth > 0:
             self.project = Project.from_id(self.project_id, self.loading_depth-1)
             self.samples = AnalysisSample.get_samples(self.id, self.loading_depth-1)
             self.filters = self.get_filters(self.loading_depth-1)
+            self.files = AnalysisFile.get_files(self.id, self.loading_depth-1)
+            self.panels = self.get_panels()
     except Exception as ex:
         raise RegovarException("Analysis data corrupted (id={}).".format(self.id), "", ex)
             
@@ -70,49 +77,53 @@ def analysis_from_id(analysis_id, loading_depth=0):
     """
         Retrieve analysis with the provided id in the database
     """
-    analysis = session().query(Analysis).filter_by(id=analysis_id).first()
+    analysis = Session().query(Analysis).filter_by(id=analysis_id).first()
     if analysis:
         analysis.init(loading_depth)
     return analysis
 
 
 
-def analysis_to_json(self, fields=None):
+def analysis_to_json(self, fields=None, loading_depth=-1):
     """
-        export the analysis into json format with only requested fields
+        export the analysis into json format
+        - fields lazy loading
+        - custom recursive depth loading (max 2)
     """
-    from core.model.sample import Sample
     result = {}
+    if loading_depth < 0:
+        loading_depth = self.loading_depth
     if fields is None:
         fields = Analysis.public_fields
-    for f in fields:
-        if f == "create_date" or f == "update_date":
-            result.update({f: eval("self." + f + ".isoformat()")})
-        elif f == "samples":
-            fields = Sample.public_fields
-            if "analyses" in fields : fields.remove("analyses")
-            result[f] = [o.to_json(fields) for o in eval("self." + f)]
-        elif f in ["filters", "attributes"] and self.loading_depth>0:
-            result[f] = [o.to_json() for o in eval("self." + f)]
-        elif f in ["project", "template"] and self.loading_depth>0:
-            obj = eval("self." + f)
-            result[f] = obj.to_json() if obj else None
+    for field in fields:
+        if field == "create_date" or field == "update_date":
+            result.update({field: eval("self." + field + ".isoformat()")})
+        elif field in ["samples", "filters", "files"]:
+            if hasattr(self, field) and len(eval("self." + field)) > 0 and loading_depth > 0:
+                result[field] = [o.to_json(None, loading_depth-1) for o in eval("self." + field)]
+            else:
+                result[field] = []
+        elif field in ["project"] and loading_depth>0:
+            obj = eval("self." + field)
+            result[field] = obj.to_json(None, loading_depth-1) if obj else None
         else:
             try:
-                result.update({f: eval("self." + f)})
+                result.update({field: eval("self." + field)})
             except Exception as ex:
-                err("Analysis.to_json unable to evaluate the value of the field {}. {}".format(f, str(ex)))
+                err("Analysis.to_json unable to evaluate the value of the field {}. {}".format(field, str(ex)))
     return result
     
     
 
 def analysis_load(self, data):
     """
-        Helper to update several paramters at the same time. Note that dynamics properties (project, template, samples, samples_ids, attributes)
+        Helper to update several paramters at the same time. Note that dynamics properties (project, samples, files, attributes)
         cannot be updated with this method. However, you can update project_id .
-        To update sample and Attributes you must used dedicated models object : AnalysisSample and Attribute
+        To update sample you must used dedicated models object : AnalysisSample
     """
+    from core.model.project import Project
     settings = False
+    need_to_clean_db = False
     try:
         if "name"               in data.keys(): self.name               = data['name']
         if "project_id"         in data.keys(): self.project_id         = data['project_id']
@@ -126,14 +137,28 @@ def analysis_load(self, data):
         if "total_variants"     in data.keys(): self.total_variants     = data["total_variants"]
         if "reference_id"       in data.keys(): self.reference_id       = data["reference_id"]
         if "computing_progress" in data.keys(): self.computing_progress = data["computing_progress"]
-        if "status"             in data.keys(): self.status             = data["status"] if data["status"] else 'emmpty'
+        if "status"             in data.keys(): self.status             = data["status"] if data["status"] else 'empty'
+        if "attributes"         in data.keys(): self.attributes         = data["attributes"]
+        if "statistics"         in data.keys(): self.statistics         = data["statistics"]
+        
+        if "files_ids" in data.keys(): 
+            self.files_ids = data['files_ids']
+            # Remove old
+            for fid in self.files_ids:
+                if fid not in data["files_ids"]:
+                    AnalysisFile.delete(self.id, fid)
+            # Add new samples
+            for fid in data["files_ids"]:
+                if fid not in self.files_ids:
+                    AnalysisFile.new(self.id, sid)
+            
         if "settings" in data.keys(): 
             # When settings change, need to regenerate working table
-            self.settings = data['settings']
+            self.settings = data["settings"]
             self.status = "empty"
-            self.computing_progress = 0
-            execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
-            execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(self.id))
+            self.computing_progress = None
+            need_to_clean_db = True
+            
 
         if "samples_ids" in data.keys():
             # Remove old
@@ -146,9 +171,8 @@ def analysis_load(self, data):
                     AnalysisSample.new(self.id, sid)
             # When settings change, need to regenerate working table
             self.status = "empty"
-            self.computing_progress = 0
-            execute("DROP TABLE IF EXISTS wt_{} CASCADE".format(self.id))
-            execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(self.id))
+            self.computing_progress = None
+            need_to_clean_db = True
 
             # If settings empty, init it with informations from samples
             if len(self.settings["annotations_db"]) == 0:
@@ -165,10 +189,16 @@ def analysis_load(self, data):
                 settings["annotations_db"] = dbuids
                 self.settings = settings
 
+        
+        if need_to_clean_db:
+            execute("DROP TABLE IF EXISTS wt_{0} CASCADE; DROP TABLE IF EXISTS wt_{0}_var CASCADE;".format(self.id))
 
         # check to reload dynamics properties
         if self.loading_depth > 0:
-            self.load_depth(self.loading_depth)
+            self.project = Project.from_id(self.project_id, self.loading_depth-1)
+            self.samples = AnalysisSample.get_samples(self.id, self.loading_depth-1)
+            self.filters = self.get_filters(self.loading_depth-1)
+            self.files = AnalysisFile.get_files(self.id, self.loading_depth-1)
         self.save()
 
         # FIXME : why sqlalchemy don't care about json settings the first time ?
@@ -176,8 +206,8 @@ def analysis_load(self, data):
             self.settings = settings
             self.save()
         # END FIXME
-    except Exception as err:
-        raise RegovarException('Invalid input data to load.', "", err)
+    except Exception as ex:
+        raise RegovarException('Invalid input data to load.', "", ex)
     return self
 
 
@@ -187,7 +217,7 @@ def analysis_delete(analysis_id):
         Delete the Analysis with the provided id in the database
     """
     # TODO : delete linked filters, AnalysisSample, Attribute, WorkingTable
-    session().query(Analysis).filter_by(id=analysis_id).delete(synchronize_session=False)
+    Session().query(Analysis).filter_by(id=analysis_id).delete(synchronize_session=False)
 
 
 def analysis_new():
@@ -205,6 +235,7 @@ def analysis_new():
     return a
 
 
+
 def analysis_count():
     """
         Return total of Analyses entries in database
@@ -218,46 +249,91 @@ def analysis_get_filters_ids(self):
         Return the list of filters saved for the analysis
     """
     result = []
-    filters = session().query(Filter).filter_by(analysis_id=self.id).all()
+    filters = Session().query(Filter).filter_by(analysis_id=self.id).order_by(Filter.id).all()
     for f in filters:
         result.append(f.id)
     return result
+
+
 
 def analysis_get_filters(self, loading_depth=0):
     """
         Return the list of filters saved in the analysis
     """
-    return session().query(Filter).filter_by(analysis_id=self.id).all()
+    filters = Session().query(Filter).filter_by(analysis_id=self.id).all()
+    for f in filters: f.init(loading_depth)
+    return filters
 
 
-def analysis_get_attributes_ids(self):
+
+def analysis_get_attributes(self):
     """
-        Return the list of attributes defined for the analysis
-    """
-    result = []
-    attributes = session().query(Attribute).filter_by(analysis_id=self.id).all()
-    for a in attributes:
-        result.append(a.id)
-    return result
-
-
-def analysis_get_attributes(self, loading_depth=0):
-    """
-        Return the list of filters saved in the analysis
+        Return the list of attributes saved in the analysis
     """
     result = []
-    attributes = session().query(Attribute).filter_by(analysis_id=self.id).order_by("name, sample_id").all()
+    sql = "SELECT * FROM attribute WHERE analysis_id={} ORDER BY name, sample_id".format(self.id)
+    attributes = execute(sql)
     current_attribute = None
     for a in attributes:
         if current_attribute is None or current_attribute != a.name:
             current_attribute = a.name
-            result.append({"name": a.name, "samples_value": {a.sample_id: a.value}})
+            result.append({"name": a.name, "samples_values": {a.sample_id: {'value': a.value, 'wt_col_id': a.wt_col_id}}, "values_map" : {a.value : a.wt_col_id}})
         else:
-            result[-1]["samples_value"][a.sample_id] = a.value
+            result[-1]["samples_values"][a.sample_id] = {'value': a.value, 'wt_col_id': a.wt_col_id}
+            result[-1]["values_map"][a.value] = a.wt_col_id
+    return result
+
+
+
+def analysis_get_panels_ids(self):
+    """
+        Return the list of panels versions ids used for this analyses (set in settings)
+    """
+    return self.settings["panels"]  if "panels" in self.settings else []
+
+
+
+def analysis_get_panels(self):
+    """
+        Return the list of panels versions used for this analyses (set in settings)
+    """
+    panels_ids = self.settings["panels"]  if "panels" in self.settings else []
+    result = []
+    refgene_table = "refgene_{}".format(execute("SELECT table_suffix FROM reference WHERE id={}".format(self.reference_id)).first().table_suffix)
+    if len(panels_ids)>0:
+        data = execute("SELECT p.name, p.id AS panel_id, pv.version, pv.id AS version_id, pv.data FROM panel_entry pv INNER JOIN panel p ON pv.panel_id=p.id WHERE pv.id IN ('{}')".format("','".join(panels_ids)))
+        for panel_data in data:
+            # Get panel data
+            panel_result = {"name": panel_data.name, "version": panel_data.version, "panel_id": panel_data.panel_id, "version_id":panel_data.version_id, "entries": []}
+            for data in panel_data.data:
+                if "chr" in data:
+                    panel_result["entries"].append({"chr" : data["chr"], "start": data["start"], "end": data["end"]})
+                elif "id" in data:
+                    gene_data = execute("SELECT chr, txrange FROM {} WHERE name2='{}'".format(refgene_table, data["label"])).first()
+                    if gene_data:
+                        panel_result["entries"].append({"chr" : gene_data.chr, "start": gene_data.txrange.lower, "end": gene_data.txrange.upper})
+                    else:
+                        war("Gene '{}' have not been retrieved in {} for the panel {}. TODO: MUST implement search from former symbols and synonyms".format(data["label"], refgene_table, panel_data.id))
+        result.append(panel_result)
+    return result
+
+
+def analaysis_get_fullpath(self):
+    """
+        Return the list of project from the root to the last one where the analysis is stored
+    """
+    from core.model import Project
+    fullpath = []
+    project = Project.from_id(self.project_id)
+    while project is not None:
+        fullpath.insert(0,{"id": project.id, "name":project.name})
+        project = None if not project.parent_id else Project.from_id(project.parent_id)
+    
+    return fullpath
 
 
 Analysis = Base.classes.analysis
-Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "computing_progress", "status"]
+Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "files_ids", "files", "computing_progress", "status", "panels_ids", "panels", "fullpath", "statistics"]
 Analysis.init = analysis_init
 Analysis.from_id = analysis_from_id
 Analysis.to_json = analysis_to_json
@@ -269,6 +345,12 @@ Analysis.count = analysis_count
 Analysis.get_filters_ids = analysis_get_filters_ids
 Analysis.get_filters = analysis_get_filters
 Analysis.get_attributes = analysis_get_attributes
+Analysis.get_panels_ids = analysis_get_panels_ids
+Analysis.get_panels = analysis_get_panels
+Analysis.get_fullpath = analaysis_get_fullpath
+
+
+
 
 
 
@@ -301,14 +383,14 @@ def analysissample_get_samples_ids(analysis_id):
     """
         Return the list of samples ids of an analysis
     """
-    return [s.sample_id for s in session().query(AnalysisSample).filter_by(analysis_id=analysis_id).all()]
+    return [s.sample_id for s in Session().query(AnalysisSample).filter_by(analysis_id=analysis_id).all()]
 
 
 def analysissample_get_analyses_ids(sample_id):
     """
         Return the list of analyses ids where the sample is used
     """
-    return [a.analysis_id for a in session().query(AnalysisSample).filter_by(sample_id=sample_id).all()]
+    return [a.analysis_id for a in Session().query(AnalysisSample).filter_by(sample_id=sample_id).all()]
 
 
 def analysissample_get_samples(analysis_id, loading_depth=0):
@@ -319,7 +401,7 @@ def analysissample_get_samples(analysis_id, loading_depth=0):
     samples_ids = analysissample_get_samples_ids(analysis_id)
     result = []
     if len(samples_ids) > 0:
-        samples = session().query(Sample).filter(Sample.id.in_(samples_ids)).all()
+        samples = Session().query(Sample).filter(Sample.id.in_(samples_ids)).all()
         for s in samples:
             s.init(loading_depth)
             result.append(s)
@@ -333,7 +415,7 @@ def analysissample_get_analyses(sample_id, loading_depth=0):
     result = []
     analyses_ids = analysissample_get_analyses_ids(sample_id)
     if len(analyses_ids) > 0:
-        analyses = session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
+        analyses = Session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
         for a in analyses:
             a.init(loading_depth)
             result.append(a)
@@ -354,7 +436,7 @@ def analysissample_delete(analysis_id, sample_id):
         Delete the link between an analysis and a sample
     """
     # TODO : delete linked filters, AnalysisSample, Attribute, WorkingTable
-    session().query(AnalysisSample).filter_by(analysis_id=analysis_id, sample_id=sample_id).delete(synchronize_session=False)
+    Session().query(AnalysisSample).filter_by(analysis_id=analysis_id, sample_id=sample_id).delete()
 
 
 AnalysisSample = Base.classes.analysis_sample
@@ -365,6 +447,84 @@ AnalysisSample.get_analyses = analysissample_get_analyses
 AnalysisSample.save = generic_save
 AnalysisSample.new = analysissample_new
 AnalysisSample.delete = analysissample_delete
+
+
+
+
+# =====================================================================================================================
+# ANALYSIS FILE
+# =====================================================================================================================
+AnalysisFile = Base.classes.analysis_file
+
+
+def analysisfile_get_files_ids(analysis_id):
+    """
+        Return the list of file ids of an analysis
+    """
+    return [f.file_id for f in Session().query(AnalysisFile).filter_by(analysis_id=analysis_id).all()]
+
+
+def analysisfile_get_analyses_ids(file_id):
+    """
+        Return the list of analyses ids where the file is linked
+    """
+    return [a.analysis_id for a in Session().query(AnalysisFile).filter_by(file_id=file_id).all()]
+
+
+def analysisfile_get_files(analysis_id, loading_depth=0):
+    """
+        Return the list of files used in an analysis
+    """
+    from core.model.file import File
+    files_ids = analysisfile_get_files_ids(analysis_id)
+    result = []
+    if len(files_ids) > 0:
+        files = Session().query(File).filter(File.id.in_(files_ids)).all()
+        for f in files:
+            f.init(loading_depth)
+            result.append(f)
+    return result
+
+
+def analysisfile_get_analyses(file_id, loading_depth=0):
+    """
+        Return the list of analyses that have the file
+    """
+    result = []
+    analyses_ids = analysisfile_get_analyses_ids(sample_id)
+    if len(analyses_ids) > 0:
+        analyses = Session().query(Analysis).filter(Analysis.id.in_(analyses_ids)).all()
+        for a in analyses:
+            a.init(loading_depth)
+            result.append(a)
+    return result
+
+
+def analysisfile_new(analysis_id, file_id):
+    """
+        Create a new analysis-file association and save it in the database
+    """
+    sf = AnalysisFile(analysis_id=analysis_id, file_id=file_id)
+    sf.save()
+    return sf
+
+
+def analysisfile_delete(analysis_id, file_id):
+    """
+        Delete the link between an analysis and a file
+    """
+    # TODO : delete linked filters, AnalysisFile, Attribute, WorkingTable
+    Session().query(AnalysisFile).filter_by(analysis_id=analysis_id, file_id=file_id).delete()
+
+
+AnalysisFile = Base.classes.analysis_file
+AnalysisFile.get_files_ids = analysisfile_get_files_ids
+AnalysisFile.get_analyses_ids = analysisfile_get_analyses_ids
+AnalysisFile.get_files = analysisfile_get_files
+AnalysisFile.get_analyses = analysisfile_get_analyses
+AnalysisFile.save = generic_save
+AnalysisFile.new = analysisfile_new
+AnalysisFile.delete = analysisfile_delete
 
 
 

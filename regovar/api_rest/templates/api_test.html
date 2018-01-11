@@ -98,13 +98,14 @@
                     <li><a data-toggle="tab" href="#db"><i class="glyphicon glyphicon-book"></i> Database</a></li>
                     
                     <li><a data-toggle="tab" href="#annot"><i class="glyphicon glyphicon-tag"></i> Annotations</a></li>
-                    <li><a data-toggle="tab" href="#var"><i class="glyphicon glyphicon-folder-open"></i> Variants</a></li>
+                    <li><a data-toggle="tab" href="#search"><i class="glyphicon glyphicon-search"></i> Search</a></li>
                     <li><a data-toggle="tab" href="#sample"><i class="glyphicon glyphicon glyphicon-tint"></i> Samples</a></li>
                     <li><a data-toggle="tab" href="#analysis"><i class="glyphicon glyphicon-equalizer"></i> Analyses</a></li>
                     
                     <li><a data-toggle="tab" href="#user"><i class="glyphicon glyphicon-user"></i> Users</a></li>
                     <li><a data-toggle="tab" href="#project"><i class="glyphicon glyphicon-folder-open"></i> Project</a></li>
                     <li><a data-toggle="tab" href="#subject"><i class="glyphicon glyphicon-briefcase"></i> Subjects</a></li>
+                    <li><a data-toggle="tab" href="#panel"><i class="glyphicon glyphicon-th"></i> Panels</a></li>
                     <li><a data-toggle="tab" href="#event"><i class="glyphicon glyphicon-calendar"></i> Events</a></li>
                     
                     <li><a data-toggle="tab" href="#ws"><i class="glyphicon glyphicon-flash" id="ws_ico"></i> Realtime</a></li>
@@ -140,14 +141,34 @@
 
                 <hr/>
                 <h2>Changes log</h2>
-                <h3>0.2.0 [Current]</h3>
+                <h3>0.6.dev [Current]</h3>
+                <ul><li>Adding panels feature</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.5.dev</h3>
+                <ul><li>Search feature and endpoints</li>
+                    <li>Removing "Variant" endpoints (replaced by search)</li>
+                    <li>Export and Report tools for variant selection</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.4.dev</h3>
+                <ul><li>HPO integration</li>
+                    <li>Python 3.6</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.3.dev</h3>
+                <ul><li>PostgresSQL 9.6</li>
+                    <li>Subject CRUD implementation</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.2.dev</h3>
                 <ul><li>API online documentation (here you are)</li>
                     <li>Adding Pirus v0.2.0 endpoints</li>
                     <li>Adding Annso v0.2.0 endpoints</li>
                     <li>Rework 0.1.0 existings endpoints to be more complient with core and cli api</li>
                 </ul>
-                <h3>0.1.0</h3>
-                <ul><li>First version of the API with endpoints to manage users and</li>
+                <h3>0.1.dev</h3>
+                <ul><li>First version of the API with endpoints to manage users and authentication</li>
                 </ul>
             </div>
 
@@ -162,7 +183,7 @@
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#misc_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Config</a></li>
-                            <li><a href="#misc_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Website</a></li>
+                            <li><a href="#misc_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Tools</a></li>
                             <li><a href="#misc_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Api</a></li>
                             <li><a href="#misc_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Welcom</a></li>
                         </ul>
@@ -183,21 +204,20 @@
                                     <div class="col-sm-10"><button onclick="generic_exec_static('/config', 'misc_result');">Test it</button></div>
                                 </div>
                             </div>
-                            <!-- GET home -->
+                            <!-- GET tools -->
                             <div class="tab-pane fade" id="misc_api_02">
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /</code><br/>
-                                        <i>Return the official web page of Regovar.</i>
+                                        <code>GET /config/tools</code><br/>
+                                        <i>Return custom tools deployed on the server. Custom tools can be export and report generator for variant filtering selection.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
-                                    <div class="col-sm-10"><a href="/" target="_blank" class="btn btn-default">Test it</a></div>  
+                                    <div class="col-sm-10"><button onclick="generic_exec_static('/config/tools', 'misc_result');">Test it</button></div>
                                 </div>
                             </div>
-
                             <!-- GET api -->
                             <div class="tab-pane fade" id="misc_api_03">
                                 <div class="row form-group">
@@ -1103,18 +1123,20 @@
 
 
 
-            <!--          -->
-            <!-- VARIANTS -->
-            <!--          -->
-            <div id="var" class="tab-pane fade">
-                <h1>Variants REST api</h1>
-                <p>API to manage regovar's variants database used for dynamic filtering.</p>
+            <!--        -->
+            <!-- SEARCH -->
+            <!--        -->
+            <div id="search" class="tab-pane fade">
+                <h1>Search REST api</h1>
+                <p>API to search amongs all regovar's data and also several public API like HGNC or OMIM.</p>
                 <div class="panel with-nav-tabs panel-default">
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
-                            <li class="active"><a href="#annot_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show</a></li>
-                            <li><a href="#var_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show (analysis context)</a></li>
-                            <!--<li><a href="#var_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> new</a></li>-->
+                            <li class="active"><a href="#search_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> search</a></li>
+                            <li><a href="#search_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> fetch variant</a></li>
+                            <li><a href="#search_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> fetch gene</a></li>
+                            <li><a href="#search_api_04" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> fetch phenotype</a></li>
+                            <!--<li><a href="#search_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> new</a></li>-->
                         </ul>
                     </div>
 
@@ -1122,37 +1144,47 @@
                     <div class="panel-body">
                         <div class="tab-content">
                             <!-- show variant -->
-                            <div class="tab-pane fade in active" id="annot_api_01">
+                            <div class="tab-pane fade in active" id="search_api_01">
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /variant/{ref_id}/{variant_id}</code><br/>
-                                        <i>Return all information about the given variant.</i>
+                                        <code>GET /search/{query}</code><br/>
+                                        <i>Search provided query in following "objects" :<ul>
+                                            <li>variant :   ILIKE "chr:pos ref>alt" || "chr:pos_start-pos_end" || "chr:pos~delta " || "chr:pos"</li>
+                                            <li>project :   ILIKE "%name%"</li>
+                                            <li>analysis :  ILIKE "%name%"</li>
+                                            <li>sample :    ILIKE "%name%"</li>
+                                            <li>subject :   ILIKE "%firstname|lastname|identifiant%"</li>
+                                            <li>file :      ILIKE "%name%"</li>
+                                            <li>gene :      ILIKE "%name%"</li>
+                                            <li>phenotype : ILIKE "%name%" | "HP:id" </li>
+                                            <li>disease :   ILIKE "%name%" | "OMIM:id" | "ORPHA:id"</li>
+                                            <li>user :      ILIKE "%login|firstname|lastname%"</li>
+                                            <li>pipeline :  ILIKE "%name%"</li>
+                                            <li>panel :     ILIKE "%name%"</li></ul></i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
-                                        <code>ref_id</code><br/>
-                                        <i>The id of the reference.</i><br/><br/>
-                                        <code>variant_id</code><br/>
-                                        <i>The id of the variant.</i>
+                                        <code>query</code><br/>
+                                        <i>The query as string.</i><br/><br/>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="var_api_01_query" type="text" placeholder="/variant/{ref_id}/{variant_id}" value="/variant/2/1"/> 
-                                        <button onclick="generic_exec_from_input('var_api_01_query', 'var_result');" class="btn btn-primary">Test it</button>
+                                        <input id="search_api_01_query" type="text" placeholder="/search/{query}" value="/search/e"/> 
+                                        <button onclick="generic_exec_from_input('search_api_01_query', 'search_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- show variant (analysis context) -->
-                            <div class="tab-pane fade" id="var_api_02">
+                            <div class="tab-pane fade" id="search_api_02">
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /variant/{ref_id}/{variant_id}/{analysis_id}</code><br/>
+                                        <code>GET /search/variant/{ref_id}/{variant_id}(/{analysis_id})</code><br/>
                                         <i>Return all available information about the given variant + data in the context of the analysis.</i>
                                     </div>  
                                 </div>
@@ -1164,74 +1196,71 @@
                                         <code>variant_id</code><br/>
                                         <i>The id of the variant.</i><br/><br/>
                                         <code>analysis_id</code><br/>
-                                        <i>The id of the analysis.</i>
+                                        <i>The optional id of the analysis.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="var_api_02_query" type="text" placeholder="/variant/{ref_id}/{variant_id}/{analysis_id}" value="/variant/2/1/1"/> 
-                                        <button onclick="generic_exec_from_input('var_api_02_query', 'var_result');" class="btn btn-primary">Test it</button>
+                                        <input id="search_api_02_query" type="text" placeholder="/search/variant/{ref_id}/{variant_id}/{analysis_id}" value="/search/variant/2/1"/> 
+                                        <button onclick="generic_exec_from_input('search_api_02_query', 'search_result');" class="btn btn-primary">Test it</button>
                                     </div>
                                 </div>
                             </div>
-                            <!-- show annotation database -->
-                            <div class="tab-pane fade" id="var_api_03">
-                                <div class="alert alert-danger">
-                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
-                                </div>
+                            <!-- show variant (analysis context) -->
+                            <div class="tab-pane fade" id="search_api_03">
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>POST /variant</code><br/>
-                                        <i>Import all variant and their annotations provided as json in the POST body into the database.</i>
+                                        <code>GET /search/gene/{gene_name}</code><br/>
+                                        <i>Return all available information about the given gene.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
-                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
-                                        <pre>[
-    {
-        sample_id:int, 
-        bin:int, 
-        chr:enum, 
-        pos:int, 
-        ref:str, 
-        samples:[
-        {
-            id:int,
-            alt:str, 
-            dp:int, 
-            gt:enum
-        },
-        ...], 
-        annotations:
-        [
-            {&lt;field_uid&gt;:&lt;field_value&gt;},
-        ...]
-    }, 
-    ...
-]</pre><br/>
-                                        <i>The list of variant and their annotation. Note that annotation database and field must already exists in the database (see annotation api to see how to manage it).</i>
+                                        <code>gene_name</code><br/>
+                                        <i>The name of the gene.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        Query : 
-                                        <input id="var_api_03_query" type="text" placeholder="/variant" value="/variant"/><br/>
-                                        Body : <br/>
-                                        <textarea id="var_api_03_body" cols="40" rows="6">{...}</textarea><br/>
-                                        <button onclick="generic_exec_body('var_api_03_query', 'var_api_03_body', 'var_result', 'POST');" class="btn btn-primary">Test it</button>
+                                        <input id="search_api_03_query" type="text" placeholder="/search/gene/{gene_name}" value="/search/gene/BIRC6"/> 
+                                        <button onclick="generic_exec_from_input('search_api_03_query', 'search_result');" class="btn btn-primary">Test it</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- show variant (analysis context) -->
+                            <div class="tab-pane fade" id="search_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /search/phenotype/{hpo_id}</code><br/>
+                                        <i>Return all available information about the given HPO id. HPO id can be of 3 kinds: HPO:{id} for phenotype entries, OMIM:{id} and ORPHA:{id} for disease entries.</i>
                                     </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>hpo_id</code><br/>
+                                        <i>The id of the phenotype or disease.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="search_api_04_query" type="text" placeholder="/search/phenotype/{hpo_id}" value="/search/phenotype/hpo_0000145"/> 
+                                        <button onclick="generic_exec_from_input('search_api_04_query', 'search_result');" class="btn btn-primary">Test it</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <h2>Result</h2>
-                    <button onclick="clear_container('var_result');">Clear</button>
-                    <pre id="var_result"/>
+                    <button onclick="clear_container('search_result');">Clear</button>
+                    <pre id="search_result"/>
                     </pre>
                 </div>
             </div>
@@ -2290,6 +2319,167 @@
             </div>
 
 
+            
+            
+            
+            <!--        -->
+            <!-- PANELS -->
+            <!--        -->
+            <div id="panel" class="tab-pane fade">
+                <h1>Panel REST api</h1>
+                <div class="panel with-nav-tabs panel-default">
+                    <div class="panel-heading">
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a href="#panel_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
+                            <li><a href="#panel_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> get</a></li>
+                            <li><a href="#panel_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
+                            <li><a href="#panel_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> update</a></li>
+                            <li><a href="#panel_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>
+                        </ul>
+                    </div>
+
+
+                    <div class="panel-body">
+                        <div class="tab-content">
+                            <!-- List panel -->
+                            <div class="tab-pane fade in active" id="panel_api_01">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /panel</code><br/>
+                                        <i>Return the list of panel in the database.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="panel_api_01_query" type="text" placeholder="/panel" value="/panel"/> 
+                                        <button onclick="generic_exec_from_input('panel_api_01_query', 'panel_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- get panel -->
+                            <div class="tab-pane fade" id="panel_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /panel/{panel_id}</code><br/>
+                                        <i>Get all details about the panel.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>panel_id</code><br/>
+                                        <i>The id of the panel.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="panel_api_02_query" type="text" placeholder="/panel/{panel_id}" value="/panel/1"/> 
+                                        <button onclick="generic_exec_from_input('panel_api_02_query', 'panel_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- new panel -->
+                            <div class="tab-pane fade" id="panel_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>POST /panel</code><br/>
+                                        <i>Create a new panel with provided information.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "name": str, 
+    "description": str, 
+    "owner": str,
+    "shared": bool, 
+    "version": str,
+    "entries": json,
+    "comment": str
+}</pre><br/>
+                                        <i>The only mandatory fields are <code>name</code> and <code>version</code>.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="panel_api_03_query" type="text" placeholder="/panel" value="/panel"/><br/>
+                                        Body : <br/>
+                                        <textarea id="panel_api_03_body" cols="40" rows="6">{
+    "name": "Test Panel", 
+    "description": "Test", 
+    "shared": false, 
+    "version": "v3",
+    "owner": "Pr Olivier",
+    "entries": [{}]
+}</textarea><br/>
+                                        <button onclick="generic_exec_body('panel_api_03_query', 'panel_api_03_body', 'panel_result', 'POST');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- update panel -->
+                            <div class="tab-pane fade" id="panel_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>PUT /panel/{panel_id}</code><br/>
+                                        <i>Update the panel with provided information.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Parameters</b></div>
+                                    <div class="col-sm-10">
+                                        <code>panel_id</code><br/>
+                                        <i>The id of the panel.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "name": str, 
+    "description": str, 
+    "owner": str,
+    "shared": bool, 
+    "version": str,
+    "new_version": str,
+    "entries": json,
+    "comment": str
+}</pre><br/>
+                                        <i>The only mandatory fields are <code>name</code> and <code>version</code>.<br/>
+                                        If you want to also update the name of the version, you have to put the former version name in the field <code>version</code> and put the new version name in the field <code>new_version</code>.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="panel_api_04_query" type="text" placeholder="/panel/{event_id}" value="/panel/1"/><br/>
+                                        Body : <br/>
+                                        <textarea id="panel_api_04_body" cols="40" rows="6">{...}</textarea><br/>
+                                        <button onclick="generic_exec_body('panel_api_04_query', 'panel_api_04_body', 'panel_result', 'PUT');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2>Result</h2>
+                    <button onclick="clear_container('panel_result');">Clear</button>
+                    <pre id="panel_result"/>
+                    </pre>
+                </div>
+            </div>
+            
+            
+            
 
             <!--        -->
             <!-- EVENTS -->

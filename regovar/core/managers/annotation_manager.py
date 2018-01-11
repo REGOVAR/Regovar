@@ -71,13 +71,14 @@ class AnnotationManager:
         result = await execute_aio(query)
         for row in result:
             if row.reference_id in self.db_list.keys():
-                if row.name_ui in self.db_list[row.reference_id].keys():
-                    self.db_list[row.reference_id][row.name_ui]["versions"][row.version] = row.uid
+                if row.name_ui in self.db_list[row.reference_id]["db"].keys():
+                    
+                    self.db_list[row.reference_id]["db"][row.name_ui]["versions"][row.version] = row.uid
                 else:
-                    self.db_list[row.reference_id]['order'].append(row.name_ui)
-                    self.db_list[row.reference_id]['db'][row.name_ui] = {"name": row.name_ui, "description": row.description, "versions": {row.version: row.uid}}
+                    self.db_list[row.reference_id]["order"].append(row.name_ui)
+                    self.db_list[row.reference_id]["db"][row.name_ui] = {"name": row.name_ui, "description": row.description, "versions": {row.version: row.uid}}
             else:
-                self.db_list[row.reference_id] = {'order': [row.name_ui], 'db': {row.name_ui: {"name": row.name_ui, "description": row.description, "versions": {row.version: row.uid}}}}
+                self.db_list[row.reference_id] = {"order": [row.name_ui], "db": {row.name_ui: {"name": row.name_ui, "description": row.description, "versions": {row.version: row.uid}}}}
 
         # Get list of all annotations fields
         query = "SELECT d.uid AS duid, d.reference_id AS ref, d.version, d.ord AS dord, d.name_ui AS dname, d.description AS ddesc, d.update_date AS ddate, a.uid AS fuid, a.name_ui AS name, a.ord AS ford, a.type AS type, a.description AS desc, a.meta AS meta \
@@ -115,5 +116,5 @@ class AnnotationManager:
             await self.load_annotation_metadata()
             return True
         except Exception as ex:
-            err("Unable to delete annotation database with uid : ".format(db_uid), ex)
+            err("Unable to delete annotation database with uid : {}".format(db_uid), ex)
             return False
