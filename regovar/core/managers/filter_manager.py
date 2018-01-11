@@ -80,17 +80,17 @@ class FilterEngine:
             if analysis is None:
                 raise RegovarException("Analysis cannot be null")
             analysis.db_suffix = "_" + execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix 
-            progress = {"analysis_id": analysis.id, "status": analysis.status, "error_message": "", "log": [
-                {"label": "Creating Working Table", "status": "waiting"},
-                {"label": "Getting variants", "status": "waiting"},
-                {"label": "Getting samples fields", "status": "waiting"},
-                {"label": "Computing predefined filters", "status": "waiting"},
-                {"label": "Computing indexes", "status": "waiting"},
-                {"label": "Gettings annotations", "status": "waiting"},
-                {"label": "Restoring saved filters", "status": "waiting"},
-                {"label": "Restoring selections", "status": "waiting"},
-                {"label": "Restoring variants selection", "status": "skip"},
-                {"label": "Computing analysis statistics", "status": "waiting"},
+            progress = {"id": analysis.id, "status": analysis.status, "error_message": "", "log": [
+                {"label": "Checking prequisites", "status": "done", "progress": 1}, # done in the request method : checking that sample data are ready
+                {"label": "Creating Working Table", "status": "waiting", "progress": 0},
+                {"label": "Getting variants", "status": "waiting", "progress": 0},
+                {"label": "Getting samples fields", "status": "waiting", "progress": 0},
+                {"label": "Computing predefined filters", "status": "waiting", "progress": 0},
+                {"label": "Computing indexes", "status": "waiting", "progress": 0},
+                {"label": "Gettings annotations", "status": "waiting", "progress": 0},
+                {"label": "Restoring saved filters", "status": "waiting", "progress": 0},
+                {"label": "Restoring selections", "status": "waiting", "progress": 0},
+                {"label": "Computing analysis statistics", "status": "waiting", "progress": 0},
             ]}
 
             # create wt table
@@ -128,6 +128,8 @@ class FilterEngine:
             query = "UPDATE analysis SET status='ready' WHERE id={}".format(analysis_id)
             log(" > wt is ready")
             execute(query)
+            progress["status"] = "ready"
+            working_table_creation_update_status(analysis, progress, 0, 1)
 
         except Exception as ex:
             err("Error occurend during ASYNCH creation of the working table of the anlysis {}".format(analysis_id), exception=ex)
@@ -135,17 +137,19 @@ class FilterEngine:
             raise ex
 
 
-    def working_table_creation_update_status(self, analysis, progress, step, status, error=None):
+    def working_table_creation_update_status(self, analysis, progress, step, status, percent, error=None):
         from core.core import core
         progress["log"][step]["status"] = status
+        progress["log"][step]["progress"] = percent
         if error:
             progress["error_message"] += error
-        analysis.computing_progress = progress; analysis.save()
-        core.notify_all({'action':'filtering_creation', 'data': progress})
+        analysis.computing_progress = progress
+        analysis.save()
+        core.notify_all({'action':'wt_creation', 'data': progress})
 
 
     def create_wt_schema(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 0, "computing")
+        self.working_table_creation_update_status(analysis, progress, 1, "computing", 0.1)
 
         wt = "wt_{}".format(analysis.id)
         query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE TABLE {0} (\
@@ -197,11 +201,11 @@ class FilterEngine:
         query = query[:-2] + ");"
         log(" > create wt schema")
         execute(query.format(wt))
-        self.working_table_creation_update_status(analysis, progress, 0, "done")
+        self.working_table_creation_update_status(analysis, progress, 1, "done", 1)
 
 
     def insert_wt_variants(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 1, "computing")
+        self.working_table_creation_update_status(analysis, progress, 2, "computing", 0.1)
         wt = "wt_{}".format(analysis.id)
 
         # create temp table with id of variants
@@ -216,6 +220,7 @@ class FilterEngine:
         query = "UPDATE analysis SET total_variants={1} WHERE id={0};".format(analysis.id, res.rowcount)
         #query += "CREATE INDEX {0}_var_idx_id ON {0}_var USING btree (id);"
         execute(query.format(wt))
+        self.working_table_creation_update_status(analysis, progress, 2, "computing", 0.33)
 
         # Insert variants and their annotations
         q_fields = "is_variant, variant_id, vcf_line, regovar_score, bin, chr, pos, ref, alt, is_transition, sample_tlist"
@@ -232,17 +237,18 @@ class FilterEngine:
         # execute query
         query = "INSERT INTO {0} ({1}) SELECT {2} FROM {3};".format(wt, q_fields, q_select, q_from)
         execute(query)
+        self.working_table_creation_update_status(analysis, progress, 2, "computing", 0.66)
         
         # Create index on variant_id and vcf_line 
         log(" > create variants index")
         query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(wt)
         query += "CREATE INDEX {0}_idx_vcfline ON {0} USING btree (vcf_line);".format(wt)
         execute(query)
-        self.working_table_creation_update_status(analysis, progress, 1, "done")
+        self.working_table_creation_update_status(analysis, progress, 2, "done", 1)
         
 
     def update_wt_samples_fields(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 2, "computing")
+        self.working_table_creation_update_status(analysis, progress, 3, "computing", 0.1)
         log(" > import samples informations")
         wt = "wt_{}".format(analysis.id)
         for sid in analysis.samples_ids:
@@ -250,11 +256,11 @@ class FilterEngine:
             execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_dp_alt=_sub.depth_alt, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, depth_alt, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
             # Retrive informations vcf'line dependent (= chr-pos without trimming)
             execute("UPDATE {0} SET s{2}_qual=_sub.quality, s{2}_filter=_sub.filter FROM (SELECT vcf_line, chr, pos, quality, filter FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.vcf_line=_sub.vcf_line".format(wt, analysis.db_suffix, sid))
-        self.working_table_creation_update_status(analysis, progress, 2, "done")
+        self.working_table_creation_update_status(analysis, progress, 3, "done", 1)
 
 
     def update_wt_stats_prefilters(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 3, "computing")
+        self.working_table_creation_update_status(analysis, progress, 4, "computing", 0.1)
         wt = "wt_{}".format(analysis.id)
         # Variant occurence stats
         query = "UPDATE {0} SET \
@@ -281,6 +287,8 @@ class FilterEngine:
                 sql_where.append(where_pattern.format(region["chr"], region["start"], region["end"]))
             execute(sql.format(wt, panel["version_id"].replace("-", "_"), ' OR '.join(sql_where)))
 
+        self.working_table_creation_update_status(analysis, progress, 4, "computing", 0.5)
+        
         # Predefinied quickfilters
         if analysis.settings["trio"]:
             self.update_wt_compute_prefilter_trio(analysis, analysis.samples_ids, analysis.settings["trio"], progress)
@@ -288,11 +296,11 @@ class FilterEngine:
             for sid in analysis.samples_ids:
                 # TODO: retrieve sex of sample if subject associated, otherwise, do it with default "Female"
                 self.update_wt_compute_prefilter_single(analysis, sid, "F", progress)
-        self.working_table_creation_update_status(analysis, progress, 3, "done")
+        self.working_table_creation_update_status(analysis, progress, 4, "done", 1)
         
         
     def create_wt_variants_indexes(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 4, "computing")
+        self.working_table_creation_update_status(analysis, progress, 5, "computing", 0.1)
         wt = "wt_{}".format(analysis.id)
 
         # Common indexes for variants
@@ -321,11 +329,11 @@ class FilterEngine:
         
         log(" > create index for variants random access")
         execute(query)
-        self.working_table_creation_update_status(analysis, progress, 4, "done")
+        self.working_table_creation_update_status(analysis, progress, 5, "done", 1)
         
 
     def insert_wt_trx(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 5, "computing")
+        self.working_table_creation_update_status(analysis, progress, 6, "computing", 0.1)
         wt = "wt_{}".format(analysis.id)
 
         # Insert trx and their annotations
@@ -389,7 +397,7 @@ class FilterEngine:
                 res = execute(query)
                 log(" > {} trx inserted for {} annotations".format(res.rowcount, self.db_map[dbuid]["name"]))
 
-        self.working_table_creation_update_status(analysis, progress, 5, "done")
+        self.working_table_creation_update_status(analysis, progress, 6, "done", 1)
 
 
     def create_wt_trx_indexes(self, analysis, progress):
@@ -489,22 +497,23 @@ class FilterEngine:
 
 
     def create_wt_stored_filters(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 6, "computing")
+        self.working_table_creation_update_status(analysis, progress, 7, "computing", 0.1)
         
         for flt in analysis.filters:
             log(" > compute filter {}: {}".format(flt.id, flt.name))
             self.update_wt(analysis, "filter_{}".format(flt.id), flt.filter)
-        self.working_table_creation_update_status(analysis, progress, 6, "done")
+        self.working_table_creation_update_status(analysis, progress, 7, "done", 1)
     
 
     def update_wt_set_restore_selection(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 7, "computing")
+        self.working_table_creation_update_status(analysis, progress, 8, "computing", 0.1)
         # TODO: create sql request from json selection data.
-        self.working_table_creation_update_status(analysis, progress, 7, "done")
+        self.working_table_creation_update_status(analysis, progress, 8, "done", 1)
 
 
     def update_wt_samples_stats(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 8, "computing")
+        # TODO: improve progress feedback according to sample count and vep consequences
+        self.working_table_creation_update_status(analysis, progress, 9, "computing", 0.1)
         wt  = "wt_{}".format(analysis.id)
         
         with_vep = None
@@ -533,6 +542,8 @@ class FilterEngine:
                 "others": execute("SELECT COUNT(*) FROM {0} WHERE is_variant AND char_length(ref)<>char_length(alt) AND char_length(ref)>0 AND char_length(alt)>0".format(wt)).first()[0]
                 }
             }
+        self.working_table_creation_update_status(analysis, progress, 9, "computing", 0.20)
+        
         consequences = []
         if with_vep:
             for k, v in self.db_map[with_vep]["fields"].items():
@@ -544,6 +555,7 @@ class FilterEngine:
 
         analysis.statistics = astats
         analysis.save()
+        self.working_table_creation_update_status(analysis, progress, 9, "computing", 0.40)
 
 
         #
@@ -586,7 +598,7 @@ class FilterEngine:
             # Save stats
             sample.stats = stats
             sample.save()
-        self.working_table_creation_update_status(analysis, progress, 8, "done")
+        self.working_table_creation_update_status(analysis, progress, 9, "done", 1)
 
 
 
