@@ -64,11 +64,16 @@ class AnalysisHandler:
 
 
 
+
+
+
     async def new(self, request):
         """
             Create new analysis
         """
         data = await request.json()
+        if isinstance(data, str) : data = json.loads(data)
+        
         try:
             project_id = data["project_id"]
             name = data["name"]
@@ -88,8 +93,10 @@ class AnalysisHandler:
     async def update(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
         data = await request.json()
+        if isinstance(data, str) : data = json.loads(data)
+        
         try:
-            result = core.analyses.update(analysis_id, json.loads(data))
+            result = core.analyses.update(analysis_id, data)
         except Exception as err:
             return rest_error("Error occured when trying to save settings for the analysis with id=" + str(analysis_id) + ". " + str(err))
         return rest_success(result.to_json()) 

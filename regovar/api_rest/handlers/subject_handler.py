@@ -62,8 +62,8 @@ class SubjectHandler:
         from core.core import core
         subject_id = request.match_info.get('subject_id', -1)
         data = await request.json()
-
         if isinstance(data, str) : data = json.loads(data)
+        
         # If provided by the query parameter, ensure that we use the query subject_id
         if subject_id != -1:
         	data["id"] = subject_id
