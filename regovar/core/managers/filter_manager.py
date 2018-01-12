@@ -125,26 +125,26 @@ class FilterEngine:
             self.update_wt_samples_stats(analysis, progress)
 
             # Update count stat of the analysis
-            execute(query)
             progress["status"] = "ready"
             analysis.status = "ready"
-            # send last notifification to update the client too
-            self.working_table_creation_update_status(analysis, progress, 0, "done", 1)
+            self.working_table_creation_update_status(analysis, progress)
             log(" > wt is ready")
 
         except Exception as ex:
             msg = "Error occurend during ASYNCH creation of the working table of the anlysis {}".format(analysis_id)
             err_file = err(msg.format(analysis_id), exception=ex)
-            progress["error_message"] = "[{}] {}".format(err_file, msg)
-            execute("UPDATE analysis SET status='error', computing_progress='{}' WHERE id={}".format(json.dumps(progress), analysis_id))
+            self.working_table_creation_update_status(analysis, progress, error="[{}] {}".format(err_file, msg))
 
 
-    def working_table_creation_update_status(self, analysis, progress, step, status, percent, error=None):
+    def working_table_creation_update_status(self, analysis, progress, step=None, status=None, percent=None, error=None):
         from core.core import core
-        progress["log"][step]["status"] = status
-        progress["log"][step]["progress"] = percent
+        if step and status and percent:
+            progress["log"][step]["status"] = status
+            progress["log"][step]["progress"] = percent
         if error:
             progress["error_message"] += error
+            progress["status"] = "error"
+            analysis.status = "error"
         analysis.computing_progress = progress
         analysis.save()
         core.notify_all({'action':'wt_creation', 'data': progress})
