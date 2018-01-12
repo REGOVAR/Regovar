@@ -89,7 +89,7 @@ CONTAINERS_CONFIG = {
                 "run"         : "The command line that will executed by pirus to run the pipeline.", 
             },
             "default" : {
-                "pirus_api"   : VERSION,               # The version of the pirus api used by the pipeline
+                "pirus_api"   : 0.5,                   # The version of the pirus api used by the pipeline
                 "inputs"      : "/pipeline/inputs",    # The absolute path in the pipeline lxd container to the directory where input files have to be mount.
                 "outputs"     : "/pipeline/outputs",   # The absolute path in the pipeline lxd container to the directory where output files will be write.
                 "logs"        : "/pipeline/logs",      # The absolute path in the pipeline lxd container to the directory where logs files will be write. Note that out.log, err.log and pirus.log will be automatically created in this directory.
