@@ -11,8 +11,10 @@ from core.managers import *
 
 
 
-
-
+#
+# The version of the source code
+#
+REGOVAR_DB_VERSION = "0.6.2"
 
 
 
@@ -28,7 +30,17 @@ def default_notify_all(data):
 
 
 class Core:
+    version = REGOVAR_DB_VERSION
+    
+    
     def __init__(self):
+        # Check that db version is compatible with application version
+        db_version = execute("SELECT value FROM parameter WHERE key='database_version'").first()[0]
+        if db_version != REGOVAR_DB_VERSION:
+            raise RegovarException("The database version ({}) is not complient with the regovar application source code ({}).".format(db_version, REGOVAR_DB_VERSION))
+        else:
+            log("DB version check success: {}".format(db_version))
+        
         # Pipeline and job management (Pirus part)
         self.files = FileManager()
         self.pipelines = PipelineManager()

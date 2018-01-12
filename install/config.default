@@ -9,7 +9,6 @@ DEBUG = True
 # HOST (internal)
 HOST = "127.0.0.1"
 PORT = 8500
-VERSION = "0.6.dev"
 HOSTNAME = "{}:{}".format(HOST, PORT)  # This is the internal host on which aioHTTP will run the service.
 # HOST (public)
 HOST_P = "dev.regovar.org"  # THIS url must be change if the annso server is reach via a public namespace that user

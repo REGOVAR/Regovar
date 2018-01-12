@@ -691,7 +691,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           '0.5.dev'),
+    ('database_version',          'The current version of the database',           '0.6.3'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
     ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
 

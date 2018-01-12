@@ -51,7 +51,7 @@ class ApiHandler:
         result = {
             "api_url": HOST_P,
             "title": "Regovar Service API",
-            "version": VERSION,
+            "version": core.version,
             "website" : "http://regovar.org",
             "last_analyses": self.get_last_analyses(),
             "last_subjects" : self.get_last_subjects(),
@@ -68,7 +68,7 @@ class ApiHandler:
 
     def config(self, request):
         return rest_success({
-            "version" : VERSION,
+            "version" : core.version,
             "host" : HOST_P,
             "pagination_default_range": RANGE_DEFAULT,
             "pagination_max_range": RANGE_MAX
@@ -85,7 +85,7 @@ class ApiHandler:
     @aiohttp_jinja2.template('api_test.html')
     def api(self, request):
         return {
-            "version" : VERSION,
+            "version" : core.version,
             "hostname" : HOST_P,
             "file_public_fields" : ", ".join(File.public_fields)
             }

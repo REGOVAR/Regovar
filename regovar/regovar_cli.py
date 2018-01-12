@@ -9,7 +9,7 @@ import json
 
 from argparse import RawTextHelpFormatter
 from config import *
-
+from core.core import REGOVAR_DB_VERSION
 
 
 
@@ -316,7 +316,7 @@ def parse_job(args, inputs_ids=[], files=[], form=None, help=False, verbose=Fals
 args = parser.parse_args()
 
 if args.version:
-    print ("regovar server : {}".format(VERSION))
+    print ("regovar server : {}".format(REGOVAR_DB_VERSION))
 
 
 if len(args.subcommand) > 0:
@@ -327,9 +327,9 @@ if len(args.subcommand) > 0:
     elif args.subcommand[0] == "file":
         parse_file(args.subcommand[1:], args.help, args.verbose, args.async)
     elif args.subcommand[0] == "version":
-        print ("regovar server : {}".format(VERSION))
+        print ("regovar server : {}".format(REGOVAR_DB_VERSION))
     elif args.subcommand[0] == "config":
-        print ("Server :\n  Version \t{}\n  Hostname \t{}\n  Hostname pub \t{}\n".format(VERSION, HOSTNAME, HOST_P))
+        print ("Server :\n  Version \t{}\n  Hostname \t{}\n  Hostname pub \t{}\n".format(REGOVAR_DB_VERSION, HOSTNAME, HOST_P))
         print ("Database :\n  Host \t\t{}\n  Port \t\t{}\n  User \t\t{} (pwd: \"{}\")\n  Name \t\t{}\n  Pool \t\t{}\n".format(DATABASE_HOST, DATABASE_PORT, DATABASE_USER, DATABASE_PWD, DATABASE_NAME, DATABASE_POOL_SIZE))
         print ("File system :\n  Files \t{}\n  Temp \t\t{}\n  Databases \t{}\n  Pipelines \t{}\n  Jobs \t\t{}\n  Logs \t\t{}".format(FILES_DIR, TEMP_DIR, DATABASES_DIR ,PIPELINES_DIR, JOBS_DIR, LOG_DIR))
     else:
