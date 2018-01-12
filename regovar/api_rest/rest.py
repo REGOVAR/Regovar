@@ -23,6 +23,7 @@ from urllib.parse import parse_qsl
 
 from config import *
 from core.framework.common import *
+from core.framework.postgresql import *
 from core.core import core
 
 
@@ -48,12 +49,11 @@ def rest_success(response_data=None, pagination_data=None):
         results = {"success":True, "data":response_data}
     if pagination_data is not None:
         results.update(pagination_data)
-        
     return web.json_response(results)
 
 
 
-def rest_error(message:str="Unknow error", code:str="", error_id:str="", ex:RegovarException=None):
+def rest_error(message:str="Unknow error", code:str="", error_id:str="", ex=None):
     """ 
         Build the REST error response
         :param message:         The short "friendly user" error message
@@ -61,6 +61,7 @@ def rest_error(message:str="Unknow error", code:str="", error_id:str="", ex:Rego
         :param error_id:        The id of the error, to return to the end-user. 
                                 This code will allow admins to find in logs where exactly this error occure
     """
+    err(message, exception=ex)
     results = {
         "success":      False, 
         "msg":          message, 

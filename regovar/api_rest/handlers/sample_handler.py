@@ -129,7 +129,7 @@ class SampleHandler:
                     s.subject_id = params["subject_id"]
                 if hasattr(params, "analysis_id") and params["analysis_id"]: 
                     AnalysisSample.new(s.id, params["analysis_id"])
-            return rest_success([s.to_json() for s in samples])
+            return rest_success(samples)
         
         return rest_error("unable to import samples from file.")
     

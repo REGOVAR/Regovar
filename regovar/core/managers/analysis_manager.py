@@ -67,9 +67,9 @@ class AnalysisManager:
             Create a new analysis in the database.
         """
         from core.core import core
+        if ref_id not in core.annotations.ref_list.keys():
+            raise RegovarException(msg="A Valid ref_id must be provided to create an analyusis", exception=ex)
         try:
-            if ref_id not in core.annotations.ref_list.keys():
-                ref_id = DEFAULT_REFERENCIAL_ID
             analysis = Analysis.new()            
             analysis.name = name
             analysis.project_id = project_id
@@ -84,7 +84,7 @@ class AnalysisManager:
             log('Core.AnalysisManager.create : New analysis \"{}\" created with the id {}.'.format(name, analysis.id))
             return analysis
         except Exception as ex:
-            raise RegovarException("Unable to create new analysis with provided data", "", ex)
+            raise RegovarException(msg="Unable to create new analysis with provided data", exception=ex)
         return None
 
 
@@ -155,7 +155,7 @@ class AnalysisManager:
             analysis.status = "empty"
             analysis.save()
         except Exception as ex:
-            raise RegovarException("Error occure when trying to clear temporary data of the analysis {}. {}".format(analysis_id, ex))
+            raise RegovarException("Error occure when trying to clear temporary data of the analysis {}.".format(analysis_id), exception=ex)
         return True
 
 
@@ -256,34 +256,6 @@ class AnalysisManager:
     
     
     
-    #async def export(self, file_id, reference_id, analysis_id=None):
-        #from core.managers.imports.vcf_manager import VcfManager
-        ## Check ref_id
-        #if analysis_id:
-            #analysis = Model.Analysis.from_id(analysis_id)
-            #if analysis and not reference_id:
-                #reference_id=analysis.reference_id
-        ## Only import from VCF is supported for samples
-        #print ("Using import manager {}. {}".format(VcfManager.metadata["name"],VcfManager.metadata["description"]))
-        #try:
-            #result = await VcfManager.import_data(file_id, reference_id=reference_id)
-        #except Exception as ex:
-            #msg = "Error occured when caling: core.samples.import_from_file > VcfManager.import_data(file_id={}, ref_id={}).".format(file_id, reference_id)
-            #raise RegovarException(msg, exception=ex)
-        ## if analysis_id set, associate it to sample
-        #if result and result["success"]:
-            #samples = [result["samples"][s] for s in result["samples"].keys()]
-            
-            #if analysis_id:
-                #for s in samples:
-                    #Model.AnalysisSample.new(s.id, analysis_id)
-                    #s.init()
-        #if result["success"]:
-            #return [result["samples"][s] for s in result["samples"].keys()]
-        
-        #return False # TODO raise error
-
-
 
 
 
