@@ -73,12 +73,12 @@ class FilterEngine:
         # As we are in another thread, we have to work in another sql session to avoid conflics
         analysis = Analysis.from_id(analysis_id)
 
+        if analysis is None:
+            err("Analysis cannot be null. Creation of working table for the analysis {} aborded".format(analysis_id))
+            return
+
 
         try:
-
-            # retrieve analysis data
-            if analysis is None:
-                raise RegovarException("Analysis cannot be null")
             analysis.db_suffix = "_" + execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix 
             progress = {"id": analysis.id, "status": analysis.status, "error_message": "", "log": [
                 {"label": "Checking prequisites", "status": "done", "progress": 1}, # done in the request method : checking that sample data are ready
@@ -125,16 +125,18 @@ class FilterEngine:
             self.update_wt_samples_stats(analysis, progress)
 
             # Update count stat of the analysis
-            query = "UPDATE analysis SET status='ready' WHERE id={}".format(analysis_id)
-            log(" > wt is ready")
             execute(query)
             progress["status"] = "ready"
-            working_table_creation_update_status(analysis, progress, 0, 1)
+            analysis.status = "ready"
+            # send last notifification to update the client too
+            self.working_table_creation_update_status(analysis, progress, 0, "done", 1)
+            log(" > wt is ready")
 
         except Exception as ex:
-            err("Error occurend during ASYNCH creation of the working table of the anlysis {}".format(analysis_id), exception=ex)
-            execute("UPDATE analysis SET status='error'")
-            raise ex
+            msg = "Error occurend during ASYNCH creation of the working table of the anlysis {}".format(analysis_id)
+            err_file = err(msg.format(analysis_id), exception=ex)
+            progress["error_message"] = "[{}] {}".format(err_file, msg)
+            execute("UPDATE analysis SET status='error', computing_progress='{}' WHERE id={}".format(json.dumps(progress), analysis_id))
 
 
     def working_table_creation_update_status(self, analysis, progress, step, status, percent, error=None):
@@ -201,7 +203,10 @@ class FilterEngine:
         query = query[:-2] + ");"
         log(" > create wt schema")
         execute(query.format(wt))
-        self.working_table_creation_update_status(analysis, progress, 1, "done", 1)
+        
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][1]["status"] = "done"
+        progress["log"][1]["progress"] = 1
 
 
     def insert_wt_variants(self, analysis, progress):
@@ -244,7 +249,10 @@ class FilterEngine:
         query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(wt)
         query += "CREATE INDEX {0}_idx_vcfline ON {0} USING btree (vcf_line);".format(wt)
         execute(query)
-        self.working_table_creation_update_status(analysis, progress, 2, "done", 1)
+        
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][2]["status"] = "done"
+        progress["log"][2]["progress"] = 1
         
 
     def update_wt_samples_fields(self, analysis, progress):
@@ -256,7 +264,10 @@ class FilterEngine:
             execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_dp_alt=_sub.depth_alt, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, depth_alt, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
             # Retrive informations vcf'line dependent (= chr-pos without trimming)
             execute("UPDATE {0} SET s{2}_qual=_sub.quality, s{2}_filter=_sub.filter FROM (SELECT vcf_line, chr, pos, quality, filter FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.vcf_line=_sub.vcf_line".format(wt, analysis.db_suffix, sid))
-        self.working_table_creation_update_status(analysis, progress, 3, "done", 1)
+            
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][3]["status"] = "done"
+        progress["log"][3]["progress"] = 1
 
 
     def update_wt_stats_prefilters(self, analysis, progress):
@@ -296,7 +307,10 @@ class FilterEngine:
             for sid in analysis.samples_ids:
                 # TODO: retrieve sex of sample if subject associated, otherwise, do it with default "Female"
                 self.update_wt_compute_prefilter_single(analysis, sid, "F", progress)
-        self.working_table_creation_update_status(analysis, progress, 4, "done", 1)
+                
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][4]["status"] = "done"
+        progress["log"][4]["progress"] = 1
         
         
     def create_wt_variants_indexes(self, analysis, progress):
@@ -329,7 +343,10 @@ class FilterEngine:
         
         log(" > create index for variants random access")
         execute(query)
-        self.working_table_creation_update_status(analysis, progress, 5, "done", 1)
+        
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][5]["status"] = "done"
+        progress["log"][5]["progress"] = 1
         
 
     def insert_wt_trx(self, analysis, progress):
@@ -397,7 +414,9 @@ class FilterEngine:
                 res = execute(query)
                 log(" > {} trx inserted for {} annotations".format(res.rowcount, self.db_map[dbuid]["name"]))
 
-        self.working_table_creation_update_status(analysis, progress, 6, "done", 1)
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][6]["status"] = "done"
+        progress["log"][6]["progress"] = 1
 
 
     def create_wt_trx_indexes(self, analysis, progress):
@@ -508,7 +527,10 @@ class FilterEngine:
     def update_wt_set_restore_selection(self, analysis, progress):
         self.working_table_creation_update_status(analysis, progress, 8, "computing", 0.1)
         # TODO: create sql request from json selection data.
-        self.working_table_creation_update_status(analysis, progress, 8, "done", 1)
+        
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][8]["status"] = "done"
+        progress["log"][8]["progress"] = 1
 
 
     def update_wt_samples_stats(self, analysis, progress):
@@ -598,7 +620,10 @@ class FilterEngine:
             # Save stats
             sample.stats = stats
             sample.save()
-        self.working_table_creation_update_status(analysis, progress, 9, "done", 1)
+            
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][9]["status"] = "done"
+        progress["log"][9]["progress"] = 1
 
 
 

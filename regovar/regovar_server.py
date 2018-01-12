@@ -28,8 +28,6 @@ from asyncio import AbstractEventLoop
 from aiohttp import web
 from api_rest import *
 
-if DEBUG:
-    logging.basicConfig(level=logging.DEBUG)
 
 # Start the pirus server
 if __name__ == '__main__':

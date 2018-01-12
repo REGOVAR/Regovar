@@ -9,7 +9,6 @@ import json
 
 from config import *
 from core.framework.common import *
-from core.framework.erreurs_list import ERR
 import core.model as Model
 
 
@@ -55,7 +54,7 @@ class PanelManager:
         """
             Create or update a panel with provided data.
         """
-        if not isinstance(panel_data, dict): raise RegovarException(ERR.E202002, "E202002")
+        if not isinstance(panel_data, dict): raise RegovarException(code="E202002")
 
         pid = None
         if "id" in panel_data.keys() and panel_data["id"]:

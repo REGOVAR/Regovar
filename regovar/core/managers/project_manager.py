@@ -4,7 +4,6 @@ import ipdb
 import json
 import core.model as Model
 from core.framework.common import *
-from core.framework.erreurs_list import ERR
 
 from config import *
 
@@ -42,7 +41,7 @@ class ProjectManager:
             Delete the project
         """
         project = Model.Project.from_id(project_id)
-        if not project: raise RegovarException(ERR.E102001.format(project_id), "E102001")
+        if not project: raise RegovarException(code="E102001", arg=[project_id])
         # TODO
         # regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
 
@@ -54,7 +53,7 @@ class ProjectManager:
         """
             Create or update a project with provided data.
         """
-        if not isinstance(project_data, dict): raise RegovarException(ERR.E202002, "E202002")
+        if not isinstance(project_data, dict): raise RegovarException(code="E202002")
 
         pid = None
         if "id" in project_data.keys():

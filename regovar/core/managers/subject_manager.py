@@ -4,7 +4,6 @@ import ipdb
 import json
 import core.model as Model
 from core.framework.common import *
-from core.framework.erreurs_list import ERR
 
 
 
@@ -41,7 +40,7 @@ class SubjectManager:
             Delete the subject
         """
         subject = Model.Subject.from_id(subject_id)
-        if not subject: raise RegovarException(ERR.E102001.format(subject_id), "E102001")
+        if not subject: raise RegovarException(code="E102001", args=[subject_id])
         # TODO
         # regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
 
@@ -53,7 +52,7 @@ class SubjectManager:
         """
             Create or update a subject with provided data.
         """
-        if not isinstance(subject_data, dict): raise RegovarException(ERR.E202002, "E202002")
+        if not isinstance(subject_data, dict): raise RegovarException(code="E202002")
 
         sid = None
         if "id" in subject_data.keys():

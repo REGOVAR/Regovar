@@ -4,7 +4,6 @@ import ipdb
 import json
 import core.model as Model
 from core.framework.common import *
-from core.framework.erreurs_list import ERR
 
 
 
@@ -47,11 +46,11 @@ class UserManager:
         user = Model.User.from_id(user_to_delete_id)
 
         if admin is None or "Administration" not in admin.roles_dic.keys() or admin.roles_dic["Administration"] != "Write" :
-            raise RegovarException(ERR.E101003, "E101003")
+            raise RegovarException(code="E101003")
         if user is None:
-            raise RegovarException(ERR.E101001, "E101001")
+            raise RegovarException(code="E101001")
         if admin_id == user_to_delete_id:
-            raise RegovarException(ERR.E101004, "E101004")
+            raise RegovarException(code="E101004")
             
         Model.User.delete(user_to_delete_id)
         # core.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
@@ -67,7 +66,7 @@ class UserManager:
         """
         remote_user = Model.User.from_id(remote_user_id)
         if remote_user is None or not isinstance(user_data, dict):
-            raise RegovarException(ERR.E101002, "E101002")
+            raise RegovarException(code="E101002")
         user_id = None
         if "id" in user_data.keys():
             user_id = user_data["id"]

@@ -15,7 +15,6 @@ from sqlalchemy.sql.expression import ClauseElement
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from core.framework.common import *
-from core.framework.erreurs_list import *
 import config as C
 
 
@@ -30,8 +29,8 @@ def init_pg(user, password, host, port, db):
     try:
         url = 'postgresql://{}:{}@{}:{}/{}'.format(user, password, host, port, db)
         con = sqlalchemy.create_engine(url, client_encoding='utf8')
-    except Exception as err:
-        raise RegovarException("Unable to connect to database", "", err)
+    except Exception as ex:
+        raise RegovarException(code="E000001", exception=ex)
     return con
     
 
@@ -42,8 +41,8 @@ try:
     Base.prepare(__db_engine, reflect=True)
     Base.metadata.create_all(__db_engine)
     Session = scoped_session(sessionmaker(bind=__db_engine))
-except Exception as err:
-    raise RegovarException("Error occured when initialising database", "", err)
+except Exception as ex:
+    raise RegovarException(code="E000002", exception=ex)
 
 
 
@@ -75,12 +74,12 @@ def get_or_create(session, model, defaults=None, **kwargs):
                 session.add(instance)
                 session.commit()
                 return instance, True
-            except IntegrityError as e:
+            except IntegrityError as ex:
                 session.rollback()
                 instance = query.one()
                 return instance, False
-    except Exception as e:
-        raise e
+    except Exception as ex:
+        raise ex
 
 
 def check_session(obj):
@@ -102,7 +101,7 @@ def generic_save(obj):
         s.commit()
     except Exception as ex:
         if s: s.rollback()
-        raise RegovarException("Unable to save object in the database", "", ex)
+        raise RegovarException(code="E100002", arg=[str(obj)], exception=ex)
 
 
 def generic_count(obj):
@@ -113,7 +112,7 @@ def generic_count(obj):
         return Session().query(obj).count()
     except Exception as ex:
         Session().rollback()
-        raise RegovarException("Unable to count how many object in the table", "", ex)
+        raise RegovarException(msg="Unable to count how many object in the table", exception=ex)
     
 
 
@@ -134,10 +133,10 @@ def execute(query, loop=True):
             print ("LOOPING > Rollback session and Try to execute again the query")
             s.rollback()
             execute(query, False)
-    except Exception as err:
+    except Exception as ex:
         print ("EXCEPTION SQL !!!!")
         s.rollback()
-        r = RegovarException(ERR.E100001, "E100001", err)
+        r = RegovarException(code="E100001", exception=ex)
         log_snippet(query, r)
         raise r
     

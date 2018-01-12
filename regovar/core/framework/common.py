@@ -270,6 +270,7 @@ def chr_to_db(chr_value):
 
 regovar_logger = None 
 
+    
 
 def setup_logger(logger_name, log_file, level=logging.INFO):
     """
@@ -308,10 +309,10 @@ def war(msg):
 
 def err(msg, exception=None):
     global regovar_logger
-    regovar_logger.error(msg)
-    if exception and not isinstance(exception, RegovarException):
-        # To avoid to log multiple time the same exception when chaining try/catch
-        regovar_logger.exception(exception)
+    log_file = log_snippet(msg, exception)
+    regovar_logger.error("[{}] ".format(log_file) + msg)
+    return log_file
+    
 
 
 
@@ -328,42 +329,40 @@ class RegovarException(Exception):
     """
         Regovar exception
     """
-    msg = "Unknow error :/"
+    msg = "Unknow error :("
     code = "E000000"
 
-    def __init__(self, msg: str, code: str=None, exception: Exception=None, logger: logging.Logger=None):
+    def __init__(self, msg: str=None, code: str=None, args=[], exception: Exception=None, logger: logging.Logger=None):
         self.code = code or RegovarException.code
-        self.msg = msg or RegovarException.msg
-        self.id = str(uuid.uuid4())
-        self.date = datetime.datetime.utcnow().timestamp()
-        self.log = "ERROR {} [{}] {}".format(self.code, self.id, self.msg)
-
-        if logger:
-            logger.error(self.log)
-            if exception and not isinstance(exception, RegovarException):
-                # To avoid to log multiple time the same exception when chaining try/catch
-                logger.exception(exception)
+        
+        # If code set, we can retrieve default error message from error_list, else get message or unknow message
+        if code and not msg: 
+            from core.framework.errors_list import ERR
+            self.msg = eval("ERR.{}".format(code))
+            self.msg = self.msg.format(*args)
         else:
-            err(self.log, exception)
+            self.msg = msg or RegovarException.msg
+        self.date = datetime.datetime.utcnow().timestamp()
+        self.log = "ERROR {} - {}".format(self.code, self.msg)
 
 
     def __str__(self):
         return self.log
 
 
-def log_snippet(longmsg, exception: RegovarException=None):
+def log_snippet(longmsg, exception=None):
     """
         Log the provided msg into a new log file and return the generated log file
         To use when you want to log a long text (like a long generated sql query by example) to 
         avoid to poluate the main log with too much code.
     """
-    uid = exception.id if exception else str(uuid.uuid4())
-    filename = os.path.join(LOG_DIR,"snippet_{}.log".format(uid))
+    uid = str(uuid.uuid4())
+    filename = os.path.join(LOG_DIR, "Error_{}.log".format(uid))
     with open(filename, 'w+') as f:
-        f.write(exception)
+        f.write(str(exception))
         f.write("\n\n")
         f.write(longmsg)
-    return filename
+    return "Error_{}.log".format(uid)
 
 
 
@@ -418,5 +417,5 @@ class Timer(object):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 # Create logger
-setup_logger('regovar', os.path.join(LOG_DIR, "regovar.log"))
+setup_logger('regovar', os.path.join(LOG_DIR, "regovar.log"), logging.DEBUG if DEBUG else logging.INFO)
 regovar_logger = logging.getLogger('regovar')
