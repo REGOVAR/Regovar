@@ -18,6 +18,7 @@ import core.model as Model
 
 from config import *
 from core.managers.imports.vcf_import_vep import VepImporter
+from core.managers.imports.vcf_import_snpeff import SnpEffImporter
 
 
 
@@ -107,38 +108,11 @@ def prepare_vcf_parsing(reference_id, filename):
         vep = {'vep' : False}
     
     # Check for SnpEff
-    snpeff = {'snpeff' : False }
-    #if 'SnpEffVersion' in headers.keys() :
-        #if 'ANN' in headers['INFO'].keys():
-            #d = headers['INFO']['ANN']['description'].split('\'')
-            #snpeff = {
-                #'snpeff' : {
-                    #'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
-                    #'version' : headers['SnpEffVersion'][0].strip().strip('"').split(' ')[0],
-                    #'flag' : 'ANN',
-                    #'name' : 'SnpEff',
-                    #'db_type' : 'transcript',
-                    #'db_pk_field' : 'Feature_ID',
-                    #'columns' : [c.strip() for c in d[1].strip().split('|')],
-                    #'description' : d[0].strip(),
-                #}
-            #}
-        #elif 'EFF' in headers['INFO'].keys():
-            #d = headers['INFO']['EFF']['description'].split('\'')
-            #snpeff = {
-                #'snpeff' : {
-                    #'type' : 'multiple_annotation', # use this key for complex annotations (multiple in one info field like ANN, EFF, CSQ, ...)
-                    #'version' : headers['SnpEffVersion'][0].strip().strip('"').split(' ')[0],
-                    #'flag' : 'EFF',
-                    #'name' : 'SnpEff',
-                    #'db_type' : 'transcript',
-                    #'db_pk_field' : 'Transcript_ID',
-                    #'columns' : [c.strip() for c in d[1].strip().split('|')],
-                    #'description' : d[0].strip(),
-                #}
-            #}
-            #if 'Transcript_ID' not in snpeff['snpeff']['columns']:
-                #snpeff = {'snpeff' : False }
+    snpeff_imp = SnpEffImporter()
+    if snpeff_imp.init(headers, reference_id):
+        snpeff = {'snpeff' : snpeff_imp}
+    else:
+        snpeff = {'snpeff' : False }
 
     ## Check for dbNSFP
     dbnsfp = {'dbnsfp' : False }
