@@ -193,7 +193,7 @@ def check_int(value, default=None):
     """
     if isinstance(value, int):
         return value
-    elif:
+    else:
         try:
             return int(value)
         except ValueError:
@@ -207,7 +207,7 @@ def check_float(value, default=None):
     """
     if isinstance(value, float):
         return value
-    elif:
+    else:
         try:
             return float(value)
         except ValueError:
@@ -221,7 +221,7 @@ def check_bool(value, default=None):
     """
     if isinstance(value, bool):
         return value
-    elif:
+    else:
         try:
             return bool(value)
         except ValueError:
@@ -235,7 +235,7 @@ def check_string(value, default=None):
     """
     if isinstance(value, str):
         return value
-    elif:
+    else:
         try:
             return str(value)
         except ValueError:
