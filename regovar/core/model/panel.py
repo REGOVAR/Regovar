@@ -123,11 +123,11 @@ def panel_to_json(self, fields=None, loading_depth=-1):
 def panel_load(self, data):
     try:
         # Required fields
-        if "name" in data.keys(): self.name = data['name']
-        if "description" in data.keys(): self.description = data['description']
-        if "owner" in data.keys(): self.owner = data['owner']
-        if "update_date" in data.keys(): self.update_date = data['update_date']
-        if "shared" in data.keys(): self.shared = data['shared']
+        if "name" in data.keys(): self.name = check_string(data['name'])
+        if "description" in data.keys(): self.description = check_string(data['description'])
+        if "owner" in data.keys(): self.owner = check_string(data['owner'])
+        if "update_date" in data.keys(): self.update_date = check_date(data['update_date'])
+        if "shared" in data.keys(): self.shared = check_bool(data['shared'])
         self.save()
         
         # if version id provided : update version  (can be done for one version at time)
@@ -147,8 +147,8 @@ def panel_load(self, data):
                           
         # else, if only data provided : create new version
         elif "entries" in data.keys():
-            version = sql_escape(data["version"]) if "version" in data else ""
-            comment = sql_escape(data["comment"]) if "comment" in data else ""
+            version = sql_escape(check_string(data["version"], "")) if "version" in data else ""
+            comment = sql_escape(check_string(data["comment"], "")) if "comment" in data else ""
             
             entries = format_entries(data['entries'])
             entries = json.dumps(entries)

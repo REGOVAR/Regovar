@@ -125,21 +125,21 @@ def analysis_load(self, data):
     settings = False
     need_to_clean_db = False
     try:
-        if "name"               in data.keys(): self.name               = data['name']
-        if "project_id"         in data.keys(): self.project_id         = data['project_id']
-        if "comment"            in data.keys(): self.comment            = data['comment']
-        if "create_date"        in data.keys(): self.create_date        = data['create_date']
-        if "update_date"        in data.keys(): self.update_date        = data['update_date']
-        if "fields"             in data.keys(): self.fields             = data["fields"]
-        if "filter"             in data.keys(): self.filter             = data["filter"]
-        if "selection"          in data.keys(): self.selection          = data["selection"]
-        if "order"              in data.keys(): self.order              = data["order"]
-        if "total_variants"     in data.keys(): self.total_variants     = data["total_variants"]
-        if "reference_id"       in data.keys(): self.reference_id       = data["reference_id"]
-        if "computing_progress" in data.keys(): self.computing_progress = data["computing_progress"]
-        if "status"             in data.keys(): self.status             = data["status"] if data["status"] else 'empty'
-        if "attributes"         in data.keys(): self.attributes         = data["attributes"]
-        if "statistics"         in data.keys(): self.statistics         = data["statistics"]
+        if "name" in data.keys(): self.name = check_string(data['name'])
+        if "project_id" in data.keys(): self.project_id = check_int(data['project_id'])
+        if "comment" in data.keys(): self.comment = check_string(data['comment'])
+        if "create_date" in data.keys(): self.create_date = check_date(data['create_date'])
+        if "update_date" in data.keys(): self.update_date = check_date(data['update_date'])
+        if "fields" in data.keys(): self.fields = data["fields"]
+        if "filter" in data.keys(): self.filter = data["filter"]
+        if "selection" in data.keys(): self.selection = data["selection"]
+        if "order" in data.keys(): self.order = data["order"]
+        if "total_variants" in data.keys(): self.total_variants = check_int(data["total_variants"])
+        if "reference_id" in data.keys(): self.reference_id = check_int(data["reference_id"])
+        if "computing_progress" in data.keys(): self.computing_progress = check_float(data["computing_progress"])
+        if "status" in data.keys(): self.status = check_string(data["status"], "empty") if data["status"] else "empty"
+        if "attributes" in data.keys(): self.attributes = data["attributes"]
+        if "statistics" n data.keys(): self.statistics = data["statistics"]
         
         if "files_ids" in data.keys(): 
             self.files_ids = data['files_ids']

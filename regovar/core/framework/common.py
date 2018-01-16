@@ -173,6 +173,75 @@ def array_merge(array1, array2):
 
 
 
+def check_date(value, default=None):
+    """
+        Secure method to get datetime from unknow value
+    """
+    if isinstance(value, datetime.datetime): 
+        return value
+    elif isinstance(value, str):
+        try:
+            return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+        except ValueError:
+            return default
+    return default
+
+
+def check_int(value, default=None):
+    """
+        Secure method to get int from unknow value
+    """
+    if isinstance(value, int):
+        return value
+    elif:
+        try:
+            return int(value)
+        except ValueError:
+            return default
+    return default
+
+
+def check_float(value, default=None):
+    """
+        Secure method to get float from unknow value
+    """
+    if isinstance(value, float):
+        return value
+    elif:
+        try:
+            return float(value)
+        except ValueError:
+            return default
+    return default
+
+
+def check_bool(value, default=None):
+    """
+        Secure method to get bool from unknow value
+    """
+    if isinstance(value, bool):
+        return value
+    elif:
+        try:
+            return bool(value)
+        except ValueError:
+            return default
+    return default
+
+
+def check_string(value, default=None):
+    """
+        Secure method to get string from unknow value
+    """
+    if isinstance(value, str):
+        return value
+    elif:
+        try:
+            return str(value)
+        except ValueError:
+            return default
+    return default
+
 
 
 

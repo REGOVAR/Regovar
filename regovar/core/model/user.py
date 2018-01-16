@@ -128,18 +128,18 @@ def user_load(self, data):
     """
     try:
         # Required fields
-        if "login" in data.keys() : self.login = data["login"]
-        if "firstname" in data.keys() : self.firstname = data["firstname"]
-        if "lastname" in data.keys() : self.lastname = data["lastname"]
-        if "email" in data.keys() : self.email = data["email"]
-        if "function" in data.keys() : self.function = data["function"]
-        if "location" in data.keys() : self.location = data["location"]
+        if "login" in data.keys() : self.login = check_string(data["login"])
+        if "firstname" in data.keys() : self.firstname = check_string(data["firstname"])
+        if "lastname" in data.keys() : self.lastname = check_string(data["lastname"])
+        if "email" in data.keys() : self.email = check_string(data["email"])
+        if "function" in data.keys() : self.function = check_string(data["function"])
+        if "location" in data.keys() : self.location = check_string(data["location"])
         if "settings" in data.keys() : self.settings = data["settings"]
         if "roles" in data.keys() : self.roles = data["roles"]
-        if "is_activated" in data.keys() : self.is_activated = data["is_activated"]
+        if "is_activated" in data.keys() : self.is_activated = check_bool(data["is_activated"])
         # Update password
-        if "password" in data.keys() : 
-            self.erase_password(data["password"])
+        if "password" in data.keys() and check_string(data["password"]): 
+            self.erase_password(check_string(data["password"]))
         self.save()
     
         # reload dynamics properties

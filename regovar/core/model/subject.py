@@ -123,16 +123,15 @@ def subject_to_json(self, fields=None, loading_depth=-1):
 def subject_load(self, data):
     try:
         # Required fields
-        if "identifier" in data.keys(): self.identifier = data['identifier']
-        if "comment" in data.keys(): self.comment = data['comment']
-        if "firstname" in data.keys(): self.firstname = data['firstname']
-        if "lastname" in data.keys(): self.lastname = data['lastname']
-        if "family_number" in data.keys(): self.family_number = data['family_number']
+        if "identifier" in data.keys(): self.identifier = check_string(data['identifier'])
+        if "comment" in data.keys(): self.comment = check_string(data['comment'])
+        if "firstname" in data.keys(): self.firstname = check_string(data['firstname'])
+        if "lastname" in data.keys(): self.lastname = check_string(data['lastname'])
+        if "family_number" in data.keys(): self.family_number = check_string(data['family_number'])
         if "sex" in data.keys() and data['sex'] in ["male", "female", "unknow"]: self.sex = data['sex']
-        if "dateofbirth" in data.keys(): self.dateofbirth = data['dateofbirth']
-        if "dateofdeath" in data.keys(): self.dateofdeath = data['dateofdeath']
-        if "update_date" in data.keys(): self.update_date = data['update_date']
-        if "last_activity" in data.keys(): self.last_activity = data['last_activity']
+        if "dateofbirth" in data.keys(): self.dateofbirth = check_date(data['dateofbirth'])
+        if "dateofdeath" in data.keys(): self.dateofdeath = check_date(data['dateofdeath'])
+        if "update_date" in data.keys(): self.update_date = check_date(data['update_date'])
         self.save()
         
         # TODO : update indicators

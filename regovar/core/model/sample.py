@@ -112,16 +112,16 @@ def sample_load(self, data):
     from core.model.file import File
     try:
         # update simple properties
-        if "name"               in data.keys(): self.name               = data['name']
-        if "comment"            in data.keys(): self.comment            = data['comment']
-        if "is_mosaic"          in data.keys(): self.is_mosaic          = data['is_mosaic']
-        if "default_dbuid"      in data.keys(): self.default_dbuid      = data['default_dbuid']
+        if "name" in data.keys(): self.name = check_string(data['name'])
+        if "comment" in data.keys(): self.comment = check_string(data['comment'])
+        if "is_mosaic" in data.keys(): self.is_mosaic = check_bool(data['is_mosaic'])
+        if "default_dbuid" in data.keys(): self.default_dbuid = check_string(data['default_dbuid'])
         if "filter_description" in data.keys(): self.filter_description = data['filter_description']
-        if "subject_id"         in data.keys(): self.subject_id         = data['subject_id'] 
-        if "file_id"            in data.keys(): self.file_id            = data['file_id']
-        if "analyses_ids"       in data.keys(): self.analyses_ids       = data['analyses_ids']
-        if "update_date"        in data.keys(): self.update_date        = data['update_date']
-        if "stats"              in data.keys(): self.stats              = data['stats']
+        if "subject_id" in data.keys(): self.subject_id = check_int(data['subject_id'])
+        if "file_id" in data.keys(): self.file_id = check_int(data['file_id'])
+        if "analyses_ids" in data.keys(): self.analyses_ids = data['analyses_ids']
+        if "update_date" in data.keys(): self.update_date = check_date(data['update_date'])
+        if "stats" in data.keys(): self.stats = data['stats']
         
         # save modifications
         self.save()

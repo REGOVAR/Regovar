@@ -112,10 +112,10 @@ def project_load(self, data):
     """
     try:
         # Required fields
-        if "name" in data.keys(): self.name = data['name']
-        if "comment" in data.keys(): self.comment = data['comment']
-        if "parent_id" in data.keys(): self.parent_id = data['parent_id']
-        if "is_folder" in data.keys(): self.is_folder = data['is_folder']
+        if "name" in data.keys(): self.name = check_string(data['name'])
+        if "comment" in data.keys(): self.comment = check_string(data['comment'])
+        if "parent_id" in data.keys(): self.parent_id = check_int(data['parent_id'])
+        if "is_folder" in data.keys(): self.is_folder = check_bool(data['is_folder'], False)
         self.save()
         
         # Update user sharing

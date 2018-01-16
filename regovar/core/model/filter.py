@@ -72,13 +72,13 @@ def filter_load(self, data):
         the dynamic property analysis.
     """
     try:
-        if "name"        in data.keys(): self.name        = data['name']
-        if "analysis_id" in data.keys(): self.analysis_id = data['analysis_id']
-        if "filter"      in data.keys(): self.filter      = data['filter']
-        if "description" in data.keys(): self.description = data['description']
-        if "total_variants" in data.keys(): self.total_variants = data['total_variants']
-        if "total_results" in data.keys(): self.total_results = data['total_results']
-        if "progress" in data.keys(): self.progress = data['progress']
+        if "name" in data.keys(): self.name = check_string(data['name'])
+        if "analysis_id" in data.keys(): self.analysis_id = check_int(data['analysis_id'])
+        if "filter" in data.keys(): self.filter = data['filter']
+        if "description" in data.keys(): self.description = check_string(data['description'])
+        if "total_variants" in data.keys(): self.total_variants = check_int(data['total_variants'])
+        if "total_results" in data.keys(): self.total_results = check_int(data['total_results'])
+        if "progress" in data.keys(): self.progress = check_float(data['progress'])
         self.save()
         
     except Exception as err:

@@ -65,7 +65,6 @@ class MonitoringLog:
 
 
 
-"id", "pipeline_id", "pipeline", "config", "create_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs", "path", "logs", "name"
 # =====================================================================================================================
 # JOB
 # =====================================================================================================================
@@ -194,17 +193,17 @@ def job_to_json(self, fields=None, loading_depth=-1):
 def job_load(self, data):
     try:
         # Required fields
-        if "name" in data.keys(): self.name = data['name']
-        if "pipeline_id" in data.keys(): self.pipeline_id = data['pipeline_id']
+        if "name" in data.keys(): self.name = check_string(data['name'])
+        if "pipeline_id" in data.keys(): self.pipeline_id = check_int(data['pipeline_id'])
         if "config" in data.keys(): self.config = data["config"]
-        if "create_date" in data.keys(): self.create_date = int(data["create_date"])
-        if "update_date" in data.keys(): self.update_date = int(data["update_date"])
-        if "status" in data.keys(): self.status = data["status"]
-        if "progress_value" in data.keys(): self.progress_value = data["progress_value"]
-        if "progress_label" in data.keys(): self.progress_label = data['progress_label']
+        if "create_date" in data.keys(): self.create_date = check_date(data["create_date"])
+        if "update_date" in data.keys(): self.update_date = check_date(data["update_date"])
+        if "status" in data.keys(): self.status = check_string(data["status"])
+        if "progress_value" in data.keys(): self.progress_value = check_float(data["progress_value"])
+        if "progress_label" in data.keys(): self.progress_label = check_string(data['progress_label'])
         if "inputs_ids" in data.keys(): self.inputs_ids = data["inputs_ids"]
         if "outputs_ids" in data.keys(): self.outputs_ids = data["outputs_ids"]
-        if "path" in data.keys(): self.path = data["path"]
+        if "path" in data.keys(): self.path = check_string(data["path"])
         self.save()
 
         # delete old file/job links

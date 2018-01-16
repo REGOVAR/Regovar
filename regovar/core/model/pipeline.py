@@ -106,18 +106,18 @@ def pipeline_to_json(self, fields=None, loading_depth=-1):
 def pipeline_load(self, data):
     try:
         # Required fields
-        if "name" in data.keys(): self.name = data['name']
-        if "type" in data.keys(): self.type = data["type"]
-        if "status" in data.keys(): self.status = data["status"]
-        if "description" in data.keys(): self.description = data["description"]
+        if "name" in data.keys(): self.name = check_string(data['name'])
+        if "type" in data.keys(): self.type = check_string(data["type"])
+        if "status" in data.keys(): self.status = check_string(data["status"])
+        if "description" in data.keys(): self.description = check_string(data["description"])
         if "developers" in data.keys(): self.developers = data["developers"]
-        if "installation_date" in data.keys(): self.installation_date = data["installation_date"]
-        if "version" in data.keys(): self.version = data['version']
-        if "pirus_api" in data.keys(): self.pirus_api = data["pirus_api"]
-        if "image_file_id" in data.keys(): self.image_file_id = data["image_file_id"]
+        if "installation_date" in data.keys(): self.installation_date = check_date(data["installation_date"])
+        if "version" in data.keys(): self.version = check_string(data['version'])
+        if "pirus_api" in data.keys(): self.pirus_api = check_string(data["pirus_api"])
+        if "image_file_id" in data.keys(): self.image_file_id = check_int(data["image_file_id"])
         if "manifest" in data.keys(): self.manifest = data['manifest']
         if "documents" in data.keys(): self.documents = data['documents']
-        if "path" in data.keys(): self.path = data['path']
+        if "path" in data.keys(): self.path = check_string(data['path'])
         # check to reload dynamics properties
         if self.loading_depth > 0:
             self.load_depth(self.loading_depth)

@@ -94,17 +94,17 @@ def file_load(self, data):
         jobs list cannot be edited from the file, each run have to be edited
     """
     try:
-        if "name"          in data.keys(): self.name           = data['name']
-        if "type"          in data.keys(): self.type           = data['type']
-        if "path"          in data.keys(): self.path           = data['path']
-        if "size"          in data.keys(): self.size           = int(data["size"])
-        if "upload_offset" in data.keys(): self.upload_offset  = int(data["upload_offset"])
-        if "status"        in data.keys(): self.status         = data['status']
-        if "create_date"   in data.keys(): self.create_date    = data['create_date']
-        if "update_date"   in data.keys(): self.update_date    = data['update_date']
-        if "md5sum"        in data.keys(): self.md5sum         = data["md5sum"]
-        if "tags"          in data.keys(): self.tags           = data['tags']
-        if "job_source_id" in data.keys(): self.job_source_id  = int(data["job_source_id"])
+        if "name" in data.keys(): self.name = check_string(data['name'])
+        if "type" in data.keys(): self.type = check_string(data['type'])
+        if "path" in data.keys(): self.path = check_string(data['path'])
+        if "size" in data.keys(): self.size = check_int(data["size"])
+        if "upload_offset" in data.keys(): self.upload_offset = check_int(data["upload_offset"])
+        if "status" in data.keys(): self.status = check_string(data['status'])
+        if "create_date" in data.keys(): self.create_date = check_date(data['create_date'])
+        if "update_date" in data.keys(): self.update_date = check_date(data['update_date'])
+        if "md5sum" in data.keys(): self.md5sum = check_string(data["md5sum"])
+        if "tags" in data.keys(): self.tags = data['tags']
+        if "job_source_id" in data.keys(): self.job_source_id = check_int(data["job_source_id"])
         # check to reload dynamics properties
         if self.loading_depth > 0:
             self.load_depth(self.loading_depth)
