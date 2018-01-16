@@ -139,7 +139,7 @@ def analysis_load(self, data):
         if "computing_progress" in data.keys(): self.computing_progress = check_float(data["computing_progress"])
         if "status" in data.keys(): self.status = check_string(data["status"], "empty") if data["status"] else "empty"
         if "attributes" in data.keys(): self.attributes = data["attributes"]
-        if "statistics" n data.keys(): self.statistics = data["statistics"]
+        if "statistics" in data.keys(): self.statistics = data["statistics"]
         
         if "files_ids" in data.keys(): 
             self.files_ids = data['files_ids']
