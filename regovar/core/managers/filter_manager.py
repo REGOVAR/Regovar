@@ -256,14 +256,20 @@ class FilterEngine:
         
 
     def update_wt_samples_fields(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 3, "computing", 0.1)
+        self.working_table_creation_update_status(analysis, progress, 3, "computing", 0.01)
         log(" > import samples informations")
         wt = "wt_{}".format(analysis.id)
+        step = 1/(2*len(analysis.samples_ids))
+        prg = 0
         for sid in analysis.samples_ids:
             # Retrive informations chr-pos-ref-alt dependent
             execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_dp_alt=_sub.depth_alt, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, depth_alt, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
+            prg += step
+            self.working_table_creation_update_status(analysis, progress, 3, "computing", prg)
             # Retrive informations vcf'line dependent (= chr-pos without trimming)
             execute("UPDATE {0} SET s{2}_qual=_sub.quality, s{2}_filter=_sub.filter FROM (SELECT vcf_line, chr, pos, quality, filter FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.vcf_line=_sub.vcf_line".format(wt, analysis.db_suffix, sid))
+            prg += step
+            self.working_table_creation_update_status(analysis, progress, 3, "computing", prg)
             
         # We just update progress without calling notify_all as a notify will be send by the next step
         progress["log"][3]["status"] = "done"
@@ -271,8 +277,10 @@ class FilterEngine:
 
 
     def update_wt_stats_prefilters(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 4, "computing", 0.1)
+        self.working_table_creation_update_status(analysis, progress, 4, "computing", 0.01)
         wt = "wt_{}".format(analysis.id)
+        step = 1/(1+ len(analysis.attributes)*len(analysis.samples_ids) + len(analysis.panels) + (2 if analysis.settings["trio"] else len(analysis.samples_ids)))
+        prg = 0
         # Variant occurence stats
         query = "UPDATE {0} SET \
             sample_tcount=array_length(sample_tlist,1), \
@@ -280,12 +288,16 @@ class FilterEngine:
             sample_acount=array_length(array_intersect(sample_tlist, array[{1}]),1)"
         log(" > compute statistics")
         execute(query.format(wt, ",".join([str(i) for i in analysis.samples_ids])))
+        prg += step
+        self.working_table_creation_update_status(analysis, progress, 4, "computing", prg)
         
         # Attributes
         for attr in analysis.attributes:
             log(" > compute attribute {}".format(attr["name"]))
             for sid, attr_data in attr["samples_values"].items():
                 execute("UPDATE {0} SET attr_{1}=True WHERE s{2}_gt IS NOT NULL".format(wt, attr_data["wt_col_id"], sid))
+                prg += step
+                self.working_table_creation_update_status(analysis, progress, 4, "computing", prg)
 
         # Panels
         for panel in analysis.panels:
@@ -297,16 +309,16 @@ class FilterEngine:
             for region in panel["entries"]:
                 sql_where.append(where_pattern.format(region["chr"], region["start"], region["end"]))
             execute(sql.format(wt, panel["version_id"].replace("-", "_"), ' OR '.join(sql_where)))
-
-        self.working_table_creation_update_status(analysis, progress, 4, "computing", 0.5)
+            prg += step
+            self.working_table_creation_update_status(analysis, progress, 4, "computing", prg)
         
         # Predefinied quickfilters
         if analysis.settings["trio"]:
-            self.update_wt_compute_prefilter_trio(analysis, analysis.samples_ids, analysis.settings["trio"], progress)
+            self.update_wt_compute_prefilter_trio(analysis, analysis.samples_ids, analysis.settings["trio"], progress, prg, step)
         else:
             for sid in analysis.samples_ids:
                 # TODO: retrieve sex of sample if subject associated, otherwise, do it with default "Female"
-                self.update_wt_compute_prefilter_single(analysis, sid, "F", progress)
+                self.update_wt_compute_prefilter_single(analysis, sid, "F", progress, prg, step)
                 
         # We just update progress without calling notify_all as a notify will be send by the next step
         progress["log"][4]["status"] = "done"
@@ -314,7 +326,7 @@ class FilterEngine:
         
         
     def create_wt_variants_indexes(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 5, "computing", 0.1)
+        self.working_table_creation_update_status(analysis, progress, 5, "computing", 0.01)
         wt = "wt_{}".format(analysis.id)
 
         # Common indexes for variants
@@ -350,7 +362,7 @@ class FilterEngine:
         
 
     def insert_wt_trx(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 6, "computing", 0.1)
+        self.working_table_creation_update_status(analysis, progress, 6, "computing", 0.01)
         wt = "wt_{}".format(analysis.id)
 
         # Insert trx and their annotations
@@ -425,48 +437,30 @@ class FilterEngine:
         pass
 
 
-    def update_wt_compute_prefilter_single(self, analysis, sample_id, sex, progress):
-        wt = "wt_{}".format(analysis.id)
-
+    def update_wt_compute_prefilter_single(self, analysis, sample_id, sex, progress, prg, step):
+        query = "UPDATE wt_{0} SET "
         # Dominant
         if sex == "F":
-            query = "UPDATE {0} SET is_dom=True WHERE s{1}_gt>1"
+            query += "is_dom=(s{1}_gt>1), "
         else: # sex == "M"
-            query = "UPDATE {0} SET is_dom=True WHERE chr=23 OR s{1}_gt>1"
-        res = execute(query.format(wt, sample_id))
-        log(" > is_dom : {} variants".format(res.rowcount))
-
+            query += "is_dom=(chr=23 OR s{1}_gt>1), "
         # Recessif Homozygous
-        query = "UPDATE {0} SET is_rec_hom=True WHERE s{1}_gt=1"
-        res = execute(query.format(wt, sample_id))
-        log(" > is_rec_hom : {} variants".format(res.rowcount))
-
+        query += "is_rec_hom=(s{1}_gt=1), "
         # Recessif Heterozygous compoud
-        query = "UPDATE {0} SET is_rec_htzcomp=True WHERE s{1}_is_composite"
-        res = execute(query.format(wt, sample_id))
-        log(" > is_rec_htzcomp : {} variants".format(res.rowcount))
-
+        query += "is_rec_htzcomp=(s{1}_is_composite), "
         # Inherited and denovo are not available for single
-        log(" > is_denovo & is_inherited : disabled")
-
         # Autosomal
-        query = "UPDATE {0} SET is_aut=True WHERE chr<23"
-        res = execute(query.format(wt))
-        log(" > is_aut : {} variants".format(res.rowcount))
-
+        query += "is_aut=(chr<23), "
         # X-Linked
-        query = "UPDATE {0} SET is_xlk=True WHERE chr=23"
-        res = execute(query.format(wt))
-        log(" > is_xlk : {} variants".format(res.rowcount))
-
+        query += "is_xlk=(chr=23), "
         # Mitochondrial
-        query = "UPDATE {0} SET is_mit=True WHERE chr=25"
-        res = execute(query.format(wt))
-        log(" > is_mit : {} variants".format(res.rowcount))
+        query += "is_mit=(chr=25);"
+        execute(query.format(analysis.id, sample_id))
+        prg += step
+        self.working_table_creation_update_status(analysis, progress, 4, "computing", prg)
 
 
-    def update_wt_compute_prefilter_trio(self, analysis, samples_ids, trio, progress):
-        wt  = "wt_{}".format(analysis.id)
+    def update_wt_compute_prefilter_trio(self, analysis, samples_ids, trio, progress, prg, step):
         sex = trio["child_sex"]
         child_id = trio["child_id"]
         mother_id = trio["mother_id"]
@@ -474,45 +468,32 @@ class FilterEngine:
         child_idx = trio["child_index"]
         mother_idx = trio["mother_index"]
         father_idx = trio["father_index"]
-
+        query = "UPDATE wt_{0} SET "
         # Dominant
         if sex == "F":
-            query = "UPDATE {0} SET is_dom=True WHERE s{1}_gt>1"
+            query += "is_dom=(s{1}_gt>1), "
         else: # sex == "M"
-            query = "UPDATE {0} SET is_dom=True WHERE chr=23 OR s{1}_gt>1"
-        res = execute(query.format(wt, child_id))
-        log(" > is_dom : {} variants".format(res.rowcount))
-
+            query += "is_dom=(chr=23 OR s{1}_gt>1), "
         # Recessif Homozygous
-        query = "UPDATE {0} SET is_rec_hom=True WHERE s{1}_gt=1"
-        res = execute(query.format(wt, child_id))
-        log(" > is_rec_hom : {} variants".format(res.rowcount))
-
+        query += "is_rec_hom=(s{1}_gt=1), "
+        # Inherited and denovo
+        query += "is_denovo=(s{1}_gt>0 AND s{2}_gt=0 AND s{3}_gt=0), "
+        # Autosomal
+        query += "is_aut=(chr<23), "
+        # X-Linked
+        query += "is_xlk=(chr=23 AND s{1}_gt>1 AND s{2}_gt>1"
+        query += " AND s{3}_gt>1), " if trio["child_sex"] == "F" else "), "
+        # mitochondrial
+        query += "is_mit=(chr=25)"
+        execute(query.format(analysis.id, child_id, mother_id, father_id, analysis.db_suffix))
+        prg += step
+        self.working_table_creation_update_status(analysis, progress, 4, "computing", prg)
+        
         # Recessif Heterozygous compoud
         query = "UPDATE {0} u SET is_rec_htzcomp=True WHERE u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM ( SELECT array_agg(w.variant_id) as vids, g.name2 FROM {0} w  INNER JOIN refgene{4} g ON g.chr=w.chr AND g.trxrange @> w.pos  WHERE  s{1}_gt > 1 AND ( (s{2}_gt > 1 AND (s{3}_gt = NULL or s{3}_gt < 2)) OR (s{3}_gt > 1 AND (s{2}_gt = NULL or s{2}_gt < 2))) GROUP BY name2 HAVING count(*) > 1) AS sub )"
-        res = execute(query.format(wt, child_id, mother_id, father_id, analysis.db_suffix))
-        log(" > is_rec_htzcomp : {} variants".format(res.rowcount))
-
-        # Inherited and denovo
-        query = "UPDATE {0} SET is_denovo=True WHERE s{1}_gt>0 and s{2}_gt=0 and s{3}_gt=0"
-        res = execute(query.format(wt, child_id, mother_id, father_id))
-        log(" > is_denovo : {} variants".format(res.rowcount))        
-
-        # Autosomal
-        query = "UPDATE {0} SET is_aut=True WHERE chr<23"
-        res = execute(query.format(wt))
-        log(" > is_aut : {} variants".format(res.rowcount))
-
-        # X-Linked
-        query = "UPDATE {0} SET is_xlk=True WHERE chr=23 AND s{1}_gt>1 and s{2}_gt>1"
-        if trio["child_sex"] == "F": query += " AND s{3}_gt>1"
-        res = execute(query.format(wt, child_id, mother_id, father_id))
-        log(" > is_xlk : {} variants".format(res.rowcount))
-
-        # mitochondrial
-        query = "UPDATE {0} SET is_mit=True WHERE chr=25"
-        res = execute(query.format(wt))
-        log(" > is_mit : {} variants".format(res.rowcount))
+        res = execute(query.format(analysis.id, child_id, mother_id, father_id, analysis.db_suffix))
+        prg += step
+        self.working_table_creation_update_status(analysis, progress, 4, "computing", prg)
 
 
     def create_wt_stored_filters(self, analysis, progress):

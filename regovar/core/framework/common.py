@@ -5,6 +5,7 @@ import os
 import hashlib
 import datetime
 import logging
+import traceback
 import uuid
 import time
 import asyncio
@@ -384,6 +385,24 @@ def err(msg, exception=None):
     
 
 
+def log_snippet(longmsg, exception:BaseException=None):
+    """
+        Log the provided msg into a new log file and return the generated log file
+        To use when you want to log a long text (like a long generated sql query by example) to 
+        avoid to poluate the main log with too much code.
+    """
+    uid = str(uuid.uuid4())
+    filename = os.path.join(LOG_DIR, "Error_{}.log".format(uid))
+    with open(filename, 'w+') as f:
+        if exception:
+            # Retrieve stack trace of the exception
+            e_traceback = traceback.format_exception(exception.__class__, exception, exception.__traceback__)
+            for line in e_traceback:
+                f.write(line)
+            f.write("\n=============================\n")
+        f.write(longmsg)
+    return "Error_{}.log".format(uid)
+
 
 
 
@@ -419,19 +438,7 @@ class RegovarException(Exception):
         return self.log
 
 
-def log_snippet(longmsg, exception=None):
-    """
-        Log the provided msg into a new log file and return the generated log file
-        To use when you want to log a long text (like a long generated sql query by example) to 
-        avoid to poluate the main log with too much code.
-    """
-    uid = str(uuid.uuid4())
-    filename = os.path.join(LOG_DIR, "Error_{}.log".format(uid))
-    with open(filename, 'w+') as f:
-        f.write(str(exception))
-        f.write("\n\n")
-        f.write(longmsg)
-    return "Error_{}.log".format(uid)
+
 
 
 
