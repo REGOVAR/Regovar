@@ -8,9 +8,6 @@ Ci-dessous la liste des paramètres du fichier de configuration python du server
  - `HOST_P`
  - `PRIVATE_KEY32`
  - `OMIM_API_KEY`
- - 
-
-
 
 | Clé | Type | Défaut | Description |
 | --- | ---- | ------ | ----------- |
