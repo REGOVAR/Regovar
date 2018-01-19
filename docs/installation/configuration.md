@@ -54,6 +54,7 @@ Ci-dessous la liste des paramètres du fichier de configuration python du server
 
 
 ###Paramètres en base de donnée
+
 | Clé | Défaut | Description |
 | --- | ------ | ----------- |
 | `database_version` | `M.m.b` | Il s'agit de la version actuelle de la base de donnée. Vous ne devez en aucun cas modifier cette valeur. Elle est mis à jours par les développeurs quand le schéma de la base est modifié lors d'une évolution du logiciel. Elle permet de s'assurer que l'application est compatible avec la base de donnée utilisée. |
