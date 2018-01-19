@@ -58,7 +58,6 @@ class ApiHandler:
             "last_events": [],
             #"tools" : self.get_tools_list(),
             "references" : [{"id": ref[0], "name": ref[1]} for ref in core.annotations.ref_list.items()],
-            "default_reference_id": DEFAULT_REFERENCIAL_ID,
             "milestones" : data
         }
 

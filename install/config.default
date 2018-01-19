@@ -56,8 +56,6 @@ NOTIFY_URL = "http://" + HOST_P + "/job/{}/notify"
 
 
 
-DEFAULT_REFERENCIAL_ID = 2 # hg19
-
 
 
 # REST API
