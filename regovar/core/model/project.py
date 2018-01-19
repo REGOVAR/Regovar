@@ -59,6 +59,7 @@ def project_from_id(project_id, loading_depth=0):
     """
     project = Session().query(Project).filter_by(id=project_id).first()
     if project:
+        Session().refresh(project)
         project.init(loading_depth)
     return project
 
@@ -71,6 +72,7 @@ def project_from_ids(project_ids, loading_depth=0):
     if project_ids and len(project_ids) > 0:
         projects = Session().query(Project).filter(Project.id.in_(project_ids)).all()
         for f in projects:
+            Session().refresh(f)
             f.init(loading_depth)
     return projects
 

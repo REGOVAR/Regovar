@@ -16,7 +16,9 @@ def variant_from_id(reference_id, variant_id):
     """
         Retrieve Sample with the provided id in the database
     """
-    return Session().query(Variant).filter_by(id=variant_id).first()
+    variant = Session().query(Variant).filter_by(id=variant_id).first()
+    Session().refresh(variant)
+    return variant
 
 
 Variant = Base.classes.variant_hg19

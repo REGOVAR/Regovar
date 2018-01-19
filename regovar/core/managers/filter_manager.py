@@ -490,7 +490,7 @@ class FilterEngine:
         self.working_table_creation_update_status(analysis, progress, 4, "computing", prg)
         
         # Recessif Heterozygous compoud
-        query = "UPDATE {0} u SET is_rec_htzcomp=True WHERE u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM ( SELECT array_agg(w.variant_id) as vids, g.name2 FROM {0} w  INNER JOIN refgene{4} g ON g.chr=w.chr AND g.trxrange @> w.pos  WHERE  s{1}_gt > 1 AND ( (s{2}_gt > 1 AND (s{3}_gt = NULL or s{3}_gt < 2)) OR (s{3}_gt > 1 AND (s{2}_gt = NULL or s{2}_gt < 2))) GROUP BY name2 HAVING count(*) > 1) AS sub )"
+        query = "UPDATE wt_{0} u SET is_rec_htzcomp=True WHERE u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM ( SELECT array_agg(w.variant_id) as vids, g.name2 FROM wt_{0} w  INNER JOIN refgene{4} g ON g.chr=w.chr AND g.trxrange @> w.pos  WHERE  s{1}_gt > 1 AND ( (s{2}_gt > 1 AND (s{3}_gt = NULL or s{3}_gt < 2)) OR (s{3}_gt > 1 AND (s{2}_gt = NULL or s{2}_gt < 2))) GROUP BY name2 HAVING count(*) > 1) AS sub )"
         res = execute(query.format(analysis.id, child_id, mother_id, father_id, analysis.db_suffix))
         prg += step
         self.working_table_creation_update_status(analysis, progress, 4, "computing", prg)
@@ -763,20 +763,39 @@ class FilterEngine:
             raise RegovarException("Not able to retrieve analysis with provided id: {}".format(analysis_id))
         
         # If need to create working table
-        if not analysis.status or analysis.status == "empty":
+        if not analysis.status or analysis.status in ["empty", "waiting"]:
             # check if all samples are ready to be use for the creation of the working table
+            in_samples = {"loading": [], "error": [], "empty": [], "ready": []}
             for sid in analysis.samples_ids:
                 sample = Sample.from_id(sid)
-                if sample.status != "ready":
-                    raise RegovarException("Samples of the analysis {} are not ready to be used".format(analysis.id))
+                in_samples[sample.status].append(sid)
+                
+            if len(in_samples["error"]) > 0:
+                analysis.status = "error"
+                analysis.computing_progress = {
+                    "error_message": "Import of the sample () for the analysis {} failled.".format(", ".join(in_samples["error"]), analysis.id),
+                    "status" : "error"}
+                analysis.save()
+            elif len(in_samples["loading"]) > 0:
+                analysis.status = "waiting"
+                analysis.computing_progress = {
+                    "error_message": "Import of the sample () for the analysis {} are in progress.".format(", ".join(in_samples["loading"]), analysis.id),
+                    "status" : "waiting"}
+                analysis.save()
+
+            if sample.status != "ready":
+                return {"status": analysis.status, "progress": analysis.computing_progress}
+            
             # Execute the creation of the working table async
             analysis.status = "computing"
             analysis.computing_progress = None
             analysis.save()
             run_async(self.create_working_table, analysis.id)
             return {"status": analysis.status, "progress": analysis.computing_progress}
+        
         elif analysis.status != "ready":
             return {"status": analysis.status, "progress": analysis.computing_progress}
+        
         
         # Prepare wt for specific filter query
         # if filter_json is None, we assume that we are requesting the current tmp working table formerly prepared

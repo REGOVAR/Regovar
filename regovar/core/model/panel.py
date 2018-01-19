@@ -77,6 +77,7 @@ def panel_from_id(panel_id, loading_depth=0):
     """
     panel = Session().query(Panel).filter_by(id=panel_id).first()
     if panel:
+        Session().refresh(panel)
         panel.init(loading_depth)
     return panel
 
@@ -89,6 +90,7 @@ def panel_from_ids(panel_ids, loading_depth=0):
     if panel_ids and len(panel_ids) > 0:
         panels = Session().query(Panel).filter(Panel.id.in_(panel_ids)).all()
         for f in panels:
+            Session().refresh(f)
             f.init(loading_depth)
     return panels
 

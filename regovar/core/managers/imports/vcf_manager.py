@@ -101,6 +101,7 @@ def prepare_vcf_parsing(reference_id, filename):
                 break;
 
     # Check for VEP
+    ipdb.set_trace()
     vep_imp = VepImporter()
     if vep_imp.init(headers, reference_id):
         vep = {'vep' : vep_imp}
@@ -613,9 +614,9 @@ class VcfManager(AbstractImportManager):
                 # Register variant annotations
                 for ann_name, importer in vcf_metadata["annotations"].items():
                     if importer:
-                        vep_query, vep_count = importer.import_annotations(sql_annot_trx, bin, chrm, pos, ref, alt, row.info)
-                        sql_query3 += vep_query
-                        count += vep_count
+                        importer_query, importer_count = importer.import_annotations(sql_annot_trx, bin, chrm, pos, ref, alt, row.info)
+                        sql_query3 += importer_query
+                        count += importer_count
                         
                             
 
@@ -675,19 +676,19 @@ class VcfManager(AbstractImportManager):
         end = datetime.datetime.now()
         
         # update sample's progress indicator
-        for sid in samples:
-            sp = Model.Sample.from_id(samples[sid]["id"])
-            sp.loading_progress = 1
-            sp.status = "ready"
-            sp.save()
-        
-
+        Model.execute("UPDATE sample SET status='ready', loading_progress=1  WHERE id IN ({})".format(",".join([str(samples[sid]["id"]) for sid in samples])))
         
         core.notify_all({"action": "import_vcf_end", "data" : {"file_id" : file_id, "msg" : "Import done without error.", "samples": [ {"id" : samples[s]["id"], "name" : samples[s]["name"]} for s in samples.keys()]}})
 
 
         # When import is done, check if analysis are waiting for creation and then start wt creation if all sample are ready 
         # TODO
+        sql = "SELECT DISTINCT(analysis_id) FROM analysis_sample WHERE sample_id IN ({})".format(",".join([str(samples[sid]["id"]) for sid in samples]))
+        for row in Model.execute(sql):
+            analysis = Model.Analysis.from_id(row.analysis_id,1)
+            if analysis.status == "waiting":
+                log("Auto initialisation of the analysis in witing state : {} ({})".format(analysis.name, analysis.id))
+                run_async(core.filters.request, analysis.id, analysis.filter, analysis.fields)
 
 
 
@@ -733,6 +734,7 @@ class VcfManager(AbstractImportManager):
                 sample.reference_id = reference_id
                 sample.filter_description = {filter[0]:filter[1].description for filter in vcf_reader.header.filters.items()}
                 sample.default_dbuid = []
+                sample.status = "loading"
                 for dbname in vcf_metadata["annotations"].keys():
                     if vcf_metadata["annotations"][dbname]:
                         sample.default_dbuid.append(vcf_metadata["annotations"][dbname].db_uid)

@@ -59,6 +59,7 @@ def pipeline_from_id(pipeline_id, loading_depth=0):
     """
     pipeline = Session().query(Pipeline).filter_by(id=pipeline_id).first()
     if pipeline:
+        Session().refresh(pipeline)
         pipeline.init(loading_depth)
     return pipeline
 
@@ -71,6 +72,7 @@ def pipeline_from_ids(pipeline_ids, loading_depth=0):
     if pipeline_ids and len(pipeline_ids) > 0:
         pipelines = Session().query(Pipeline).filter(Pipeline.id.in_(pipeline_ids)).all()
         for p in pipelines:
+            Session().refresh(p)
             p.init(loading_depth)
     return pipelines
 

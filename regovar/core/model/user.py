@@ -63,7 +63,9 @@ def user_from_id(user_id, loading_depth=0):
         Retrieve user with the provided id in the database
     """
     user = Session().query(User).filter_by(id=user_id).first()
-    if user : user.init(loading_depth)
+    if user : 
+        Session().refresh(user)
+        user.init(loading_depth)
     return user
 
 
@@ -75,6 +77,7 @@ def user_from_ids(user_ids, loading_depth=0):
     if user_ids and len(user_ids) > 0:
         users = Session().query(User).filter(User.id.in_(user_ids)).all()
         for u in users:
+            Session().refresh(u)
             u.init(loading_depth)
     return users
 

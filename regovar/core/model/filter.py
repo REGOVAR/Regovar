@@ -43,7 +43,9 @@ def filter_from_id(filter_id, loading_depth=0):
         Retrieve Filter with the provided id in the database
     """
     filter = Session().query(Filter).filter_by(id=filter_id).first()
-    if filter : filter.init(loading_depth)
+    if filter : 
+        Session().refresh(filter)
+        filter.init(loading_depth)
     return filter
 
     return Session().query(Filter).filter_by(id=filter_id).first()

@@ -79,6 +79,7 @@ def analysis_from_id(analysis_id, loading_depth=0):
     """
     analysis = Session().query(Analysis).filter_by(id=analysis_id).first()
     if analysis:
+        Session().refresh(analysis)
         analysis.init(loading_depth)
     return analysis
 

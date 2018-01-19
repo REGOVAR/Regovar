@@ -44,6 +44,7 @@ def file_from_id(file_id, loading_depth=0):
     """
     file = Session().query(File).filter_by(id=file_id).first()
     if file:
+        Session().refresh(file)
         file.init(loading_depth)
     return file
 
@@ -56,6 +57,7 @@ def file_from_ids(file_ids, loading_depth=0):
     if file_ids and len(file_ids) > 0:
         files = Session().query(File).filter(File.id.in_(file_ids)).all()
         for f in files:
+            Session().refresh(f)
             f.init(loading_depth)
     return files
 

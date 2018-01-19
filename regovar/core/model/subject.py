@@ -81,6 +81,7 @@ def subject_from_id(subject_id, loading_depth=0):
     """
     subject = Session().query(Subject).filter_by(id=subject_id).first()
     if subject:
+        Session().refresh(subject)
         subject.init(loading_depth)
     return subject
 
@@ -93,6 +94,7 @@ def subject_from_ids(subject_ids, loading_depth=0):
     if subject_ids and len(subject_ids) > 0:
         subjects = Session().query(Subject).filter(Subject.id.in_(subject_ids)).all()
         for f in subjects:
+            Session().refresh(f)
             f.init(loading_depth)
     return subjects
 

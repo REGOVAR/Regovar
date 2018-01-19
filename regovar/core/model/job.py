@@ -147,6 +147,7 @@ def job_from_id(job_id, loading_depth=0):
     """
     job = Session().query(Job).filter_by(id=job_id).first()
     if job:
+        Session().refresh(job)
         job.init(loading_depth)
     return job
 
@@ -159,6 +160,7 @@ def job_from_ids(job_ids, loading_depth=0):
     if job_ids and len(job_ids) > 0:
         jobs = Session().query(Job).filter(Job.id.in_(job_ids)).all()
         for f in jobs:
+            Session().refresh(f)
             f.init(loading_depth)
     return jobs
 

@@ -68,7 +68,9 @@ def sample_from_id(sample_id, loading_depth=0):
         Retrieve sample with the provided id in the database
     """
     sample = Session().query(Sample).filter_by(id=sample_id).first()
-    if sample : sample.init(loading_depth)
+    if sample : 
+        Session().refresh(sample)
+        sample.init(loading_depth)
     return sample
 
 
