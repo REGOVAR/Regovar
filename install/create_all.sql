@@ -728,7 +728,6 @@ INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, desc
   ('2c0a7043a9e736eaf14b6614fff102c0', 6,  'is_aut',           'Autosomal',                      'bool',         'Is the variant autosomal for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 7,  'is_xlk',           'X-linked',                       'bool',         'Is the variant X-linked for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 8,  'is_mit',           'Mitochondrial',                  'bool',         'Is the variant mitochondrial for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 9,  'trx_count',        'Transcript count',               'int',          'The count of transcripts for the variant.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 10, 'sample_tlist',     'samples total',                  'string',       'List of sample in the whole database that have the variant.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 11, 'sample_tcount',    'samples total count',            'int',          'Number of sample in the whole database that have the variant.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 12, 'sample_alist',     'samples analysis',               'string',       'List of sample in the analysis that have the variant.', NULL),
