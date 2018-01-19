@@ -101,7 +101,6 @@ def prepare_vcf_parsing(reference_id, filename):
                 break;
 
     # Check for VEP
-    ipdb.set_trace()
     vep_imp = VepImporter()
     if vep_imp.init(headers, reference_id):
         vep = {'vep' : vep_imp}

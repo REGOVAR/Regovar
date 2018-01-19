@@ -88,6 +88,7 @@ class AnnotationDBHandler:
         db_id = request.match_info.get('db_id', -1)
         result = {}
         result.update(core.annotations.db_map[db_id])
+        result["update"] = result["update"].isoformat()
         return rest_success(result)
 
 

@@ -169,7 +169,8 @@ class SnpEffImporter(AbstractTranscriptDataImporter):
                         if new_value:
                             if new_value[0] == "{": new_value = new_value[1:]
                             if new_value[-1] == "}": new_value = new_value[:-1]  
-                            vals = [new_value.lower()]                          
+                            success, new_value = self.value_to_regovar_type(new_value.lower(), "string")
+                            vals = [new_value]                          
                     elif col_name in ['annotation', 'annotation_impact']:
                         vals = ["ARRAY [{}]".format(",".join(["'{}'".format(self.escape_value_for_sql(v)) for v in data[col_pos].split('&')]))]
                    
