@@ -4,7 +4,7 @@
 ## Serveur
 
 ###Paramètres du config.py
-Ci-dessous la liste des paramètres du fichier de configuration python du server. Pour la grande majorité vous pouvez laisser la valeur par défaut si vous suivez utilisez les mêmes réglages que ceux de la documentation. En revanche, il vous faudra impérativement mettre/générer vos propres réglages pour les entrées suivantes:
+Ci-dessous la liste des paramètres du fichier de configuration python du server. Pour la grande majorité vous pouvez laisser la valeur par défaut si vous suivez les mêmes réglages que ceux de la documentation. En revanche, il vous faudra impérativement mettre/générer vos propres réglages pour les entrées suivantes:
  - `HOST_P`
  - `PRIVATE_KEY32`
  - `OMIM_API_KEY`
@@ -43,11 +43,11 @@ Ci-dessous la liste des paramètres du fichier de configuration python du server
 | | | | |
 | `REGOVAR_DIR` | `string` | `.` | Le répertoire sur le serveur où est l'application Regovar  |
 | `LOG_DIR` | `string` | `<REGOVAR_DIR>` | Le répertoire où seront stockés les logs  |
-| `TEMPLATE_DIR` | `string` | `<REGOVAR_DIR>/api_rest/templates` | Le répertoire où sont stockés les templates HTML  |
+| `TEMPLATE_DIR` | `string` | `...` | Le répertoire où sont stockés les templates HTML  |
 | `ERROR_ROOT_URL` | `string` | `<HOST_P>/errorcode/` | L'adresse qui sera utilisé par le serveur pour guider l'utilisateur à trouver l'aide automatique correspondant aux codes d'erreurs |
-| `NOTIFY_URL` | `string` | `http://<HOST_P>/job/{}/notify` | L'adresse utilisé en interne par les containers Docker/LXD pour notifier le serveur de leur progression |
+| `NOTIFY_URL` | `string` | `...` | L'adresse utilisé en interne par les containers Docker/LXD pour notifier le serveur de leur progression |
 | | | | |
-| `PIPELINE_DEFAULT_ICON_PATH` | `string` | `<REGOVAR_DIR>/api_rest/templates/pipeline_icon.png` | L'icone par défaut utilisé pour les Pipelines quand ce dernier n'est pas fournis à l'installation.  |
+| `PIPELINE_DEFAULT_ICON_PATH` | `string` | `...` | L'icone par défaut utilisé pour les Pipelines quand ce dernier n'est pas fournis à l'installation.  |
 | `MAX_JOB_RUNNING` | `string` | `5` | Le nombre maximum de pipeline qui pourront être exécuté en parallèle |
 | `CONTAINERS_CONFIG` | `json` |  | Configuration du manager LXD. Voir la section dédiée.   |
 
@@ -70,7 +70,7 @@ Ci-dessous la liste des paramètres du fichier de configuration python du server
 
 ###Mettre à jour les données phénotype (HPO)
 
-Très simple, il suffit de lancer la commande `make update_hpo`, et le script s'occupera pour vous de récupérer la dernière version de la base de donnée HPO et d'enregistrer ces données dans la base de donnée de Regovar. Les données HPO sont mises à jour environs tout les mois.
+Très simple, il suffit de lancer la commande `make update_hpo`, et le script s'occupera pour vous de récupérer la dernière version de la base de donnée HPO et d'enregistrer ces données dans la base de donnée de Regovar. Les données HPO sont mises à jours environs tous les mois.
 
 
 
