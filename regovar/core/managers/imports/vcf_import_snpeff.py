@@ -213,7 +213,7 @@ class SnpEffImporter(AbstractTranscriptDataImporter):
     # When need to create annotation table/field : to create columns with good type and description
     columns_definitions = {
         "allele" :               { "type" : "string", "description" : "The variant allele used to calculate the consequence"},
-        "annotation" :           { "type" : "enum",   "description" : "Annotated using Sequence Ontology terms (a.k.a. effect)"},
+        "annotation" :           { "type" : "list",   "description" : "Annotated using Sequence Ontology terms (a.k.a. effect)"},
         "annotation_impact" :    { "type" : "enum",   "description" : "A simple estimation of putative impact / deleteriousness : {HIGH, MODERATE, LOW, MODIFIER}"},
         "gene_name" :            { "type" : "string", "description" : "Common gene name (HGNC). Optional: use closest gene when the variant is \"intergenic\""},
         "gene_id" :              { "type" : "string", "description" : "Gene ID"},
