@@ -47,8 +47,6 @@ Ci-dessous la liste des paramètres du fichier de configuration python du server
 | `ERROR_ROOT_URL` | `string` | `<HOST_P>/errorcode/` | L'adresse qui sera utilisé par le serveur pour guider l'utilisateur à trouver l'aide automatique correspondant aux codes d'erreurs |
 | `NOTIFY_URL` | `string` | `http://<HOST_P>/job/{}/notify` | L'adresse utilisé en interne par les containers Docker/LXD pour notifier le serveur de leur progression |
 | | | | |
-
-
 | `PIPELINE_DEFAULT_ICON_PATH` | `string` | `<REGOVAR_DIR>/api_rest/templates/pipeline_icon.png` | L'icone par défaut utilisé pour les Pipelines quand ce dernier n'est pas fournis à l'installation.  |
 | `MAX_JOB_RUNNING` | `string` | `5` | Le nombre maximum de pipeline qui pourront être exécuté en parallèle |
 | `CONTAINERS_CONFIG` | `json` |  | Configuration du manager LXD. Voir la section dédiée.   |
