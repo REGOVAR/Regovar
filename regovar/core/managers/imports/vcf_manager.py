@@ -654,6 +654,15 @@ class VcfManager(AbstractImportManager):
         # Waiting that all query in the queue was executed
         log("VCF parsing done. Waiting for async execution of sql queries")
         
+        # block until all tasks are done
+        self.queue.join()
+        log("No more sql query to proceed")
+        
+        # stop vcf_import_thread_workers
+        for i in range(VCF_IMPORT_MAX_THREAD):
+            self.queue.put(None)
+        for t in self.workers:
+            t.join()
 
         # Compute composite variant by sample
         sql_pattern = "UPDATE sample_variant" + db_ref_suffix + " u SET is_composite=TRUE WHERE u.sample_id = {0} AND u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM (SELECT array_agg(v.variant_id) as vids, g.name2 FROM sample_variant" + db_ref_suffix + " v INNER JOIN refgene" + db_ref_suffix + " g ON g.chr=v.chr AND g.trxrange @> v.pos WHERE v.sample_id={0} AND v.genotype=2 or v.genotype=3 GROUP BY name2 HAVING count(*) > 1) AS sub)"
@@ -672,15 +681,7 @@ class VcfManager(AbstractImportManager):
             sp.status = "ready"
             sp.save()
         
-        # block until all tasks are done
-        self.queue.join()
-        log("No more sql query to proceed")
-        
-        # stop vcf_import_thread_workers
-        for i in range(VCF_IMPORT_MAX_THREAD):
-            self.queue.put(None)
-        for t in self.workers:
-            t.join()
+
         
         core.notify_all({"action": "import_vcf_end", "data" : {"file_id" : file_id, "msg" : "Import done without error.", "samples": [ {"id" : samples[s]["id"], "name" : samples[s]["name"]} for s in samples.keys()]}})
 
