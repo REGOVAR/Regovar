@@ -182,7 +182,7 @@ def check_date(value, default=None):
         return value
     elif isinstance(value, str):
         try:
-            return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+            return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f") if len(value) > 10 else datetime.datetime.strptime(value, "%Y-%m-%d")
         except ValueError:
             return default
     return default
