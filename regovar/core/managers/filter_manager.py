@@ -37,7 +37,15 @@ class FilterEngine:
               # We just need to test if one of the "joined" field is set or not
               'IN': '{0}.chr is not null',
               'NOTIN': '{0}.chr is null'}
-    sql_type_map = {'int': 'integer', 'string': 'text', 'float': 'real', 'enum': 'varchar(50)', 'range': 'int8range', 'bool': 'boolean', 'sequence': 'text', 'list' : 'varchar(250)[]'}
+    sql_type_map = {'int': 'integer', 'string': 'text', 'float': 'real', 'enum': 'text', 'range': 'int8range', 'bool': 'boolean', 'sequence': 'text', 'list' : 'varchar(250)[]'}
+    sql_agg_map = {'int': 'avg({0}) AS {0}', 
+                   'string': 'string_agg(DISTINCT {0}, \', \') AS {0}', 
+                   'float': 'avg({0}) AS {0}', 
+                   'enum': 'string_agg(DISTINCT {0}, \', \') AS {0}', 
+                   'range': 'int8range(min(lower({0})), max(upper({0}))) as {0}', 
+                   'bool': 'bool_and({0}) AS {0}', 
+                   'sequence': 'string_agg(DISTINCT {0}, \', \') AS {0}', 
+                   'list' : 'array_agg(DISTINCT {0}, \', \') AS {0}'}
 
 
     def __init__(self):
@@ -87,7 +95,8 @@ class FilterEngine:
                 {"label": "Getting samples fields", "status": "waiting", "progress": 0},
                 {"label": "Computing predefined filters", "status": "waiting", "progress": 0},
                 {"label": "Computing indexes", "status": "waiting", "progress": 0},
-                {"label": "Gettings annotations", "status": "waiting", "progress": 0},
+                {"label": "Getting annotations", "status": "waiting", "progress": 0},
+                {"label": "Mergin annotations", "status": "waiting", "progress": 0},
                 {"label": "Restoring saved filters", "status": "waiting", "progress": 0},
                 {"label": "Restoring selections", "status": "waiting", "progress": 0},
                 {"label": "Computing analysis statistics", "status": "waiting", "progress": 0},
@@ -111,6 +120,9 @@ class FilterEngine:
 
             # insert trx annotations
             self.insert_wt_trx(analysis, progress)
+
+            # merge single trw into their annotation, and mergin trx annotation into root variant annotations
+            self.update_wt_mergin_trx_variant(analysis, progress)
 
             # trx's indexes # TODO: DO WE NEED IT ?
             # self.create_wt_trx_indexes(analysis)
@@ -496,13 +508,73 @@ class FilterEngine:
         self.working_table_creation_update_status(analysis, progress, 4, "computing", prg)
 
 
-    def create_wt_stored_filters(self, analysis, progress):
+    def update_wt_mergin_trx_variant(self, analysis, progress):
         self.working_table_creation_update_status(analysis, progress, 7, "computing", 0.1)
+        
+        
+        query = "UPDATE wt_{0} w SET {1} FROM (SELECT variant_id, {2} FROM wt_{0} WHERE NOT is_variant GROUP BY variant_id) as sub WHERE w.is_variant AND w.variant_id=sub.variant_id"
+        
+        
+        # Step 1: mergin trx annotation into variant
+        q1 = []
+        q2 = [] 
+        list_field = []
+        for dbuid in analysis.settings["annotations_db"]:
+            if self.db_map[dbuid]["type"] == "transcript":
+                for fuid in self.db_map[dbuid]["fields"]:
+                    if self.fields_map[fuid]['type'] != 'list':
+                        q1.append("_{0} = sub._{0}".format(fuid))
+                        q2.append(self.sql_agg_map[self.fields_map[fuid]['type']].format("_" + fuid))
+                    else:
+                        list_field.append(fuid)
+        
+        res = execute(query.format(analysis.id, ','.join(q1), ','.join(q2)))
+        log(" > {} trx annotation merged into their respective variant".format(res.rowcount))
+        self.working_table_creation_update_status(analysis, progress, 7, "computing", 0.25)
+        
+        # Manage special sql query for list fields
+        if len(list_field) > 0:
+            query = "UPDATE wt_{0} w SET {1} FROM (SELECT variant_id, {2} FROM (SELECT variant_id, {3} FROM  wt_{0}) AS t GROUP BY variant_id) AS sub WHERE w.is_variant AND w.variant_id=sub.variant_id"
+            q1 = []
+            q2 = []
+            q3 = []
+            for fuid in list_field:
+                q1.append("_{0} = sub._{0}".format(fuid))
+                q2.append("array_agg(DISTINCT _{0}) AS _{0}".format(fuid))
+                q3.append("unnest(_{0}) as _{0}".format(fuid))
+            
+            res = execute(query.format(analysis.id, ','.join(q1), ','.join(q2), ','.join(q3)))
+            log(" > {} trx list typed annotation merged into their respective variant".format(res.rowcount))
+        self.working_table_creation_update_status(analysis, progress, 7, "computing", 0.5)
+
+        # Step 2: deleting trx when only one by variant annotation for variant that have more than 1 trx
+        # merge variant and trx id
+        query = "UPDATE wt_{0} w SET trx_pk_uid=sub.trx_pk_uid, trx_pk_value=sub.trx_pk_value FROM "
+        query+= "(SELECT variant_id, max(trx_pk_uid) as trx_pk_uid, max(trx_pk_value) as trx_pk_value FROM wt_{0} WHERE NOT is_variant GROUP BY variant_id HAVING count(*) = 1) AS sub "
+        query+= "WHERE w.is_variant AND w.variant_id=sub.variant_id"
+        res = execute(query.format(analysis.id))
+        self.working_table_creation_update_status(analysis, progress, 7, "computing", 0.75)
+        # delete useless trx entries
+        query = "DELETE FROM wt_{0} w WHERE not w.is_variant AND w.variant_id IN (SELECT variant_id FROM wt_{0} WHERE NOT is_variant GROUP BY variant_id HAVING count(*) = 1)"
+        res = execute(query.format(analysis.id))
+        log(" > {} single trx annotation removed (merged with the variant)".format(res.rowcount))
+        
+        ipdb.set_trace()
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][7]["status"] = "done"
+        progress["log"][7]["progress"] = 1
+    
+
+    def create_wt_stored_filters(self, analysis, progress):
+        self.working_table_creation_update_status(analysis, progress, 8, "computing", 0.1)
         
         for flt in analysis.filters:
             log(" > compute filter {}: {}".format(flt.id, flt.name))
             self.update_wt(analysis, "filter_{}".format(flt.id), flt.filter)
-        self.working_table_creation_update_status(analysis, progress, 7, "done", 1)
+            
+        # We just update progress without calling notify_all as a notify will be send by the next step
+        progress["log"][8]["status"] = "done"
+        progress["log"][8]["progress"] = 1
     
 
     def update_wt_set_restore_selection(self, analysis, progress):
@@ -510,13 +582,13 @@ class FilterEngine:
         # TODO: create sql request from json selection data.
         
         # We just update progress without calling notify_all as a notify will be send by the next step
-        progress["log"][8]["status"] = "done"
-        progress["log"][8]["progress"] = 1
+        progress["log"][9]["status"] = "done"
+        progress["log"][9]["progress"] = 1
 
 
     def update_wt_samples_stats(self, analysis, progress):
         # TODO: improve progress feedback according to sample count and vep consequences
-        self.working_table_creation_update_status(analysis, progress, 9, "computing", 0.1)
+        self.working_table_creation_update_status(analysis, progress, 10, "computing", 0.1)
         wt  = "wt_{}".format(analysis.id)
         
         with_vep = None
@@ -545,7 +617,7 @@ class FilterEngine:
                 "others": execute("SELECT COUNT(*) FROM {0} WHERE is_variant AND char_length(ref)<>char_length(alt) AND char_length(ref)>0 AND char_length(alt)>0".format(wt)).first()[0]
                 }
             }
-        self.working_table_creation_update_status(analysis, progress, 9, "computing", 0.20)
+        self.working_table_creation_update_status(analysis, progress, 10, "computing", 0.20)
         
         consequences = []
         if with_vep:
@@ -558,7 +630,7 @@ class FilterEngine:
 
         analysis.statistics = astats
         analysis.save()
-        self.working_table_creation_update_status(analysis, progress, 9, "computing", 0.40)
+        self.working_table_creation_update_status(analysis, progress, 10, "computing", 0.40)
 
 
         #
