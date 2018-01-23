@@ -38,8 +38,8 @@ def project_init(self, loading_depth=0, force=False):
         self.loading_depth = min(2, loading_depth)
     try:
         self.subjects_ids = self.get_subjects_ids()
-        self.jobs_ids = [j.id for j in self.get_jobs()]
-        self.analyses_ids = [a.id for a in self.get_analyses()]
+        self.jobs_ids = [j["id"] for j in self.get_jobs()]
+        self.analyses_ids = [a["id"] for a in self.get_analyses()]
 
         self.jobs = []
         self.analyses = []
@@ -47,9 +47,9 @@ def project_init(self, loading_depth=0, force=False):
         self.parent = None
         if self.loading_depth > 0:
             self.parent = Project.from_id(self.parent_id, self.loading_depth-1)
-            self.jobs = self.get_jobs(self.loading_depth-1)
-            self.analyses = self.get_analyses(self.loading_depth-1)
-            self.subjects = self.get_subjects(self.loading_depth-1)
+            self.jobs = self.get_jobs()
+            self.analyses = self.get_analyses()
+            self.subjects = self.get_subjects()
     except Exception as ex:
         raise RegovarException("Project data corrupted (id={}).".format(self.id), "", ex)
 
@@ -91,11 +91,6 @@ def project_to_json(self, fields=None, loading_depth=-1):
         if f in Project.public_fields:
             if f in ["create_date", "update_date"] :
                 result.update({f: eval("self." + f + ".isoformat()")})
-            elif f in ["jobs", "analyses", "subjects"]:
-                if hasattr(self, f) and len(eval("self." + f)) > 0 and loading_depth > 0:
-                    result[f] = [o.to_json(None, loading_depth-1) for o in eval("self." + f)]
-                else :                           
-                    result[f] = []
             elif f in ["parent"] and self.loading_depth > 0 and self.parent:
                 result[f] = self.parent.to_json(None, loading_depth-1)
             else:
@@ -119,22 +114,21 @@ def project_load(self, data):
         if "comment" in data.keys(): self.comment = check_string(data['comment'])
         if "parent_id" in data.keys(): self.parent_id = check_int(data['parent_id'])
         if "is_folder" in data.keys(): self.is_folder = check_bool(data['is_folder'], False)
+        if "users" in data.keys(): self.users = data["users"]
         self.save()
         
         # Update user sharing
-        if "users" in data.keys():
-            # Delete all associations
-            Session().query(UserProjectSharing).filter_by(project_id=self.id).delete(synchronize_session=False)
-            # Create new associations
-            self.users = data["users"]
-            for u in data["users"]:
-                if isinstance(u, dict) and "id" in u.keys() and "write_authorisation" in u.keys():
-                    UserProjectSharing.set(self.id, u["id"], u["write_authorisation"])
-                else:
-                    err("")
+        # if "users" in data.keys():
+        #     # Delete all associations
+        #     Session().query(UserProjectSharing).filter_by(project_id=self.id).delete(synchronize_session=False)
+        #     # Create new associations
+        #     self.users = data["users"]
+        #     for u in data["users"]:
+        #         if isinstance(u, dict) and "id" in u.keys() and "write_authorisation" in u.keys():
+        #             UserProjectSharing.set(self.id, u["id"], u["write_authorisation"])
+        #         else:
+        #             err("")
     
-        
-        # TODO : update 
 
         # Reload dynamics properties
         self.init(self.loading_depth, True)
@@ -151,7 +145,7 @@ def project_delete(project_id):
     """
         Delete the project with the provided id in the database
     """
-    Session().query(UserProjectSharing).filter_by(project_id=project_id).delete(synchronize_session=False)
+    #Session().query(UserProjectSharing).filter_by(project_id=project_id).delete(synchronize_session=False)
     Session().query(ProjectSubject).filter_by(project_id=project_id).delete(synchronize_session=False)
     Session().query(Project).filter_by(id=project_id).delete(synchronize_session=False)
     # TODO : delete analyses and job linked to the project ? that means also deleting outputs files of these jobs
@@ -182,23 +176,32 @@ def projects_get_jobs(self, loading_depth=0):
     """
         Return the list of jobs linked to the project
     """
-    from core.model.job import Job
-    jobs = Session().query(Job).filter_by(project_id=self.id).all()
-    for j in jobs: j.init(loading_depth)
-    return jobs
+    return []
 
 
 
 
-def projects_get_analyses(self, loading_depth=0):
+def projects_get_analyses(self):
     """
         Return the list of analyses linked to the project
     """
-    from core.model.analysis import Analysis
-    analyses = Session().query(Analysis).filter_by(project_id=self.id).all()
-    for a in analyses : a.init(loading_depth)
-    return analyses
-
+    sql = "SELECT id, name, comment, settings, create_date, update_date, reference_id, computing_progress, status FROM analysis WHERE project_id={} ORDER BY name"
+    result = []
+    for anl in execute(sql.format(self.id)):
+        result.append({
+            "id": anl.id,
+            "project_id": self.id,
+            "name": anl.name,
+            "comment": anl.comment,
+            "settings": anl.settings,
+            "reference_id": anl.reference_id,
+            "computing_progress": anl.computing_progress,
+            "status": anl.status,
+            "create_date": anl.create_date.isoformat() if isinstance(anl.create_date, datetime.datetime) else None, 
+            "update_date": anl.update_date.isoformat() if isinstance(anl.update_date, datetime.datetime) else None, 
+            "indicators": []
+            })
+    return result
 
 
 
@@ -211,12 +214,11 @@ def projects_get_subjects_ids(self):
     
 
 
-def projects_get_subjects(self, loading_depth=0):
+def projects_get_subjects(self):
     """
         Return the list of subjects linked to the project
     """
     sql = "SELECT  id, identifier, firstname, lastname, sex, family_number, dateofbirth, comment, create_date, update_date FROM subject WHERE id IN ({}) ORDER BY lastname, firstname"
-
     result = []
     for sbj in execute(sql.format(",".join([str(i) for i in self.get_subjects_ids()]))):
         result.append({
@@ -227,9 +229,9 @@ def projects_get_subjects(self, loading_depth=0):
             "sex": sbj.sex,
             "comment": sbj.comment,
             "dateofbirth": sbj.dateofbirth.isoformat() if isinstance(sbj.dateofbirth, datetime.datetime) else None,
-            "create_date": sbj.create_date.isoformat() if isinstance(sbj.dateofbirth, datetime.datetime) else None, 
+            "create_date": sbj.create_date.isoformat() if isinstance(sbj.create_date, datetime.datetime) else None, 
             "family_number": sbj.family_number,
-            "update_date": sbj.update_date.isoformat() if isinstance(sbj.dateofbirth, datetime.datetime) else None, 
+            "update_date": sbj.update_date.isoformat() if isinstance(sbj.update_date, datetime.datetime) else None, 
             "indicators": []
             })
     return result

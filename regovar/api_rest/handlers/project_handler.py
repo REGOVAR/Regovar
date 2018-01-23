@@ -47,9 +47,9 @@ class ProjectHandler:
             if p.is_folder:
                 entry["children"] = ProjectHandler.build_tree(p.id)
             else:
-                analyses = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.analyses]
+                analyses = p.analyses
                 for a in analyses: a.update({"type": "analysis"})
-                jobs = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.jobs]
+                jobs = p.jobs
                 for j in jobs: j.update({"type":"pipeline"})
                 entry["subjects"] = p.subjects
                 entry["analyses"] = analyses + jobs
