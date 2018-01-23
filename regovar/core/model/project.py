@@ -2,6 +2,7 @@
 # coding: utf-8
 import os
 import json
+import datetime
 
 
 from core.framework.common import *
@@ -214,8 +215,24 @@ def projects_get_subjects(self, loading_depth=0):
     """
         Return the list of subjects linked to the project
     """
-    from core.model.subject import Subject
-    return Subject.from_ids(self.get_subjects_ids(), loading_depth)
+    sql = "SELECT  id, identifier, firstname, lastname, sex, family_number, dateofbirth, comment, create_date, update_date FROM subject WHERE id IN ({}) ORDER BY lastname, firstname"
+
+    result = []
+    for sbj in execute(sql.format(",".join([str(i) for i in self.get_subjects_ids()]))):
+        result.append({
+            "id": sbj.id,
+            "identifier": sbj.identifier,
+            "firstname": sbj.firstname,
+            "lastname": sbj.lastname,
+            "sex": sbj.sex,
+            "comment": sbj.comment,
+            "dateofbirth": sbj.dateofbirth.isoformat() if isinstance(sbj.dateofbirth, datetime.datetime) else None,
+            "create_date": sbj.create_date.isoformat() if isinstance(sbj.dateofbirth, datetime.datetime) else None, 
+            "family_number": sbj.family_number,
+            "update_date": sbj.update_date.isoformat() if isinstance(sbj.dateofbirth, datetime.datetime) else None, 
+            "indicators": []
+            })
+    return result
 
 
 
