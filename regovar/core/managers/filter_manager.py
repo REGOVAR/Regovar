@@ -559,7 +559,6 @@ class FilterEngine:
         res = execute(query.format(analysis.id))
         log(" > {} single trx annotation removed (merged with the variant)".format(res.rowcount))
         
-        ipdb.set_trace()
         # We just update progress without calling notify_all as a notify will be send by the next step
         progress["log"][7]["status"] = "done"
         progress["log"][7]["progress"] = 1
@@ -779,7 +778,11 @@ class FilterEngine:
         log("Index updated: idx_{0}".format(column))
         
         progress.update({"progress": 1})
+        progress.update({"count": total_variant})
         core.notify_all({'action':'wt_update', 'data': progress})
+        # force analysis to reload it's filter data
+        analysis.filters_ids = analysis.get_filters_ids()
+        analysis.filters = analysis.get_filters(0)
         return total_variant
 
 

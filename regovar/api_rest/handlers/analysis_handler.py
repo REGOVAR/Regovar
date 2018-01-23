@@ -182,6 +182,9 @@ class AnalysisHandler:
                 execute("ALTER TABLE wt_{} DROP COLUMN IF EXISTS filter_{} CASCADE;".format(analysis.id, filter_id))
             # delete filter entry in the database
         Filter.delete(filter_id)
+        # force analysis to reload it's filter data
+        analysis.filters_ids = analysis.get_filters_ids()
+        analysis.filters = analysis.get_filters(0)
         
         return rest_success()
 

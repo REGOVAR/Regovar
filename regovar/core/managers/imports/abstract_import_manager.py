@@ -105,7 +105,6 @@ class AbstractTranscriptDataImporter():
             else:
                 result = "'{}'".format(self.escape_value_for_sql(value))
         except Exception as ex:
-            ipdb.set_trace()
             war("VEP import : enable to import {} cast into {}".format(value, regovar_type))
             success = False
             result = None

@@ -11,7 +11,7 @@ ANALYSIS_DEFAULT_FILTER = ["AND", []]
 
 
 
-def analysis_init(self, loading_depth=0):
+def analysis_init(self, loading_depth=0, force_refresh=False):
     """
         Init properties of an analysis :
             - id                : int           : the unique id of the analysis in the database
@@ -44,7 +44,7 @@ def analysis_init(self, loading_depth=0):
     from core.model.project import Project
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     # Avoid recursion infinit loop
-    if hasattr(self, "loading_depth") and self.loading_depth >= loading_depth:
+    if hasattr(self, "loading_depth") and not force_refresh and self.loading_depth >= loading_depth:
         return
     else:
         self.loading_depth = min(2, loading_depth)
@@ -262,7 +262,9 @@ def analysis_get_filters(self, loading_depth=0):
         Return the list of filters saved in the analysis
     """
     filters = Session().query(Filter).filter_by(analysis_id=self.id).all()
-    for f in filters: f.init(loading_depth)
+    for f in filters: 
+        Session().refresh(f)
+        f.init(loading_depth)
     return filters
 
 
