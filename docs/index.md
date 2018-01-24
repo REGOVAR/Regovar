@@ -10,9 +10,9 @@ REGOVAR est un projet collaboratif, libre et ouvert de logiciel d’analyse de d
    * [Reste à faire](https://github.com/REGOVAR/Regovar/milestone/1) : les sujets sur lequel avancer pour la prochaine release.
 
 # Autres liens
- * Site officiel : https://regovar.org
- * Sources du serveur : https://github.com/REGOVAR/Regovar
- * Sources du client : https://github.com/REGOVAR/QRegovar
+ * [Site officiel](https://regovar.org)
+ * [Sources du serveur](https://github.com/REGOVAR/Regovar)
+ * [Sources du client](https://github.com/REGOVAR/QRegovar)
 
 ## Contact
  * contact@regovar.org: pour prendre contact avec l'équipe du projet;
