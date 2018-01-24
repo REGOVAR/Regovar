@@ -22,35 +22,35 @@ Référez-vous au [SLS utilisé pour le déploiement au CHU d'Angers](https://gi
 Les commandes sont à exécuter en tant que root.
 
 ```sh
-    apt update && apt upgrade
-    apt install curl git ca-certificates nginx postgresql-9.6
+apt update && apt upgrade
+apt install curl git ca-certificates nginx postgresql-9.6
 	
-    adduser regovar
+adduser regovar
 
-    sudo -u postgres createuser -P -s regovar # type "regovar" as password
-    sudo -u regovar createdb regovar
+sudo -u postgres createuser -P -s regovar # type "regovar" as password
+sudo -u regovar createdb regovar
 
-    mkdir -p /var/regovar/{cache,downloads,files,pipelines,jobs,databases/hg19,databases/hg38}
-	curl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > /var/regovar/databases/hg19/refGene.txt:
-    curl http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > /var/regovar/databases/hg38/refGene.txt:
-	chown -R regovar:regovar /var/regovar
+mkdir -p /var/regovar/{cache,downloads,files,pipelines,jobs,databases/hg19,databases/hg38}
+curl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > /var/regovar/databases/hg19/refGene.txt:
+curl http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > /var/regovar/databases/hg38/refGene.txt:
+chown -R regovar:regovar /var/regovar
 
-    sudo -u regovar git clone https://github.com/REGOVAR/Regovar.git /home/regovar/Regovar
-	cd /home/regovar/Regovar
-    sudo -u regovar pip install -r requirements.txt
-    cd regovar
-    sudo -u regovar make init
-	sed -i 's/^\(\s*DATABASE_NAME\s*=\s*"\)[^"]\+\(".*\)/\1regovar\2/' config.py
-    make setup
-    make install_hpo
+sudo -u regovar git clone https://github.com/REGOVAR/Regovar.git /home/regovar/Regovar
+cd /home/regovar/Regovar
+sudo -u regovar pip install -r requirements.txt
+cd regovar
+sudo -u regovar make init
+sudo -u regovar sed -i 's/^\(\s*DATABASE_NAME\s*=\s*"\)[^"]\+\(".*\)/\1regovar\2/' config.py
+sudo -u regovar make setup
+sudo -u regovar make install_hpo
 ```
 
 ## Configuration avec NGINX
 
-Configurez un site comme suit :
+Configurez un site comme suit dans `/etc/nginx/sites-available/regovar` :
 
 ```nginx
-    echo 'upstream regovar
+upstream regovar
 {
     server 127.0.0.1:8500 fail_timeout=0;
 }
@@ -73,15 +73,16 @@ server
         proxy_buffering off;
         proxy_pass http://regovar;
     }
-}' > /etc/nginx/sites-available/regovar
+}
 ```
 
 … puis activez le site :
 
+
 ```sh
-    rm /etc/nginx/sites-enabled/default
-    ln -s /etc/nginx/sites-available/regovar /etc/nginx/sites-enabled
-    service nginx restart
+rm /etc/nginx/sites-enabled/default
+ln -s /etc/nginx/sites-available/regovar /etc/nginx/sites-enabled
+service nginx restart
 ```
 
 ## Configurer HTTPS et la certification
@@ -90,8 +91,7 @@ TODO
 
 ## Démarrer et tester le serveur
 
-
 ```sh
-    cd /home/regovar/Regovar/regovar
-    sudo -u regovar make app
+cd /home/regovar/Regovar/regovar
+sudo -u regovar make app
 ```
