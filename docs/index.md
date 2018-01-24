@@ -20,4 +20,4 @@ REGOVAR est un projet collaboratif, libre et ouvert de logiciel d’analyse de d
 
 # Aperçu de l'application (client)
 
-![Aperçu](https://raw.githubusercontent.com/REGOVAR/QRegovar/master/781c155b1a0d640f757ea5677d223f3d9e347ab7/mockup/mockup.gif)
+![Aperçu](https://raw.githubusercontent.com/REGOVAR/QRegovar/781c155b1a0d640f757ea5677d223f3d9e347ab7/docs/mockup/mockup.gif)
