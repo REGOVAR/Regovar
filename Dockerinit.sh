@@ -22,7 +22,6 @@ su - postgres -c "psql -c \"CREATE DATABASE regovar OWNER regovar\""
 su - postgres -c "psql -d regovar -f /var/regovar/app/install/create_all.sql"
 su - postgres -c "psql -d regovar -f /var/regovar/app/install/install_hg19.sql"
 su - postgres -c "psql -d regovar -f /var/regovar/app/install/install_hg38.sql"
-exit
 
 
 
