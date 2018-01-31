@@ -22,8 +22,8 @@ RUN mkdir -p /var/regovar/databases/hg38
 # Init Postgresql 
 RUN mkdir -p /var/regovar/sqldb
 RUN chown postgres /var/regovar/sqldb
-RUN su - postgres -c '/usr/lib/postgresql/9.6/bin/pg_ctl -D /var/regovar/sqldb initdb'
-RUN su - postgres -c '/usr/lib/postgresql/9.6/bin/pg_ctl -D /var/regovar/sqldb -l /var/regovar/sqldb/log.txt start'
+RUN mv /etc/postgresql/9.6/main/ /etc/postgresql/9.6/old
+RUN su - postgres -c '/usr/lib/postgresql/9.6/bin/pg_ctl -D /etc/postgresql/9.6/main/ initdb'
 
 
 
@@ -32,6 +32,8 @@ RUN su - postgres -c '/usr/lib/postgresql/9.6/bin/pg_ctl -D /var/regovar/sqldb -
 # Copy regovar files
 COPY . /var/regovar/app/
 RUN cp /var/regovar/app/install/config.default /var/regovar/app/regovar/config.py
+RUN sed -i s/127\.0\.0\.1/0\.0\.0\.0/p /var/regovar/app/regovar/config.py
+RUN sed -i s/8500/80/p /var/regovar/app/regovar/config.py
 RUN chmod a+rwx -R /var/regovar/app/install
 RUN chmod a+x /var/regovar/app/*.sh
 RUN chmod a+x /var/regovar/app/regovar/*.py
@@ -43,9 +45,7 @@ RUN pip install -r /var/regovar/app/requirements-dev.txt
 
 
 # Expose disks volumes and ports
-VOLUME  ["/var/regovar/app", "/var/regovar/cache", "/var/regovar/downloads", "/var/regovar/files", "/var/regovar/pipelines", "/var/regovar/jobs", "/var/regovar/databases/hg19", "/var/regovar/databases/hg38"]
+VOLUME  ["/var/regovar/app", "/var/regovar/cache", "/var/regovar/downloads", "/var/regovar/files", "/var/regovar/pipelines", "/var/regovar/jobs", "/var/regovar/databases", "/etc/postgresql/9.6/main"]
 
 
-EXPOSE 8500
-
-
+EXPOSE 80

@@ -1,10 +1,7 @@
 #!/bin/sh
 
-
-# Start postgresql service
-/etc/init.d/postgresql start
-
-
+# Start Postgresql server
+su - postgres -c '/usr/lib/postgresql/9.6/bin/pg_ctl -D /etc/postgresql/9.6/main/ -l /etc/postgresql/9.6/main/log.txt start'
 
 # Loading public genomes references files
 cd /var/regovar/databases/hg19/
@@ -18,12 +15,14 @@ chmod 777 -R /var/regovar/databases
 
 # Init Regovar database
 su - postgres -c "psql -c \"CREATE USER regovar PASSWORD 'regovar'\""
+su - postgres -c "psql -c \"GRANT admin TO regovar;\""
 su - postgres -c "psql -c \"CREATE DATABASE regovar OWNER regovar\""
-su - postgres -c "psql -d regovar -f /var/regovar/app/install/create_all.sql"
-su - postgres -c "psql -d regovar -f /var/regovar/app/install/install_hg19.sql"
-su - postgres -c "psql -d regovar -f /var/regovar/app/install/install_hg38.sql"
+su - postgres -c "psql -U regovar -d regovar -f /var/regovar/app/install/create_all.sql"
+su - postgres -c "psql -U regovar -d regovar -f /var/regovar/app/install/install_hg19.sql"
+su - postgres -c "psql -U regovar -d regovar -f /var/regovar/app/install/install_hg38.sql"
 
 
 
 # Run server
-python -Wdefault /var/regovar/app/regovar/regovar_server.py
+cd /var/regovar/app/regovar
+python -Wdefault regovar_server.py
