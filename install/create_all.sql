@@ -685,7 +685,6 @@ CREATE INDEX variant_hg18_idx_site
 -- --------------------------------------------
 -- INIT DATA
 -- --------------------------------------------
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 INSERT INTO public."parameter" (key, description, value) VALUES
     ('database_version',          'The current version of the database',           '0.6.3'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
