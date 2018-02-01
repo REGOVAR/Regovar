@@ -16,6 +16,7 @@ terminate_queries:
 destroy: terminate_queries
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)"
 	sudo -u postgres psql -c "CREATE DATABASE $(database_name) OWNER regovar"
+	sudo -u postgres psql -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
 
 list_db:
 	psql -U regovar -d $(database_name) -c "SELECT relname as Table, pg_size_pretty(pg_total_relation_size(relid)) As Size, pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) as ExternalSize, rowcount as RowCount \
@@ -53,6 +54,7 @@ clear_files:
 test:
 	test -n $(database_name)
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)_test"
+	psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
 	sudo -u postgres psql -c "CREATE DATABASE $(database_name)_test OWNER regovar"
 	psql -U regovar -d $(database_name)_test -f ../install/create_all.sql
 	psql -U regovar -d $(database_name)_test -f tests/init_fake_data.sql

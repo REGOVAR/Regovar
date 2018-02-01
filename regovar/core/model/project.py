@@ -218,9 +218,11 @@ def projects_get_subjects(self):
     """
         Return the list of subjects linked to the project
     """
-    sql = "SELECT  id, identifier, firstname, lastname, sex, family_number, dateofbirth, comment, create_date, update_date FROM subject WHERE id IN ({}) ORDER BY lastname, firstname"
+    sql = "SELECT  id, identifier, firstname, lastname, sex, family_number, dateofbirth, comment, create_date, update_date FROM subject {} ORDER BY lastname, firstname"
     result = []
-    for sbj in execute(sql.format(",".join([str(i) for i in self.get_subjects_ids()]))):
+    sbjs = self.get_subjects_ids()
+    query =  sql.format("" if len(sbjs) == 0 else "WHERE id IN ({})".format(",".join([str(i) for i in sbjs])))
+    for sbj in execute(query):
         result.append({
             "id": sbj.id,
             "identifier": sbj.identifier,
