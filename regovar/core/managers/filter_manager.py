@@ -85,7 +85,6 @@ class FilterEngine:
             err("Analysis cannot be null. Creation of working table for the analysis {} aborded".format(analysis_id))
             return
 
-
         try:
             analysis.db_suffix = "_" + execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix 
             progress = {"id": analysis.id, "status": analysis.status, "error_message": "", "log": [
@@ -101,6 +100,10 @@ class FilterEngine:
                 {"label": "Restoring selections", "status": "waiting", "progress": 0},
                 {"label": "Computing analysis statistics", "status": "waiting", "progress": 0},
             ]}
+
+
+            # Refresh list of annotations db available
+            run_until_complete(self.load_annotation_metadata())
 
             # create wt table
             self.create_wt_schema(analysis, progress)
