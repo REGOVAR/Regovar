@@ -949,11 +949,14 @@ class FilterEngine:
         """
         # Manage case of uid comming from order json (which can prefix uid by "-" for ordering DESC
         uid = uid[1:] if uid[0] == '-' else uid
-        
+                  
+
         if self.fields_map[uid]["db_name_ui"] in ["Variant", "Regovar"]:
             # Manage special case for fields splitted by sample
             if self.fields_map[uid]["name"].startswith("s{}_"):
-                return self.fields_map[uid]["name"].format(analysis.samples_ids[0])
+                # Manage special case for filter field which have type JSON that is not complient with GROUP BY sql operator
+                suffix = " #>> '{}'" if self.fields_map[uid]["name"] == "s{}_filter" else ""
+                return self.fields_map[uid]["name"].format(analysis.samples_ids[0]) + suffix
             else:
                 return self.fields_map[uid]["name"]
         return "_" + uid
