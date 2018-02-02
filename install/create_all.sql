@@ -686,7 +686,7 @@ CREATE INDEX variant_hg18_idx_site
 -- INIT DATA
 -- --------------------------------------------
 INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           '0.6.3'),
+    ('database_version',          'The current version of the database',           '0.6.4'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
     ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
 
@@ -736,7 +736,8 @@ UPDATE annotation_field SET uid=MD5(concat(database_uid, name));
 INSERT INTO "indicator" (name, meta) VALUES
   ('Ermergency', '{"enum" : ["Burning", "Urgent", "Normal", "Low"], "default": "Normal"}');
 
-  
+INSERT INTO "project" (id, name, comment) VALUES  
+  (0, 'Trash', 'Special project that contains all analyses that have been deleted by non admin users');
 INSERT INTO "project" (comment, is_sandbox) VALUES
   ('My sandbox', True);
 INSERT INTO "user" (login, firstname, lastname, roles, sandbox_id) VALUES

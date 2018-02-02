@@ -14,7 +14,7 @@ from core.managers import *
 #
 # The version of the source code
 #
-REGOVAR_DB_VERSION = "0.6.3"
+REGOVAR_DB_VERSION = "0.6.4"
 
 
 
