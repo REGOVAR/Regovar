@@ -85,7 +85,6 @@ class FilterEngine:
             err("Analysis cannot be null. Creation of working table for the analysis {} aborded".format(analysis_id))
             return
 
-
         try:
             analysis.db_suffix = "_" + execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix 
             progress = {"id": analysis.id, "status": analysis.status, "error_message": "", "log": [
@@ -101,6 +100,10 @@ class FilterEngine:
                 {"label": "Restoring selections", "status": "waiting", "progress": 0},
                 {"label": "Computing analysis statistics", "status": "waiting", "progress": 0},
             ]}
+
+
+            # Refresh list of annotations db available
+            run_until_complete(self.load_annotation_metadata())
 
             # create wt table
             self.create_wt_schema(analysis, progress)
@@ -949,11 +952,14 @@ class FilterEngine:
         """
         # Manage case of uid comming from order json (which can prefix uid by "-" for ordering DESC
         uid = uid[1:] if uid[0] == '-' else uid
-        
+                  
+
         if self.fields_map[uid]["db_name_ui"] in ["Variant", "Regovar"]:
             # Manage special case for fields splitted by sample
             if self.fields_map[uid]["name"].startswith("s{}_"):
-                return self.fields_map[uid]["name"].format(analysis.samples_ids[0])
+                # Manage special case for filter field which have type JSON that is not complient with GROUP BY sql operator
+                suffix = " #>> '{}'" if self.fields_map[uid]["name"] == "s{}_filter" else ""
+                return self.fields_map[uid]["name"].format(analysis.samples_ids[0]) + suffix
             else:
                 return self.fields_map[uid]["name"]
         return "_" + uid

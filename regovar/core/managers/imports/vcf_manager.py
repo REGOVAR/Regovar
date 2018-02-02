@@ -711,11 +711,6 @@ class VcfManager(AbstractImportManager):
         vcf_metadata = prepare_vcf_parsing(reference_id, filepath)
         db_ref_suffix= "_" + Model.execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first().table_suffix
 
-        # Maybe new annotations table have been created during the execution of prepare_vcf_parsing
-        # So we force the server to refresh its annotations maping
-        
-        await core.annotations.load_annotation_metadata()
-
         if filepath.endswith(".vcf") or filepath.endswith(".vcf.gz"):
             filepath += ".regovar_import" # a tmp file have been created by prepare_vcf_parsing() method to avoid pysam unsupported file format.
             start = datetime.datetime.now()
