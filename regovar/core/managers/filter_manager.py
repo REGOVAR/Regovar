@@ -49,10 +49,10 @@ class FilterEngine:
 
 
     def __init__(self):
-        run_until_complete(self.load_annotation_metadata())
+        self.load_annotation_metadata()
 
 
-    async def load_annotation_metadata(self):
+    def load_annotation_metadata(self):
         """
             Init Annso Filtering engine.
             Init mapping collection for annotations databases and fields
@@ -60,14 +60,12 @@ class FilterEngine:
         self.fields_map = {}
         self.db_map = {}
         query = "SELECT d.uid AS duid, d.name AS dname, d.name_ui AS dname_ui, d.jointure, d.reference_id, d.type AS dtype, d.db_pk_field_uid, a.uid AS fuid, a.name AS fname, a.type FROM annotation_field a LEFT JOIN annotation_database d ON a.database_uid=d.uid"
-        result = await execute_aio(query)
+        result = execute(query)
         for row in result:
             if row.duid not in self.db_map:
                 self.db_map[row.duid] = {"name": row.dname, "join": row.jointure, "fields": {}, "reference_id": row.reference_id, "type": row.dtype, "db_pk_field_uid" : row.db_pk_field_uid}
             self.db_map[row.duid]["fields"][row.fuid] = {"name": row.fname, "type": row.type}
             self.fields_map[row.fuid] = {"name": row.fname, "type": row.type, "db_uid": row.duid, "db_name_ui": row.dname_ui, "db_name": row.dname, "db_type": row.dtype, "join": row.jointure}
-
-
 
 
 
@@ -103,7 +101,7 @@ class FilterEngine:
 
 
             # Refresh list of annotations db available
-            run_until_complete(self.load_annotation_metadata())
+            self.load_annotation_metadata()
 
             # create wt table
             self.create_wt_schema(analysis, progress)
@@ -638,6 +636,7 @@ class FilterEngine:
         #
         # Compute stats by sample
         #
+        analysis.init(1)
         for sample in analysis.samples:
             # skip if not need
             if sample.stats is not None:
@@ -645,15 +644,15 @@ class FilterEngine:
             # Compute simple common stats
             stats = {
                 "total_variant" : execute("SELECT COUNT(*) FROM sample_variant{} WHERE sample_id={}".format(analysis.db_suffix, sample.id)).first()[0],
-                "total_transcript": execute("SELECT COUNT(*) FROM {} WHERE s{}_gt>0 AND NOT is_variant".format(wt, sample.id)).first()[0],
+                "total_transcript": execute("SELECT COUNT(*) FROM {} WHERE s{}_gt>=0 AND NOT is_variant".format(wt, sample.id)).first()[0],
                 
                 # TODO : this stat can only be computed by the vcf_import manager by checking vcf header
                 "matching_reference": True, 
                 
                 # TODO: OPTIMIZATION : find better way with postgresql sql JSON operators
-                "filter": {fid: execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND s{1}_filter::text LIKE '%{2}%'".format(wt, sample.id, fid)).first()[0] for fid in sample.filter_description.keys()},
+                "filter": {fid: execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>=0 AND is_variant AND s{1}_filter::text LIKE '%{2}%'".format(wt, sample.id, fid)).first()[0] for fid in sample.filter_description.keys()},
                 
-                "sample_total_variant": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>-1 AND is_variant".format(wt, sample.id)).first()[0],
+                "sample_total_variant": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>=0 AND is_variant".format(wt, sample.id)).first()[0],
                 "variants_classes": {
                     "not": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt=-1 AND is_variant".format(wt, sample.id)).first()[0],
                     "ref": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt=0 AND is_variant".format(wt, sample.id)).first()[0],
@@ -677,8 +676,8 @@ class FilterEngine:
             sample.save()
             
         # We just update progress without calling notify_all as a notify will be send by the next step
-        progress["log"][9]["status"] = "done"
-        progress["log"][9]["progress"] = 1
+        progress["log"][10]["status"] = "done"
+        progress["log"][10]["progress"] = 1
 
 
 
