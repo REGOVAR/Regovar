@@ -22,7 +22,7 @@ class ProjectManager:
         if not isinstance(fields, dict):
             fields = None
         if query is None:
-            query = {}
+            query = {"id>0"}
         if order is None:
             order = "name"
         if offset is None:
@@ -39,11 +39,14 @@ class ProjectManager:
     def delete(self, project_id):
         """ 
             Delete the project
+            All its analyses are put into the trash project (id = 0)
         """
         project = Model.Project.from_id(project_id)
         if not project: raise RegovarException(code="E102001", arg=[project_id])
-        # TODO
-        # regovar.log_event("Delete user {} {} ({})".format(user.firstname, user.lastname, user.login), user_id=0, type="info")
+        sql = "UPDATE analysis SET project_id=0 WHERE project_id={0}; DELETE FROM project WHERE id={0}".format(project.id)
+        result = project.to_json()
+        Model.execute(sql)
+        return result
 
 
 

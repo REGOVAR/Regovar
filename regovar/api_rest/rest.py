@@ -193,7 +193,7 @@ def process_generic_get(query_string, allowed_fields):
 
         ## 6- Return processed data
         #return fields, query, order, offset, limit
-        return [], {}, None, 0, 100
+        return [], {}, None, 0, RANGE_DEFAULT
 
 
 

@@ -117,7 +117,7 @@ class ProjectHandler:
         project = Project.from_id(project_id, 1)
         if not project:
             return rest_error("Unable to find the project (id={})".format(project_id))
-        return rest_success(project.to_json(Project.public_fields))
+        return rest_success(project.to_json())
         
     
     
@@ -128,10 +128,11 @@ class ProjectHandler:
         """
         from core.core import core
         project_id = request.match_info.get('project_id', -1)
-        project = core.Project.delete(project_id, 1)
-        if not project:
-            return rest_error("Unable to delete the project (id={})".format(project_id))
-        return rest_success(project.to_json(Project.public_fields))
+        try:
+            project = core.projects.delete(project_id)
+        except Exception as ex:
+            return rest_error("Unable to delete the project (id={})".format(project_id), exception=ex)
+        return rest_success(project)
     
     
     

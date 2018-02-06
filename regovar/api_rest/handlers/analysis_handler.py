@@ -88,6 +88,13 @@ class AnalysisHandler:
         return rest_success(analysis.to_json())
 
 
+    def delete(self, request):
+        analysis_id = request.match_info.get('analysis_id', -1)
+        try:
+            result = core.analyses.delete(analysis_id)
+        except Exception as ex:
+            return rest_error("Error occured when trying to deleting the analysis with id=" + str(analysis_id), exception=ex)
+        return rest_success(result) 
 
 
     async def update(self, request):
@@ -97,8 +104,8 @@ class AnalysisHandler:
         
         try:
             result = core.analyses.update(analysis_id, data)
-        except Exception as err:
-            return rest_error("Error occured when trying to save settings for the analysis with id=" + str(analysis_id) + ". " + str(err))
+        except Exception as ex:
+            return rest_error("Error occured when trying to save settings for the analysis with id=" + str(analysis_id), exception=ex)
         return rest_success(result.to_json()) 
 
         
@@ -116,20 +123,20 @@ class AnalysisHandler:
         fields = data["fields"] if "fields" in data else None
         if isinstance(fields, str): fields = json.loads(fields)
         
-        limit = data["limit"] if "limit" in data else 100
+        limit = data["limit"] if "limit" in data else RANGE_DEFAULT
         offset = data["offset"] if "offset" in data else 0
         order = data["order"] if "order" in data else None
         if isinstance(order, str): order = json.loads(order)
 
         # 2- Check parameters
-        if limit<0 or limit > RANGE_MAX: limit = 100
+        if limit<0 or limit > RANGE_MAX: limit = RANGE_DEFAULT
         if offset<0: offset = 0
         
         # 3- Execute filtering request
         try:
             result = await core.filters.request(int(analysis_id), filter_json, fields, order, variant_id, int(limit), int(offset))
         except Exception as ex:
-            return rest_error("Filtering error: " + str(ex))
+            return rest_error("Filtering error", exception=ex)
         return rest_success(result)
     
     
@@ -168,7 +175,7 @@ class AnalysisHandler:
             result = await core.analyses.create_update_filter(filter_id, data)
             return rest_success(result.to_json())
         except Exception as ex:
-            return rest_error("Unable to create or update the filter with provided data. " + str(ex))
+            return rest_error("Unable to create or update the filter with provided data.", exception=ex)
 
 
 
@@ -196,7 +203,7 @@ class AnalysisHandler:
             result = core.analyses.clear_temps_data(analysis_id)
             return rest_success()
         except Exception as ex:
-            return rest_error("Unable to clear temporary data for analysis {}. {}".format(analysis_id, ex))
+            return rest_error("Unable to clear temporary data for analysis {}. {}".format(analysis_id, ex), exception=ex)
 
 
 
@@ -206,7 +213,7 @@ class AnalysisHandler:
         try:
             result = core.analyses.get_selection(analysis_id)
         except Exception as ex:
-            return rest_error("AnalysisHandler.get_selection error", ex)
+            return rest_error("AnalysisHandler.get_selection error", exception=ex)
         return rest_success(result)
 
 
@@ -225,7 +232,7 @@ class AnalysisHandler:
         try:
             export_file = await core.exporters[exporter_name]["mod"].export_data(analysis_id, **data)
         except Exception as ex:
-            return rest_error("AnalysisHandler.get_export error: ", ex)
+            return rest_error("AnalysisHandler.get_export error: ", exception=ex)
         return rest_success(export_file.to_json())
 
 
@@ -243,7 +250,7 @@ class AnalysisHandler:
         try:
             report_file = await core.reporters[report_name]["mod"].generate(analysis_id, **data)
         except Exception as ex:
-            return rest_error("AnalysisHandler.get_report error: ", ex)
+            return rest_error("AnalysisHandler.get_report error: ", exception=ex)
         return rest_success(report_file.to_json())
     
         

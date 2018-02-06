@@ -98,6 +98,31 @@ class AnalysisManager:
 
 
 
+    def delete(self, analysis_id, definitely=False):
+        """ 
+            Delete the analysis
+            When normal user delete an analysis, this one is put in the trash project
+            Then an admin can definitely delete the analysis (with the flag finally set to True)
+        """
+        analysis = Analysis.from_id(analysis_id)
+        if not analysis: raise RegovarException("Unable to find analysis with the provided id {}".format(analysis_id))
+
+        if definitely:
+            self.clear_temps_data(analysis_id)
+
+            # Delete related files
+            # TODO
+
+            sql = "DELETE FROM analysis WHERE id={0}; DELETE FROM filter WHERE analysis_id={0};".format(analysis_id)
+            sql+= "DELETE FROM analysis_sample WHERE analysis_id={0}; DELETE FROM attribute WHERE analysis_id={0}".format(analysis_id)
+            sql+= "DELETE FROM analysis_indicator_value WHERE analysis_id={0};".format(analysis_id)
+        else:
+            sql = "UPDATE analysis SET project_id=0 WHERE id={0}; ".format(analysis_id)
+        result = analysis.to_json()
+        execute(sql)
+        return result
+
+
     def update(self, analysis_id, data):
         """
             Update analysis with provided data. Data that are not provided are not updated (ignored).

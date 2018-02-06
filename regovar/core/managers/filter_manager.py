@@ -49,10 +49,10 @@ class FilterEngine:
 
 
     def __init__(self):
-        run_until_complete(self.load_annotation_metadata())
+        self.load_annotation_metadata()
 
 
-    async def load_annotation_metadata(self):
+    def load_annotation_metadata(self):
         """
             Init Annso Filtering engine.
             Init mapping collection for annotations databases and fields
@@ -60,14 +60,12 @@ class FilterEngine:
         self.fields_map = {}
         self.db_map = {}
         query = "SELECT d.uid AS duid, d.name AS dname, d.name_ui AS dname_ui, d.jointure, d.reference_id, d.type AS dtype, d.db_pk_field_uid, a.uid AS fuid, a.name AS fname, a.type FROM annotation_field a LEFT JOIN annotation_database d ON a.database_uid=d.uid"
-        result = await execute_aio(query)
+        result = execute(query)
         for row in result:
             if row.duid not in self.db_map:
                 self.db_map[row.duid] = {"name": row.dname, "join": row.jointure, "fields": {}, "reference_id": row.reference_id, "type": row.dtype, "db_pk_field_uid" : row.db_pk_field_uid}
             self.db_map[row.duid]["fields"][row.fuid] = {"name": row.fname, "type": row.type}
             self.fields_map[row.fuid] = {"name": row.fname, "type": row.type, "db_uid": row.duid, "db_name_ui": row.dname_ui, "db_name": row.dname, "db_type": row.dtype, "join": row.jointure}
-
-
 
 
 
@@ -103,7 +101,7 @@ class FilterEngine:
 
 
             # Refresh list of annotations db available
-            run_until_complete(self.load_annotation_metadata())
+            self.load_annotation_metadata()
 
             # create wt table
             self.create_wt_schema(analysis, progress)
@@ -190,7 +188,8 @@ class FilterEngine:
             is_dom boolean DEFAULT False, \
             is_rec_hom boolean DEFAULT False, \
             is_rec_htzcomp boolean DEFAULT False, \
-            is_denovo boolean DEFAULT False, \
+            is_denovo_gvcf boolean DEFAULT False, \
+            is_denovo_vcf boolean DEFAULT False, \
             is_aut boolean DEFAULT False, \
             is_xlk boolean DEFAULT False, \
             is_mit boolean DEFAULT False, "
@@ -354,7 +353,8 @@ class FilterEngine:
         query += "CREATE INDEX {0}_idx_is_dom ON {0} USING btree (is_dom);".format(wt)
         query += "CREATE INDEX {0}_idx_is_rec_hom ON {0} USING btree (is_rec_hom);".format(wt)
         query += "CREATE INDEX {0}_idx_is_rec_htzcomp ON {0} USING btree (is_rec_htzcomp);".format(wt)
-        query += "CREATE INDEX {0}_idx_is_denovo ON {0} USING btree (is_denovo);".format(wt)
+        query += "CREATE INDEX {0}_idx_is_denovo_gvcf ON {0} USING btree (is_denovo_gvcf);".format(wt)
+        query += "CREATE INDEX {0}_idx_is_denovo_vcf ON {0} USING btree (is_denovo_vcf);".format(wt)
         query += "CREATE INDEX {0}_idx_is_aut ON {0} USING btree (is_aut);".format(wt)
         query += "CREATE INDEX {0}_idx_is_xlk ON {0} USING btree (is_xlk);".format(wt)
         query += "CREATE INDEX {0}_idx_is_mit ON {0} USING btree (is_mit);".format(wt)
@@ -382,7 +382,7 @@ class FilterEngine:
 
         # Insert trx and their annotations
         q_fields  = "is_variant, variant_id, trx_pk_uid, trx_pk_value, vcf_line, regovar_score, bin, chr, pos, ref, alt, is_transition, "
-        q_fields += "sample_tlist, sample_tcount, sample_alist, sample_acount, is_dom, is_rec_hom, is_rec_htzcomp, is_denovo, is_aut, is_xlk, is_mit, "
+        q_fields += "sample_tlist, sample_tcount, sample_alist, sample_acount, is_dom, is_rec_hom, is_rec_htzcomp, is_denovo_gvcf, is_denovo_vcf, is_aut, is_xlk, is_mit, "
         q_fields += ", ".join(["s{}_gt".format(i) for i in analysis.samples_ids]) + ", "
         q_fields += ", ".join(["s{}_dp".format(i) for i in analysis.samples_ids]) + ", "
         q_fields += ", ".join(["s{}_dp_alt".format(i) for i in analysis.samples_ids]) + ", "
@@ -400,7 +400,7 @@ class FilterEngine:
         
         q_select  = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id, _wt.vcf_line, _wt.regovar_score, _wt.bin, _wt.chr, _wt.pos, "
         q_select += "_wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, _wt.sample_tcount, _wt.sample_alist, _wt.sample_acount, _wt.is_dom, _wt.is_rec_hom, "
-        q_select += "_wt.is_rec_htzcomp, _wt.is_denovo, _wt.is_aut, _wt.is_xlk, _wt.is_mit, "
+        q_select += "_wt.is_rec_htzcomp, _wt.is_denovo_gvcf, _wt.is_denovo_vcf, _wt.is_aut, _wt.is_xlk, _wt.is_mit, "
         q_select += ", ".join(["_wt.s{}_gt".format(i) for i in analysis.samples_ids]) + ", "
         q_select += ", ".join(["_wt.s{}_dp".format(i) for i in analysis.samples_ids]) + ", "
         q_select += ", ".join(["_wt.s{}_dp_alt".format(i) for i in analysis.samples_ids]) + ", "
@@ -492,7 +492,8 @@ class FilterEngine:
         # Recessif Homozygous
         query += "is_rec_hom=(s{1}_gt=1), "
         # Inherited and denovo
-        query += "is_denovo=(s{1}_gt>0 AND s{2}_gt=0 AND s{3}_gt=0), "
+        query += "is_denovo_gvcf=(s{1}_gt>0 AND s{2}_gt=0 AND s{3}_gt=0), "
+        query += "is_denovo_vcf=(s{1}_gt>0 AND COALESCE(s{2}_gt,0)=0 AND COALESCE(s{3}_gt,0)=0), "
         # Autosomal
         query += "is_aut=(chr<23), "
         # X-Linked
@@ -580,7 +581,7 @@ class FilterEngine:
     
 
     def update_wt_set_restore_selection(self, analysis, progress):
-        self.working_table_creation_update_status(analysis, progress, 8, "computing", 0.1)
+        self.working_table_creation_update_status(analysis, progress, 9, "computing", 0.1)
         # TODO: create sql request from json selection data.
         
         # We just update progress without calling notify_all as a notify will be send by the next step
@@ -638,6 +639,7 @@ class FilterEngine:
         #
         # Compute stats by sample
         #
+        analysis.init(1)
         for sample in analysis.samples:
             # skip if not need
             if sample.stats is not None:
@@ -645,15 +647,15 @@ class FilterEngine:
             # Compute simple common stats
             stats = {
                 "total_variant" : execute("SELECT COUNT(*) FROM sample_variant{} WHERE sample_id={}".format(analysis.db_suffix, sample.id)).first()[0],
-                "total_transcript": execute("SELECT COUNT(*) FROM {} WHERE s{}_gt>0 AND NOT is_variant".format(wt, sample.id)).first()[0],
+                "total_transcript": execute("SELECT COUNT(*) FROM {} WHERE s{}_gt>=0 AND NOT is_variant".format(wt, sample.id)).first()[0],
                 
                 # TODO : this stat can only be computed by the vcf_import manager by checking vcf header
                 "matching_reference": True, 
                 
                 # TODO: OPTIMIZATION : find better way with postgresql sql JSON operators
-                "filter": {fid: execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>0 AND is_variant AND s{1}_filter::text LIKE '%{2}%'".format(wt, sample.id, fid)).first()[0] for fid in sample.filter_description.keys()},
+                "filter": {fid: execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>=0 AND is_variant AND s{1}_filter::text LIKE '%{2}%'".format(wt, sample.id, fid)).first()[0] for fid in sample.filter_description.keys()},
                 
-                "sample_total_variant": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>-1 AND is_variant".format(wt, sample.id)).first()[0],
+                "sample_total_variant": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt>=0 AND is_variant".format(wt, sample.id)).first()[0],
                 "variants_classes": {
                     "not": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt=-1 AND is_variant".format(wt, sample.id)).first()[0],
                     "ref": execute("SELECT COUNT(*) FROM {0} WHERE s{1}_gt=0 AND is_variant".format(wt, sample.id)).first()[0],
@@ -677,8 +679,8 @@ class FilterEngine:
             sample.save()
             
         # We just update progress without calling notify_all as a notify will be send by the next step
-        progress["log"][9]["status"] = "done"
-        progress["log"][9]["progress"] = 1
+        progress["log"][10]["status"] = "done"
+        progress["log"][10]["progress"] = 1
 
 
 
@@ -789,12 +791,13 @@ class FilterEngine:
         return total_variant
 
 
-    async def get_variant(self, analysis, fields, limit=100, offset=0):
+    async def get_variant(self, analysis, fields, limit=RANGE_DEFAULT, offset=0):
         """
             Return results from current temporary table according to provided fields and pagination information
             
         """
         from core.core import core
+        limit = min(limit, RANGE_MAX)
         w_table = 'wt_{}'.format(analysis.id)
         query = "SELECT ws.variant_id, wt.is_selected, ws.trx_count, {1} FROM {0}_tmp ws INNER JOIN {0} wt ON ws.variant_id=wt.variant_id WHERE wt.is_variant AND ws.page>={2} ORDER BY ws.page LIMIT {3}"
         
@@ -828,10 +831,11 @@ class FilterEngine:
 
 
 
-    async def request(self, analysis_id, filter_json=None, fields=None, order=None, variant_id=None, limit=100, offset=0):
+    async def request(self, analysis_id, filter_json=None, fields=None, order=None, variant_id=None, limit=RANGE_DEFAULT, offset=0):
         """
             Commont request to manage all different cases
         """
+        limit = min(limit, RANGE_MAX)
         if fields is None or not isinstance(fields, list) or len(fields) == 0:
             raise RegovarException("You must specify which fields shall be returned by the filtering query.")
         

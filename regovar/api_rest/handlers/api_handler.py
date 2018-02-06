@@ -111,10 +111,21 @@ class ApiHandler:
         """
             Return last analyses
         """
-        result = Session().query(Analysis).order_by(Analysis.update_date.desc(), Analysis.name.asc()).limit(10).all()
-        for res in result: res.init(0)
-        fields = Analysis.public_fields + ["project"]
-        return [r.to_json(fields) for r in result]
+
+        sql = "SELECT a.id, a.name, a.status, a.project_id, a.create_date, a.update_date, p.id as project_id, p.name as project_name "
+        sql+= "FROM analysis a INNER JOIN project p ON a.project_id=p.id WHERE project_id > 0 ORDER BY update_date DESC"
+        
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "name": res.name,
+                "create_date": res.create_date.isoformat(),
+                "update_date": res.update_date.isoformat(),
+                "status": res.status,
+                "fullpath":  [{"id": res.project_id, "name": res.project_name}]
+                })
+        return result
     
     
     def get_last_subjects(self):

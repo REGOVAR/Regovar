@@ -35,7 +35,7 @@ class AnnotationDBHandler:
         return rest_success(core.annotations.ref_list)
 
 
-    def get(self, request):
+    async def get(self, request):
         """ 
             Return list of all annotation's databases and, for each, the list of availables versions and the list of their fields for the latest version
         """
@@ -44,6 +44,8 @@ class AnnotationDBHandler:
             return rest_error("A valid reference id must be provided.")
         ref_id = int(ref_id)
 
+        
+        await core.annotations.load_annotation_metadata()
         
         result = { "ref_id": ref_id, "ref_name": core.annotations.ref_list[ref_id], "db": []}
 
@@ -81,10 +83,11 @@ class AnnotationDBHandler:
         return rest_success(result)
 
 
-    def get_database(self, request):
+    async def get_database(self, request):
         """
             Return the annotation database description and the list of available versions
         """
+        await core.annotations.load_annotation_metadata()
         db_id = request.match_info.get('db_id', -1)
         result = {}
         result.update(core.annotations.db_map[db_id])
@@ -92,10 +95,11 @@ class AnnotationDBHandler:
         return rest_success(result)
 
 
-    def get_field(self, request):
+    async def get_field(self, request):
         """
             Return the annotation field details
         """
+        await core.annotations.load_annotation_metadata()
         field_id = request.match_info.get('field_id', -1)
         return rest_success(core.annotations.fields_map[field_id])
 
