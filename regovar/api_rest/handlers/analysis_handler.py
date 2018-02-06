@@ -123,13 +123,13 @@ class AnalysisHandler:
         fields = data["fields"] if "fields" in data else None
         if isinstance(fields, str): fields = json.loads(fields)
         
-        limit = data["limit"] if "limit" in data else 100
+        limit = data["limit"] if "limit" in data else RANGE_DEFAULT
         offset = data["offset"] if "offset" in data else 0
         order = data["order"] if "order" in data else None
         if isinstance(order, str): order = json.loads(order)
 
         # 2- Check parameters
-        if limit<0 or limit > RANGE_MAX: limit = 100
+        if limit<0 or limit > RANGE_MAX: limit = RANGE_DEFAULT
         if offset<0: offset = 0
         
         # 3- Execute filtering request

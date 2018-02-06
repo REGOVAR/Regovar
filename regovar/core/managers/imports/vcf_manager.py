@@ -687,7 +687,7 @@ class VcfManager(AbstractImportManager):
             analysis = Model.Analysis.from_id(row.analysis_id,1)
             if analysis.status == "waiting":
                 log("Auto initialisation of the analysis in witing state : {} ({})".format(analysis.name, analysis.id))
-                run_async(core.filters.request, analysis.id, analysis.filter, analysis.fields)
+                core.filters.request(analysis.id, analysis.filter, analysis.fields)
 
 
 

@@ -686,7 +686,7 @@ CREATE INDEX variant_hg18_idx_site
 -- INIT DATA
 -- --------------------------------------------
 INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           '0.6.4'),
+    ('database_version',          'The current version of the database',           '0.6.5'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
     ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
 
@@ -719,7 +719,8 @@ INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, desc
   ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Is the variant dominant for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 2,  'is_rec_hom',       'Recessif homozygous',            'bool',         'Is the variant recessif homozygous for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 3,  'is_rec_htzcomp',   'Recessif compound heterozygous', 'bool',         'Is the variant recessif compound heterozygous for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo',        'De novo',                        'bool',         'Is the variant de novo for the child (trio).', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo_gvcf',   'De novo (GVCF)',                 'bool',         'Is the variant de novo for the child (trio).', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 5,  'is_denovo_vcf',    'Probably de novo (VCF)',         'bool',         'Is the variant de novo for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 6,  'is_aut',           'Autosomal',                      'bool',         'Is the variant autosomal for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 7,  'is_xlk',           'X-linked',                       'bool',         'Is the variant X-linked for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 8,  'is_mit',           'Mitochondrial',                  'bool',         'Is the variant mitochondrial for the sample (single), or for the child (trio).', NULL),
