@@ -602,79 +602,6 @@ CREATE INDEX panel_entry_idx
 
 
 
--- --------------------------------------------
--- TABLES ACCORDING TO REF
--- --------------------------------------------
-CREATE TABLE public.variant_hg18
-(
-    id bigserial NOT NULL,
-    bin integer,
-    chr integer,
-    pos bigint NOT NULL,
-    ref text NOT NULL,
-    alt text NOT NULL,
-    is_transition boolean,
-    sample_list integer[],
-    CONSTRAINT variant_hg18_pkey PRIMARY KEY (id),
-    CONSTRAINT variant_hg18_ukey UNIQUE (chr, pos, ref, alt)
-);
-CREATE TABLE public.sample_variant_hg18
-(
-    sample_id integer NOT NULL,
-    bin integer,
-    chr integer,
-    pos bigint NOT NULL,
-    ref text NOT NULL,
-    alt text NOT NULL,
-    variant_id bigint,
-    genotype integer,
-    depth integer,
-    infos character varying(255)[][] COLLATE pg_catalog."C",
-    mosaic real,
-    CONSTRAINT sample_variant_hg18_pkey PRIMARY KEY (sample_id, chr, pos, ref, alt),
-    CONSTRAINT sample_variant_hg18_ukey UNIQUE (sample_id, variant_id)
-);
-CREATE INDEX sample_variant_hg18_idx_id
-  ON public.sample_variant_hg18
-  USING btree
-  (variant_id);
-CREATE INDEX sample_variant_hg18_idx_samplevar
-  ON public.sample_variant_hg18
-  USING btree
-  (sample_id);
-CREATE INDEX sample_variant_hg18_idx_site
-  ON public.sample_variant_hg18
-  USING btree
-  (sample_id, bin, chr, pos);
-CREATE INDEX variant_hg18_idx_id
-  ON public.variant_hg18
-  USING btree
-  (id);
-CREATE INDEX variant_hg18_idx_site
-  ON public.variant_hg18
-  USING btree
-  (bin, chr, pos);
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -719,8 +646,7 @@ INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, desc
   ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Is the variant dominant for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 2,  'is_rec_hom',       'Recessif homozygous',            'bool',         'Is the variant recessif homozygous for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 3,  'is_rec_htzcomp',   'Recessif compound heterozygous', 'bool',         'Is the variant recessif compound heterozygous for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo_gvcf',   'De novo (GVCF)',                 'bool',         'Is the variant de novo for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 5,  'is_denovo_vcf',    'Probably de novo (VCF)',         'bool',         'Is the variant de novo for the child (trio).', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo',        'De novo',                        'bool',         'Is the variant de novo for the child (trio). The remaining "de novo" variants also include uncovered locus in the parents.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 6,  'is_aut',           'Autosomal',                      'bool',         'Is the variant autosomal for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 7,  'is_xlk',           'X-linked',                       'bool',         'Is the variant X-linked for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 8,  'is_mit',           'Mitochondrial',                  'bool',         'Is the variant mitochondrial for the sample (single), or for the child (trio).', NULL),

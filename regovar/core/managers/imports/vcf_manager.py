@@ -608,7 +608,7 @@ class VcfManager(AbstractImportManager):
                         sql_query2 += sql_pattern2.format(samples[sn]["id"], vcf_line, bin, chrm, pos, ref, alt, gt, get_info(sp, "DP"), depth_alt, row.qual, filters)
                     else:
                         # save that the sample HAVE NOT this variant
-                        sql_query2 += sql_pattern2.format(samples[sn]["id"], vcf_line, bin, chrm, pos, ref, alt, -1, get_info(sp, "DP"), "NULL", row.qual, filters)
+                        sql_query2 += sql_pattern2.format(samples[sn]["id"], vcf_line, bin, chrm, pos, ref, alt, "NULL", get_info(sp, "DP"), "NULL", row.qual, filters)
                 
                 # Register variant annotations
                 for ann_name, importer in vcf_metadata["annotations"].items():
