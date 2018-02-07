@@ -490,7 +490,7 @@ class FilterEngine:
         # Recessif Homozygous
         query += "is_rec_hom=(s{1}_gt=1), "
         # Inherited and denovo
-        query += "is_denovo=(s{1}_gt>0 AND COALESCE(s{2}_gt,0)=0 AND COALESCE(s{3}_gt,0)=0), "
+        query += "is_denovo=(s{1}_gt>0 AND COALESCE(s{2}_gt,0)<=0 AND COALESCE(s{3}_gt,0)<=0), "
         # Autosomal
         query += "is_aut=(chr<23), "
         # X-Linked
@@ -775,7 +775,7 @@ class FilterEngine:
         core.notify_all({'action':'wt_update', 'data': progress})
         
         # Create index
-        query = "CREATE INDEX IF NOT EXISTS idx_{1} ON {0} ({1});"
+        query = "CREATE INDEX IF NOT EXISTS {0}_idx_{1} ON {0} USING btree ({1});"
         execute(query.format(w_table, column))
         log("Index updated: idx_{0}".format(column))
         
