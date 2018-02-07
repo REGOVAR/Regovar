@@ -644,9 +644,9 @@ INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, desc
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
   ('2c0a7043a9e736eaf14b6614fff102c0', 0,  'is_selected',      'Selected',                       'bool',         'Is the variant in the user selection or not.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Is the variant dominant for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 2,  'is_rec_hom',       'Recessif homozygous',            'bool',         'Is the variant recessif homozygous for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 3,  'is_rec_htzcomp',   'Recessif compound heterozygous', 'bool',         'Is the variant recessif compound heterozygous for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo',        'De novo',                        'bool',         'Is the variant de novo for the child (trio). The remaining "de novo" variants also include uncovered locus in the parents.', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 2,  'is_rec_hom',       'Recessif homozygous',            'bool',         'Is the variant recessive homozygous for the sample (single), or for the child (trio).', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 3,  'is_rec_htzcomp',   'Recessif compound heterozygous', 'bool',         'Is the variant recessive compound heterozygous for the sample (single), or for the child (trio).', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo',        'De novo',                        'bool',         'Is the variant de novo for the child (trio). The remaining de novo variants also include uncovered locus in the parents.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 6,  'is_aut',           'Autosomal',                      'bool',         'Is the variant autosomal for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 7,  'is_xlk',           'X-linked',                       'bool',         'Is the variant X-linked for the sample (single), or for the child (trio).', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 8,  'is_mit',           'Mitochondrial',                  'bool',         'Is the variant mitochondrial for the sample (single), or for the child (trio).', NULL),
