@@ -642,19 +642,19 @@ INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, desc
   ('492f18b60811bf85ce118c0c6a1a5c4a', 50, 'regovar_score',    'Regovar Pred',           'enum',         'Regovar users annotation.', '{"type": "enum", "values": ["Artifact", "Yes", "No"]}');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
-  ('2c0a7043a9e736eaf14b6614fff102c0', 0,  'is_selected',      'Selected',                       'bool',         'Is the variant in the user selection or not.', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Is the variant dominant for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 2,  'is_rec_hom',       'Recessif homozygous',            'bool',         'Is the variant recessif homozygous for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 3,  'is_rec_htzcomp',   'Recessif compound heterozygous', 'bool',         'Is the variant recessif compound heterozygous for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo',        'De novo',                        'bool',         'Is the variant de novo for the child (trio). The remaining "de novo" variants also include uncovered locus in the parents.', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 6,  'is_aut',           'Autosomal',                      'bool',         'Is the variant autosomal for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 7,  'is_xlk',           'X-linked',                       'bool',         'Is the variant X-linked for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 8,  'is_mit',           'Mitochondrial',                  'bool',         'Is the variant mitochondrial for the sample (single), or for the child (trio).', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 10, 'sample_tlist',     'samples total',                  'string',       'List of sample in the whole database that have the variant.', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 11, 'sample_tcount',    'samples total count',            'int',          'Number of sample in the whole database that have the variant.', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 12, 'sample_alist',     'samples analysis',               'string',       'List of sample in the analysis that have the variant.', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 13, 'sample_acount',    'samples analysis count',         'int',          'Number of sample in the analysis that have the variant.', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 14, 's{}_is_composite', 'is composite',                   'sample_array', 'Is the variant composite for this sample.', '{"type": "bool"}');
+  ('2c0a7043a9e736eaf14b6614fff102c0', 0,  'is_selected',      'Selected',                       'bool',         'Variant in the user selection.', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 1,  'is_dom',           'Dominant',                       'bool',         'Heterozygous variant in the sample (single) or heterozygous variant in the child (trio).', NULL), -- Variant présent à l'état hétérozygote dans l'échantillon (en singleton) ou chez l'enfant (en trio).
+  ('2c0a7043a9e736eaf14b6614fff102c0', 2,  'is_rec_hom',       'Recessif homozygous',            'bool',         'Homozygous variant in the sample (single) or homozygous variant in the child (trio).', NULL), -- Variant présent à l'état homozygote dans l'échantillon (en singleton) ou chez l'enfant (en trio).
+  ('2c0a7043a9e736eaf14b6614fff102c0', 3,  'is_rec_htzcomp',   'Recessif compound heterozygous', 'bool',         'Compound heterozygous variants in the sample (single) or compound heterozygous variants in the child (trio).', NULL), -- Variants présents à l'état hétérozygotes composite dans l'échantillon (singleton) ou chez l'enfant (en trio).
+  ('2c0a7043a9e736eaf14b6614fff102c0', 4,  'is_denovo',        'De novo',                        'bool',         'De novo variant in the child or variant in the child at uncovered locus in the parents (trio).', NULL), -- Variant de novo chez l'enfant. Les variants de novo obtenus avec ce filtre contiennent également les locus non couverts chez les parents.
+  ('2c0a7043a9e736eaf14b6614fff102c0', 6,  'is_aut',           'Autosomal',                      'bool',         'Autosomal variant in the sample (single) or autosomal variant in the child (trio).', NULL), -- Variant suivant un mode de transmission autosomique.
+  ('2c0a7043a9e736eaf14b6614fff102c0', 7,  'is_xlk',           'X-linked',                       'bool',         'X-linked variant in the sample (single) or X-linked variant in the child (trio).', NULL), -- Variant suivant un mode de transmission lié à l'X.
+  ('2c0a7043a9e736eaf14b6614fff102c0', 8,  'is_mit',           'Mitochondrial',                  'bool',         'Mitochondrial variant in the sample (single) or mitochondrial variant in the child (trio).', NULL), -- Variant suivant un mode de transmission mitochondrial.
+  ('2c0a7043a9e736eaf14b6614fff102c0', 10, 'sample_tlist',     'samples total',                  'string',       'List of samples in the whole database that have the variant.', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 11, 'sample_tcount',    'samples total count',            'int',          'Number of samples in the whole database that have the variant.', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 12, 'sample_alist',     'samples analysis',               'string',       'List of samples in the analysis that have the variant.', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 13, 'sample_acount',    'samples analysis count',         'int',          'Number of samples in the analysis that have the variant.', NULL),
+  ('2c0a7043a9e736eaf14b6614fff102c0', 14, 's{}_is_composite', 'is composite',                   'sample_array', 'Composite variant for this sample.', '{"type": "bool"}');
 
 UPDATE annotation_field SET uid=MD5(concat(database_uid, name));
 
