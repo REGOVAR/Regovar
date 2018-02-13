@@ -113,7 +113,7 @@ class ApiHandler:
         """
 
         sql = "SELECT a.id, a.name, a.status, a.project_id, a.create_date, a.update_date, p.id as project_id, p.name as project_name "
-        sql+= "FROM analysis a INNER JOIN project p ON a.project_id=p.id WHERE project_id > 0 ORDER BY update_date DESC"
+        sql+= "FROM analysis a INNER JOIN project p ON a.project_id=p.id WHERE project_id > 0 ORDER BY update_date DESC LIMIT 10"
         
         result = []
         for res in execute(sql): 
@@ -132,9 +132,23 @@ class ApiHandler:
         """
             Return last subjects
         """
-        result = Session().query(Subject).order_by(Subject.update_date.desc(), Subject.lastname.asc()).limit(10).all()
-        for res in result: res.init(0)
-        return [r.to_json() for r in result]
+        sql = "SELECT id, identifier, firstname, lastname, sex, family_number, dateofbirth, comment, update_date "
+        sql+= "FROM subject ORDER BY update_date DESC LIMIT 10"
+        
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "identifier": res.identifier,
+                "firstname": res.firstname,
+                "lastname": res.lastname,
+                "sex": res.sex,
+                "family_number": res.family_number,
+                "dateofbirth": res.dateofbirth.isoformat() if res.dateofbirth else None,
+                "comment": res.comment,
+                "update_date": res.update_date.isoformat()
+                })
+        return result
 
     
     
