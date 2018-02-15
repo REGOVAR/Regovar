@@ -319,12 +319,12 @@ class VepImporter(AbstractTranscriptDataImporter):
         "gene_pheno" :         { "type" : "string", "description" : "Indicates if overlapped gene is associated with a phenotype, disease or trait"},
         "hgvs_offset" :        { "type" : "int",    "description" : "Indicates by how many bases the HGVS notations for this variant have been shifted"},
         "exac_maf" :           { "type" : "float", "description" : "Frequency of existing variant in Exac database"},
-        "exac_adj_maf" :       { "type" : "float", "description" : "Frequency in ? population (Exac database)"},
+        "exac_adj_maf" :       { "type" : "float", "description" : "Adjusted minor allelle frequency (Exac database)"},
         "exac_afr_maf" :       { "type" : "float", "description" : "Frequency in African population (Exac database)"},
         "exac_amr_maf" :       { "type" : "float", "description" : "Frequency in American population (Exac database)"},
         "exac_eas_maf" :       { "type" : "float", "description" : "Frequency in East Asian population (Exac database)"},
-        "exac_fin_maf" :       { "type" : "float", "description" : "Frequency in ? population (Exac database)"},
-        "exac_nfe_maf" :       { "type" : "float", "description" : "Frequency in ? population (Exac database)"},
-        "exac_oth_maf" :       { "type" : "float", "description" : "Frequency in ? population (Exac database)"},
+        "exac_fin_maf" :       { "type" : "float", "description" : "Frequency in Finnish population (Exac database)"},
+        "exac_nfe_maf" :       { "type" : "float", "description" : "Frequency in Non-Finnish European population (Exac database)"},
+        "exac_oth_maf" :       { "type" : "float", "description" : "Frequency in Other population (Exac database)"},
         "exac_sas_maf" :       { "type" : "float", "description" : "Frequency in South Asian population (Exac database)"}
         }
