@@ -613,7 +613,7 @@ CREATE INDEX panel_entry_idx
 -- INIT DATA
 -- --------------------------------------------
 INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           '0.6.5'),
+    ('database_version',          'The current version of the database',           '6.5'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
     ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
 
