@@ -634,11 +634,12 @@ INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, desc
   ('492f18b60811bf85ce118c0c6a1a5c4a', 4,  'pos',              'pos',                    'int',          'Position of the variant in the chromosome.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 5,  'ref',              'ref',                    'sequence',     'Reference sequence.', NULL),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 6,  'alt',              'alt',                    'sequence',     'Alternative sequence of the variant.', NULL),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 10, 's{}_gt',           'GT',                     'sample_array', 'Genotype as number : 0="r/r", 1="a/a", 2="r/a", 3="a1/a2".', '{"type": "int"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 10, 's{}_gt',           'Genotype',               'sample_array', 'Genotype as number : 0="r/r", 1="a/a", 2="r/a", 3="a1/a2".', '{"type": "int"}'),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 11, 's{}_dp',           'DP',                     'sample_array', 'Depth.', '{"type": "int"}'),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 12, 's{}_dp_alt',       'DP alt',                 'sample_array', 'Allelic depth.', '{"type": "int"}'),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 13, 's{}_qual',         'QUAL',                   'sample_array', 'VCF Quality field.', '{"type": "float"}'),
-  ('492f18b60811bf85ce118c0c6a1a5c4a', 14, 's{}_filter',       'FILTER',                 'sample_array', 'VCF Filter field', '{"type": "enum"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 13, 's{}_vaf',          'VAF',                    'sample_array', 'Variant allelic frequence. (1=100%)', '{"type": "float"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 14, 's{}_qual',         'QUAL',                   'sample_array', 'VCF Quality field.', '{"type": "float"}'),
+  ('492f18b60811bf85ce118c0c6a1a5c4a', 15, 's{}_filter',       'FILTER',                 'sample_array', 'VCF Filter field', '{"type": "enum"}'),
   ('492f18b60811bf85ce118c0c6a1a5c4a', 50, 'regovar_score',    'Regovar Pred',           'enum',         'Regovar users annotation.', '{"type": "enum", "values": ["Artifact", "Yes", "No"]}');
 
 INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, description, meta) VALUES
