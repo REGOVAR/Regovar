@@ -894,7 +894,7 @@ class FilterEngine:
         # Get results
         vmode = variant_id is None or variant_id == ""
         if vmode:
-            sql_result = await self.get_variant(analysis, fields, limit, offset)
+            sql_result = await self.get_variant(analysis, fields, limit, offset+1)
         else:
             sql_result = await self.get_trx(analysis, fields, variant_id)
             
