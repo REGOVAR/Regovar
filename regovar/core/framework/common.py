@@ -244,6 +244,18 @@ def check_string(value, default=None):
     return default
 
 
+def remove_duplicates(source):
+    """
+        Remove duplicates in the provided list (keeping elements order)
+    """
+    if isinstance(source, list):
+        result = []
+        for i in source:
+            if i not in result:
+                result.append(i)
+        return result
+    return source
+
 
 
 

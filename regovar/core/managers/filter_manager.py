@@ -695,6 +695,7 @@ class FilterEngine:
         progress = {"start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0}
         core.notify_all({'action':'filtering_prepare', 'data': progress})
         if order and len(order) == 0: order = None
+        order = remove_duplicates(order)
 
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
@@ -833,6 +834,8 @@ class FilterEngine:
             Commont request to manage all different cases
         """
         limit = min(limit, RANGE_MAX)
+        fields = remove_duplicates(fields)
+        order = remove_duplicates(order)
         if fields is None or not isinstance(fields, list) or len(fields) == 0:
             raise RegovarException("You must specify which fields shall be returned by the filtering query.")
         

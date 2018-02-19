@@ -457,7 +457,7 @@ class SearchManager:
         from core.core import core
         query = "http://rest.genenames.org/fetch/symbol/{}".format(genename)
         data = get_cached_url(query, "hgnc_", headers={"Accept": "application/json"})
-        if data:
+        if data and 'response' in data and 'docs' in data['response'] and len(data['response']['docs']) > 0:
             pubmed= None
             phenotype = None
             data = data['response']['docs'][0]

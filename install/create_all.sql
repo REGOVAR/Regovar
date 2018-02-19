@@ -613,7 +613,7 @@ CREATE INDEX panel_entry_idx
 -- INIT DATA
 -- --------------------------------------------
 INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           '0.6.5'),
+    ('database_version',          'The current version of the database',           '6.5'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
     ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
 
@@ -654,7 +654,7 @@ INSERT INTO public.annotation_field(database_uid, ord, name, name_ui, type, desc
   ('2c0a7043a9e736eaf14b6614fff102c0', 11, 'sample_tcount',    'samples total count',            'int',          'Number of samples in the whole database that have the variant.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 12, 'sample_alist',     'samples analysis',               'string',       'List of samples in the analysis that have the variant.', NULL),
   ('2c0a7043a9e736eaf14b6614fff102c0', 13, 'sample_acount',    'samples analysis count',         'int',          'Number of samples in the analysis that have the variant.', NULL),
-  ('2c0a7043a9e736eaf14b6614fff102c0', 14, 's{}_is_composite', 'is composite',                   'sample_array', 'Composite variant for this sample.', '{"type": "bool"}');
+  ('2c0a7043a9e736eaf14b6614fff102c0', 14, 's{}_is_composite', 'is composite',                   'sample_array', 'Composite variants are variants that are at least two in the same gene, whichever the parental inheritance.', '{"type": "bool"}');
 
 UPDATE annotation_field SET uid=MD5(concat(database_uid, name));
 
