@@ -195,6 +195,7 @@ class FilterEngine:
         query += ", ".join(["s{}_gt integer".format(i) for i in analysis.samples_ids]) + ", "
         query += ", ".join(["s{}_dp integer".format(i) for i in analysis.samples_ids]) + ", "
         query += ", ".join(["s{}_dp_alt integer".format(i) for i in analysis.samples_ids]) + ", "
+        query += ", ".join(["s{}_vaf real".format(i) for i in analysis.samples_ids]) + ", "
         query += ", ".join(["s{}_qual real".format(i) for i in analysis.samples_ids]) + ", "
         query += ", ".join(["s{}_filter JSON".format(i) for i in analysis.samples_ids]) + ", "
         query += ", ".join(["s{}_is_composite boolean".format(i) for i in analysis.samples_ids]) + ", "
@@ -276,7 +277,7 @@ class FilterEngine:
         prg = 0
         for sid in analysis.samples_ids:
             # Retrive informations chr-pos-ref-alt dependent
-            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_dp_alt=_sub.depth_alt, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, depth_alt, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
+            execute("UPDATE {0} SET s{2}_gt=_sub.genotype, s{2}_dp=_sub.depth, s{2}_dp_alt=_sub.depth_alt, s{2}_vaf=CASE WHEN _sub.depth > 0 THEN _sub.depth_alt/_sub.depth::float ELSE 0 END, s{2}_is_composite=_sub.is_composite FROM (SELECT variant_id, genotype, depth, depth_alt, is_composite FROM sample_variant{1} WHERE sample_id={2}) AS _sub WHERE {0}.variant_id=_sub.variant_id".format(wt, analysis.db_suffix, sid))
             prg += step
             self.working_table_creation_update_status(analysis, progress, 3, "computing", prg)
             # Retrive informations vcf'line dependent (= chr-pos without trimming)
@@ -346,6 +347,7 @@ class FilterEngine:
         query = "".join(["CREATE INDEX {0}_idx_s{1}_gt ON {0} USING btree (s{1}_gt);".format(wt, i) for i in analysis.samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_dp ON {0} USING btree (s{1}_dp);".format(wt, i) for i in analysis.samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_dpa ON {0} USING btree (s{1}_dp_alt);".format(wt, i) for i in analysis.samples_ids])
+        query += "".join(["CREATE INDEX {0}_idx_s{1}_vaf ON {0} USING btree (s{1}_vaf);".format(wt, i) for i in analysis.samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_qual ON {0} USING btree (s{1}_qual);".format(wt, i) for i in analysis.samples_ids])
         #query += "".join(["CREATE INDEX {0}_idx_s{1}_filter ON {0} USING btree (s{1}_filter);".format(wt, i) for i in analysis.samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_is_composite ON {0} USING btree (s{1}_is_composite);".format(wt, i) for i in analysis.samples_ids])

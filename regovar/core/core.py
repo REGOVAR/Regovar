@@ -15,7 +15,7 @@ from core.managers import *
 # The version of the source code
 #
 REGOVAR_DB_VERSION = "6"         # Used only by the core to know if compatible with current Regovar DB schema
-REGOVAR_CORE_VERSION = "0.7.0"   # Official version of the Regovar Server (used client side to know if client compatible with this server)
+REGOVAR_CORE_VERSION = "0.8.0"   # Official version of the Regovar Server (used client side to know if client compatible with this server)
 
 
 
@@ -36,7 +36,7 @@ class Core:
     
     
     def __init__(self):
-        # Check that db version is compatible with application version
+        # Check that db major version is compatible with application version
         db_version = execute("SELECT value FROM parameter WHERE key='database_version'").first()[0]
         if db_version.split(".")[0] != REGOVAR_DB_VERSION:
             raise RegovarException("The database version ({}) is not complient with the regovar application source code ({}).".format(db_version, REGOVAR_DB_VERSION))
