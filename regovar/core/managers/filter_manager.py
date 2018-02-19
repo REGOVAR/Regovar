@@ -144,7 +144,7 @@ class FilterEngine:
             log(" > wt is ready")
 
         except Exception as ex:
-            msg = "Error occurend during ASYNCH creation of the working table of the anlysis {}".format(analysis_id)
+            msg = "An error occurred during the ASYNCH creation of the working table of the analysis {}".format(analysis_id)
             err_file = err(msg.format(analysis_id), exception=ex)
             self.working_table_creation_update_status(analysis, progress, error="[{}] {}".format(err_file, msg))
 
