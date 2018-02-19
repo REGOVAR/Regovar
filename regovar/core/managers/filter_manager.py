@@ -103,6 +103,8 @@ class FilterEngine:
             # Refresh list of annotations db available
             self.load_annotation_metadata()
 
+            execute("SET work_mem='1GB'")
+
             # create wt table
             self.create_wt_schema(analysis, progress)
 
@@ -137,6 +139,8 @@ class FilterEngine:
             # Compute sample's stats (done one time)
             self.update_wt_samples_stats(analysis, progress)
 
+            execute("RESET work_mem")
+            
             # Update count stat of the analysis
             progress["status"] = "ready"
             analysis.status = "ready"
@@ -167,7 +171,7 @@ class FilterEngine:
         self.working_table_creation_update_status(analysis, progress, 1, "computing", 0.1)
 
         wt = "wt_{}".format(analysis.id)
-        query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE TABLE {0} (\
+        query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE UNLOGGED TABLE {0} (\
             is_variant boolean DEFAULT False, \
             variant_id bigint, \
             vcf_line bigint, \
@@ -228,7 +232,7 @@ class FilterEngine:
         wt = "wt_{}".format(analysis.id)
 
         # create temp table with id of variants
-        query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE TABLE {0}_var (id bigint, vcf_line bigint); "
+        query  = "DROP TABLE IF EXISTS {0}_var CASCADE; CREATE UNLOGGED TABLE {0}_var (id bigint, vcf_line bigint); "
         execute(query.format(wt))
         
         query = "INSERT INTO {0}_var (id, vcf_line) SELECT DISTINCT variant_id, vcf_line FROM sample_variant{1} WHERE sample_id IN ({2});"
@@ -701,13 +705,14 @@ class FilterEngine:
 
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
-        query = "DROP TABLE IF EXISTS {0}_tmp CASCADE; CREATE TABLE {0}_tmp AS "
-        query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, array_remove(array_agg(trx_pk_value), NULL) as trx, count(trx_pk_value) as trx_count{1} FROM {0}{2} GROUP BY variant_id{1};"
+        query = "DROP TABLE IF EXISTS {0}_tmp CASCADE; SET LOCAL work_mem='1GB'; CREATE UNLOGGED TABLE {0}_tmp AS "
+        query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, '{{}}' as trx, 0 as trx_count{1} FROM {0}{2}" 
+        # array_remove(array_agg(trx_pk_value), NULL) as trx, count(trx_pk_value) as trx_count{1} ... GROUP BY variant_id{1};
         
         f_fields = ", " + ", ".join([self.parse_order_field(analysis, f) for f in  order]) if order else ", chr, pos"
         f_order  = ", ".join(["{}{}".format(self.parse_order_field(analysis, f), " DESC" if f[0] == "-" else "") for f in  order]) if order else "chr, pos"
         f_filter = self.parse_filter(analysis, filter_json, order)
-        f_filter = " WHERE {0}".format(f_filter) if len(filter_json[1]) > 0 else ""
+        f_filter = " WHERE {0}".format(f_filter) if len(filter_json[1]) > 0 else " WHERE is_variant"
         query = query.format(w_table, f_fields, f_filter, f_order)
 
         sql_result = None
