@@ -1,9 +1,8 @@
 
-WITH current_version AS (SELECT value FROM parameter WHERE key='database_version');
-
-
+CREATE FUNCTION upgrade_db(current_version text)
+RETURNS void AS $$
 BEGIN
-    IF current_version = '6.5' THEN;
+    IF current_version = '6.5' THEN
         -- New field VAF
         INSERT INTO annotation_field (database_uid, ord, name, name_ui, type, description, meta) VALUES ('492f18b60811bf85ce118c0c6a1a5c4a', 13, 's{}_vaf', 'VAF', 'sample_array', 'Variant allelic frequence. (1=100%)', '{"type": "float"}');
         -- Update fields orders
@@ -98,5 +97,10 @@ BEGIN
         
         -- Update database version
         UPDATE parameter SET value='6.6' WHERE key='database_version';
-    END
-END IF; 
+    END IF; 
+END;
+$$
+LANGUAGE 'plpgsql' ;
+
+
+SELECT upgrade_db(value) FROM parameter WHERE key='database_version';
