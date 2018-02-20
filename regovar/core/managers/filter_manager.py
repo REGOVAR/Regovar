@@ -896,8 +896,13 @@ class FilterEngine:
         
         # Prepare wt for specific filter query
         # if filter_json is None, we assume that we are requesting the current tmp working table formerly prepared
+        # We need to prepare only if provided filter is different from current or if order is different
+        former_filter = json.dumps(analysis.filter)
+        former_order = json.dumps(analysis.order)
+        current_filter = former_filter if filter_json is None else json.dumps(filter_json)
+        current_order = former_order if order is None else json.dumps(order)
         
-        if filter_json:
+        if former_filter != current_filter or former_order != current_order:
             # Need to prepare temp table
             self.prepare(analysis, filter_json, order)
         elif not analysis.filter:
