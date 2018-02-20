@@ -104,3 +104,4 @@ LANGUAGE 'plpgsql' ;
 
 
 SELECT upgrade_db(value) FROM parameter WHERE key='database_version';
+DROP FUNCTION upgrade_db(text);

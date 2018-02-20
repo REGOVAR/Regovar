@@ -131,9 +131,24 @@ CREATE TABLE refgene_trx_hg19
   trxstart bigint,
   trxend bigint,
   cdsstart bigint,
-  cdsend bigint
+  cdsend bigint,
+  exonstarts text,
+  exonends text
 );
 
+CREATE TABLE refgene_exon_hg19
+(
+  bin integer NOT NULL,
+  chr integer,
+  exonpos int,
+  exoncount int,
+  exonrange int8range,
+  
+  -- We keep these field only for the import. We delete them at the end of this script
+  i_exonstart character varying(255),
+  i_exonend character varying(255),
+  i_exonstarts character varying(10)[]
+);
 
 
 
@@ -143,10 +158,10 @@ CREATE TABLE refgene_trx_hg19
 --
 -- Migrate imported data to regovar database
 --
-INSERT INTO refgene_trx_hg19 (bin, name, chr, strand, trxrange, cdsrange, exoncount, score, name2, cdsstartstat, cdsendstat, trxstart, trxend, cdsstart, cdsend)
+INSERT INTO refgene_trx_hg19 (bin, name, chr, strand, trxrange, cdsrange, exoncount, score, name2, cdsstartstat, cdsendstat, trxstart, trxend, cdsstart, cdsend, exonstarts, exonends)
 SELECT bin, name, 
   CASE WHEN chrom='chrX' THEN 23 WHEN chrom='chrY' THEN 24 WHEN chrom='chrM' THEN 25 ELSE CAST(substring(chrom from 4) AS INTEGER) END, 
-  strand, int8range(trxstart, trxend), int8range(cdsstart, cdsend), exoncount, score, name2, cdsstartstat, cdsendstat, trxstart, trxend, cdsstart, cdsend
+  strand, int8range(trxstart, trxend), int8range(cdsstart, cdsend), exoncount, score, name2, cdsstartstat, cdsendstat, trxstart, trxend, cdsstart, cdsend, exonstarts, exonends
 FROM import_refgene_hg19
 WHERE char_length(chrom) <= 5;
 
@@ -154,12 +169,29 @@ INSERT INTO refgene_hg19 (bin, chr, trxrange, cdsrange, exoncount, trxcount, nam
 SELECT min(bin) AS bin, min(chr) AS chr, int8range(min(trxstart), max(trxend)) AS trxrange, int8range(min(cdsstart), max(cdsend)) AS cdsrange, max(exoncount) AS exoncount, count(*) AS trxcount, name2 
 FROM refgene_trx_hg19 GROUP BY name2;
 
+INSERT INTO refgene_exon_hg19(bin, chr, exoncount, i_exonstart, i_exonend, i_exonstarts)
+SELECT bin, 
+  CASE WHEN chrom='chrX' THEN 23 WHEN chrom='chrY' THEN 24 WHEN chrom='chrM' THEN 25 ELSE CAST(substring(chrom from 4) AS INTEGER) END,
+  exoncount,
+  unnest(string_to_array(trim(trailing ',' from exonstarts), ',')), 
+  unnest(string_to_array(trim(trailing ',' from exonends), ',')), 
+  string_to_array(trim(trailing ',' from exonstarts), ',')
+FROM import_refgene_hg19
+WHERE char_length(chrom) <= 5;
+
+UPDATE refgene_exon_hg19 SET 
+  exonrange=int8range(CAST(coalesce(i_exonstart, '0') AS integer), CAST(coalesce(i_exonend, '0') AS integer)),
+  exonpos=array_search(CAST(i_exonstart AS character varying(10)), i_exonstarts) ;
+
+
 -- Remove useless columns
 ALTER TABLE refgene_trx_hg19 DROP COLUMN trxstart;
 ALTER TABLE refgene_trx_hg19 DROP COLUMN trxend;
 ALTER TABLE refgene_trx_hg19 DROP COLUMN cdsstart;
 ALTER TABLE refgene_trx_hg19 DROP COLUMN cdsend;
-
+ALTER TABLE refgene_exon_hg19 DROP COLUMN i_exonstart;
+ALTER TABLE refgene_exon_hg19 DROP COLUMN i_exonend;
+ALTER TABLE refgene_exon_hg19 DROP COLUMN i_exonstarts;
 
 
 --
@@ -184,7 +216,15 @@ CREATE INDEX refgene_trx_hg19_trxrange_idx
   ON refgene_trx_hg19
   USING gist (trxrange);
 
+  
+CREATE INDEX refgene_exon_hg19_chrom_exonange_idx
+  ON refgene_exon_hg19
+  USING btree (bin, chr, exonrange);
 
+  
+CREATE INDEX refgene_exon_hg19_exonange_idx
+  ON refgene_exon_hg19
+  USING gist (exonrange);
 
 
 

@@ -193,6 +193,7 @@ class FilterEngine:
             is_rec_hom boolean DEFAULT False, \
             is_rec_htzcomp boolean DEFAULT False, \
             is_denovo boolean DEFAULT False, \
+            is_exonic boolean DEFAULT False, \
             is_aut boolean DEFAULT False, \
             is_xlk boolean DEFAULT False, \
             is_mit boolean DEFAULT False, "
@@ -266,6 +267,7 @@ class FilterEngine:
         log(" > create variants index")
         query = "CREATE INDEX {0}_idx_vid ON {0} USING btree (variant_id);".format(wt)
         query += "CREATE INDEX {0}_idx_vcfline ON {0} USING btree (vcf_line);".format(wt)
+        query += "CREATE INDEX {0}_idx_chrpos ON {0} USING btree (chr, pos);".format(wt)
         execute(query)
         
         # We just update progress without calling notify_all as a notify will be send by the next step
@@ -297,7 +299,7 @@ class FilterEngine:
     def update_wt_stats_prefilters(self, analysis, progress):
         self.working_table_creation_update_status(analysis, progress, 4, "computing", 0.01)
         wt = "wt_{}".format(analysis.id)
-        step = 1/(1+ len(analysis.attributes)*len(analysis.samples_ids) + len(analysis.panels) + (2 if analysis.settings["trio"] else len(analysis.samples_ids)))
+        step = 1/(2+ len(analysis.attributes)*len(analysis.samples_ids) + len(analysis.panels) + (2 if analysis.settings["trio"] else len(analysis.samples_ids)))
         prg = 0
         # Variant occurence stats
         query = "UPDATE {0} SET \
@@ -338,6 +340,12 @@ class FilterEngine:
                 # TODO: retrieve sex of sample if subject associated, otherwise, do it with default "Female"
                 self.update_wt_compute_prefilter_single(analysis, sid, "F", progress, prg, step)
                 
+                
+        # Compute is_exonic filter thanks to refgene
+        sql = "UPDATE {1} AS w SET is_exonic=True FROM refgene_exon{0} AS r WHERE r.chr=w.chr AND w.pos <@ r.exonrange"
+        
+        analysis.db_suffix, wt
+        
         # We just update progress without calling notify_all as a notify will be send by the next step
         progress["log"][4]["status"] = "done"
         progress["log"][4]["progress"] = 1
@@ -359,6 +367,7 @@ class FilterEngine:
         query += "CREATE INDEX {0}_idx_is_rec_hom ON {0} USING btree (is_rec_hom);".format(wt)
         query += "CREATE INDEX {0}_idx_is_rec_htzcomp ON {0} USING btree (is_rec_htzcomp);".format(wt)
         query += "CREATE INDEX {0}_idx_is_denovo ON {0} USING btree (is_denovo);".format(wt)
+        query += "CREATE INDEX {0}_idx_is_exonic ON {0} USING btree (is_exonic);".format(wt)
         query += "CREATE INDEX {0}_idx_is_aut ON {0} USING btree (is_aut);".format(wt)
         query += "CREATE INDEX {0}_idx_is_xlk ON {0} USING btree (is_xlk);".format(wt)
         query += "CREATE INDEX {0}_idx_is_mit ON {0} USING btree (is_mit);".format(wt)
@@ -386,7 +395,7 @@ class FilterEngine:
 
         # Insert trx and their annotations
         q_fields  = "is_variant, variant_id, trx_pk_uid, trx_pk_value, vcf_line, regovar_score, bin, chr, pos, ref, alt, is_transition, "
-        q_fields += "sample_tlist, sample_tcount, sample_alist, sample_acount, is_dom, is_rec_hom, is_rec_htzcomp, is_denovo, is_aut, is_xlk, is_mit, "
+        q_fields += "sample_tlist, sample_tcount, sample_alist, sample_acount, is_dom, is_rec_hom, is_rec_htzcomp, is_denovo, is_exonic, is_aut, is_xlk, is_mit, "
         q_fields += ", ".join(["s{}_gt".format(i) for i in analysis.samples_ids]) + ", "
         q_fields += ", ".join(["s{}_dp".format(i) for i in analysis.samples_ids]) + ", "
         q_fields += ", ".join(["s{}_dp_alt".format(i) for i in analysis.samples_ids]) + ", "
@@ -404,7 +413,7 @@ class FilterEngine:
         
         q_select  = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id, _wt.vcf_line, _wt.regovar_score, _wt.bin, _wt.chr, _wt.pos, "
         q_select += "_wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, _wt.sample_tcount, _wt.sample_alist, _wt.sample_acount, _wt.is_dom, _wt.is_rec_hom, "
-        q_select += "_wt.is_rec_htzcomp, _wt.is_denovo, _wt.is_aut, _wt.is_xlk, _wt.is_mit, "
+        q_select += "_wt.is_rec_htzcomp, _wt.is_denovo, _wt.is_exonic, _wt.is_aut, _wt.is_xlk, _wt.is_mit, "
         q_select += ", ".join(["_wt.s{}_gt".format(i) for i in analysis.samples_ids]) + ", "
         q_select += ", ".join(["_wt.s{}_dp".format(i) for i in analysis.samples_ids]) + ", "
         q_select += ", ".join(["_wt.s{}_dp_alt".format(i) for i in analysis.samples_ids]) + ", "
@@ -706,8 +715,7 @@ class FilterEngine:
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
         query = "DROP TABLE IF EXISTS {0}_tmp CASCADE; SET LOCAL work_mem='1GB'; CREATE UNLOGGED TABLE {0}_tmp AS "
-        query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, '{{}}' as trx, 0 as trx_count{1} FROM {0}{2}" 
-        # array_remove(array_agg(trx_pk_value), NULL) as trx, count(trx_pk_value) as trx_count{1} ... GROUP BY variant_id{1};
+        query += "SELECT ROW_NUMBER() OVER(ORDER BY {3}) as page, variant_id, array_remove(array_agg(trx_pk_value), NULL) as trx, count(trx_pk_value) as trx_count{1} FROM {0}{2} GROUP BY variant_id{1}"
         
         f_fields = ", " + ", ".join([self.parse_order_field(analysis, f) for f in  order]) if order else ", chr, pos"
         f_order  = ", ".join(["{}{}".format(self.parse_order_field(analysis, f), " DESC" if f[0] == "-" else "") for f in  order]) if order else "chr, pos"

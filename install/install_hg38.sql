@@ -60,7 +60,6 @@ CREATE INDEX variant_hg38_idx_site
   ON variant_hg38
   USING btree
   (bin, chr, pos);
-  
 
 
 
@@ -134,6 +133,19 @@ CREATE TABLE refgene_trx_hg38
   cdsend bigint
 );
 
+CREATE TABLE refgene_exon_hg38
+(
+  bin integer NOT NULL,
+  chr integer,
+  exonpos int,
+  exoncount int,
+  exonrange int8range,
+  
+  -- We keep these field only for the import. We delete them at the end of this script
+  i_exonstart character varying(255),
+  i_exonend character varying(255),
+  i_exonstarts character varying(10)[]
+);
 
 
 
@@ -154,11 +166,28 @@ INSERT INTO refgene_hg38 (bin, chr, trxrange, cdsrange, exoncount, trxcount, nam
 SELECT min(bin) AS bin, min(chr) AS chr, int8range(min(trxstart), max(trxend)) AS trxrange, int8range(min(cdsstart), max(cdsend)) AS cdsrange, max(exoncount) AS exoncount, count(*) AS trxcount, name2 
 FROM refgene_trx_hg38 GROUP BY name2;
 
+INSERT INTO refgene_exon_hg38(bin, chr, exoncount, i_exonstart, i_exonend, i_exonstarts)
+SELECT bin, 
+  CASE WHEN chrom='chrX' THEN 23 WHEN chrom='chrY' THEN 24 WHEN chrom='chrM' THEN 25 ELSE CAST(substring(chrom from 4) AS INTEGER) END,
+  exoncount,
+  unnest(string_to_array(trim(trailing ',' from exonstarts), ',')), 
+  unnest(string_to_array(trim(trailing ',' from exonends), ',')), 
+  string_to_array(trim(trailing ',' from exonstarts), ',')
+FROM import_refgene_hg38
+WHERE char_length(chrom) <= 5;
+
+UPDATE refgene_exon_hg38 SET 
+  exonrange=int8range(CAST(coalesce(i_exonstart, '0') AS integer), CAST(coalesce(i_exonend, '0') AS integer)),
+  exonpos=array_search(CAST(i_exonstart AS character varying(10)), i_exonstarts) ;
+  
 -- Remove useless columns
 ALTER TABLE refgene_trx_hg38 DROP COLUMN trxstart;
 ALTER TABLE refgene_trx_hg38 DROP COLUMN trxend;
 ALTER TABLE refgene_trx_hg38 DROP COLUMN cdsstart;
 ALTER TABLE refgene_trx_hg38 DROP COLUMN cdsend;
+ALTER TABLE refgene_exon_hg38 DROP COLUMN i_exonstart;
+ALTER TABLE refgene_exon_hg38 DROP COLUMN i_exonend;
+ALTER TABLE refgene_exon_hg38 DROP COLUMN i_exonstarts;
 
 
 
@@ -185,6 +214,16 @@ CREATE INDEX refgene_trx_hg38_trxrange_idx
   ON refgene_trx_hg38
   USING gist (trxrange);
 
+  
+CREATE INDEX refgene_exon_hg38_chrom_exonange_idx
+  ON refgene_exon_hg38
+  USING btree (bin, chr, exonrange);
+
+  
+CREATE INDEX refgene_exon_hg38_exonange_idx
+  ON refgene_exon_hg38
+  USING gist (exonrange);
+
 
 
 
@@ -195,7 +234,6 @@ CREATE INDEX refgene_trx_hg38_trxrange_idx
 -- dbuid = md5 of refId, annotation db name and annotation db version
 -- 4915f6f892d359e93ac0631fd1e76f7a = SELECT MD5(concat(3, 'refgene_hg38',      '2017-09-24 23:51'))
 -- c721472eed11a0483ced649c0a53e37c = SELECT MD5(concat(3, 'refgene_trx_hg38',  '2017-09-24 23:51'))
-
 INSERT INTO annotation_database(uid, reference_id, version, name, name_ui, description, url, ord, update_date, jointure, type) VALUES 
   ('4915f6f892d359e93ac0631fd1e76f7a', 3,
   '2017-09-24 23:51', 

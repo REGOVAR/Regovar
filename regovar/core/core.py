@@ -14,7 +14,7 @@ from core.managers import *
 #
 # The version of the source code
 #
-REGOVAR_DB_VERSION = "6"         # Used only by the core to know if compatible with current Regovar DB schema
+REGOVAR_DB_VERSION = "7"         # Used only by the core to know if compatible with current Regovar DB schema
 REGOVAR_CORE_VERSION = "0.8.0"   # Official version of the Regovar Server (used client side to know if client compatible with this server)
 
 
