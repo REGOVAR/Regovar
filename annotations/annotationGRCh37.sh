@@ -47,19 +47,19 @@ output="$(readlink -f $2)"
     --compress_output bgzip \
     --no_stats \
     -i "$input" \
--o "$output"
+    -o "$output"
 
 # SnpEff
-java -jar -Xmx16g ~/tools/snpEff/snpEff.jar \
-     eff GRCh37.75 \
-     -t \
-     -i vcf \
-     -o vcf \
-     -nodownload \
-     -sequenceOntology \
-     -lof \
-     -noStats \
-     "$input" \
-> "$output"
+#java -jar -Xmx16g ~/tools/snpEff/snpEff.jar \
+#     eff GRCh37.75 \
+#     -t \
+#     -i vcf \
+#     -o vcf \
+#     -nodownload \
+#     -sequenceOntology \
+#     -lof \
+#     -noStats \
+#     "$input" \
+#     j> "$output"
 
 
