@@ -9,11 +9,11 @@ input="$(readlink -f $1)"
 output="$(readlink -f $2)"
 
 # VEP
-./opt/ensembl-91/vep  \
+/opt/ensembl/91/vep/homo_sapiens_merged/91_GRCh37/  \
     --fork 30 \
     --buffer_size 200000 \
-    --cache --dir /opt/ensembl/vep/homo_sapiens_merged/91_GRCh37/ --offline \
-    --fasta \
+    --cache --dir /opt/ensembl/vep/91/homo_sapiens_merged/91_GRCh37/ --offline \
+    --fasta FIXME \
     --db_version 91 \
     --species homo_sapiens \
     --assembly GRCh37 \
