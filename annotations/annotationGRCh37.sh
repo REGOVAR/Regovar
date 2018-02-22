@@ -9,23 +9,42 @@ input="$(readlink -f $1)"
 output="$(readlink -f $2)"
 
 # VEP
-./variant_effect_predictor.pl  \
-    --fork 24 \
-    --buffer_size 100000 \
-    --cache --dir ~/db/VEP --offline \
-    --db_version 83 \
+./opt/ensembl-91/vep  \
+    --fork 30 \
+    --buffer_size 200000 \
+    --cache --dir /opt/ensembl/vep/homo_sapiens_merged/91_GRCh37/ --offline \
+    --fasta \
+    --db_version 91 \
     --species homo_sapiens \
     --assembly GRCh37 \
+    --no_escape \
+    --vcf_info_field CSQ \
+    --terms ensembl \
+    --hgvs \
+    --hgvsg \
+    --shift_hgvs 1 \
+    --transcript_version \
+    --protein \
     --symbol \
-    --variant_class \
-    --sift b \
-    --polyphen b \
-    --gmaf \
-    --maf_1kg \
-    --maf_esp \
-    --maf_exac \
+    --ccds \
+    --uniprot \
+    --appris \
+    --canonical \
+    --biotype \
+    --check_existing \
+    --af \
+    --max_af \
+    --af_1kg \
+    --af_esp \
+    --af_gnomad \
+    --af_exac \
+    --pubmed \
+    --all_refseq \
+    --exclude_predicted \
+    --allow_non_variant \
     --format vcf \
     --vcf \
+    --compress_output bgzip \
     --no_stats \
     -i "$input" \
 -o "$output"
