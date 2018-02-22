@@ -537,7 +537,7 @@ class VcfManager(AbstractImportManager):
     }
 
 
-    def import_delegate(self, file_id, vcf_reader, db_ref_suffix, vcf_metadata, samples):
+    def import_delegate(self, file_id, vcf_reader, reference_id, db_ref_suffix, vcf_metadata, samples):
         """
             This delegate will do the "real" import.
             It will be called by the "import_data" method in a new thread in order to don't block the main thread
@@ -635,7 +635,7 @@ class VcfManager(AbstractImportManager):
                 sps = []
                 sql = "UPDATE sample SET loading_progress={} WHERE id IN ({})".format(progress, ",".join([str(samples[sid]["id"]) for sid in samples]))
                 Model.execute(sql)
-                core.notify_all({"action": "import_vcf_processing", "data" : {"file_id" : file_id, "status" : "loading", "progress": progress, "samples": [ {"id" : samples[sname]["id"], "name" : sname} for sname in samples]}})
+                core.notify_all({"action": "import_vcf_processing", "data" : {"reference_id": reference_id, "file_id" : file_id, "status" : "loading", "progress": progress, "samples": [ {"id" : samples[sname]["id"], "name" : sname} for sname in samples]}})
                 
                 log("VCF import : enqueue query")
                 self.queue.put(transaction)
@@ -677,7 +677,7 @@ class VcfManager(AbstractImportManager):
         # update sample's progress indicator
         Model.execute("UPDATE sample SET status='ready', loading_progress=1  WHERE id IN ({})".format(",".join([str(samples[sid]["id"]) for sid in samples])))
         
-        core.notify_all({"action": "import_vcf_end", "data" : {"file_id" : file_id, "msg" : "Import done without error.", "samples": [ {"id" : samples[s]["id"], "name" : samples[s]["name"]} for s in samples.keys()]}})
+        core.notify_all({"action": "import_vcf_end", "data" : {"reference_id": reference_id, "file_id" : file_id, "msg" : "Import done without error.", "samples": [ {"id" : samples[s]["id"], "name" : samples[s]["name"]} for s in samples.keys()]}})
 
 
         # When import is done, check if analysis are waiting for creation and then start wt creation if all sample are ready 
@@ -740,7 +740,7 @@ class VcfManager(AbstractImportManager):
                 
             if len(samples.keys()) == 0 : 
                 war("VCF files without sample cannot be imported in the database.")
-                core.notify_all({"action": "import_vcf_error", "data" : {"file_id" : file_id, "msg" : "VCF files without sample cannot be imported in the database."}})
+                core.notify_all({"action": "import_vcf_error", "data" : {"reference_id": reference_id, "file_id" : file_id, "msg" : "VCF files without sample cannot be imported in the database."}})
                 return;
 
 
@@ -756,11 +756,11 @@ class VcfManager(AbstractImportManager):
                 self.workers.append(t)
 
 
-            core.notify_all({"action":"import_vcf_start", "data" : {"file_id" : file_id, "samples" : [ {"id" : samples[sid]["id"], "name" : samples[sid]["name"]} for sid in samples.keys()]}})
+            core.notify_all({"action":"import_vcf_start", "data" : {"reference_id": reference_id, "file_id" : file_id, "samples" : [ {"id" : samples[sid]["id"], "name" : samples[sid]["name"]} for sid in samples.keys()]}})
             records_count = vcf_metadata["count"]
             log ("Importing file {0}\n\r\trecords  : {1}\n\r\tsamples  :  ({2}) {3}\n\r\tstart    : {4}".format(filepath, records_count, len(samples.keys()), reprlib.repr([sid for sid in samples.keys()]), start))
             
-            run_async(self.import_delegate, file_id, vcf_reader, db_ref_suffix, vcf_metadata, samples)
+            run_async(self.import_delegate, file_id, vcf_reader, reference_id, db_ref_suffix, vcf_metadata, samples)
         
             return {"success": True, "samples": samples, "records_count": records_count }
         return {"success": False, "error": "File not supported"}

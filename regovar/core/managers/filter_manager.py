@@ -848,7 +848,7 @@ class FilterEngine:
         """
             Commont request to manage all different cases
         """
-        limit = min(limit, RANGE_MAX)
+        limit = max(1, min(limit, RANGE_MAX))
         fields = remove_duplicates(fields)
         order = remove_duplicates(order)
         if fields is None or not isinstance(fields, list) or len(fields) == 0:
