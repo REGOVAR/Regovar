@@ -902,7 +902,11 @@ class FilterEngine:
         current_filter = former_filter if filter_json is None else json.dumps(filter_json)
         current_order = former_order if order is None else json.dumps(order)
         
-        if former_filter != current_filter or former_order != current_order:
+        # Check if temp working table exists 
+        sql = "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME='wt_{}_tmp'".format(analysis.id)
+        wtmp_exists = execute(sql).rowcount > 0
+
+        if not wtmp_exists or former_filter != current_filter or former_order != current_order:
             # Need to prepare temp table
             self.prepare(analysis, filter_json, order)
         elif not analysis.filter:
