@@ -34,21 +34,9 @@ class AnalysisHandler:
 
     def list(self, request):
         """
-            Return all data about the analysis with the provided id (analysis metadata: name, settings, template data, samples used, filters, ... )
+            List all analyses
         """
-        # Generic processing of the get query
-        fields, query, order, offset, limit = process_generic_get(request.query_string, Analysis.public_fields)
-        depth = 0
-        # Get range meta data
-        range_data = {
-            "range_offset" : offset,
-            "range_limit"  : limit,
-            "range_total"  : Analysis.count(),
-            "range_max"    : RANGE_MAX,
-        }
-        # Return result of the query.
-        analyses = core.analyses.get(fields, query, order, offset, limit, depth)
-        return rest_success([a.to_json() for a in analyses], range_data)
+        return rest_success(core.analyses.list())
 
 
 

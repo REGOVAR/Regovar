@@ -98,20 +98,7 @@ class ApiHandler:
         """
             Lazy loading all analysis to init data of Client
         """
-        sql = "SELECT id, project_id, name, comment, create_date, update_date, reference_id, status FROM analysis"
-        result = []
-        for res in execute(sql): 
-            result.append({
-                "id": res.id,
-                "project_id": res.project_id,
-                "name": res.name,
-                "comment": res.comment,
-                "create_date": res.create_date.isoformat(),
-                "update_date": res.update_date.isoformat(),
-                "reference_id": res.reference_id,
-                "status": res.status
-            })
-        return result
+        return core.analyses.list()
     def get_all_subjects(self):
         """
             Lazy loading all subjects to init data of Client
@@ -136,21 +123,7 @@ class ApiHandler:
         """
             Lazy loading all samples to init data of Client
         """
-        sql = "SELECT id, subject_id, name, comment, is_mosaic, file_id, loading_progress, reference_id, status FROM sample ORDER BY id"
-        result = []
-        for res in execute(sql): 
-            result.append({
-                "id": res.id,
-                "subject_id": res.subject_id,
-                "name": res.name,
-                "comment": res.comment,
-                "status": res.status,
-                "is_mosaic": res.is_mosaic,
-                "file_id": res.file_id,
-                "loading_progress": res.loading_progress,
-                "reference_id": res.reference_id
-            })
-        return result
+        return core.samples.list()
     def get_all_projects(self):
         """
             Lazy loading all projects to init data of Client

@@ -143,8 +143,8 @@ app.router.add_route('GET',    "/annotation/db/{db_id}", annotationHandler.get_d
 app.router.add_route('GET',    "/annotation/field/{field_id}", annotationHandler.get_field)                          # Get the database details and the list of all its fields
 app.router.add_route('DELETE', "/annotation/db/{db_id}", annotationHandler.delete)                                   # Delete an annotation database with all its fields.
 
-app.router.add_route('GET',    "/sample/browse/{ref_id}", sampleHandler.tree)                                        # Get sampleslist for the requested reference
 app.router.add_route('GET',    "/sample", sampleHandler.list)                                                        # Get list of all samples in database
+app.router.add_route('GET',    "/sample/ref/{ref_id}", sampleHandler.list)                                           # Get list of samples for the requested reference
 app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)                                             # Get specific sample's database
 app.router.add_route('GET',    "/sample/import/{file_id}/{ref_id}", sampleHandler.import_from_file)                  # import sample's data from the file (vcf supported)
 app.router.add_route('PUT',    "/sample/{sample_id}", sampleHandler.update)                                          # Update sample informations

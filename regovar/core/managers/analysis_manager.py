@@ -30,6 +30,27 @@ class AnalysisManager:
         pass
 
 
+    def list(self):
+        """
+            Return all analyses with "minimal data"
+        """
+        sql = "SELECT id, project_id, name, comment, create_date, update_date, reference_id, status FROM analysis"
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "project_id": res.project_id,
+                "name": res.name,
+                "comment": res.comment,
+                "create_date": res.create_date.isoformat(),
+                "update_date": res.update_date.isoformat(),
+                "reference_id": res.reference_id,
+                "status": res.status
+            })
+        return result
+
+
+
     def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """
             Generic method to get analysis metadata according to provided filtering options.
