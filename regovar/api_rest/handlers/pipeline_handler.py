@@ -53,17 +53,10 @@ class PipelineHandler:
         pass
 
     def list(self, request):
-        fields, query, order, offset, limit = process_generic_get(request.query_string, Pipeline.public_fields)
-        depth = 0
-        # Get range meta data
-        range_data = {
-            "range_offset" : offset,
-            "range_limit"  : limit,
-            "range_total"  : Pipeline.count(),
-            "range_max"    : RANGE_MAX,
-        }
-        pipes = core.pipelines.get(fields, query, order, offset, limit, depth)
-        return rest_success([p.to_json() for p in pipes], range_data)
+        """
+            List all pipelines
+        """
+        return rest_success(core.pipelines.list())
 
 
     def get(self, request):

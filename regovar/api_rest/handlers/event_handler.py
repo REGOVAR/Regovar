@@ -30,20 +30,9 @@ from api_rest.rest import *
 class EventHandler:
     def list(self, request):
         """
-            Get list of all events (allow search parameters)
+            Get list of last 100 events
         """
-        from core.core import core
-        fields, query, order, offset, limit = process_generic_get(request.query_string, Project.public_fields)
-        depth = 0
-        # Get range meta data
-        range_data = {
-            "range_offset" : offset,
-            "range_limit"  : limit,
-            "range_total"  : Project.count(),
-            "range_max"    : RANGE_MAX,
-        }
-        projects = core.projects.get(fields, query, order, offset, limit, depth)
-        return rest_success([p.to_json() for p in projects], range_data)
+        return rest_success(core.events.list())
         
     
     async def new(self, request):

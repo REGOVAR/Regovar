@@ -4,16 +4,32 @@ import ipdb
 import json
 import core.model as Model
 from core.framework.common import *
-
+from core.framework.postgresql import execute
 from config import *
 
 
 
 class ProjectManager:
 
-    def __init__(self):
-        pass
 
+    def list(self):
+        """
+            List all projects with "minimal data"
+        """
+        sql = "SELECT p.id, p.name, p.comment, p.parent_id, p.is_folder, p.create_date, p.update_date, array_agg(a.id) as analyses FROM project p LEFT JOIN analysis a ON a.project_id=p.id where not is_sandbox GROUP BY p.id, p.name, p.comment, p.parent_id, p.is_folder, p.create_date, p.update_date ORDER BY p.parent_id, p.name"
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "name": res.name,
+                "comment": res.comment,
+                "parent_id": res.parent_id,
+                "is_folder": res.is_folder,
+                "analyses": res.analyses,
+                "create_date": res.create_date.isoformat(),
+                "update_date": res.update_date.isoformat()
+            })
+        return result
 
     def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """

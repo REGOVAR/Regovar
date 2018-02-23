@@ -141,7 +141,20 @@
 
                 <hr/>
                 <h2>Changes log</h2>
-                <h3>0.6.dev [Current]</h3>
+                <h3>0.9.dev [Current]</h3>
+                <ul><li>API routes homogeneisation</li>
+                    <li>Code source clean (removing obsolete code)</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.8.dev</h3>
+                <ul><li>Rework lazy loading for client initialization</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.7.dev</h3>
+                <ul><li>Rework notification and analysis creation/prepare/loading</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.6.dev</h3>
                 <ul><li>Adding panels feature</li>
                     <li>Bug fixing</li>
                 </ul>
@@ -183,7 +196,6 @@
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#misc_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Config</a></li>
-                            <li><a href="#misc_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Tools</a></li>
                             <li><a href="#misc_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Api</a></li>
                             <li><a href="#misc_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Welcom</a></li>
                         </ul>
@@ -202,20 +214,6 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10"><button onclick="generic_exec_static('/config', 'misc_result');">Test it</button></div>
-                                </div>
-                            </div>
-                            <!-- GET tools -->
-                            <div class="tab-pane fade" id="misc_api_02">
-                                <div class="row form-group">
-                                    <div class="col-sm-2"><b>Description</b></div>  
-                                    <div class="col-sm-10">
-                                        <code>GET /config/tools</code><br/>
-                                        <i>Return custom tools deployed on the server. Custom tools can be export and report generator for variant filtering selection.</i>
-                                    </div>  
-                                </div>
-                                <div class="row form-group">
-                                    <div class="col-sm-2"><b>Test</b></div>  
-                                    <div class="col-sm-10"><button onclick="generic_exec_static('/config/tools', 'misc_result');">Test it</button></div>
                                 </div>
                             </div>
                             <!-- GET api -->
@@ -239,7 +237,7 @@
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /</code><br/>
-                                        <i>Return the server "welcom" data for Regovar client : The list of 10 last analysis/subjects edited, the list of 20 last events, the list of references available, and so on.</i>
+                                        <i>Return the server "welcom" data for Regovar client : All data to init the client.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
@@ -267,7 +265,7 @@
                 <div class="panel with-nav-tabs panel-default">
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
-                            <li class="active"><a href="#file_api_01" data-toggle="tab"><i class="glyphicon glyphicon-warning-sign"></i> list</a></li>
+                            <li class="active"><a href="#file_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
                             <li><a href="#file_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show</a></li>
                             <li><a href="#file_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> edit</a></li>
                             <li><a href="#file_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>
@@ -278,17 +276,14 @@
                         <div class="tab-content">
                             <!-- GET files -->
                             <div class="tab-pane fade in active" id="file_api_01">
-                                <div class="alert alert-info">
-                                    <strong>Warning : </strong> <code style="background:none!important;">order_by</code> have an <a href="https://github.com/REGOVAR/Regovar/issues/92" target="_blank">issue</a> with "desc" ordering and <code style="background:none!important;">filter</code> is <a href="https://github.com/REGOVAR/Regovar/issues/105" target="_blank">not yet implemented</a>.
-                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /file?...</code><br/>
-                                        <i>Retrieve the list of file stored on Regovar server.</i>
+                                        <code>GET /files</code><br/>
+                                        <i>Retrieve the list of all file stored on Regovar server.</i>
                                     </div>  
                                 </div>
-                                <div class="row form-group">
+                                <!--div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
                                         <code>range={offset}-{limit}</code><br/>
@@ -301,11 +296,11 @@
                                         <code>filter={free_text}</code><br/>
                                         <i>Return result that match with the provided text (Fields tested are name and comments).</i>
                                     </div>
-                                </div>
+                                </div-->
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="file_api_01_query" type="text" placeholder="/file?range=0-100&amp;..." value="/file"/> 
+                                        <input id="file_api_01_query" type="text" placeholder="/files" value="/files"/> 
                                         <button onclick="generic_exec_from_input('file_api_01_query', 'file_result');" class="btn btn-primary">Test it</button> -
                                         <button onclick="generic_exec_static('/file', 'file_result', 'file_api_01_query');">Ex1 : get all</button> 
                                         <button onclick="generic_exec_static('/file?range=1-3', 'file_result', 'file_api_01_query');">Ex2 : range 1-3</button><br/>
@@ -461,7 +456,7 @@
                 <div class="panel with-nav-tabs panel-default">
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
-                            <li class="active"><a href="#pipe_api_01" data-toggle="tab"><i class="glyphicon glyphicon-warning-sign"></i> list</a></li>
+                            <li class="active"><a href="#pipe_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
                             <li><a href="#pipe_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show</a></li>
                             <li><a href="#pipe_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> install (quick)</a></li>
                             <li><a href="#pipe_api_04" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> install</a></li>
@@ -472,17 +467,14 @@
                         <div class="tab-content">
                             <!-- GET pipelines -->
                             <div class="tab-pane fade in active" id="pipe_api_01">
-                                <div class="alert alert-info">
-                                    <strong>Warning : </strong> <code style="background:none!important;">order_by</code> have an <a href="https://github.com/REGOVAR/Regovar/issues/92" target="_blank">issue</a> with "desc" ordering and <code style="background:none!important;">filter</code> is <a href="https://github.com/REGOVAR/Regovar/issues/105" target="_blank">not yet implemented</a>.
-                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /pipeline?...</code><br/>
-                                        <i>Retrieve the list of pipeline stored on Regovar server.</i>
+                                        <code>GET /pipelines</code><br/>
+                                        <i>Retrieve the list of all pipelines stored on Regovar server.</i>
                                     </div>  
                                 </div>
-                                <div class="row form-group">
+                                <!--div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
                                         <code>range={offset}-{limit}</code><br/>
@@ -495,11 +487,11 @@
                                         <code>filter={free_text}</code><br/>
                                         <i>Return results that match with the provided text (Fields tested are name, description, author and version).</i>
                                     </div>
-                                </div>
+                                </div-->
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="pipe_api_01_query" type="text" placeholder="/pipeline?range=0-100&amp;..." value="/pipeline"/> 
+                                        <input id="pipe_api_01_query" type="text" placeholder="/pipelines" value="/pipelines"/> 
                                         <button onclick="generic_exec_from_input('pipe_api_01_query', 'pipe_result');" class="btn btn-primary">Test it</button> - 
                                         <button onclick="generic_exec_static('/pipeline', 'pipe_result', 'pipe_api_01_query');">Ex1 : get all</button> 
                                         <button onclick="generic_exec_static('/pipeline?range=1-3', 'pipe_result', 'pipe_api_01_query');">Ex2 : range 1-3</button><br/>
@@ -647,17 +639,14 @@
                         <div class="tab-content">
                             <!-- List jobs -->
                             <div class="tab-pane fade in active" id="job_api_01">
-                                <div class="alert alert-info">
-                                    <strong>Warning : </strong> <code style="background:none!important;">order_by</code> have an <a href="https://github.com/REGOVAR/Regovar/issues/92" target="_blank">issue</a> with "desc" ordering and <code style="background:none!important;">filter</code> is <a href="https://github.com/REGOVAR/Regovar/issues/105" target="_blank">not yet implemented</a>.
-                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /job?...</code><br/>
-                                        <i>Retrieve the list of job on Regovar server.</i>
+                                        <i>Retrieve the list of all job on Regovar server.</i>
                                     </div>  
                                 </div>
-                                <div class="row form-group">
+                                <!--div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
                                         <code>range={offset}-{limit}</code><br/>
@@ -670,11 +659,11 @@
                                         <code>filter={free_text}</code><br/>
                                         <i>Return results that match with the provided text (Fields tested are name, pipeline's name and version).</i>
                                     </div>
-                                </div>
+                                </div-->
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="job_api_01_query" type="text" placeholder="/job?range=0-100&amp;..." value="/job"/> 
+                                        <input id="job_api_01_query" type="text" placeholder="/jobs" value="/jobs"/> 
                                         <button onclick="generic_exec_from_input('job_api_01_query', 'job_result');" class="btn btn-primary">Test it</button> - 
                                         <button onclick="generic_exec_static('/job', 'job_result', 'job_api_01_query');">Ex1 : get all</button> 
                                         <button onclick="generic_exec_static('/job?range=1-3', 'job_result', 'job_api_01_query');">Ex2 : range 1-3</button><br/>
@@ -1289,14 +1278,14 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /sample</code><br/>
+                                        <code>GET /samples</code><br/>
                                         <i>Return the list of samples in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="sample_api_01_query" type="text" placeholder="/sample" value="/sample"/> 
+                                        <input id="sample_api_01_query" type="text" placeholder="/samples" value="/samples"/> 
                                         <button onclick="generic_exec_from_input('sample_api_01_query', 'sample_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
@@ -1394,14 +1383,14 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /analysis</code><br/>
-                                        <i>Return the list of analyses.</i>
+                                        <code>GET /analyses</code><br/>
+                                        <i>Return the list of all analyses.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="analysis_api_01_query" type="text" placeholder="/analysis" value="/analysis"/> 
+                                        <input id="analysis_api_01_query" type="text" placeholder="/analyses" value="/analyses"/> 
                                         <button onclick="generic_exec_from_input('analysis_api_01_query', 'analysis_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
@@ -1780,14 +1769,14 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /user</code><br/>
-                                        <i>Return the list of user in the database.</i>
+                                        <code>GET /users</code><br/>
+                                        <i>Return the list of all user in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="user_api_01_query" type="text" placeholder="/user" value="/user"/> 
+                                        <input id="user_api_01_query" type="text" placeholder="/users" value="/users"/> 
                                         <button onclick="generic_exec_from_input('user_api_01_query', 'user_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
@@ -2015,14 +2004,14 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /project</code><br/>
-                                        <i>Return the list of projects in the database.</i>
+                                        <code>GET /projects</code><br/>
+                                        <i>Return the list of all projects in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="project_api_01_query" type="text" placeholder="/project" value="/project"/> 
+                                        <input id="project_api_01_query" type="text" placeholder="/projects" value="/projects"/> 
                                         <button onclick="generic_exec_from_input('project_api_01_query', 'project_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
@@ -2184,14 +2173,14 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /subject</code><br/>
-                                        <i>Return the list of subject in the database.</i>
+                                        <code>GET /subjects</code><br/>
+                                        <i>Return the list of all subject in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="subject_api_01_query" type="text" placeholder="/subject" value="/subject"/> 
+                                        <input id="subject_api_01_query" type="text" placeholder="/subjects" value="/subjects"/> 
                                         <button onclick="generic_exec_from_input('subject_api_01_query', 'subject_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
@@ -2346,14 +2335,14 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /panel</code><br/>
-                                        <i>Return the list of panel in the database.</i>
+                                        <code>GET /panels</code><br/>
+                                        <i>Return the list of all panel in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="panel_api_01_query" type="text" placeholder="/panel" value="/panel"/> 
+                                        <input id="panel_api_01_query" type="text" placeholder="/panels" value="/panels"/> 
                                         <button onclick="generic_exec_from_input('panel_api_01_query', 'panel_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
@@ -2505,14 +2494,14 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /event</code><br/>
-                                        <i>Return the list of event in the database.</i>
+                                        <code>GET /events</code><br/>
+                                        <i>Return the list of 100 last event in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="event_api_01_query" type="text" placeholder="/event" value="/event"/> 
+                                        <input id="event_api_01_query" type="text" placeholder="/events" value="/events"/> 
                                         <button onclick="generic_exec_from_input('event_api_01_query', 'event_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>

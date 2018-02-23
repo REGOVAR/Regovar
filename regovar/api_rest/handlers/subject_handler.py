@@ -37,20 +37,9 @@ class SubjectHandler:
 
     def list(self, request):
         """
-            Get list of all subjects (allow search parameters)
+            Get list of all subjects
         """
-        from core.core import core
-        fields, query, order, offset, limit = process_generic_get(request.query_string, Subject.public_fields)
-        depth = 0
-        # Get range meta data
-        range_data = {
-            "range_offset" : offset,
-            "range_limit"  : limit,
-            "range_total"  : Subject.count(),
-            "range_max"    : RANGE_MAX,
-        }
-        subjects = core.subjects.get(fields, query, order, offset, limit, depth)
-        return rest_success([s.to_json() for s in subjects], range_data)
+        return rest_success(core.subjects.list())
 
 
         

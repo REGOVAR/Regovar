@@ -15,7 +15,7 @@ import ped_parser
 
 from config import *
 from core.framework.common import *
-from core.framework.postgresql import *
+from core.framework.postgresql import execute
 import core.model as Model
 
 

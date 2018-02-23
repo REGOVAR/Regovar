@@ -16,6 +16,7 @@ import requests
 
 from config import *
 from core.framework.common import *
+from core.framework.postgresql import execute
 from core.model import *
 
 
@@ -28,6 +29,27 @@ from core.model import *
 class PipelineManager:
     def __init__(self):
         pass
+
+
+    def list(self):
+        """
+            List all pipelines with minimum of data
+        """
+        sql = "SELECT id, name, type, status, description, version, image_file_id, starred, installation_date FROM pipeline ORDER BY id"
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "name": res.name,
+                "description": res.description,
+                "type": res.type,
+                "status": res.status,
+                "version": res.version,
+                "image_file_id": res.image_file_id,
+                "starred": res.starred,
+                "installation_date": res.installation_date.isoformat()
+            })
+        return result
 
     def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """
