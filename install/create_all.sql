@@ -78,7 +78,7 @@ CREATE TYPE field_type AS ENUM ('int', 'string', 'float', 'enum', 'range', 'bool
 CREATE TYPE annotation_db_type AS ENUM ('site', 'variant', 'transcript');
 CREATE TYPE sample_status AS ENUM ('empty', 'loading', 'ready', 'error');
 CREATE TYPE analysis_status AS ENUM ('empty', 'waiting', 'computing', 'ready', 'error');
-CREATE TYPE event_type AS ENUM ('info', 'warning', 'error');
+CREATE TYPE event_type AS ENUM ('custom', 'info', 'warning', 'error');
 CREATE TYPE sex_type AS ENUM ('male', 'female', 'unknow');
 
 
