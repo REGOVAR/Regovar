@@ -55,17 +55,36 @@ class EventManager:
         return result
 
 
+
     def get(self, event_id):
         """
             Get event by id
         """
         result = self.list(event_id=event_id)
         return None if len(result) == 0 else result[0]
-
-
-    def edit(self, event_id, data, from_user_id):
+    
+    
+    
+    def new(self, user_id, date, message, meta):
         """
-            Edit information of the event
+            Create a new user custom event
+        """
+        # TODO: check that user_id exists
+        if isinstance(meta, dict) and not meta == {}:
+            meta = json.dumps(meta)
+            meta = "'" + sql_escape(meta) + "'"
+        else:
+            meta = "NULL"
+        sql = "INSERT INTO event (date, message, type, meta) VALUES ('{0}', '{1}', 'custom', {2}) RETURNING id;".format(check_date(date).isoformat(), sql_escape(message), meta)
+        event_id = execute(sql).first()[0]
+        self.log("User (id={}) create new 'custom' event (id={})".format(user_id, event_id), "technical")
+        return self.get(event_id)
+
+
+
+    def edit(self, user_id, event_id, date, message, data):
+        """
+            Edit information of the event (user can only edit 'custom' events)
         """
         return None
 
@@ -73,7 +92,7 @@ class EventManager:
 
     def delete(self, event_id, user_id):
         """
-            Delete the event (user can only delete 'custom' events
+            Delete the event (user can only delete 'custom' events)
         """
         event = self.get(event_id)
         if event and event["type"] == "custom":
@@ -85,18 +104,22 @@ class EventManager:
         return event
     
     
-    def new(self, user_id, date, message, meta):
-        """
-            Create a new user custom event
-        """
-        return None
     
-    
-    def log(self, message, type):
+    def log(self, message, type, meta=None):
         """
             Create an auto "system" event
         """
-        return None
+        if type not in ["custom", "info", "warning", "error", "technical"]:
+            type = "technical"
+        if meta is not None:
+            if meta is not isinstance(meta, str):
+                meta = json.dumps(meta)
+            meta = "'" + sql_escape(meta) + "'"
+        else:
+            meta = "NULL"
+        sql = "INSERT INTO event (message, type, meta) VALUES ('{0}', '{1}', {2}) RETURNING id;".format(sql_escape(message), type, meta)
+        event_id = execute(sql).first()[0]
+        return event_id
     
 
 

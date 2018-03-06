@@ -47,28 +47,8 @@ class EventHandler:
         except Exception as ex:
             return rest_error("Error occured when retriving list of requested events. {}".format(ex), ex=ex)
     
-        
     
-    async def new(self, request):
-        """
-            Create new event with provided data
-        """
-        data = await request.json()
-        data = json.loads(data) if isinstance(data, str) else data
-        message = data["message"] if "message" in data else None
-        user_id = 1 # TODO: retrieve user_id from session
-        date = data["date"] if "date" in data else datetime.datetime.now()
-        
-        # Create the event
-        try:
-            event = core.events.new(user_id, date, message, data)
-        except Exception as ex:
-            return rest_error("Error occured when creating the new project. {}".format(ex), ex=ex)
-        if event is None:
-            return rest_error("Unable to create a new event with provided information.")
-        return rest_success(event)
-        
-        
+    
     def get(self, request):
         """
             Get details about the event
@@ -80,6 +60,26 @@ class EventHandler:
         return rest_success(event)
         
         
+    
+    async def new(self, request):
+        """
+            Create new event with provided data
+        """
+        data = await request.json()
+        data = json.loads(data) if isinstance(data, str) else data
+        message = check_string(data.pop("message")) if "message" in data else None
+        user_id = 1 # TODO: retrieve user_id from session
+        date = check_date(data.pop("date")) if "date" in data else datetime.datetime.now()
+        # Create the event
+        try:
+            event = core.events.new(user_id, date, message, data)
+        except Exception as ex:
+            return rest_error("Error occured when creating the new project. {}".format(ex), ex=ex)
+        if event is None:
+            return rest_error("Unable to create a new event with provided information.")
+        return rest_success(event)
+        
+        
         
     async def edit(self, request):
         """
@@ -87,13 +87,12 @@ class EventHandler:
         """
         data = await request.json()
         data = json.loads(data) if isinstance(data, str) else data
-        message = data["message"] if "message" in data else None
+        message = check_string(data.pop("message")) if "message" in data else None
         user_id = 1 # TODO: retrieve user_id from session
-        date = data["date"] if "date" in data else datetime.datetime.now()
-        
-        # Create the event
+        date = check_date(data.pop("date")) if "date" in data else datetime.datetime.now()
+        # Edit the event
         try:
-            event = core.events.new(user_id, date, message, data)
+            event = core.events.edit(user_id, event_id, date, message, data)
         except Exception as ex:
             return rest_error("Error occured when creating the new project. {}".format(ex), ex=ex)
         if event is None:
