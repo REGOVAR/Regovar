@@ -5,6 +5,7 @@ ALTER TABLE "event" ADD COLUMN meta JSONB;
 
 -- Alter type type
 ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'custom'
+ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'technical'
 
 -- Create index
 CREATE INDEX event_meta_idx 
@@ -14,3 +15,4 @@ CREATE INDEX event_meta_idx
 
 -- Update database version
 UPDATE parameter SET value='7.1' WHERE key='database_version';
+INSERT INTO "event" (message, type) VALUES ('Update database to version 7.1', 'technical')

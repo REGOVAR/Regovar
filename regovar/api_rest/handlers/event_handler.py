@@ -28,63 +28,89 @@ from api_rest.rest import *
 
 
 class EventHandler:
+    
     def list(self, request):
         """
             Get list of last 100 events
         """
         return rest_success(core.events.list())
+    
+    
+    async def search(self, request):
+        """
+            Get events list corresponding to provided filters
+        """
+        data = await request.json()
+        try:
+            data = json.loads(data) if isinstance(data, str) else data
+            return rest_success(core.events.list(**data))
+        except Exception as ex:
+            return rest_error("Error occured when retriving list of requested events. {}".format(ex), ex=ex)
+    
         
     
     async def new(self, request):
         """
             Create new event with provided data
         """
-        from core.core import core
         data = await request.json()
-        is_folder = data["is_folder"]
-        name = data["name"]
-        parent_id = data["parent_id"]
-        # Create the project
+        data = json.loads(data) if isinstance(data, str) else data
+        message = data["message"] if "message" in data else None
+        user_id = 1 # TODO: retrieve user_id from session
+        date = data["date"] if "date" in data else datetime.datetime.now()
+        
+        # Create the event
         try:
-            project = core.projects.new(name, is_folder, parent_id)
+            event = core.events.new(user_id, date, message, data)
         except Exception as ex:
-            return rest_error("Error occured when creating the new project. {}".format(ex))
-        if project is None:
-            return rest_error("Unable to create a new project.")
-        return rest_success(project.to_json())
+            return rest_error("Error occured when creating the new project. {}".format(ex), ex=ex)
+        if event is None:
+            return rest_error("Unable to create a new event with provided information.")
+        return rest_success(event)
         
         
     def get(self, request):
         """
-            Get details about the project
+            Get details about the event
         """
-        project_id = request.match_info.get('project_id', -1)
-        project = Project.from_id(job_id, 2)
-        if not project:
-            return rest_error("Unable to find the project (id={})".format(project_id))
-        return rest_success(project.to_json(Project.public_fields))
+        event_id = request.match_info.get('event_id', -1)
+        event = core.events.get(event_id)
+        if not event:
+            return rest_error("Unable to find the event (id={})".format(event_id))
+        return rest_success(event)
         
         
         
     async def edit(self, request):
         """
-            Edit project meta data
+            Edit event data
         """
         data = await request.json()
-        # Create the project
-        return rest_error("To be implemented")
+        data = json.loads(data) if isinstance(data, str) else data
+        message = data["message"] if "message" in data else None
+        user_id = 1 # TODO: retrieve user_id from session
+        date = data["date"] if "date" in data else datetime.datetime.now()
+        
+        # Create the event
+        try:
+            event = core.events.new(user_id, date, message, data)
+        except Exception as ex:
+            return rest_error("Error occured when creating the new project. {}".format(ex), ex=ex)
+        if event is None:
+            return rest_error("Unable to create a new event with provided information.")
+        return rest_success(event)
     
     
     
     def delete(self, request):
         """
-            Delete the project
+            Delete the event
         """
-        project_id = request.match_info.get('project_id', -1)
-        project = Project.delete(project_id, 2)
-        if not project:
-            return rest_error("Unable to delete the project (id={})".format(project_id))
-        return rest_success(project.to_json(Project.public_fields))
+        event_id = request.match_info.get('event_id', -1)
+        event = core.events.delete(event_id)
+        if not event:
+            return rest_error("Unable to delete the event (id={})".format(event_id))
+        return rest_success(event)
     
     
 

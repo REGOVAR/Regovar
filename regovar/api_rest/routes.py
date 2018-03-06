@@ -33,7 +33,7 @@ dbHdl = DatabaseHandler()
 annotationHandler = AnnotationDBHandler()
 analysisHandler = AnalysisHandler()
 sampleHandler = SampleHandler()
-hpoHandler = PhenotypeHandler()
+phenoHandler = PhenotypeHandler()
 searchHandler = SearchHandler()
 panelHandler = PanelHandler()
 adminHandler = AdminHandler()
@@ -88,6 +88,7 @@ app.router.add_route('GET',    "/project/{project_id}/analyses", projHandler.ana
 app.router.add_route('GET',    "/project/{project_id}/files",    projHandler.files)                              # Get list of files (samples and attachments) of the project (allow search parameters)
 
 app.router.add_route('GET',    "/events",           eventHandler.list)                                           # 100 last events
+app.router.add_route('POST',   "/events",           eventHandler.search)                                         # Events list corresponding to provided filters
 app.router.add_route('POST',   "/event",            eventHandler.new)                                            # Create a new event
 app.router.add_route('GET',    "/event/{event_id}", eventHandler.get)                                            # Get details about an event
 app.router.add_route('PUT',    "/event/{event_id}", eventHandler.edit)                                           # Edit event's data
@@ -132,8 +133,9 @@ app.router.add_route('GET',    "/db",       dbHdl.get)
 app.router.add_route('GET',    "/db/{ref}", dbHdl.get)
 
 
-app.router.add_route('POST',   "/hpo/search",   hpoHandler.search)
-app.router.add_route('GET',    "/hpo/{hpo_id}", hpoHandler.get)
+app.router.add_route('GET',   "/phenotypes",           phenoHandler.list)
+app.router.add_route('POST',   "/phenotypes/search",   phenoHandler.search)
+app.router.add_route('GET',    "/phenotype/{hpo_id}",  phenoHandler.get)
 
 
 

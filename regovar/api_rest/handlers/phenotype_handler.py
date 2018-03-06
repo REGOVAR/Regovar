@@ -28,6 +28,12 @@ from api_rest.rest import *
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 class PhenotypeHandler:
 
+    def list(self, request):
+        """
+            Return all phenotypes entries
+        """
+        return rest_success(core.phenotypes.list())
+
 
 
     def get(self, request):
