@@ -2,6 +2,8 @@
 -- Alter column type of event
 ALTER TABLE "event" DROP COLUMN meta;
 ALTER TABLE "event" ADD COLUMN meta JSONB;
+ALTER TABLE "event" ADD COLUMN details text COLLATE pg_catalog."C";
+ALTER TABLE "event" ADD COLUMN author_id int;
 
 -- Alter type type
 ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'custom'

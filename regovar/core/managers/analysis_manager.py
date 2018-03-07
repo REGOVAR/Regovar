@@ -84,7 +84,7 @@ class AnalysisManager:
     
     
 
-    def create(self, name, project_id, ref_id, template_id=None):
+    def create(self, name, project_id, ref_id, template_id=None, author_id=None):
         """
             Create a new analysis in the database.
         """
@@ -99,11 +99,11 @@ class AnalysisManager:
             analysis.template = template_id
             # Set fields with default Variant's fields
             analysis.fields = []
-            db_uid = core.annotations.db_list[0]['db']['Variant']['versions']['_all_']
+            db_uid = core.annotations.db_list[0]["db"]["Variant"]["versions"]["_all_"]
             for f in core.annotations.db_map[db_uid]["fields"][1:]:
                 analysis.fields.append(f)
             analysis.save()
-            log('Core.AnalysisManager.create : New analysis \"{}\" created with the id {}.'.format(name, analysis.id))
+            core.events.log(author_id, "info", {"analysis_id": analysis.id}, "New analysis created: {}".format(name))
             return analysis
         except Exception as ex:
             raise RegovarException(msg="Unable to create new analysis with provided data", exception=ex)
@@ -120,12 +120,13 @@ class AnalysisManager:
 
 
 
-    def delete(self, analysis_id, definitely=False):
+    def delete(self, analysis_id, author_id=None, definitely=False):
         """ 
             Delete the analysis
             When normal user delete an analysis, this one is put in the trash project
             Then an admin can definitely delete the analysis (with the flag finally set to True)
         """
+        from core.core import core
         analysis = Analysis.from_id(analysis_id)
         if not analysis: raise RegovarException("Unable to find analysis with the provided id {}".format(analysis_id))
 
@@ -138,17 +139,21 @@ class AnalysisManager:
             sql = "DELETE FROM analysis WHERE id={0}; DELETE FROM filter WHERE analysis_id={0};".format(analysis_id)
             sql+= "DELETE FROM analysis_sample WHERE analysis_id={0}; DELETE FROM attribute WHERE analysis_id={0}".format(analysis_id)
             sql+= "DELETE FROM analysis_indicator_value WHERE analysis_id={0};".format(analysis_id)
+            
+            core.events.log(author_id, "info", {"analysis_id": analysis.id}, "Analysis moved to trash: {}".format(analysis.name))
         else:
             sql = "UPDATE analysis SET project_id=0 WHERE id={0}; ".format(analysis_id)
+            core.events.log(author_id, "warning", {"analysis_id": analysis.id}, "Irreversible deletion of the analysis: {}".format(analysis.name))
         result = analysis.to_json()
         execute(sql)
         return result
 
 
-    def update(self, analysis_id, data):
+    def update(self, analysis_id, data, author_id=None):
         """
             Update analysis with provided data. Data that are not provided are not updated (ignored).
         """
+        from core.core import core
         analysis = Analysis.from_id(analysis_id)
         if not analysis:
             raise RegovarException("Unable to find analysis with the provided id {}".format(analysis_id))
@@ -184,14 +189,16 @@ class AnalysisManager:
                 pass
 
         # return reloaded analysis
+        core.events.log(author_id, "info", {"analysis_id": analysis.id}, "Analysis information updated: {}".format(analysis.name))
         return Analysis.from_id(analysis_id, 1)
         
 
 
-    def clear_temps_data(self, analysis_id):
+    def clear_temps_data(self, analysis_id, author_id=None):
         """
             Clear temporary data of the analysis (to save disk space by example)
         """
+        from core.core import core
         analysis = Analysis.from_id(analysis_id)
         if not analysis:
             raise RegovarException("Unable to fin analysis with the provided id {}".format(analysis_id))
@@ -201,6 +208,7 @@ class AnalysisManager:
             execute("DROP TABLE IF EXISTS wt_{}_tmp CASCADE".format(analysis_id))
             analysis.status = "empty"
             analysis.save()
+            core.events.log(author_id, "info", {"analysis_id": analysis.id}, "Analysis closed: {}".format(analysis.name))
         except Exception as ex:
             raise RegovarException("Error occure when trying to clear temporary data of the analysis {}.".format(analysis_id), exception=ex)
         return True
@@ -225,7 +233,7 @@ class AnalysisManager:
         
         
 
-    async def create_update_filter(self, filter_id, data):
+    async def create_update_filter(self, filter_id, data, author_id=None):
         """
             Create or update a filter for the analysis with the provided id.
         """
@@ -259,6 +267,7 @@ class AnalysisManager:
             filter.save()
             run_async(update_analysis_async, analysis, filter.id, data)
     
+        core.events.log(author_id, "info", {"analysis_id": analysis.id}, "New filter \"{}\" created for the analysis: {}".format(filter.name, analysis.name))
         return filter
         
         

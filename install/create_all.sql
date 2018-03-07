@@ -411,6 +411,8 @@ CREATE TABLE public.event
     id bigserial NOT NULL,
     "date" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     message text COLLATE pg_catalog."C",
+    details text COLLATE pg_catalog."C",
+    author_id int,
     type event_type,
     meta JSONB,
     CONSTRAINT event_pkey PRIMARY KEY (id)

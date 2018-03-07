@@ -79,6 +79,9 @@ class Core:
         self.reporters = {}
         self.load_export_managers()
         self.load_report_managers()
+        
+        # All seams good ? let's go
+        self.events.log(None, "technical", None, "Regovar core {} initialised. Server ready !".format(REGOVAR_CORE_VERSION))
 
 
     def notify_all(self, data):
@@ -163,5 +166,5 @@ class Core:
 # =====================================================================================================================
 
 core = Core()
-log('Regovar core initialised. Server ready !')
+
 
