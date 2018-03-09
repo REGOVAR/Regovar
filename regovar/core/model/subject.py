@@ -36,8 +36,10 @@ def subject_init(self, loading_depth=0, force=False):
             - analyses      : [Analysis]    : The list of Analysis that are using subject's sample as inputs
             - files         : [File]        : The list of File owns by the subject
             - projects      : [Project]     : The list of Project that contains this subject
+            - events        : [json]        : The list of events linked to this subject
     """
     from core.model.indicator import Indicator
+    from core.core import core
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)
     # Avoid recursion infinit loop
     if hasattr(self, "loading_depth") and self.loading_depth >= loading_depth:
@@ -64,12 +66,14 @@ def subject_init(self, loading_depth=0, force=False):
         self.analyses = []
         self.files = []
         self.projects = []
+        self.events = []
         if self.loading_depth > 0:
             self.samples = self.get_samples(self.loading_depth-1)
             self.jobs = self.get_jobs(self.loading_depth-1)
             self.analyses = self.get_analyses(self.loading_depth-1)
             self.files = self.get_files(self.loading_depth-1)
             self.projects = self.get_projects(self.loading_depth-1)
+            self.events = core.events.list(subject_id=self.id)
     except Exception as ex:
         raise RegovarException("subject data corrupted (id={}).".format(self.id), "", ex)
 
@@ -275,7 +279,7 @@ def subject_get_projects(self, loading_depth=0):
 
 
 Subject = Base.classes.subject
-Subject.public_fields = ["id", "identifier", "firstname", "lastname", "sex", "comment", "dateofbirth", "dateofdeath", "create_date", "family_number", "update_date", "jobs_ids", "samples_ids", "files_ids", "analyses_ids", "projects_ids", "jobs", "samples", "analyses", "files", "indicators", "projects_ids", "projects"]
+Subject.public_fields = ["id", "identifier", "firstname", "lastname", "sex", "comment", "dateofbirth", "dateofdeath", "create_date", "family_number", "update_date", "jobs_ids", "samples_ids", "files_ids", "analyses_ids", "projects_ids", "jobs", "samples", "analyses", "files", "indicators", "projects_ids", "projects", "events"]
 Subject.init = subject_init
 Subject.from_id = subject_from_id
 Subject.from_ids = subject_from_ids

@@ -68,13 +68,14 @@ class EventHandler:
         data = await request.json()
         data = json.loads(data) if isinstance(data, str) else data
         message = check_string(data.pop("message")) if "message" in data else None
-        user_id = 1 # TODO: retrieve user_id from session
+        details = check_string(data.pop("details")) if "detals" in data else None
+        author_id = 1 # TODO: retrieve author_id from session
         date = check_date(data.pop("date")) if "date" in data else datetime.datetime.now()
         # Create the event
         try:
-            event = core.events.new(user_id, date, message, data)
+            event = core.events.new(author_id, date, message, details, data)
         except Exception as ex:
-            return rest_error("Error occured when creating the new project. {}".format(ex), ex=ex)
+            return rest_error("Error occured when creating the new event. {}".format(ex), ex=ex)
         if event is None:
             return rest_error("Unable to create a new event with provided information.")
         return rest_success(event)
@@ -88,13 +89,13 @@ class EventHandler:
         data = await request.json()
         data = json.loads(data) if isinstance(data, str) else data
         message = check_string(data.pop("message")) if "message" in data else None
-        user_id = 1 # TODO: retrieve user_id from session
+        author_id = 1 # TODO: retrieve author_id from session
         date = check_date(data.pop("date")) if "date" in data else datetime.datetime.now()
         # Edit the event
         try:
-            event = core.events.edit(user_id, event_id, date, message, data)
+            event = core.events.edit(author_id, event_id, date, message, data)
         except Exception as ex:
-            return rest_error("Error occured when creating the new project. {}".format(ex), ex=ex)
+            return rest_error("Error occured when creating the new event. {}".format(ex), ex=ex)
         if event is None:
             return rest_error("Unable to create a new event with provided information.")
         return rest_success(event)

@@ -77,7 +77,7 @@ class EventManager:
     
     
     
-    def new(self, author_id, date, message, details=None):
+    def new(self, author_id, date, message, details=None, meta=None):
         """
             Create a new user custom event
         """
@@ -85,11 +85,12 @@ class EventManager:
         date = check_date(date, datetime.datetime.now()).isoformat()
         message = sql_escape(message)
         details = "'" + sql_escape(details) + "'" if details else "NULL"
+        metasql = self.check_meta_for_sql(meta)
         # Execute query
-        sql = "INSERT INTO event (author_id, type, date, message, details) VALUES ({0}, 'custom', '{1}', '{2}', {3}) RETURNING id;".format(author_id, date, message, details)
+        sql = "INSERT INTO event (author_id, type, date, message, details, meta) VALUES ({0}, 'custom', '{1}', '{2}', {3}, {4}) RETURNING id;".format(author_id, date, message, details, metasql)
         event_id = execute(sql).first()[0]
         # Technical Log
-        self.log("technical", "User (id={}) create new 'custom' event (id={})".format(user_id, event_id))
+        self.log(author_id, "technical", meta, "User (id={}) create new 'custom' event (id={})".format(author_id, event_id))
         # Return created event
         return self.get(event_id)
 
@@ -129,12 +130,7 @@ class EventManager:
         if type == "warning": war(message)
         elif type == "error": err(message)
         elif type != "custom": log(message)
-        if meta is not None:
-            if meta is not isinstance(meta, str):
-                meta = json.dumps(meta)
-            meta = "'" + sql_escape(meta) + "'"
-        else:
-            meta = "NULL"
+        meta = self.check_meta_for_sql(meta)
         message = sql_escape(message)
         details = "'" + sql_escape(details) + "'" if details else "NULL"
         # Execute query
@@ -142,7 +138,26 @@ class EventManager:
         event_id = execute(sql).first()[0]
         return event_id
     
+    def check_meta_json(self, meta):
+        result = {}
+        for k in meta.keys():
+            if k.lower() in ["user_id", "pipeline_id", "job_id", "project_id", "analysis_id", "subject_id", "file_id", "sample_id", "filter_id"]:
+                result[k.lower()] = int(meta[k])
+            elif k.lower() in ["annotation_dbuid", "panel_id"]:
+                result[k.lower()] = str(meta[k])
+            elif k.lower() == "variant_id":
+                # TODO: complex key for variant
+                pass
+        return result 
 
-
+    def check_meta_for_sql(self, meta):
+        if meta is not None:
+            if meta is not isinstance(meta, str): 
+                meta = self.check_meta_json(meta)
+                meta = json.dumps(meta)
+            meta = "'" + sql_escape(meta) + "'"
+        else:
+            meta = "NULL"
+        return meta
 
 
