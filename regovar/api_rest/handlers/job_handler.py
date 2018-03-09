@@ -33,17 +33,7 @@ class JobHandler:
         pass
 
     def list(self, request):
-        fields, query, order, offset, limit = process_generic_get(request.query_string, Job.public_fields)
-        depth = 0
-        # Get range meta data
-        range_data = {
-            "range_offset" : offset,
-            "range_limit"  : limit,
-            "range_total"  : Job.count(),
-            "range_max"    : RANGE_MAX,
-        }
-        jobs = core.jobs.get(fields, query, order, offset, limit, depth)
-        return rest_success([j.to_json() for j in jobs], range_data)
+        return rest_success(core.jobs.list())
 
 
     def delete(self, request):

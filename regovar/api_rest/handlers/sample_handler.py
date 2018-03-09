@@ -34,71 +34,58 @@ from api_rest.rest import *
 
 
 class SampleHandler:
-    
-    def build_tree(subject_id):
-        from core.core import core
 
-        currentLevelProjects = core.projects.get(None, {"subject_id": subject_id, "is_sandbox": False}, None, None, None, 1)
-        result = []
-
-        for p in currentLevelProjects:
-            entry = p.to_json(["id", "name", "comment", "subject_id", "update_date", "create_date", "is_sandbox", "is_folder"])
-
-            if p.is_folder:
-                entry["children"] = ProjectHandler.build_tree(p.id)
-            else:
-                entry["subjects"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.subjects]
-                entry["analyses"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.analyses]
-                entry["analyses"] += [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.jobs]
-
-
-            result.append(entry)
+    # def build_tree(subject_id):
+    #     from core.core import core
+    #     currentLevelProjects = core.projects.get(None, {"subject_id": subject_id, "is_sandbox": False}, None, None, None, 1)
+    #     result = []
+    #     for p in currentLevelProjects:
+    #         entry = p.to_json(["id", "name", "comment", "subject_id", "update_date", "create_date", "is_sandbox", "is_folder"])
+    #         if p.is_folder:
+    #             entry["children"] = ProjectHandler.build_tree(p.id)
+    #         else:
+    #             entry["subjects"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.subjects]
+    #             entry["analyses"] = [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.analyses]
+    #             entry["analyses"] += [o.to_json(["id", "name", "comment", "update_date", "create_date"]) for o in p.jobs]
+    #         result.append(entry)
+    #     return result
 
 
-        return result
+    # def tree(self, request):
+    #     """
+    #         Get samples as tree of samples (with subject as folders)
+    #         Samples that are not linked to a subject are grouped into an "empty" subject
+    #     """
+    #     ref_id = request.match_info.get('ref_id', None)
+    #     if ref_id is None:
+    #         return rest_error("A valid referencial id must be provided to get samples tree")
+    #     # TODO : check that ref_id exists in database
+    #     # TODO : pagination
+    #     # TODO : search parameters
+    #     result = []
+    #     samples = [s for s in Session().query(Sample).filter_by(reference_id=ref_id).order_by(Sample.subject_id).all()]
+    #     current_subject = {"id":-1}
+    #     for s in samples:
+    #         if s.subject_id != current_subject["id"]:
+    #             if current_subject["id"] != -1: result.append(current_subject)
+    #             current_subject = {"id": s.subject_id, "samples": []}
+    #         s.init(1)
+    #         current_subject["samples"].append(s.to_json())
+    #     if current_subject["id"] != -1: 
+    #         result.append(current_subject)
+    #     return rest_success(result)
 
-
-
-    def tree(self, request):
-        """
-            Get samples as tree of samples (with subject as folders)
-            Samples that are not linked to a subject are grouped into an "empty" subject
-        """
-        ref_id = request.match_info.get('ref_id', None)
-        if ref_id is None:
-            return rest_error("A valid referencial id must be provided to get samples tree")
-        # TODO : check that ref_id exists in database
-        # TODO : pagination
-        # TODO : search parameters
-        result = []
-        samples = [s for s in Session().query(Sample).filter_by(reference_id=ref_id).order_by(Sample.subject_id).all()]
-        current_subject = {"id":-1}
-        for s in samples:
-            if s.subject_id != current_subject["id"]:
-                if current_subject["id"] != -1: result.append(current_subject)
-                current_subject = {"id": s.subject_id, "samples": []}
-            
-            s.init(1)
-            current_subject["samples"].append(s.to_json())
-        if current_subject["id"] != -1: 
-            result.append(current_subject)
-        return rest_success(result)
     
     
+
+
+
     def list(self, request):
-        # Generic processing of the get query
-        fields, query, order, offset, limit = process_generic_get(request.query_string, Sample.public_fields)
-        depth = 0
-        # Get range meta data
-        range_data = {
-            "range_offset" : offset,
-            "range_limit"  : limit,
-            "range_total"  : Sample.count(),
-            "range_max"    : RANGE_MAX,
-        }
-        # Return result of the query.
-        samples = core.samples.get(fields, query, order, offset, limit, depth)
-        return rest_success([s.to_json() for s in samples], range_data)
+        """
+            List all samples to init data of Client
+        """
+        ref_id = int(request.match_info.get('ref_id', 0)) if request else 0
+        return rest_success(core.samples.list(ref_id))
 
 
     def get(self, request):

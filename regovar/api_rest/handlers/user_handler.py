@@ -54,19 +54,7 @@ class UserHandler:
         ''' 
             Public method that return the list of regovar's users (only public details).
         '''
-        # Generic processing of the get query
-        fields, query, order, offset, limit = process_generic_get(request.query_string, User.public_fields)
-        depth = 0
-        # Get range meta data
-        range_data = {
-            "range_offset" : offset,
-            "range_limit"  : limit,
-            "range_total"  : User.count(),
-            "range_max"    : RANGE_MAX,
-        }
-        # Return result of the query 
-        users = core.users.get(fields, query, order, offset, limit, depth)
-        return rest_success([u.to_json() for u in users], range_data)
+        return rest_success(core.users.list())
 
 
     @user_role('Authenticated')

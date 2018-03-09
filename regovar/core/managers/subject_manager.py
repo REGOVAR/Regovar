@@ -4,12 +4,37 @@ import ipdb
 import json
 import core.model as Model
 from core.framework.common import *
+from core.framework.postgresql import execute
 
 
 
 
 
 class SubjectManager:
+
+
+
+    def list(self):
+        """
+            List all subjects with "minimal data"
+        """
+        sql = "SELECT id, identifier, firstname, lastname, sex, family_number, dateofbirth, comment, create_date, update_date FROM subject"
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "identifier": res.identifier,
+                "firstname": res.firstname,
+                "lastname": res.lastname,
+                "sex": res.sex,
+                "family_number": res.family_number,
+                "dateofbirth": res.dateofbirth.isoformat() if res.dateofbirth else None,
+                "comment": res.comment,
+                "create_date": res.create_date.isoformat(),
+                "update_date": res.update_date.isoformat()
+            })
+        return result
+
 
 
 

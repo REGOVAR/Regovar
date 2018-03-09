@@ -14,5 +14,19 @@ from core.framework.postgresql import *
 
 
 
+
+
+def event_from_id(event_id):
+    """
+        Retrieve Event with the provided id in the database
+    """
+    event = Session().query(Variant).filter_by(id=variant_id).first()
+    Session().refresh(variant)
+    return variant
+
+
+
+
 Event = Base.classes.event
-Event.public_fields = ["id", "analysis_id", "name", "filter", "description"]
+Event.public_fields = ["id", "date", "message", "type", "meta"]
+Event.from_id = event_from_id

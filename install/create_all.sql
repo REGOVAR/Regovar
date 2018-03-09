@@ -78,7 +78,7 @@ CREATE TYPE field_type AS ENUM ('int', 'string', 'float', 'enum', 'range', 'bool
 CREATE TYPE annotation_db_type AS ENUM ('site', 'variant', 'transcript');
 CREATE TYPE sample_status AS ENUM ('empty', 'loading', 'ready', 'error');
 CREATE TYPE analysis_status AS ENUM ('empty', 'waiting', 'computing', 'ready', 'error');
-CREATE TYPE event_type AS ENUM ('info', 'warning', 'error');
+CREATE TYPE event_type AS ENUM ('custom', 'info', 'warning', 'error', 'technical');
 CREATE TYPE sex_type AS ENUM ('male', 'female', 'unknow');
 
 
@@ -411,8 +411,10 @@ CREATE TABLE public.event
     id bigserial NOT NULL,
     "date" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     message text COLLATE pg_catalog."C",
+    details text COLLATE pg_catalog."C",
+    author_id int,
     type event_type,
-    meta JSON,
+    meta JSONB,
     CONSTRAINT event_pkey PRIMARY KEY (id)
 );
 
@@ -537,31 +539,26 @@ CREATE TABLE public.panel_entry
 -- --------------------------------------------
 CREATE INDEX sample_idx
   ON public.sample
-  USING btree
-  (id);
+  USING btree (id);
 
 
 CREATE INDEX attribute_idx
   ON public.attribute
-  USING btree
-  (analysis_id, sample_id, name COLLATE pg_catalog."default");
+  USING btree (analysis_id, sample_id, name COLLATE pg_catalog."default");
 
 CREATE INDEX analysis_idx
   ON public.analysis
-  USING btree
-  (id);
+  USING btree (id);
 
 
 CREATE INDEX filter_idx
   ON public.filter
-  USING btree
-  (id);
+  USING btree (id);
     
 
 CREATE INDEX annotation_database_idx
   ON public.annotation_database
-  USING btree
-  (reference_id, name, version);
+  USING btree (reference_id, name, version);
 CREATE INDEX annotation_database_idx2
   ON public.annotation_database
   USING btree (uid);
@@ -569,8 +566,7 @@ CREATE INDEX annotation_database_idx2
 
 CREATE INDEX annotation_field_idx
   ON public.annotation_field
-  USING btree
-  (database_uid, name);
+  USING btree (database_uid, name);
 CREATE INDEX annotation_field_idx2
   ON public.annotation_field
   USING btree (uid);
@@ -578,26 +574,24 @@ CREATE INDEX annotation_field_idx2
   
 CREATE INDEX subject_indicator_idx
   ON public.subject_indicator_value
-  USING btree
-  (subject_id, indicator_id);
+  USING btree (subject_id, indicator_id);
 CREATE INDEX analysis_indicator_idx
   ON public.analysis_indicator_value
-  USING btree
-  (analysis_id, indicator_id);
+  USING btree (analysis_id, indicator_id);
 CREATE INDEX job_indicator_idx
   ON public.job_indicator_value
-  USING btree
-  (job_id, indicator_id);
+  USING btree (job_id, indicator_id);
 
 
 CREATE INDEX panel_entry_idx
   ON public.panel_entry
-  USING btree
-  (panel_id, version);
+  USING btree (panel_id, version);
   
   
 
-
+CREATE INDEX event_meta_idx 
+    ON event 
+    USING GIN (meta jsonb_path_ops);
 
 
 

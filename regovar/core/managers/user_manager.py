@@ -4,6 +4,7 @@ import ipdb
 import json
 import core.model as Model
 from core.framework.common import *
+from core.framework.postgresql import execute
 
 
 
@@ -11,9 +12,8 @@ from core.framework.common import *
 
 class UserManager:
 
-    def __init__(self):
-        pass
-
+    def list(self):
+        return []
 
 
     def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):

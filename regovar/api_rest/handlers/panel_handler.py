@@ -37,20 +37,9 @@ class PanelHandler:
 
     def list(self, request):
         """
-            Get list of all panels (allow search parameters)
+            List all panels
         """
-        from core.core import core
-        fields, query, order, offset, limit = process_generic_get(request.query_string, Panel.public_fields)
-        depth = 0
-        # Get range meta data
-        range_data = {
-            "range_offset" : offset,
-            "range_limit"  : limit,
-            "range_total"  : Subject.count(),
-            "range_max"    : RANGE_MAX,
-        }
-        panels = core.panels.get(fields, query, order, offset, limit, depth)
-        return rest_success([p.to_json() for p in panels], range_data)
+        return rest_success(core.panels.list())
 
 
         

@@ -33,7 +33,7 @@ dbHdl = DatabaseHandler()
 annotationHandler = AnnotationDBHandler()
 analysisHandler = AnalysisHandler()
 sampleHandler = SampleHandler()
-hpoHandler = PhenotypeHandler()
+phenoHandler = PhenotypeHandler()
 searchHandler = SearchHandler()
 panelHandler = PanelHandler()
 adminHandler = AdminHandler()
@@ -64,12 +64,11 @@ app.on_shutdown.append(on_shutdown)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 app.router.add_route('GET',    "/",       apiHandler.welcom)                                                     # Get "welcom page of the rest API"
 app.router.add_route('GET',    "/config", apiHandler.config)                                                     # Get config of the server
-app.router.add_route('GET',    "/config/tools", apiHandler.get_tools)                                            # Get list of tools deployed on the server (variant export/report generator)
 app.router.add_route('GET',    "/api",    apiHandler.api)                                                        # Get html test api page
 app.router.add_route('GET',    "/ws",     websocket.get)                                                         # Websocket url to use with ws or wss protocol
 
 
-app.router.add_route('GET',    "/user", userHandler.list)                                                        # Get list of all users (allow search parameters)
+app.router.add_route('GET',    "/users", userHandler.list)                                                       # Get list of all users (allow search parameters)
 app.router.add_route('POST',   "/user", userHandler.new)                                                         # Create new users with provided data
 app.router.add_route('GET',    "/user/{user_id}", userHandler.get)                                               # Get details about one user
 app.router.add_route('PUT',    "/user/{user_id}", userHandler.edit)                                              # Edit user with provided data
@@ -77,8 +76,8 @@ app.router.add_route('POST',   "/user/login", userHandler.login)                
 app.router.add_route('GET',    "/user/logout", userHandler.logout)                                               # Kill user's session
 app.router.add_route('DELETE', "/user/{user_id}", userHandler.delete)                                            # Delete a user
 
-app.router.add_route('GET',    "/project/browserTree",           projHandler.tree)                               # Get projects as tree (allow search parameters)
-app.router.add_route('GET',    "/project",                       projHandler.list)                               # Get list of all projects (allow search parameters)
+#app.router.add_route('GET',    "/project/browserTree",           projHandler.tree)                               # Get projects as tree (allow search parameters)
+app.router.add_route('GET',    "/projects",                       projHandler.list)                              # Get list of all projects (allow search parameters)
 app.router.add_route('POST',   "/project",                       projHandler.create_or_update)                   # Create new project with provided data
 app.router.add_route('GET',    "/project/{project_id}",          projHandler.get)                                # Get details about the project
 app.router.add_route('PUT',    "/project/{project_id}",          projHandler.create_or_update)                   # Edit project meta data
@@ -88,12 +87,14 @@ app.router.add_route('GET',    "/project/{project_id}/subjects", projHandler.sub
 app.router.add_route('GET',    "/project/{project_id}/analyses", projHandler.analyses)                           # Get list of analyses (pipeline and filtering) of the project (allow search parameters)
 app.router.add_route('GET',    "/project/{project_id}/files",    projHandler.files)                              # Get list of files (samples and attachments) of the project (allow search parameters)
 
+app.router.add_route('GET',    "/events",           eventHandler.list)                                           # 100 last events
+app.router.add_route('POST',   "/events",           eventHandler.search)                                         # Events list corresponding to provided filters
 app.router.add_route('POST',   "/event",            eventHandler.new)                                            # Create a new event
 app.router.add_route('GET',    "/event/{event_id}", eventHandler.get)                                            # Get details about an event
 app.router.add_route('PUT',    "/event/{event_id}", eventHandler.edit)                                           # Edit event's data
 app.router.add_route('DELETE', "/event/{event_id}", eventHandler.delete)                                         # Delete an event
 
-app.router.add_route('GET',    "/subject",                       subjectHandler.list)                            # Get subjects as list (allow search parameters)
+app.router.add_route('GET',    "/subjects",                      subjectHandler.list)                            # Get subjects as list (allow search parameters)
 app.router.add_route('POST',   "/subject",                       subjectHandler.create_or_update)                # Create subjects
 app.router.add_route('GET',    "/subject/{subject_id}",          subjectHandler.get)                             # Get details about a subject
 app.router.add_route('PUT',    "/subject/{subject_id}",          subjectHandler.create_or_update)                # Edit subject's data
@@ -103,7 +104,7 @@ app.router.add_route('GET',    "/project/{project_id}/samples",  subjectHandler.
 app.router.add_route('GET',    "/project/{project_id}/analyses", subjectHandler.samples)                         # Get list of analyses (pipeline and filtering) of the subject (allow search parameters)
 app.router.add_route('GET',    "/project/{project_id}/files",    subjectHandler.files)                           # Get list of files of the subject (allow search parameters)
 
-app.router.add_route('GET',    "/file",                  fileHdl.list)                                           # Get list of all file (allow search parameters)
+app.router.add_route('GET',    "/files",                 fileHdl.list)                                           # Get list of all file (allow search parameters)
 app.router.add_route('GET',    "/file/{file_id}",        fileHdl.get)                                            # Get details about a file
 app.router.add_route('PUT',    "/file/{file_id}",        fileHdl.edit)                                           # Edit file's details
 app.router.add_route('DELETE', "/file/{file_id}",        fileHdl.delete)                                         # Delete the file
@@ -113,13 +114,13 @@ app.router.add_route('HEAD',   "/file/upload/{file_id}", fileHdl.tus_upload_resu
 app.router.add_route('PATCH',  "/file/upload/{file_id}", fileHdl.tus_upload_chunk)
 app.router.add_route('DELETE', "/file/upload/{file_id}", fileHdl.tus_upload_delete)
 
-app.router.add_route('GET',    "/pipeline",                                    pipeHdl.list)
+app.router.add_route('GET',    "/pipelines",                                   pipeHdl.list)
 app.router.add_route('GET',    "/pipeline/{pipe_id}",                          pipeHdl.get)
 app.router.add_route('DELETE', "/pipeline/{pipe_id}",                          pipeHdl.delete)
 app.router.add_route('GET',    "/pipeline/install/{file_id}/{container_type}", pipeHdl.install)
 app.router.add_route('POST',   "/pipeline/install",                            pipeHdl.install_json)
 
-app.router.add_route('GET',    "/job",                     jobHdl.list)
+app.router.add_route('GET',    "/jobs",                    jobHdl.list)
 app.router.add_route('POST',   "/job",                     jobHdl.new)
 app.router.add_route('GET',    "/job/{job_id}",            jobHdl.get)
 app.router.add_route('GET',    "/job/{job_id}/pause",      jobHdl.pause)
@@ -131,8 +132,10 @@ app.router.add_route('GET',    "/job/{job_id}/finalize",   jobHdl.finalize)
 app.router.add_route('GET',    "/db",       dbHdl.get)
 app.router.add_route('GET',    "/db/{ref}", dbHdl.get)
 
-app.router.add_route('POST',   "/hpo/search",   hpoHandler.search)
-app.router.add_route('GET',    "/hpo/{hpo_id}", hpoHandler.get)
+
+app.router.add_route('GET',   "/phenotypes",           phenoHandler.list)
+app.router.add_route('POST',   "/phenotypes/search",   phenoHandler.search)
+app.router.add_route('GET',    "/phenotype/{hpo_id}",  phenoHandler.get)
 
 
 
@@ -143,13 +146,13 @@ app.router.add_route('GET',    "/annotation/db/{db_id}", annotationHandler.get_d
 app.router.add_route('GET',    "/annotation/field/{field_id}", annotationHandler.get_field)                          # Get the database details and the list of all its fields
 app.router.add_route('DELETE', "/annotation/db/{db_id}", annotationHandler.delete)                                   # Delete an annotation database with all its fields.
 
-app.router.add_route('GET',    "/sample/browse/{ref_id}", sampleHandler.tree)                                        # Get sampleslist for the requested reference
-app.router.add_route('GET',    "/sample", sampleHandler.list)                                                        # Get list of all samples in database
+app.router.add_route('GET',    "/samples", sampleHandler.list)                                                       # Get list of all samples in database
+app.router.add_route('GET',    "/samples/ref/{ref_id}", sampleHandler.list)                                          # Get list of samples for the requested reference
 app.router.add_route('GET',    "/sample/{sample_id}", sampleHandler.get)                                             # Get specific sample's database
 app.router.add_route('GET',    "/sample/import/{file_id}/{ref_id}", sampleHandler.import_from_file)                  # import sample's data from the file (vcf supported)
 app.router.add_route('PUT',    "/sample/{sample_id}", sampleHandler.update)                                          # Update sample informations
 
-app.router.add_route('GET',    "/analysis",                                      analysisHandler.list)                 # List analyses
+app.router.add_route('GET',    "/analyses",                                      analysisHandler.list)                 # List analyses
 app.router.add_route('POST',   "/analysis",                                      analysisHandler.new)                  # Create new analysis
 app.router.add_route('GET',    "/analysis/{analysis_id}",                        analysisHandler.get)                  # Get analysis metadata
 app.router.add_route('PUT',    "/analysis/{analysis_id}",                        analysisHandler.update)               # Save analysis metadata
@@ -173,16 +176,16 @@ app.router.add_route('GET',    "/search/variant/{ref_id}/{variant_id}/{analysis_
 app.router.add_route('GET',    "/search/gene/{gene_name}",                            searchHandler.fetch_gene)      # Get all available information about the given gene
 app.router.add_route('GET',    "/search/phenotype/{hpo_id}",                          searchHandler.fetch_hpo)       # Get all available information about the given phenotype or disease (HPO/OMIM/ORPHA)
 
-app.router.add_route('GET',    "/panel/search/{query}",       panelHandler.search)             # Search gene and phenotype that match the query (used to help user to populate panel regions)
-app.router.add_route('GET',    "/panel/import/{file_id}",     panelHandler.import_file)        # Import region from a bed file already in database
-app.router.add_route('POST',   "/panel/import",               panelHandler.import_file)        # Import a new file store it on regovar server (as bed) and import as a panel
 
-app.router.add_route('GET',    "/panel",                      panelHandler.list)               # Get list of all panels
+app.router.add_route('GET',    "/panels",                     panelHandler.list)               # Get list of all panels
 app.router.add_route('POST',   "/panel",                      panelHandler.create_or_update)   # Create a new panel with provided data
 app.router.add_route('GET',    "/panel/{panel_id}",           panelHandler.get)                # Get information about the panel
 app.router.add_route('PUT',    "/panel/{panel_id}/{version}", panelHandler.create_or_update)   # Update the panel with provided data
 app.router.add_route('DELETE', "/panel/{panel_id}",           panelHandler.delete)             # Delete panel and all its versions
 app.router.add_route('DELETE', "/panel/{panel_id}/{version}", panelHandler.delete)             # Delete a panel version
+app.router.add_route('GET',    "/panel/search/{query}",       panelHandler.search)             # Search gene and phenotype that match the query (used to help user to populate panel regions)
+app.router.add_route('GET',    "/panel/import/{file_id}",     panelHandler.import_file)        # Import region from a bed file already in database
+app.router.add_route('POST',   "/panel/import",               panelHandler.import_file)        # Import a new file store it on regovar server (as bed) and import as a panel
 
 
 

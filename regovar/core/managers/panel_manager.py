@@ -9,12 +9,30 @@ import json
 
 from config import *
 from core.framework.common import *
+from core.framework.postgresql import execute
 import core.model as Model
 
 
 class PanelManager:
 
 
+    def list(self):
+        """
+            List all panels with minimal data
+        """
+        sql = "SELECT id, name, description, owner, create_date, update_date, shared FROM panel ORDER BY id"
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "name": res.name,
+                "description": res.description,
+                "owner": res.owner,
+                "shared": res.shared,
+                "create_date": res.create_date.isoformat(),
+                "update_date": res.update_date.isoformat()
+            })
+        return result
 
     def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """

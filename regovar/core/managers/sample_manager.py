@@ -15,6 +15,7 @@ import ped_parser
 
 from config import *
 from core.framework.common import *
+from core.framework.postgresql import execute
 import core.model as Model
 
 
@@ -30,6 +31,27 @@ class SampleManager:
         pass
 
 
+    def list(self, ref_id=0):
+        """
+            List all samples by default, or samples for a provided reference_id
+        """
+        sql_where = " WHERE reference_id={}".format(ref_id) if ref_id > 0 else ""
+        sql = "SELECT id, subject_id, name, comment, is_mosaic, file_id, loading_progress, reference_id, status FROM sample{} ORDER BY id".format(sql_where)
+
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "subject_id": res.subject_id,
+                "name": res.name,
+                "comment": res.comment,
+                "status": res.status,
+                "is_mosaic": res.is_mosaic,
+                "file_id": res.file_id,
+                "loading_progress": res.loading_progress,
+                "reference_id": res.reference_id
+            })
+        return result
 
 
 

@@ -141,7 +141,20 @@
 
                 <hr/>
                 <h2>Changes log</h2>
-                <h3>0.6.dev [Current]</h3>
+                <h3>0.9.dev [Current]</h3>
+                <ul><li>API routes homogeneisation</li>
+                    <li>Code source clean (removing obsolete code)</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.8.dev</h3>
+                <ul><li>Rework lazy loading for client initialization</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.7.dev</h3>
+                <ul><li>Rework notification and analysis creation/prepare/loading</li>
+                    <li>Bug fixing</li>
+                </ul>
+                <h3>0.6.dev</h3>
                 <ul><li>Adding panels feature</li>
                     <li>Bug fixing</li>
                 </ul>
@@ -183,7 +196,6 @@
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#misc_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Config</a></li>
-                            <li><a href="#misc_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Tools</a></li>
                             <li><a href="#misc_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Api</a></li>
                             <li><a href="#misc_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> Welcom</a></li>
                         </ul>
@@ -192,6 +204,12 @@
                         <div class="tab-content">
                             <!-- GET config -->
                             <div class="tab-pane fade in active" id="misc_api_01">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-ok" style="color:green"></i> No authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -204,22 +222,14 @@
                                     <div class="col-sm-10"><button onclick="generic_exec_static('/config', 'misc_result');">Test it</button></div>
                                 </div>
                             </div>
-                            <!-- GET tools -->
-                            <div class="tab-pane fade" id="misc_api_02">
-                                <div class="row form-group">
-                                    <div class="col-sm-2"><b>Description</b></div>  
-                                    <div class="col-sm-10">
-                                        <code>GET /config/tools</code><br/>
-                                        <i>Return custom tools deployed on the server. Custom tools can be export and report generator for variant filtering selection.</i>
-                                    </div>  
-                                </div>
-                                <div class="row form-group">
-                                    <div class="col-sm-2"><b>Test</b></div>  
-                                    <div class="col-sm-10"><button onclick="generic_exec_static('/config/tools', 'misc_result');">Test it</button></div>
-                                </div>
-                            </div>
                             <!-- GET api -->
                             <div class="tab-pane fade" id="misc_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-ok" style="color:green"></i> No authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -232,14 +242,19 @@
                                     <div class="col-sm-10"><a href="/api" target="_blank" class="btn btn-default">Test it</a></div>  
                                 </div>
                             </div>
-                            
-                             <!-- GET Welcom -->
+                            <!-- GET Welcom -->
                             <div class="tab-pane fade" id="misc_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /</code><br/>
-                                        <i>Return the server "welcom" data for Regovar client : The list of 10 last analysis/subjects edited, the list of 20 last events, the list of references available, and so on.</i>
+                                        <i>Return the server "welcom" data for Regovar client : All data to init the client.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
@@ -267,7 +282,7 @@
                 <div class="panel with-nav-tabs panel-default">
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
-                            <li class="active"><a href="#file_api_01" data-toggle="tab"><i class="glyphicon glyphicon-warning-sign"></i> list</a></li>
+                            <li class="active"><a href="#file_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
                             <li><a href="#file_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show</a></li>
                             <li><a href="#file_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> edit</a></li>
                             <li><a href="#file_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>
@@ -278,17 +293,20 @@
                         <div class="tab-content">
                             <!-- GET files -->
                             <div class="tab-pane fade in active" id="file_api_01">
-                                <div class="alert alert-info">
-                                    <strong>Warning : </strong> <code style="background:none!important;">order_by</code> have an <a href="https://github.com/REGOVAR/Regovar/issues/92" target="_blank">issue</a> with "desc" ordering and <code style="background:none!important;">filter</code> is <a href="https://github.com/REGOVAR/Regovar/issues/105" target="_blank">not yet implemented</a>.
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /file?...</code><br/>
-                                        <i>Retrieve the list of file stored on Regovar server.</i>
+                                        <code>GET /files</code><br/>
+                                        <i>Retrieve the list of all file stored on Regovar server.</i>
                                     </div>  
                                 </div>
-                                <div class="row form-group">
+                                <!--div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
                                         <code>range={offset}-{limit}</code><br/>
@@ -301,11 +319,11 @@
                                         <code>filter={free_text}</code><br/>
                                         <i>Return result that match with the provided text (Fields tested are name and comments).</i>
                                     </div>
-                                </div>
+                                </div-->
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="file_api_01_query" type="text" placeholder="/file?range=0-100&amp;..." value="/file"/> 
+                                        <input id="file_api_01_query" type="text" placeholder="/files" value="/files"/> 
                                         <button onclick="generic_exec_from_input('file_api_01_query', 'file_result');" class="btn btn-primary">Test it</button> -
                                         <button onclick="generic_exec_static('/file', 'file_result', 'file_api_01_query');">Ex1 : get all</button> 
                                         <button onclick="generic_exec_static('/file?range=1-3', 'file_result', 'file_api_01_query');">Ex2 : range 1-3</button><br/>
@@ -315,6 +333,12 @@
                             </div>
                             <!-- GET file -->
                             <div class="tab-pane fade" id="file_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -337,9 +361,20 @@
                                     </div>  
                                 </div>
                             </div>
-
                             <!-- PUT file -->
                             <div class="tab-pane fade" id="file_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="alert alert-danger">
                                     <strong>Warning !</strong> Implemenation of this endpoint is not finished.
                                 </div>
@@ -375,9 +410,14 @@
                                     </div>  
                                 </div>
                             </div>
-
                             <!-- DELETE file -->
                             <div class="tab-pane fade" id="file_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -400,9 +440,14 @@
                                     </div>  
                                 </div>
                             </div>
-
                             <!-- POST file (TUS) -->
                             <div class="tab-pane fade" id="file_api_05">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="alert alert-info">
                                     <strong>Info : </strong> Checksum TUS extension is <a href="https://github.com/REGOVAR/Regovar/issues/48" target="_blank">planned</a> to be implemented/supported. But not yet available.
                                 </div>
@@ -461,7 +506,7 @@
                 <div class="panel with-nav-tabs panel-default">
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
-                            <li class="active"><a href="#pipe_api_01" data-toggle="tab"><i class="glyphicon glyphicon-warning-sign"></i> list</a></li>
+                            <li class="active"><a href="#pipe_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
                             <li><a href="#pipe_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show</a></li>
                             <li><a href="#pipe_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> install (quick)</a></li>
                             <li><a href="#pipe_api_04" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> install</a></li>
@@ -472,17 +517,20 @@
                         <div class="tab-content">
                             <!-- GET pipelines -->
                             <div class="tab-pane fade in active" id="pipe_api_01">
-                                <div class="alert alert-info">
-                                    <strong>Warning : </strong> <code style="background:none!important;">order_by</code> have an <a href="https://github.com/REGOVAR/Regovar/issues/92" target="_blank">issue</a> with "desc" ordering and <code style="background:none!important;">filter</code> is <a href="https://github.com/REGOVAR/Regovar/issues/105" target="_blank">not yet implemented</a>.
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /pipeline?...</code><br/>
-                                        <i>Retrieve the list of pipeline stored on Regovar server.</i>
+                                        <code>GET /pipelines</code><br/>
+                                        <i>Retrieve the list of all pipelines stored on Regovar server.</i>
                                     </div>  
                                 </div>
-                                <div class="row form-group">
+                                <!--div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
                                         <code>range={offset}-{limit}</code><br/>
@@ -495,11 +543,11 @@
                                         <code>filter={free_text}</code><br/>
                                         <i>Return results that match with the provided text (Fields tested are name, description, author and version).</i>
                                     </div>
-                                </div>
+                                </div-->
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="pipe_api_01_query" type="text" placeholder="/pipeline?range=0-100&amp;..." value="/pipeline"/> 
+                                        <input id="pipe_api_01_query" type="text" placeholder="/pipelines" value="/pipelines"/> 
                                         <button onclick="generic_exec_from_input('pipe_api_01_query', 'pipe_result');" class="btn btn-primary">Test it</button> - 
                                         <button onclick="generic_exec_static('/pipeline', 'pipe_result', 'pipe_api_01_query');">Ex1 : get all</button> 
                                         <button onclick="generic_exec_static('/pipeline?range=1-3', 'pipe_result', 'pipe_api_01_query');">Ex2 : range 1-3</button><br/>
@@ -508,6 +556,12 @@
                             </div>
                             <!-- GET pipeline -->
                             <div class="tab-pane fade" id="pipe_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -532,6 +586,12 @@
                             </div>
                             <!-- GET install -->
                             <div class="tab-pane fade" id="pipe_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:red"></i> Authentication as Administrator required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -558,6 +618,12 @@
                             </div>
                             <!-- POST install -->
                             <div class="tab-pane fade" id="pipe_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:red"></i> Authentication as Administrator required.
+                                    </div>  
+                                </div>
                                 <div class="alert alert-danger">
                                     <strong>Warning : </strong> <a href="https://github.com/REGOVAR/Regovar/issues/93" target="_blank">To be implemented</a>.
                                 </div>
@@ -590,6 +656,12 @@
                             </div>
                             <!-- DELETE pipeline -->
                             <div class="tab-pane fade" id="pipe_api_05">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:red"></i> Authentication as Administrator required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -631,7 +703,7 @@
                 <div class="panel with-nav-tabs panel-default">
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
-                            <li class="active"><a href="#job_api_01" data-toggle="tab"><i class="glyphicon glyphicon-warning-sign"></i> list</a></li>
+                            <li class="active"><a href="#job_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
                             <li><a href="#job_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show</a></li>
                             <li><a href="#job_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
                             <li><a href="#job_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> pause</a></li>
@@ -647,17 +719,20 @@
                         <div class="tab-content">
                             <!-- List jobs -->
                             <div class="tab-pane fade in active" id="job_api_01">
-                                <div class="alert alert-info">
-                                    <strong>Warning : </strong> <code style="background:none!important;">order_by</code> have an <a href="https://github.com/REGOVAR/Regovar/issues/92" target="_blank">issue</a> with "desc" ordering and <code style="background:none!important;">filter</code> is <a href="https://github.com/REGOVAR/Regovar/issues/105" target="_blank">not yet implemented</a>.
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /job?...</code><br/>
-                                        <i>Retrieve the list of job on Regovar server.</i>
+                                        <i>Retrieve the list of all job on Regovar server.</i>
                                     </div>  
                                 </div>
-                                <div class="row form-group">
+                                <!--div class="row form-group">
                                     <div class="col-sm-2"><b>Parameters</b></div>
                                     <div class="col-sm-10">
                                         <code>range={offset}-{limit}</code><br/>
@@ -670,11 +745,11 @@
                                         <code>filter={free_text}</code><br/>
                                         <i>Return results that match with the provided text (Fields tested are name, pipeline's name and version).</i>
                                     </div>
-                                </div>
+                                </div-->
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="job_api_01_query" type="text" placeholder="/job?range=0-100&amp;..." value="/job"/> 
+                                        <input id="job_api_01_query" type="text" placeholder="/jobs" value="/jobs"/> 
                                         <button onclick="generic_exec_from_input('job_api_01_query', 'job_result');" class="btn btn-primary">Test it</button> - 
                                         <button onclick="generic_exec_static('/job', 'job_result', 'job_api_01_query');">Ex1 : get all</button> 
                                         <button onclick="generic_exec_static('/job?range=1-3', 'job_result', 'job_api_01_query');">Ex2 : range 1-3</button><br/>
@@ -683,6 +758,12 @@
                             </div>
                             <!-- Show job -->
                             <div class="tab-pane fade" id="job_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -707,6 +788,12 @@
                             </div>
                             <!-- New job -->
                             <div class="tab-pane fade" id="job_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -765,6 +852,12 @@
                             <!-- Pause job -->
                             <div class="tab-pane fade" id="job_api_04">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /job/{job_id}/pause</code><br/>
@@ -788,6 +881,12 @@
                             </div>
                             <!-- Start job -->
                             <div class="tab-pane fade" id="job_api_05">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -813,6 +912,12 @@
                             <!-- Cancel job -->
                             <div class="tab-pane fade" id="job_api_06">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /job/{job_id}/cancel</code><br/>
@@ -837,10 +942,16 @@
                             <!-- Finalize job -->
                             <div class="tab-pane fade" id="job_api_07">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:red"></i> Authentication as Administrator required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /job/{job_id}/finalize</code><br/>
-                                        <i>This action can be done automaticaly by Regovar when the execution of the job is done. But if for some raison, the pipeline is not able to indicate to Regovar that its task is finished, Regovar cannot finalize the job and doing technical tasks like stopping and deleting the virtual machine used for the job. So for these pipeline, the api provide a way to manualy finalize a job.</i>
+                                        <i>This action is done automaticaly by Regovar when the execution of the job is done. But if for some raison, the pipeline is not able to indicate to Regovar that its task is finished, Regovar cannot finalize the job and doing technical tasks like stopping and deleting the virtual machine used for the job. So for these pipelines, the api provide a way to manualy finalize a job.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
@@ -860,6 +971,12 @@
                             </div>
                             <!-- Monitoring job-->
                             <div class="tab-pane fade" id="job_api_08">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -928,6 +1045,12 @@
                             <!-- List ref -->
                             <div class="tab-pane fade in active" id="db_api_01">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /db</code><br/>
@@ -944,6 +1067,12 @@
                             </div>
                             <!-- List dbs -->
                             <div class="tab-pane fade" id="db_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1001,6 +1130,12 @@
                             <!-- List ref -->
                             <div class="tab-pane fade in active" id="annot_api_01">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /annotation</code><br/>
@@ -1017,6 +1152,12 @@
                             </div>
                             <!-- List dbs -->
                             <div class="tab-pane fade" id="annot_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1042,6 +1183,12 @@
                             <!-- show annotation database -->
                             <div class="tab-pane fade" id="annot_api_03">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /annotation/db/{db_id}</code><br/>
@@ -1066,6 +1213,12 @@
                             <!-- show annotation field -->
                             <div class="tab-pane fade" id="annot_api_04">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /annotation/field/{field_id}</code><br/>
@@ -1089,6 +1242,12 @@
                             </div>
                             <!-- Delete db -->
                             <div class="tab-pane fade" id="annot_api_05">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:red"></i> Authentication as Administrator required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1134,7 +1293,7 @@
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#search_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> search</a></li>
                             <li><a href="#search_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> fetch variant</a></li>
-                            <li><a href="#search_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> fetch gene</a></li>
+                            <li><a href="#search_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> fetch gene</a></li>
                             <li><a href="#search_api_04" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> fetch phenotype</a></li>
                             <!--<li><a href="#search_api_03" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> new</a></li>-->
                         </ul>
@@ -1143,8 +1302,14 @@
 
                     <div class="panel-body">
                         <div class="tab-content">
-                            <!-- show variant -->
+                            <!-- omnisearch -->
                             <div class="tab-pane fade in active" id="search_api_01">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1179,8 +1344,14 @@
                                     </div>  
                                 </div>
                             </div>
-                            <!-- show variant (analysis context) -->
+                            <!-- fetch variant (analysis context) -->
                             <div class="tab-pane fade" id="search_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1207,8 +1378,14 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- show variant (analysis context) -->
+                            <!-- fetch gene -->
                             <div class="tab-pane fade" id="search_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1231,8 +1408,14 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- show variant (analysis context) -->
+                            <!-- fetch phenotype -->
                             <div class="tab-pane fade" id="search_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1275,7 +1458,8 @@
                 <div class="panel with-nav-tabs panel-default">
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
-                            <li class="active"><a href="#sample_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
+                            <li class="active"><a href="#sample_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list all</a></li>
+                            <li><a href="#sample_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list by ref</a></li>
                             <li><a href="#sample_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> get</a></li>
                             <li><a href="#sample_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> import</a></li>
                         </ul>
@@ -1287,22 +1471,57 @@
                             <!-- List samples -->
                             <div class="tab-pane fade in active" id="sample_api_01">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /sample</code><br/>
+                                        <code>GET /samples</code><br/>
                                         <i>Return the list of samples in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="sample_api_01_query" type="text" placeholder="/sample" value="/sample"/> 
+                                        <input id="sample_api_01_query" type="text" placeholder="/samples" value="/samples"/> 
                                         <button onclick="generic_exec_from_input('sample_api_01_query', 'sample_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- List samples -->
+                            <div class="tab-pane fade" id="sample_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>GET /samples/ref/{ref_id}</code><br/>
+                                        <i>Return the list of samples for the provided reference id in the database.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="sample_api_01_query" type="text" placeholder="/samples/ref/{ref_id}" value="/samples/ref/2"/> 
+                                        <button onclick="generic_exec_from_input('sample_api_04_query', 'sample_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- get sample -->
                             <div class="tab-pane fade" id="sample_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1327,6 +1546,12 @@
                             </div>
                             <!-- import sample -->
                             <div class="tab-pane fade" id="sample_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1376,12 +1601,12 @@
                             <li><a href="#analysis_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> get</a></li>
                             <li><a href="#analysis_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
                             <li><a href="#analysis_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> update</a></li>
-                            <li><a href="#analysis_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> load file</a></li>
+                            <!--<li><a href="#analysis_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> load file</a></li>-->
                             <li><a href="#analysis_api_06" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list filters</a></li>
                             <li><a href="#analysis_api_07" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new filter</a></li>
                             <li><a href="#analysis_api_08" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete filter</a></li>
                             <li><a href="#analysis_api_09" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering</a></li>
-                            <li><a href="#analysis_api_10" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering count</a></li>
+                            <!--<li><a href="#analysis_api_10" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> filtering count</a></li>-->
                             <li><a href="#analysis_api_11" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> clear wt</a></li>
                         </ul>
                     </div>
@@ -1392,22 +1617,34 @@
                             <!-- List analyses -->
                             <div class="tab-pane fade in active" id="analysis_api_01">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /analysis</code><br/>
-                                        <i>Return the list of analyses.</i>
+                                        <code>GET /analyses</code><br/>
+                                        <i>Return the list of all analyses.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="analysis_api_01_query" type="text" placeholder="/analysis" value="/analysis"/> 
+                                        <input id="analysis_api_01_query" type="text" placeholder="/analyses" value="/analyses"/> 
                                         <button onclick="generic_exec_from_input('analysis_api_01_query', 'analysis_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- get analysis details -->
                             <div class="tab-pane fade" id="analysis_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1432,6 +1669,12 @@
                             </div>
                             <!-- new analysis -->
                             <div class="tab-pane fade" id="analysis_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1465,6 +1708,12 @@
                             </div>
                             <!-- update analysis -->
                             <div class="tab-pane fade" id="analysis_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1517,6 +1766,12 @@
                             <!-- Load file  -->
                             <div class="tab-pane fade" id="analysis_api_05">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /analysis/{analysis_id}/load/{file_id}</code><br/>
@@ -1548,6 +1803,12 @@
                             <!-- list filters -->
                             <div class="tab-pane fade" id="analysis_api_06">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>GET /analysis/{analysis_id}/filter</code><br/>
@@ -1571,6 +1832,12 @@
                             </div>
                             <!-- new filter -->
                             <div class="tab-pane fade" id="analysis_api_07">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1611,6 +1878,12 @@
                             <!-- delete filter -->
                             <div class="tab-pane fade" id="analysis_api_08">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>DELETE /analysis/{analysis_id}/filter/{filter_id}"</code><br/>
@@ -1634,6 +1907,12 @@
                             </div>
                             <!-- filtering -->
                             <div class="tab-pane fade" id="analysis_api_09">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1675,6 +1954,12 @@
                             <!-- filtering count -->
                             <div class="tab-pane fade" id="analysis_api_10">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>POST /analysis/{analysis_id}/filtering/count</code><br/>
@@ -1714,6 +1999,12 @@
 
                             <!-- clear temporary data -->
                             <div class="tab-pane fade" id="analysis_api_11">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:red"></i> Authentication as Administrator required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1780,14 +2071,14 @@
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /user</code><br/>
-                                        <i>Return the list of user in the database.</i>
+                                        <code>GET /users</code><br/>
+                                        <i>Return the list of all user in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="user_api_01_query" type="text" placeholder="/user" value="/user"/> 
+                                        <input id="user_api_01_query" type="text" placeholder="/users" value="/users"/> 
                                         <button onclick="generic_exec_from_input('user_api_01_query', 'user_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
@@ -1871,6 +2162,12 @@
                                     <strong>Warning !</strong> Implemenation of this endpoint is not finished.
                                 </div>
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>PUT /user/{user_id}</code><br/>
@@ -1912,6 +2209,12 @@
                             <!-- delete user -->
                             <div class="tab-pane fade" id="user_api_05">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:red"></i> Authentication as Administrator required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>DELETE /user/{user_id}</code><br/>
@@ -1935,6 +2238,12 @@
                             </div>
                             <!-- login -->
                             <div class="tab-pane fade" id="user_api_06">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-ok" style="color:green"></i> No authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -1964,6 +2273,12 @@
                             </div>
                             <!-- logout -->
                             <div class="tab-pane fade" id="user_api_07">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2003,7 +2318,7 @@
                             <li><a href="#project_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> get</a></li>
                             <li><a href="#project_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
                             <li><a href="#project_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> update</a></li>
-                            <li><a href="#project_api_05" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> delete</a></li>
+                            <li><a href="#project_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>
                         </ul>
                     </div>
 
@@ -2013,22 +2328,34 @@
                             <!-- List projects -->
                             <div class="tab-pane fade in active" id="project_api_01">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /project</code><br/>
-                                        <i>Return the list of projects in the database.</i>
+                                        <code>GET /projects</code><br/>
+                                        <i>Return the list of all projects in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="project_api_01_query" type="text" placeholder="/project" value="/project"/> 
+                                        <input id="project_api_01_query" type="text" placeholder="/projects" value="/projects"/> 
                                         <button onclick="generic_exec_from_input('project_api_01_query', 'project_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- get project -->
                             <div class="tab-pane fade" id="project_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2053,6 +2380,12 @@
                             </div>
                             <!-- new project -->
                             <div class="tab-pane fade" id="project_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2085,6 +2418,12 @@
                             </div>
                             <!-- update project -->
                             <div class="tab-pane fade" id="project_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2123,14 +2462,17 @@
                             </div>
                             <!-- delete projects -->
                             <div class="tab-pane fade" id="project_api_05">
-                                <div class="alert alert-danger">
-                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>DELETE /project/{project_id}</code><br/>
-                                        <i>Return the list of projects in the database.</i>
+                                        <i>Deleting a project will automatically move all its analyses to the trash. The trash should be browse in an admin dedicated view. Technicaly, the trash is the special project with the id 0.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
@@ -2172,7 +2514,7 @@
                             <li><a href="#subject_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> get</a></li>
                             <li><a href="#subject_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
                             <li><a href="#subject_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> update</a></li>
-                            <li><a href="#subject_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>
+                            <!--<li><a href="#subject_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>-->
                         </ul>
                     </div>
 
@@ -2182,22 +2524,34 @@
                             <!-- List subject -->
                             <div class="tab-pane fade in active" id="subject_api_01">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /subject</code><br/>
-                                        <i>Return the list of subject in the database.</i>
+                                        <code>GET /subjects</code><br/>
+                                        <i>Return the list of all subject in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="subject_api_01_query" type="text" placeholder="/subject" value="/subject"/> 
+                                        <input id="subject_api_01_query" type="text" placeholder="/subjects" value="/subjects"/> 
                                         <button onclick="generic_exec_from_input('subject_api_01_query', 'subject_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- get subject -->
                             <div class="tab-pane fade" id="subject_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2222,6 +2576,12 @@
                             </div>
                             <!-- new subject -->
                             <div class="tab-pane fade" id="subject_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="alert alert-danger">
                                     <strong>Warning !</strong> Implemenation of this endpoint is not finished.
                                 </div>
@@ -2263,6 +2623,12 @@
                             </div>
                             <!-- update subject -->
                             <div class="tab-pane fade" id="subject_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="alert alert-danger">
                                     <strong>Warning !</strong> Implemenation of this endpoint is not finished.
                                 </div>
@@ -2344,22 +2710,34 @@
                             <!-- List panel -->
                             <div class="tab-pane fade in active" id="panel_api_01">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /panel</code><br/>
-                                        <i>Return the list of panel in the database.</i>
+                                        <code>GET /panels</code><br/>
+                                        <i>Return the list of all panel in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="panel_api_01_query" type="text" placeholder="/panel" value="/panel"/> 
+                                        <input id="panel_api_01_query" type="text" placeholder="/panels" value="/panels"/> 
                                         <button onclick="generic_exec_from_input('panel_api_01_query', 'panel_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- get panel -->
                             <div class="tab-pane fade" id="panel_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2384,6 +2762,12 @@
                             </div>
                             <!-- new panel -->
                             <div class="tab-pane fade" id="panel_api_03">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2426,6 +2810,12 @@
                             </div>
                             <!-- update panel -->
                             <div class="tab-pane fade" id="panel_api_04">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2490,6 +2880,7 @@
                     <div class="panel-heading">
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#event_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
+                            <li><a href="#event_api_06" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> search</a></li>
                             <li><a href="#event_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> get</a></li>
                             <li><a href="#event_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> new</a></li>
                             <li><a href="#event_api_04" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> update</a></li>
@@ -2503,22 +2894,81 @@
                             <!-- List events -->
                             <div class="tab-pane fade in active" id="event_api_01">
                                 <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
-                                        <code>GET /event</code><br/>
-                                        <i>Return the list of event in the database.</i>
+                                        <code>GET /events</code><br/>
+                                        <i>Return the list of 100 last event in the database.</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Test</b></div>  
                                     <div class="col-sm-10">
-                                        <input id="event_api_01_query" type="text" placeholder="/event" value="/event"/> 
+                                        <input id="event_api_01_query" type="text" placeholder="/events" value="/events"/> 
                                         <button onclick="generic_exec_from_input('event_api_01_query', 'event_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <!-- search event -->
+                            <div class="tab-pane fade" id="event_api_06">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>POST /events</code><br/>
+                                        <i>Get events list corresponding to provided filters</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Body</b></div>
+                                    <div class="col-sm-10">
+                                        <pre>{
+    "event_id": int,
+    "event_type": enum,
+    "user_id": int, 
+    "pipeline_id": int, 
+    "job_id": int, 
+    "project_id": int,
+    "analysis_id": int,
+    "subject_id": int,
+    "file_id": int,
+    "sample_id": int,
+    "variant_id": json,
+    "panel_id": str,
+    "annotation_dbuid", str
+}</pre><br/>
+                                        <i>All fields are optional.</i>
+                                    </div>
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        Query : 
+                                        <input id="event_api_06_query" type="text" placeholder="/events" value="/events"/><br/>
+                                        Body : <br/>
+                                        <textarea id="event_api_06_body" cols="40" rows="6">{}</textarea><br/>
+                                        <button onclick="generic_exec_body('event_api_06_query', 'event_api_06_body', 'event_result', 'POST');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- get event -->
                             <div class="tab-pane fade" id="event_api_02">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
@@ -2543,14 +2993,17 @@
                             </div>
                             <!-- new event -->
                             <div class="tab-pane fade" id="event_api_03">
-                                <div class="alert alert-danger">
-                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>POST /event</code><br/>
-                                        <i>Create a new event with provided information.</i>
+                                        <i>Create a new 'custom' event with provided information. Other event's types ('info', 'warning', 'error' and 'technical') cannot be created via the public api. </i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
@@ -2559,16 +3012,22 @@
                                         <pre>{
     "date":datetime, 
     "message":str, 
-    "type":enum, 
-    "user_id":int,
-    "project_id":int,
-    "analysis_id":int,
-    "file_id":int,
-    "subject_id":int,
-    "job_id":int,
-    "pipeline_id":int
+    
+    "event_id": int,
+    "event_type": enum,
+    "user_id": int, 
+    "pipeline_id": int, 
+    "job_id": int, 
+    "project_id": int,
+    "analysis_id": int,
+    "subject_id": int,
+    "file_id": int,
+    "sample_id": int,
+    "variant_id": json,
+    "panel_id": str,
+    "annotation_dbuid", str
 }</pre><br/>
-                                        <i>The only mandatory fields are <code>date</code> and <code>message</code>. Optional fields that end by "_id" are to link the event to an other objects in the database.</i>
+                                        <i>The only mandatory field is <code>message</code>. Optional fields that end by "_id" are to link the event to an other objects in the database.</i>
                                     </div>
                                 </div>
                                 <div class="row form-group">
@@ -2577,21 +3036,26 @@
                                         Query : 
                                         <input id="event_api_03_query" type="text" placeholder="/event" value="/event"/><br/>
                                         Body : <br/>
-                                        <textarea id="event_api_03_body" cols="40" rows="6">{...}</textarea><br/>
+                                        <textarea id="event_api_03_body" cols="40" rows="6">{
+    "message": "My custom event"
+}</textarea><br/>
                                         <button onclick="generic_exec_body('event_api_03_query', 'event_api_03_body', 'event_result', 'POST');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>
                             <!-- update event -->
                             <div class="tab-pane fade" id="event_api_04">
-                                <div class="alert alert-danger">
-                                    <strong>Warning !</strong> Implemenation of this endpoint is not finished.
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
                                 </div>
                                 <div class="row form-group">
                                     <div class="col-sm-2"><b>Description</b></div>  
                                     <div class="col-sm-10">
                                         <code>PUT /event/{event_id}</code><br/>
-                                        <i>Update the event with provided information.</i>
+                                        <i>Update the event with provided information. Note that editing an event will also automatically create a 'technical' event that log that the event have been edited (which field and by which user).</i>
                                     </div>  
                                 </div>
                                 <div class="row form-group">
@@ -2607,14 +3071,21 @@
                                         <pre>{
     "date":datetime, 
     "message":str, 
-    "type":enum, 
-    "user_id":int,
-    "project_id":int,
-    "analysis_id":int,
-    "file_id":int,
-    "subject_id":int,
-    "job_id":int,
-    "pipeline_id":int
+    "from_user_id":int,
+    
+    "event_id": int,
+    "event_type": enum,
+    "user_id": int, 
+    "pipeline_id": int, 
+    "job_id": int, 
+    "project_id": int,
+    "analysis_id": int,
+    "subject_id": int,
+    "file_id": int,
+    "sample_id": int,
+    "variant_id": json,
+    "panel_id": str,
+    "annotation_dbuid", str
 }</pre><br/>
                                     </div>
                                 </div>
@@ -2629,6 +3100,30 @@
                                     </div>  
                                 </div>
                             </div>
+                            <!-- delete event -->
+                            <div class="tab-pane fade" id="event_api_05">
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Access</b></div>  
+                                    <div class="col-sm-10">
+                                        <i class="glyphicon glyphicon-lock" style="color:orange"></i> Authentication required.
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Description</b></div>  
+                                    <div class="col-sm-10">
+                                        <code>DELETE /event/{event_id}</code><br/>
+                                        <i>Delete the event with the provided id. Note that only 'custom' event can be deleted, and deleting an event will automatically create a 'technical' event that log the deletion of the event.</i>
+                                    </div>  
+                                </div>
+                                <div class="row form-group">
+                                    <div class="col-sm-2"><b>Test</b></div>  
+                                    <div class="col-sm-10">
+                                        <input id="event_api_05_query" type="text" placeholder="/event/{event_id}" value="/event/..."/> 
+                                        <button onclick="generic_exec_from_input('event_api_05_query', 'event_result');" class="btn btn-primary">Test it</button>
+                                    </div>  
+                                </div>
+                            </div>
+                            
                         </div>
                     </div>
 

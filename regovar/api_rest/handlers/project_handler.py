@@ -32,59 +32,42 @@ from api_rest.rest import *
 class ProjectHandler:
 
 
-    def build_tree(parent_id):
-        """
-            Recursive method to build treeview of folders/projects
-        """
-        from core.core import core
+    # def build_tree(parent_id):
+    #     """
+    #         Recursive method to build treeview of folders/projects
+    #     """
+    #     from core.core import core
+    #     currentLevelProjects = core.projects.get(None, {"parent_id": parent_id, "is_sandbox": False}, None, None, None, 1)
+    #     result = []
+    #     for p in currentLevelProjects:
+    #         entry = p.to_json(["id", "name", "comment", "parent_id", "update_date", "create_date", "is_sandbox", "is_folder"])
 
-        currentLevelProjects = core.projects.get(None, {"parent_id": parent_id, "is_sandbox": False}, None, None, None, 1)
-        result = []
-
-        for p in currentLevelProjects:
-            entry = p.to_json(["id", "name", "comment", "parent_id", "update_date", "create_date", "is_sandbox", "is_folder"])
-
-            if p.is_folder:
-                entry["children"] = ProjectHandler.build_tree(p.id)
-            else:
-                analyses = p.analyses
-                for a in analyses: a.update({"type": "analysis"})
-                jobs = p.jobs
-                for j in jobs: j.update({"type":"pipeline"})
-                entry["subjects"] = p.subjects
-                entry["analyses"] = analyses + jobs
-
-
-            result.append(entry)
-
-
-        return result
+    #         if p.is_folder:
+    #             entry["children"] = ProjectHandler.build_tree(p.id)
+    #         else:
+    #             analyses = p.analyses
+    #             for a in analyses: a.update({"type": "analysis"})
+    #             jobs = p.jobs
+    #             for j in jobs: j.update({"type":"pipeline"})
+    #             entry["subjects"] = p.subjects
+    #             entry["analyses"] = analyses + jobs
+    #         result.append(entry)
+    #     return result
 
 
 
-    def tree(self, request):
-        """
-            Get projects as tree
-        """
-        return rest_success(ProjectHandler.build_tree(None))
+    # def tree(self, request):
+    #     """
+    #         Get projects as tree
+    #     """
+    #     return rest_success(ProjectHandler.build_tree(None))
 
 
     def list(self, request):
         """
-            Get list of all projects (allow search parameters)
+            Get list of all projects
         """
-        from core.core import core
-        fields, query, order, offset, limit = process_generic_get(request.query_string, Project.public_fields)
-        depth = 0
-        # Get range meta data
-        range_data = {
-            "range_offset" : offset,
-            "range_limit"  : limit,
-            "range_total"  : Project.count(),
-            "range_max"    : RANGE_MAX,
-        }
-        projects = core.projects.get(fields, query, order, offset, limit, depth)
-        return rest_success([p.to_json() for p in projects], range_data)
+        return rest_success(core.projects.list())
         
     
     async def create_or_update(self, request):

@@ -16,6 +16,7 @@ import requests
 
 from config import *
 from core.framework.common import *
+from core.framework.postgresql import execute
 from core.model import *
 
 
@@ -29,6 +30,26 @@ class JobManager:
         pass
 
 
+    def list(self):
+        """
+            List all jobs with minimal data
+        """
+        sql = "SELECT id, pipeline_id, project_id, name, comment, create_date, update_date, status, progress_value, progress_label FROM job ORDER BY id"
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "pipeline_id": res.pipeline_id,
+                "project_id": res.project_id,
+                "name": res.name,
+                "comment": res.comment,
+                "status": res.status,
+                "progress_value": res.progress_value,
+                "progress_label": res.progress_label,
+                "create_date": res.create_date.isoformat(),
+                "update_date": res.update_date.isoformat()
+            })
+        return result
 
     def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
         """
