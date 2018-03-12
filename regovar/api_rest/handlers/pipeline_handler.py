@@ -28,20 +28,26 @@ from api_rest.rest import *
 
 
 
+# def format_file_json(file_json):
+#     if "path" in file_json.keys():
+#         file_json["url"] = "http://{}/dl/file/{}/{}".format(HOST_P, file_json["id"], file_json["name"])
+#         file_json.pop("path")
+#     return file_json
 
+    
 def format_pipeline_json(pipe_json):
-    if "image_file" in pipe_json.keys():
-        pipe_json["image_file"] = format_file_json(pipe_json["image_file"] )
+    # if "image_file" in pipe_json.keys():
+    #     pipe_json["image_file"] = format_file_json(pipe_json["image_file"] )
     if "documents" in pipe_json.keys():
         docs = []
         for doc in pipe_json["documents"]:
             docs.append("http://{}/dl/pipe/{}/{}".format(HOST_P, pipe_json["id"], os.path.basename(doc)))
         pipe_json["documents"] = docs
-    if "jobs" in pipe_json.keys():
-        jobs = []
-        for job in pipe_json["jobs"]:
-            jobs.append(format_job_json(job))
-        pipe_json["jobs"] = jobs
+    # if "jobs" in pipe_json.keys():
+    #     jobs = []
+    #     for job in pipe_json["jobs"]:
+    #         jobs.append(format_job_json(job))
+    #     pipe_json["jobs"] = jobs
     if "path" in pipe_json.keys():
         pipe_json.pop("path")
     return pipe_json

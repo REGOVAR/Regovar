@@ -30,6 +30,8 @@ def pipeline_init(self, loading_depth=0):
     else:
         self.loading_depth = min(2, loading_depth)
 
+    self.image_file = None
+    self.jobs = []
     jobs = Session().query(Job).filter_by(pipeline_id=self.id).all()
     for j in jobs:
         self.jobs_ids.append(j.id)
@@ -41,9 +43,7 @@ def pipeline_load_depth(self, loading_depth):
     from core.model.file import File
     if loading_depth > 0:
         try:
-            self.image_file = None
             self.image_file = File.from_id(self.image_file_id, self.loading_depth-1)
-            self.jobs = []
             if len(self.jobs_ids) > 0:
                 self.jobs = Session().query(Job).filter(Job.id.in_(self.jobs_ids)).all()
                 for j in self.jobs:

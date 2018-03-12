@@ -84,7 +84,7 @@ CONTAINERS_CONFIG = {
         "manifest" : {
             "mandatory" : {
                 "name"        : "The displayed name of the pirus pipeline", 
-                "run"         : "The command line that will executed by pirus to run the pipeline.", 
+                "job"         : "The command line that will executed by pirus to run the pipeline.", 
             },
             "default" : {
                 "pirus_api"   : 0.5,                   # The version of the pirus api used by the pipeline
