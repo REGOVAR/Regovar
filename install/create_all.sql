@@ -174,11 +174,11 @@ CREATE TABLE public.pipeline
     type character varying(50) COLLATE pg_catalog."C",
     status pipe_status,
     description text COLLATE pg_catalog."C",
-    developers json,
+    developpers json,
     installation_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     version character varying(50) COLLATE pg_catalog."C",
-    pirus_api character varying(50) COLLATE pg_catalog."C",
+    version_api character varying(50) COLLATE pg_catalog."C",
 
     image_file_id int,
     "path" text COLLATE pg_catalog."C",

@@ -5,6 +5,10 @@ ALTER TABLE "event" ADD COLUMN meta JSONB;
 ALTER TABLE "event" ADD COLUMN details text COLLATE pg_catalog."C";
 ALTER TABLE "event" ADD COLUMN author_id int;
 
+-- Rename columns
+ALTER TABLE "pipeline" RENAME COLUMN developers TO developpers;
+ALTER TABLE "pipeline" RENAME COLUMN pirus_api TO version_api;
+
 -- Alter type type
 ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'custom'
 ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'technical'
