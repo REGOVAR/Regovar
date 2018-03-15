@@ -39,7 +39,7 @@ class PipelineHandler:
 
     @staticmethod
     def format_pipeline_json(pipe_json):
-        if "documents" in pipe_json.keys():
+        if "documents" in pipe_json.keys() and isinstance(pipe_json["documents"], dict):
             docs = {}
             for doc in pipe_json["documents"].keys():
                 docs[doc] = "http://{}/dl/pipe/{}/{}".format(HOST_P, pipe_json["id"], os.path.basename(pipe_json["documents"][doc]))
