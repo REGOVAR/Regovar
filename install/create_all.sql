@@ -72,6 +72,7 @@ $$ LANGUAGE sql;
 -- TYPES
 -- --------------------------------------------
 CREATE TYPE file_status AS ENUM ('uploading', 'uploaded', 'checked', 'error');
+CREATE TYPE file_usage AS ENUM ('none', 'pipeline', 'job', 'subject', 'sample', 'analysis', 'mix');
 CREATE TYPE pipe_status AS ENUM ('initializing', 'installing', 'ready', 'error');
 CREATE TYPE job_status AS ENUM ('waiting', 'initializing', 'running', 'pause', 'finalizing', 'done', 'canceled', 'error');
 CREATE TYPE field_type AS ENUM ('int', 'string', 'float', 'enum', 'range', 'bool', 'sequence', 'list', 'sample_array');
