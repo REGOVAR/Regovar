@@ -118,6 +118,7 @@ class JobHandler:
         data = await request.json()
         job_id = request.match_info.get('job_id', -1)
         try:
+            ipdb.set_trace()
             if "status" in data.keys():
                 core.jobs.set_status(job_id, data["status"])
             job = Job.from_id(job_id)

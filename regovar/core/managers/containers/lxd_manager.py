@@ -1,5 +1,6 @@
 #!env/python3
 # coding: utf-8
+import ipdb
 import os
 import uuid
 import json
@@ -223,7 +224,7 @@ class LxdManager(AbstractContainerManager):
         """
         # Setting up the lxc container for the job
         lxd_container = os.path.basename(job.path)
-        manifest = yaml.load(job.pipeline.manifest)
+        manifest = job.pipeline.manifest if isinstance(job.pipeline.manifest, dict) else yaml.load(job.pipeline.manifest)
         lxd_job_cmd = manifest["job"]
         lxd_logs_path = manifest["logs"]
         lxd_inputs_path = manifest["inputs"]
