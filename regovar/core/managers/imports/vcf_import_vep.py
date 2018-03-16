@@ -92,13 +92,20 @@ class VepImporter(AbstractTranscriptDataImporter):
                 30, 
                 'transcript',
                 pk_uid)
-            query += "INSERT INTO annotation_field (database_uid, ord, name, name_ui, type, description) VALUES "
+            query += "INSERT INTO annotation_field (database_uid, ord, name, name_ui, type, description, meta) VALUES "
             
             # Register annotation Fields
             fields = [field for field in self.columns_definitions.keys()]
             fields.sort()
             for idx, col_name in enumerate(fields):
-                query += "('{0}', {1}, '{2}', '{3}', '{4}', '{5}'),".format(db_uid, idx, col_name, col_name.title(), self.columns_definitions[col_name]["type"], self.escape_value_for_sql(self.columns_definitions[col_name]["description"]))
+                query += "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}),".format(
+                    db_uid, 
+                    idx, 
+                    self.columns_definitions[col_name]["order"], 
+                    col_name.title(), 
+                    self.columns_definitions[col_name]["type"], 
+                    self.escape_value_for_sql(self.columns_definitions[col_name]["description"]), 
+                    "'"+self.escape_value_for_sql(self.columns_definitions[col_name]["meta"])+"'" if "meta" in self.columns_definitions[col_name] else "NULL")
             Model.execute(query[:-1])
             Model.execute("UPDATE annotation_field SET uid=MD5(concat(database_uid, name)) WHERE uid IS NULL;")
         
@@ -309,22 +316,22 @@ class VepImporter(AbstractTranscriptDataImporter):
         "tsl" :                { "type" : "string", "order": 47, "description" : "Transcript support level. NB: not available for GRCh37."},
         "uniparc" :            { "type" : "string", "order": 48, "description" : "Best match UniParc accession of protein product."},
         "variant_class" :      { "type" : "string", "order": 49, "description" : "Sequence Ontology variant class."},
-        "gmaf" :               { "type" : "float",  "order": 50, "description" : "Frequency of existing variant in 1000 Genomes."},   
-        "afr_maf" :            { "type" : "float",  "order": 51, "description" : "Frequency of existing variant in 1000 Genomes combined African population."},  
-        "amr_maf" :            { "type" : "float",  "order": 52, "description" : "Frequency of existing variant in 1000 Genomes combined American population."},  
-        "asn_maf" :            { "type" : "float",  "order": 53, "description" : "Frequency of existing variant in 1000 Genomes combined Asian population."},  
-        "eur_maf" :            { "type" : "float",  "order": 54, "description" : "Frequency of existing variant in 1000 Genomes combined European population."},  
-        "eas_maf" :            { "type" : "float",  "order": 55, "description" : "Frequency of existing variant in 1000 Genomes combined East Asian population."},
-        "sas_maf" :            { "type" : "float",  "order": 56, "description" : "Frequency of existing variant in 1000 Genomes combined South Asian population."},
-        "exac_maf" :           { "type" : "float",  "order": 57, "description" : "Frequency of existing variant in Exac database."},
-        "exac_adj_maf" :       { "type" : "float",  "order": 58, "description" : "Adjusted minor allelle frequency (Exac database)."},
-        "exac_afr_maf" :       { "type" : "float",  "order": 59, "description" : "Frequency in African population (Exac database)."},
-        "exac_amr_maf" :       { "type" : "float",  "order": 60, "description" : "Frequency in American population (Exac database)."},
-        "exac_eas_maf" :       { "type" : "float",  "order": 61, "description" : "Frequency in East Asian population (Exac database)."},
-        "exac_fin_maf" :       { "type" : "float",  "order": 62, "description" : "Frequency in Finnish population (Exac database)."},
-        "exac_nfe_maf" :       { "type" : "float",  "order": 63, "description" : "Frequency in Non-Finnish European population (Exac database)."},
-        "exac_oth_maf" :       { "type" : "float",  "order": 64, "description" : "Frequency in Other population (Exac database)."},
-        "exac_sas_maf" :       { "type" : "float",  "order": 65, "description" : "Frequency in South Asian population (Exac database)."},
-        "aa_maf" :             { "type" : "float",  "order": 66, "description" : "Frequency of existing variant in NHLBI-ESP African American population."},  
-        "ea_maf" :             { "type" : "float",  "order": 67, "description" : "Frequency of existing variant in NHLBI-ESP European American population."}
+        "gmaf" :               { "type" : "float",  "order": 50, "description" : "Frequency of existing variant in 1000 Genomes.", "meta": {"default": 0}},   
+        "afr_maf" :            { "type" : "float",  "order": 51, "description" : "Frequency of existing variant in 1000 Genomes combined African population.", "meta": {"default": 0}},  
+        "amr_maf" :            { "type" : "float",  "order": 52, "description" : "Frequency of existing variant in 1000 Genomes combined American population.", "meta": {"default": 0}},  
+        "asn_maf" :            { "type" : "float",  "order": 53, "description" : "Frequency of existing variant in 1000 Genomes combined Asian population.", "meta": {"default": 0}},  
+        "eur_maf" :            { "type" : "float",  "order": 54, "description" : "Frequency of existing variant in 1000 Genomes combined European population.", "meta": {"default": 0}},  
+        "eas_maf" :            { "type" : "float",  "order": 55, "description" : "Frequency of existing variant in 1000 Genomes combined East Asian population.", "meta": {"default": 0}},
+        "sas_maf" :            { "type" : "float",  "order": 56, "description" : "Frequency of existing variant in 1000 Genomes combined South Asian population.", "meta": {"default": 0}},
+        "exac_maf" :           { "type" : "float",  "order": 57, "description" : "Frequency of existing variant in Exac database.", "meta": {"default": 0}},
+        "exac_adj_maf" :       { "type" : "float",  "order": 58, "description" : "Adjusted minor allelle frequency (Exac database).", "meta": {"default": 0}},
+        "exac_afr_maf" :       { "type" : "float",  "order": 59, "description" : "Frequency in African population (Exac database).", "meta": {"default": 0}},
+        "exac_amr_maf" :       { "type" : "float",  "order": 60, "description" : "Frequency in American population (Exac database).", "meta": {"default": 0}},
+        "exac_eas_maf" :       { "type" : "float",  "order": 61, "description" : "Frequency in East Asian population (Exac database).", "meta": {"default": 0}},
+        "exac_fin_maf" :       { "type" : "float",  "order": 62, "description" : "Frequency in Finnish population (Exac database).", "meta": {"default": 0}},
+        "exac_nfe_maf" :       { "type" : "float",  "order": 63, "description" : "Frequency in Non-Finnish European population (Exac database).", "meta": {"default": 0}},
+        "exac_oth_maf" :       { "type" : "float",  "order": 64, "description" : "Frequency in Other population (Exac database).", "meta": {"default": 0}},
+        "exac_sas_maf" :       { "type" : "float",  "order": 65, "description" : "Frequency in South Asian population (Exac database).", "meta": {"default": 0}},
+        "aa_maf" :             { "type" : "float",  "order": 66, "description" : "Frequency of existing variant in NHLBI-ESP African American population.", "meta": {"default": 0}},  
+        "ea_maf" :             { "type" : "float",  "order": 67, "description" : "Frequency of existing variant in NHLBI-ESP European American population.", "meta": {"default": 0}}
         }
