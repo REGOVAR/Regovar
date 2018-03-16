@@ -10,8 +10,8 @@ ALTER TABLE "pipeline" RENAME COLUMN developers TO developpers;
 ALTER TABLE "pipeline" RENAME COLUMN pirus_api TO version_api;
 
 -- Alter type type
-ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'custom'
-ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'technical'
+ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'custom';
+ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'technical';
 
 -- New type
 CREATE TYPE file_usage AS ENUM ('none', 'pipeline', 'job', 'subject', 'sample', 'analysis', 'mix');
@@ -34,4 +34,4 @@ UPDATE file AS f SET usage='analysis' FROM analysis_file AS a WHERE f.id=a.file_
 
 -- Update database version
 UPDATE parameter SET value='7.1' WHERE key='database_version';
-INSERT INTO "event" (message, type) VALUES ('Update database to version 7.1', 'technical')
+INSERT INTO "event" (message, type) VALUES ('Update database to version 7.1', 'technical');
