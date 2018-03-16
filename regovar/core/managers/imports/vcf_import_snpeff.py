@@ -224,7 +224,7 @@ class SnpEffImporter(AbstractTranscriptDataImporter):
         "annotation_impact" :    { "type" : "enum",   "description" : "A simple estimation of putative impact / deleteriousness : {HIGH, MODERATE, LOW, MODIFIER}"},
         "gene_name" :            { "type" : "string", "description" : "Common gene name (HGNC). Optional: use closest gene when the variant is \"intergenic\""},
         "gene_id" :              { "type" : "string", "description" : "Gene ID"},
-        "feature_type" :         { "type" : "string", "description" : " Which type of feature is in the \"Feature Type\" field (e.g. transcript, motif, miRNA, etc.). It is preferred to use Sequence Ontology (SO) terms, but \"custom\" (user defined) are allowed"},
+        "feature_type" :         { "type" : "string", "description" : "Which type of feature is in the \"Feature Type\" field (e.g. transcript, motif, miRNA, etc.). It is preferred to use Sequence Ontology (SO) terms, but \"custom\" (user defined) are allowed"},
         "feature_id" :           { "type" : "string", "description" : "Depending on the annotation, this may be: Transcript ID (preferably using version number), Motif ID, miRNA, ChipSeq peak, Histone mark, etc. Note: Some features may not have ID (e.g. histone marks from custom Chip-Seq experiments may not have a unique ID)"},
         "transcript_bioType" :   { "type" : "string", "description" : "The bare minimum is at least a description on whether the transcript is {\"Coding\", \"Noncoding\"}. Whenever possible, use ENSEMBL biotypes"},
         "rank" :                 { "type" : "string", "description" : "Exon or Intron rank / total number of exons or introns"},

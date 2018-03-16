@@ -607,10 +607,6 @@ CREATE INDEX event_meta_idx
 -- --------------------------------------------
 -- INIT DATA
 -- --------------------------------------------
-INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           '6.6'),
-    ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
-    ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
 
 
 
@@ -670,8 +666,13 @@ INSERT INTO "user" (login, firstname, lastname, roles, sandbox_id) VALUES
 
 
 INSERT INTO "event" (message, type) VALUES
-  ('Regovar database creation', 'info'),
-  ('Default root admin user created', 'info');
+  ('Regovar database 7.1 creation', 'technical'),
+  ('Default root admin user created', 'technical');
+  
+INSERT INTO public."parameter" (key, description, value) VALUES
+    ('database_version',          'The current version of the database',           '7.1'),
+    ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
+    ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
   
   
 

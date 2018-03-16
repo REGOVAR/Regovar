@@ -59,13 +59,13 @@ class FilterEngine:
         """
         self.fields_map = {}
         self.db_map = {}
-        query = "SELECT d.uid AS duid, d.name AS dname, d.name_ui AS dname_ui, d.jointure, d.reference_id, d.type AS dtype, d.db_pk_field_uid, a.uid AS fuid, a.name AS fname, a.type FROM annotation_field a LEFT JOIN annotation_database d ON a.database_uid=d.uid"
+        query = "SELECT d.uid AS duid, d.name AS dname, d.name_ui AS dname_ui, d.jointure, d.reference_id, d.type AS dtype, d.db_pk_field_uid, a.uid AS fuid, a.name AS fname, a.type, a.meta FROM annotation_field a LEFT JOIN annotation_database d ON a.database_uid=d.uid"
         result = execute(query)
         for row in result:
             if row.duid not in self.db_map:
                 self.db_map[row.duid] = {"name": row.dname, "join": row.jointure, "fields": {}, "reference_id": row.reference_id, "type": row.dtype, "db_pk_field_uid" : row.db_pk_field_uid}
             self.db_map[row.duid]["fields"][row.fuid] = {"name": row.fname, "type": row.type}
-            self.fields_map[row.fuid] = {"name": row.fname, "type": row.type, "db_uid": row.duid, "db_name_ui": row.dname_ui, "db_name": row.dname, "db_type": row.dtype, "join": row.jointure}
+            self.fields_map[row.fuid] = {"name": row.fname, "type": row.type, "meta": row.meta, "db_uid": row.duid, "db_name_ui": row.dname_ui, "db_name": row.dname, "db_type": row.dtype, "join": row.jointure}
 
 
 
@@ -208,7 +208,10 @@ class FilterEngine:
         # Add annotation's columns
         for dbuid in analysis.settings["annotations_db"]:
             for fuid in self.db_map[dbuid]["fields"]:
-                query += "_{} {}, ".format(fuid, self.sql_type_map[self.fields_map[fuid]['type']])
+                default = ""
+                if "meta" in self.fields_map[fuid] and isinstance(self.fields_map[fuid]["meta"], dict) and "default" in self.fields_map[fuid]["meta"]:
+                    default = " DEFAULT {}".format(self.fields_map[fuid]["meta"]["default"])
+                query += "_{} {}{}, ".format(fuid, self.sql_type_map[self.fields_map[fuid]["type"]], default)
                 
         # Add attribute's columns
         for attr in analysis.attributes:
@@ -342,9 +345,9 @@ class FilterEngine:
                 
                 
         # Compute is_exonic filter thanks to refgene
-        sql = "UPDATE {1} AS w SET is_exonic=True FROM refgene_exon{0} AS r WHERE r.chr=w.chr AND w.pos <@ r.exonrange"
+        sql = "UPDATE {1} AS w SET is_exonic=True FROM refgene_exon{0} AS r WHERE w.chr=r.chr AND w.pos <@ r.exonrange"
+        execute(sql.format(analysis.db_suffix, wt))
         
-        analysis.db_suffix, wt
         
         # We just update progress without calling notify_all as a notify will be send by the next step
         progress["log"][4]["status"] = "done"
@@ -509,7 +512,9 @@ class FilterEngine:
         # Autosomal
         query += "is_aut=(chr<23), "
         # X-Linked
-        query += "is_xlk=(chr=23 AND s{1}_gt>1 AND s{2}_gt>1"
+        query += "is_xlk=(chr=23 AND " 
+        query += "s{1}_gt=1" if trio["child_sex"] == "M" else "s{1}_gt>1"
+        query += " AND s{2}_gt>1"
         query += " AND s{3}_gt>1), " if trio["child_sex"] == "F" else "), "
         # mitochondrial
         query += "is_mit=(chr=25)"
