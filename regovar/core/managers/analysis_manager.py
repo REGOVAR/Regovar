@@ -139,11 +139,11 @@ class AnalysisManager:
             sql = "DELETE FROM analysis WHERE id={0}; DELETE FROM filter WHERE analysis_id={0};".format(analysis_id)
             sql+= "DELETE FROM analysis_sample WHERE analysis_id={0}; DELETE FROM attribute WHERE analysis_id={0}".format(analysis_id)
             sql+= "DELETE FROM analysis_indicator_value WHERE analysis_id={0};".format(analysis_id)
+            core.events.log(author_id, "warning", {"analysis_id": analysis.id}, "Irreversible deletion of the analysis: {}".format(analysis.name))
             
-            core.events.log(author_id, "info", {"analysis_id": analysis.id}, "Analysis moved to trash: {}".format(analysis.name))
         else:
             sql = "UPDATE analysis SET project_id=0 WHERE id={0}; ".format(analysis_id)
-            core.events.log(author_id, "warning", {"analysis_id": analysis.id}, "Irreversible deletion of the analysis: {}".format(analysis.name))
+            core.events.log(author_id, "info", {"analysis_id": analysis.id}, "Analysis moved to trash: {}".format(analysis.name))
         result = analysis.to_json()
         execute(sql)
         return result
@@ -206,7 +206,7 @@ class AnalysisManager:
             execute("DROP TABLE IF EXISTS wt_{} CASCADE;".format(analysis_id))
             execute("DROP TABLE IF EXISTS wt_{}_var CASCADE".format(analysis_id))
             execute("DROP TABLE IF EXISTS wt_{}_tmp CASCADE".format(analysis_id))
-            analysis.status = "empty"
+            analysis.status = "close"
             analysis.save()
             core.events.log(author_id, "info", {"analysis_id": analysis.id}, "Analysis closed: {}".format(analysis.name))
         except Exception as ex:
@@ -215,22 +215,6 @@ class AnalysisManager:
 
 
 
-    #async def load_file(self, analysis_id, file_id):
-        #pfile = File.from_id(file_id)
-        #if pfile == None:
-            #raise RegovarException("Unable to retrieve the file with the provided id : " + file_id)
-        
-        ## Importing to the database according to the type (if an import module can manage it)
-        #log('Looking for available module to import file data into database.')
-        #for m in self.import_modules.values():
-            #if pfile.type in m['info']['input']:
-                #log('Start import of the file (id={0}) with the module {1} ({2})'.format(file_id, m['info']['name'], m['info']['description']))
-                #await m['do'](pfile.id, pfile.path, core)
-                ## Reload annotation's databases/fields metadata as some new annot db/fields may have been created during the import
-                #await self.annotation_db.load_annotation_metadata()
-                #await self.filter.load_annotation_metadata()
-                #break
-        
         
 
     async def create_update_filter(self, filter_id, data, author_id=None):

@@ -78,7 +78,7 @@ CREATE TYPE job_status AS ENUM ('waiting', 'initializing', 'running', 'pause', '
 CREATE TYPE field_type AS ENUM ('int', 'string', 'float', 'enum', 'range', 'bool', 'sequence', 'list', 'sample_array');
 CREATE TYPE annotation_db_type AS ENUM ('site', 'variant', 'transcript');
 CREATE TYPE sample_status AS ENUM ('empty', 'loading', 'ready', 'error');
-CREATE TYPE analysis_status AS ENUM ('empty', 'waiting', 'computing', 'ready', 'error');
+CREATE TYPE analysis_status AS ENUM ('empty', 'waiting', 'computing', 'ready', 'close', 'error');
 CREATE TYPE event_type AS ENUM ('custom', 'info', 'warning', 'error', 'technical');
 CREATE TYPE sex_type AS ENUM ('male', 'female', 'unknow');
 

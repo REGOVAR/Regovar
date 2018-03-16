@@ -12,6 +12,7 @@ ALTER TABLE "pipeline" RENAME COLUMN pirus_api TO version_api;
 -- Alter type type
 ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'custom';
 ALTER TYPE "event_type" ADD VALUE IF NOT EXISTS 'technical';
+ALTER TYPE "analysis_status" ADD VALUE IF NOT EXISTS 'close';
 
 -- New type
 CREATE TYPE file_usage AS ENUM ('none', 'pipeline', 'job', 'subject', 'sample', 'analysis', 'mix');
