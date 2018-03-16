@@ -74,6 +74,7 @@ def job_init(self, loading_depth=0, force=False):
             - id            : int               : the unique id of the job in the database
             - pipeline_id   : int               : refer to the pipeline used for this job
             - name          : str               : the name of the job
+            - comment       : str               : user can add free comment about the job
             - config        : dict              : dict with parameter's value set by the user that run this job
             - status        : enum              : status of the job : 'waiting', 'initializing', 'running', 'pause', 'finalizing', 'done', 'canceled', 'error'
             - progress_value: float             : progress of the job from 0 to 1 (1=100%)
@@ -196,6 +197,7 @@ def job_load(self, data):
     try:
         # Required fields
         if "name" in data.keys(): self.name = check_string(data['name'])
+        if "comment" in data.keys(): self.comment = check_string(data['comment'])
         if "pipeline_id" in data.keys(): self.pipeline_id = check_int(data['pipeline_id'])
         if "config" in data.keys(): self.config = data["config"]
         if "create_date" in data.keys(): self.create_date = check_date(data["create_date"])
@@ -261,7 +263,7 @@ def job_count():
 
 
 Job = Base.classes.job
-Job.public_fields = ["id", "pipeline_id", "pipeline", "config", "create_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs", "path", "logs", "name"]
+Job.public_fields = ["id", "pipeline_id", "pipeline", "config", "create_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs", "path", "logs", "name", "comment"]
 Job.init = job_init
 Job.from_id = job_from_id
 Job.from_ids = job_from_ids

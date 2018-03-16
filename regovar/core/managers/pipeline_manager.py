@@ -35,7 +35,7 @@ class PipelineManager:
         """
             List all pipelines with minimum of data
         """
-        sql = "SELECT id, name, type, status, description, version, image_file_id, starred, installation_date FROM pipeline ORDER BY id"
+        sql = "SELECT id, name, type, status, description, version, image_file_id, starred, installation_date, manifest, documents FROM pipeline ORDER BY id"
         result = []
         for res in execute(sql): 
             result.append({
@@ -47,7 +47,9 @@ class PipelineManager:
                 "version": res.version,
                 "image_file_id": res.image_file_id,
                 "starred": res.starred,
-                "installation_date": res.installation_date.isoformat()
+                "installation_date": res.installation_date.isoformat(),
+                "manifest": res.manifest,
+                "documents": res.documents
             })
         return result
 

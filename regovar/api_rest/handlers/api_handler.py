@@ -26,6 +26,7 @@ from core.framework.common import *
 from core.model import *
 from core.core import core
 from api_rest.rest import *
+from api_rest.handlers import PipelineHandler
  
 
 
@@ -51,7 +52,7 @@ class ApiHandler:
             "samples": core.samples.list(),
             "projects": core.projects.list(),
             "panels": core.panels.list(),
-            "pipelines": core.pipelines.list(),
+            "pipelines": [PipelineHandler.format_pipeline_json(pipe) for pipe in core.pipelines.list()],
             "jobs": core.jobs.list(),
             "users": core.users.list(),
             "last_events": core.events.list(),

@@ -118,6 +118,7 @@ class JobHandler:
         data = await request.json()
         job_id = request.match_info.get('job_id', -1)
         try:
+            ipdb.set_trace()
             if "status" in data.keys():
                 core.jobs.set_status(job_id, data["status"])
             job = Job.from_id(job_id)
@@ -134,11 +135,11 @@ class JobHandler:
         # 1- Retrieve data from request
         try:
             data = await request.json()
-            data = json.loads(data)
+            if isinstance(data, str) : data = json.loads(data)
         except Exception as ex:
             return rest_error("Error occured when retriving json data to start new job. {}".format(ex))
         missing = []
-        for k in ["pipeline_id", "name", "config", "inputs"]:
+        for k in ["pipeline_id", "name", "config", "inputs_ids"]:
             if k not in data.keys(): missing.append(k)
         if len(missing) > 0:
             return rest_error("Following informations are missing to create a new job : {}".format(", ".join(missing)))
@@ -146,10 +147,10 @@ class JobHandler:
         pipe_id = data["pipeline_id"]
         name = data["name"]
         config = data["config"]
-        inputs = data["inputs"]
+        inputs_ids = data["inputs_ids"]
         # Create the job 
         try:
-            job = core.jobs.new(pipe_id, name, config, inputs, asynch=True)
+            job = core.jobs.new(pipe_id, name, config, inputs_ids, asynch=True)
         except Exception as ex:
             return rest_error("Error occured when initializing the new job. {}".format(ex))
         if job is None:
