@@ -245,7 +245,6 @@ class JobManager:
             save outputs files and ask the container manager to delete container
         """
         from core.core import core
-
         job = Job.from_id(job_id)
         if not job:
             raise RegovarException("Job not found (id={}).".format(job_id))
@@ -325,7 +324,6 @@ class JobManager:
             Call manager to prepare the container for the job.
         """
         from core.core import core
-
         job = Job.from_id(job_id, 1)
         if job and job.status == "initializing":
             try:
@@ -367,7 +365,7 @@ class JobManager:
                 war("INPUTS of the run not ready. waiting")
                 self.set_status(job, "waiting", asynch=asynch)
                 return False
-            
+
         # TODO : check that enough reszources to run the job
         # Inputs files ready to use, looking for lxd resources now
         # count = 0
