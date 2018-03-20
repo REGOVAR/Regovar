@@ -157,7 +157,7 @@ class JobManager:
         # If job is still initializing
         if job.status == "initializing":
             if asynch: 
-                run_async(self.__init_job, (job.id, asynch, True))
+                run_async(self.__init_job, job.id, asynch, True)
                 return True
             else:
                 return self.__init_job(job.id, asynch, True)
@@ -166,7 +166,7 @@ class JobManager:
             raise RegovarException("Job status ({}) is not \"pause\" or \"waiting\". Cannot start the job.".format(job.status))
         # Call start of the container
         if asynch: 
-            run_async(self.__start_job, (job.id, asynch,))
+            run_async(self.__start_job, job.id, asynch)
             return True
         else:
             return self.__start_job(job.id, asynch)
@@ -213,7 +213,7 @@ class JobManager:
             return False
         # Call pause of the container
         if asynch: 
-            run_async(self.__pause_job, (job.id, asynch,))
+            run_async(self.__pause_job, job.id, asynch)
             return True
         else:
             return self.__pause_job(job.id, asynch)
@@ -232,7 +232,7 @@ class JobManager:
             raise RegovarException("Job status is \"{}\". Cannot stop the job.".format(job.status))
         # Call stop of the container
         if asynch: 
-            run_async(self.__stop_job, (job.id, asynch,))
+            run_async(self.__stop_job, job.id, asynch)
             return True
         else:
             return self.__stop_job(job.id, asynch)
@@ -264,7 +264,7 @@ class JobManager:
                 JobFile.new(job_id, pf.id)
         # Stop container and delete it
         if asynch: 
-            run_async(self.__finalize_job, (job.id, asynch,))
+            run_async(self.__finalize_job, job.id, asynch)
             return True
         else:
             return self.__finalize_job(job.id, asynch)
@@ -280,7 +280,7 @@ class JobManager:
             raise RegovarException("Job not found (id={}).".format(job_id))
         # Security, force call stop/delete the container
         if asynch: 
-            run_async(self.__finalize_job, (job.id, asynch,))
+            run_async(self.__finalize_job, job.id, asynch)
         else:
             self.__finalize_job(job.id, asynch)
         # Deleting file in the filesystem
@@ -306,12 +306,12 @@ class JobManager:
             next_jobs = Session().query(Job).filter_by(status="waiting").order_by("priority").all()
             if len(next_jobs) > 0:
                 if asynch: 
-                    run_async(self.start, (next_jobs[0].id, asynch,))
+                    run_async(self.start, next_jobs[0].id, asynch)
                 else:
                     self.start(next_jobs[0].id, asynch)
         elif job.status == "finalizing":
             # if asynch: 
-            #     run_async(self.finalize, (job.id, asynch,))
+            #     run_async(self.finalize, job.id, asynch)
             # else:
             self.finalize(job.id, asynch)
         # Push notification
