@@ -70,7 +70,7 @@ def file_to_json(self, fields=None, loading_depth=-1):
     if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
-        fields = ["id", "name", "type", "size", "upload_offset", "status", "create_date", "update_date", "tags", "job_source_id", "jobs_ids"]
+        fields = ["id", "name", "type", "size", "upload_offset", "status", "create_date", "update_date", "tags", "job_source_id", "jobs_ids", "path"]
     for f in fields:
         if f == "create_date" or f == "update_date":
             result.update({f: eval("self." + f + ".isoformat()")})

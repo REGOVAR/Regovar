@@ -256,11 +256,9 @@ class JobManager:
         for f in os.listdir(outputs_path):
             file_path = os.path.join(outputs_path, f)
             if os.path.isfile(file_path):
-                # 1- Move & store file into Pirus DB/Filesystem
-                pf = core.files.from_local(file_path, True, {"job_source_id" : job.id})
-                # 2- create link (to help admins when browsing pirus filesystem)
-                os.link(pf.path, file_path)
-                # 3- update job's entry in db to link file to job's outputs
+                # 1- register outputs file as into DB
+                pf = core.files.from_job(file_path, job_id)
+                # 2- update job's entry in db to link file to job's outputs
                 JobFile.new(job_id, pf.id)
         # Stop container and delete it
         if asynch: 

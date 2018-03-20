@@ -197,7 +197,29 @@ class FileManager:
         except Exception as ex:
             raise RegovarException("Error occured when trying to copy/move the file from the provided path : {}".format(path), "", ex)
         return pfile
+    
+    
 
+    def from_job(self, path, job_id):
+        """
+            Job generated files are supposed to be on a safe disk, always available. 
+            So we don't move them and just create a file entry in database with the original filepath.
+            It's also required to avoid moving file for job that generate complex html report that 
+            may create a html file with several local dependencies...
+        """
+        if not os.path.isfile(path):
+            raise RegovarException("File \"{}\" doesn't exists.".format(path))
+        pfile = File.new()
+        pfile.load({"job_source_id" : job_id})
+        pfile.name = clean_filename(os.path.basename(path))
+        pfile.type = os.path.splitext(pfile.name)[1][1:].strip().lower()
+        pfile.path = path
+        pfile.size = os.path.getsize(path)
+        pfile.upload_offset = 0
+        pfile.status = "checked"
+        pfile.create_date = datetime.datetime.now()
+        pfile.save()
+        return pfile
 
 
 
