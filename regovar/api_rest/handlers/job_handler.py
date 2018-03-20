@@ -114,18 +114,18 @@ class JobHandler:
 
 
     async def update_status(self, request):
-        print("NOTIF FROM PIPE !!")
         # 1- Retrieve data from request
         data = await request.json()
         job_id = request.match_info.get('job_id', -1)
         try:
-            print(" > " + job_id + " " + json.dumps(data))
             job = Job.from_id(job_id)
-            
-            if "status" in data.keys():
-                print(" > done")
-                core.jobs.set_status(job, data["status"], True, False)
+            new_status = data.pop("status") if "status" in data else None
             job.load(data)
+            if new_status:
+                print("JOB STATUS CHANGE: " + new_status)
+                core.jobs.set_status(job, new_status)
+            else:
+                core.notify_all({"action": "job_updated", "data" : job.to_json()})
             
         except Exception as ex:
             return rest_error("Unable to update information for the jobs with id {}. {}".format(job_id, ex))

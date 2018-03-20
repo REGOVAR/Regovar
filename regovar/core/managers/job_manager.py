@@ -294,12 +294,12 @@ class JobManager:
         from core.core import core
         # Avoid useless notification
         # Impossible to change state of a job in error or canceled
-        if (new_status != "running" and job.status == new_status) or job.status in  ["error", "canceled"]:
+        if job.status == new_status or job.status in  ["error", "canceled"]:
             return
         # Update status
         job.status = new_status
         job.save()
-
+        
         # Need to do something according to the new status ?
         # Nothing to do for status : "waiting", "initializing", "running", "finalizing"
         if job.status in ["pause", "error", "done", "canceled"]:
@@ -316,7 +316,7 @@ class JobManager:
             self.finalize(job.id, asynch)
         # Push notification
         if notify:
-            core.notify_all({"action": "job_updated", "data" : [job.to_json()]})
+            core.notify_all({"action": "job_updated", "data" : job.to_json()})
 
 
     def __init_job(self, job_id, asynch, auto_notify):
