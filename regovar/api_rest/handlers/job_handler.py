@@ -34,6 +34,7 @@ class JobHandler:
 
     @staticmethod
     def format_job_json(job_json):
+        if not isinstance(job_json, dict): return job_json
         if "logs" in job_json.keys():
             logs = []
             for l in job_json["logs"]:
@@ -126,27 +127,30 @@ class JobHandler:
         job_id  = request.match_info.get('job_id',  -1)
         try:
             core.jobs.pause(job_id, False)
+            job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to pause the job {}. {}".format(job.id, ex))
-        return rest_success()
+        return rest_success(self.format_job_json(job.to_json()))
 
 
     def start(self, request):
         job_id  = request.match_info.get('job_id', -1)
         try:
             core.jobs.start(job_id, False)
+            job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to start the job {}. {}".format(job.id, ex))
-        return rest_success()
+        return rest_success(self.format_job_json(job.to_json()))
 
 
     def cancel(self, request):
         job_id  = request.match_info.get('job_id',  -1)
         try:
             core.jobs.stop(job_id, False)
+            job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to stop the job {}. {}".format(job_id, ex))
-        return rest_success()
+        return rest_success(self.format_job_json(job.to_json()))
 
 
     def monitoring(self, request):
@@ -164,6 +168,7 @@ class JobHandler:
         job_id  = request.match_info.get('job_id', -1)
         try:
             core.jobs.finalize(job_id, False)
+            job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to finalize the job {}. {}".format(job_id, ex))
         job = Job.from_id(job_id)

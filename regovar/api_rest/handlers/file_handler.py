@@ -106,6 +106,7 @@ class FileHandler:
 
     @staticmethod
     def format_file_json(file_json):
+        if not isinstance(file_json, dict): return file_json
         if "path" in file_json.keys():
             path = file_json["path"]
             if path and path.startswith(FILES_DIR):

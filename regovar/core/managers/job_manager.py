@@ -132,7 +132,7 @@ class JobManager:
         for f in job.inputs:
             link_path = os.path.join(inputs_path, f.name)
             os.link(f.path, link_path)
-            os.chmod(link_path, 0o644)
+            #os.chmod(link_path, 0o644)
 
         # Call init of the container
         # if asynch: 

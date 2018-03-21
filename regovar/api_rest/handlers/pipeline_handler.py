@@ -39,6 +39,7 @@ class PipelineHandler:
 
     @staticmethod
     def format_pipeline_json(pipe_json):
+        if not isinstance(pipe_json, dict): return pipe_json
         if "documents" in pipe_json.keys() and isinstance(pipe_json["documents"], dict):
             docs = {}
             for doc in pipe_json["documents"].keys():
