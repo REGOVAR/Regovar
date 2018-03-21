@@ -186,7 +186,7 @@ class JobManager:
             raise RegovarException("Job status is \"initializing\". Cannot retrieve yet monitoring informations.")
         # Ask container manager to update data about container
         try:
-            job.logs_moninitoring = core.container_managers[job.pipeline.type].monitoring_job(job)
+            job.monitoring = core.container_managers[job.pipeline.type].monitoring_job(job)
         except Exception as ex:
             err("Error occured when retrieving monitoring information for the job {} (id={})".format(os.path.basename(job.path), job.id), ex)
         return job

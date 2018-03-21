@@ -160,7 +160,7 @@ class JobHandler:
         except Exception as ex:
             return rest_error("Unable to retrieve monitoring info for the jobs with id={}. {}".format(job_id, ex))
         if job:
-            return rest_success(self.format_job_json(job, ["id", "pipeline_id", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "logs", "logs_tails"]))
+            return rest_success(self.format_job_json(job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs", "monitoring"])))
         return rest_error("Unable to get monitoring information for the job {}.".format(job_id))
 
 

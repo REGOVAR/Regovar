@@ -188,7 +188,7 @@ def job_to_json(self, fields=None, loading_depth=-1):
                 for l in self.logs:
                     logs.append(l.path)
                 result.update({"logs" : logs})
-            else :
+            elif hasattr(self, f):
                 result.update({f: eval("self." + f)})
     return result
 
@@ -263,7 +263,7 @@ def job_count():
 
 
 Job = Base.classes.job
-Job.public_fields = ["id", "pipeline_id", "pipeline", "config", "create_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs", "path", "logs", "name", "comment"]
+Job.public_fields = ["id", "pipeline_id", "pipeline", "config", "create_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs", "path", "logs", "name", "comment", "monitoring"]
 Job.init = job_init
 Job.from_id = job_from_id
 Job.from_ids = job_from_ids
