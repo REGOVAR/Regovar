@@ -86,7 +86,7 @@ class JobManager:
         job = Job.new()
         job.status = "initializing"
         job.name = name
-        job.config = json.dumps(config, sort_keys=True, indent=4)
+        job.config = config
         job.progress_value = 0
         job.pipeline_id = pipeline_id
         job.progress_label = "0%"

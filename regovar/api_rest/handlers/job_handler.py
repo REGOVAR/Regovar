@@ -55,11 +55,20 @@ class JobHandler:
 
 
     def get(self, request):
+        from api_rest.handlers.file_handler import FileHandler
+        from api_rest.handlers.pipeline_handler import PipelineHandler
         job_id = request.match_info.get('job_id', -1)
         job = Job.from_id(job_id, 2)
         if not job:
             return rest_error("Unable to find the job (id={})".format(job_id))
-        return rest_success(self.format_job_json(job.to_json()))
+        result = job.to_json(Job.public_fields)
+        formated_inputs = [FileHandler.format_file_json(f) for f in result["inputs"]]
+        formated_outputs = [FileHandler.format_file_json(f) for f in result["outputs"]]
+        formated_pipeline = PipelineHandler.format_pipeline_json(result["pipeline"])
+        result["inputs"] = formated_inputs
+        result["outputs"] = formated_outputs
+        result["pipeline"] = formated_pipeline
+        return rest_success(self.format_job_json(result))
 
 
 
