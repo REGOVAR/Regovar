@@ -104,16 +104,16 @@ tus_manager.route_maping["/file/upload"] = FileWrapper
 
 class FileHandler:
 
-    @staticmethod
-    def format_file_json(file_json):
-        if not isinstance(file_json, dict): return file_json
-        if "path" in file_json.keys():
-            path = file_json["path"]
-            if path and path.startswith(FILES_DIR):
-                file_json["path"] = "http://{}/dl/file{}".format(HOST_P, path[len(JOBS_DIR):])
-            elif path and path.startswith(JOBS_DIR):
-                file_json["path"] = "http://{}/dl/job{}".format(HOST_P, path[len(JOBS_DIR):])
-        return file_json
+    #@staticmethod
+    #def format_file_json(file_json):
+        #if not isinstance(file_json, dict): return file_json
+        #if "path" in file_json.keys():
+            #path = file_json["path"]
+            #if path and path.startswith(FILES_DIR):
+                #file_json["path"] = "http://{}/dl/file{}".format(HOST_P, path[len(JOBS_DIR):])
+            #elif path and path.startswith(JOBS_DIR):
+                #file_json["path"] = "http://{}/dl/job{}".format(HOST_P, path[len(JOBS_DIR):])
+        #return file_json
     
     
     
@@ -130,7 +130,7 @@ class FileHandler:
         }
         # Return result of the query for PirusFile 
         files = core.files.get(fields, query, order, offset, limit, depth)
-        return rest_success([self.format_file_json(f.to_json()) for f in files], range_data)
+        return rest_success(check_local_path([f.to_json() for f in files]), range_data)
 
 
 
@@ -146,7 +146,7 @@ class FileHandler:
     def delete(self, request):
         file_id = request.match_info.get('file_id', "")
         try:
-            return rest_success(self.format_file_json(core.files.delete(file_id).to_json()))
+            return rest_success(check_local_path(core.files.delete(file_id).to_json()))
         except Exception as ex:
             return rest_error("Error occured : " + str(ex))
 
@@ -157,7 +157,7 @@ class FileHandler:
         file = File.from_id(file_id, 2)
         if not file:
             return rest_error("Unable to find the file (id={})".format(file_id))
-        return rest_success(self.format_file_json(file.to_json(File.public_fields)))
+        return rest_success(check_local_path(file.to_json(File.public_fields)))
 
 
 

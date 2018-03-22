@@ -52,7 +52,7 @@ class ApiHandler:
             "samples": core.samples.list(),
             "projects": core.projects.list(),
             "panels": core.panels.list(),
-            "pipelines": [PipelineHandler.format_pipeline_json(pipe) for pipe in core.pipelines.list()],
+            "pipelines": core.pipelines.list(),
             "jobs": core.jobs.list(),
             "users": core.users.list(),
             "last_events": core.events.list(),
@@ -60,7 +60,7 @@ class ApiHandler:
             "last_subjects" : self.get_last_subjects(),
             "references" : [{"id": ref[0], "name": ref[1]} for ref in core.annotations.ref_list.items()]
         }
-        return rest_success(result)
+        return rest_success(check_local_path(result))
 
 
 

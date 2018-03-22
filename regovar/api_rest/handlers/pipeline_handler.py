@@ -37,25 +37,25 @@ class PipelineHandler:
     def __init__(self):
         pass
 
-    @staticmethod
-    def format_pipeline_json(pipe_json):
-        if not isinstance(pipe_json, dict): return pipe_json
-        if "documents" in pipe_json.keys() and isinstance(pipe_json["documents"], dict):
-            docs = {}
-            for doc in pipe_json["documents"].keys():
-                docs[doc] = "http://{}/dl/pipe/{}/{}".format(HOST_P, pipe_json["id"], os.path.basename(pipe_json["documents"][doc]))
-            pipe_json["documents"] = docs
+    #@staticmethod
+    #def format_pipeline_json(pipe_json):
+        #if not isinstance(pipe_json, dict): return pipe_json
+        #if "documents" in pipe_json.keys() and isinstance(pipe_json["documents"], dict):
+            #docs = {}
+            #for doc in pipe_json["documents"].keys():
+                #docs[doc] = "http://{}/dl/pipe/{}/{}".format(HOST_P, pipe_json["id"], os.path.basename(pipe_json["documents"][doc]))
+            #pipe_json["documents"] = docs
 
-        if "path" in pipe_json.keys():
-            pipe_json.pop("path")
-        return pipe_json
+        #if "path" in pipe_json.keys():
+            #pipe_json.pop("path")
+        #return pipe_json
 
     def list(self, request):
         """
             List all pipelines
         """
         pipes = core.pipelines.list()
-        return rest_success([PipelineHandler.format_pipeline_json(pipe) for pipe in pipes])
+        return rest_success(check_local_path(pipes))
 
 
     def get(self, request):
@@ -65,7 +65,7 @@ class PipelineHandler:
             return rest_error("No pipeline with id {}".format(pipe_id))
 
         pipe = pipe.to_json(Pipeline.public_fields)
-        return rest_success(PipelineHandler.format_pipeline_json(pipe))
+        return rest_success(check_local_path(pipe))
 
 
     def install(self, request):
@@ -82,7 +82,7 @@ class PipelineHandler:
         p = core.pipelines.install_init_image_local(file.path, False, {"type" : container_type})
         try:
             if core.pipelines.install(p.id, asynch=False):
-                return rest_success(pipe.to_json())
+                return rest_success(check_local_path(pipe.to_json()))
         except RegovarException as ex:
             return rest_error(str(ex))
         return rest_error("Error occured during installation of the pipeline.")
@@ -101,7 +101,7 @@ class PipelineHandler:
         except Exception as ex:
             # TODO : manage error
             return rest_error("Unable to delete the pipeline with id {} : {}".format(pipe_id, str(ex)))
-        return rest_success(pipe)
+        return rest_success(check_local_path(pipe))
 
 
 
