@@ -57,7 +57,7 @@ class JobHandler:
 
     def get(self, request):
         job_id = request.match_info.get('job_id', -1)
-        job = Job.from_id(job_id, 2)
+        job = Job.from_id(job_id, 1)
         if not job:
             return rest_error("Unable to find the job (id={})".format(job_id))
         result = job.to_json(Job.public_fields)

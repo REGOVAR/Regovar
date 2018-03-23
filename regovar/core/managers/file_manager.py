@@ -215,7 +215,7 @@ class FileManager:
         pfile.type = os.path.splitext(pfile.name)[1][1:].strip().lower()
         pfile.path = path
         pfile.size = os.path.getsize(path)
-        pfile.upload_offset = 0
+        pfile.upload_offset = pfile.size
         pfile.status = "checked"
         pfile.create_date = datetime.datetime.now()
         pfile.save()
