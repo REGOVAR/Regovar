@@ -67,6 +67,7 @@ test:
 
 
 install_travis:
+	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)"
 	sudo -u postgres psql -c "CREATE DATABASE $(database_name) OWNER regovar"
 	sudo -u postgres psql -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
 	psql -U regovar -d $(database_name) -f ../install/create_all.sql
