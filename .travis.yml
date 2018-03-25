@@ -31,7 +31,6 @@ install:
 before_script:
   - cd /home/travis/build/REGOVAR/Regovar
   - psql -c "CREATE USER regovar WITH PASSWORD 'regovar';" -U postgres
-  - psql -c "CREATE DATABASE regovar_test OWNER regovar;" -U postgres
 
 script:
   - pip install -r requirements.txt
