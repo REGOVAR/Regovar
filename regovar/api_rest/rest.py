@@ -36,6 +36,16 @@ from core.core import core
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # COMMON TOOLS
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+def check_local_path(data):
+    dump = json.dumps(data)
+    dump = dump.replace("\"{}".format(FILES_DIR), "\"http://{}/dl/file".format(HOST_P))
+    dump = dump.replace("\"{}".format(JOBS_DIR), "\"http://{}/dl/job".format(HOST_P))
+    dump = dump.replace("\"{}".format(PIPELINES_DIR), "\"http://{}/dl/pipe".format(HOST_P))
+    dump = dump.replace("\"{}".format(DATABASES_DIR), "\"http://{}/dl/db".format(HOST_P))
+    dump = dump.replace("\"{}".format(TEMPLATE_DIR), "\"http://{}/assets".format(HOST_P))
+    return json.loads(dump)
+
+
 
 def rest_success(response_data=None, pagination_data=None):
     """ 
@@ -46,10 +56,11 @@ def rest_success(response_data=None, pagination_data=None):
     if response_data is None:
         results = {"success":True}
     else:
-        results = {"success":True, "data":response_data}
+        results = {"success":True, "data": response_data}
     if pagination_data is not None:
         results.update(pagination_data)
     return web.json_response(results)
+
 
 
 
@@ -110,7 +121,9 @@ def user_role(role):
 
 
 def rest_notify_all(data):
+    data = check_local_path(data)
     msg = json.dumps(data)
+    
     if 'action' not in data.keys() or data['action'] != 'hello':
         log ("API_rest Notify All: {0}".format(msg))
     for ws in WebsocketHandler.socket_list:

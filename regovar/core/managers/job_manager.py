@@ -86,7 +86,7 @@ class JobManager:
         job = Job.new()
         job.status = "initializing"
         job.name = name
-        job.config = json.dumps(config, sort_keys=True, indent=4)
+        job.config = config
         job.progress_value = 0
         job.pipeline_id = pipeline_id
         job.progress_label = "0%"
@@ -132,7 +132,7 @@ class JobManager:
         for f in job.inputs:
             link_path = os.path.join(inputs_path, f.name)
             os.link(f.path, link_path)
-            os.chmod(link_path, 0o644)
+            #os.chmod(link_path, 0o644)
 
         # Call init of the container
         # if asynch: 
@@ -157,7 +157,7 @@ class JobManager:
         # If job is still initializing
         if job.status == "initializing":
             if asynch: 
-                run_async(self.__init_job, (job.id, asynch, True))
+                run_async(self.__init_job, job.id, asynch, True)
                 return True
             else:
                 return self.__init_job(job.id, asynch, True)
@@ -166,7 +166,7 @@ class JobManager:
             raise RegovarException("Job status ({}) is not \"pause\" or \"waiting\". Cannot start the job.".format(job.status))
         # Call start of the container
         if asynch: 
-            run_async(self.__start_job, (job.id, asynch,))
+            run_async(self.__start_job, job.id, asynch)
             return True
         else:
             return self.__start_job(job.id, asynch)
@@ -186,7 +186,7 @@ class JobManager:
             raise RegovarException("Job status is \"initializing\". Cannot retrieve yet monitoring informations.")
         # Ask container manager to update data about container
         try:
-            job.logs_moninitoring = core.container_managers[job.pipeline.type].monitoring_job(job)
+            job.monitoring = core.container_managers[job.pipeline.type].monitoring_job(job)
         except Exception as ex:
             err("Error occured when retrieving monitoring information for the job {} (id={})".format(os.path.basename(job.path), job.id), ex)
         return job
@@ -213,7 +213,7 @@ class JobManager:
             return False
         # Call pause of the container
         if asynch: 
-            run_async(self.__pause_job, (job.id, asynch,))
+            run_async(self.__pause_job, job.id, asynch)
             return True
         else:
             return self.__pause_job(job.id, asynch)
@@ -232,7 +232,7 @@ class JobManager:
             raise RegovarException("Job status is \"{}\". Cannot stop the job.".format(job.status))
         # Call stop of the container
         if asynch: 
-            run_async(self.__stop_job, (job.id, asynch,))
+            run_async(self.__stop_job, job.id, asynch)
             return True
         else:
             return self.__stop_job(job.id, asynch)
@@ -245,7 +245,6 @@ class JobManager:
             save outputs files and ask the container manager to delete container
         """
         from core.core import core
-
         job = Job.from_id(job_id)
         if not job:
             raise RegovarException("Job not found (id={}).".format(job_id))
@@ -257,15 +256,13 @@ class JobManager:
         for f in os.listdir(outputs_path):
             file_path = os.path.join(outputs_path, f)
             if os.path.isfile(file_path):
-                # 1- Move & store file into Pirus DB/Filesystem
-                pf = core.files.from_local(file_path, True, {"job_source_id" : job.id})
-                # 2- create link (to help admins when browsing pirus filesystem)
-                os.link(pf.path, file_path)
-                # 3- update job's entry in db to link file to job's outputs
+                # 1- register outputs file as into DB
+                pf = core.files.from_job(file_path, job_id)
+                # 2- update job's entry in db to link file to job's outputs
                 JobFile.new(job_id, pf.id)
         # Stop container and delete it
         if asynch: 
-            run_async(self.__finalize_job, (job.id, asynch,))
+            run_async(self.__finalize_job, job.id, asynch)
             return True
         else:
             return self.__finalize_job(job.id, asynch)
@@ -281,7 +278,7 @@ class JobManager:
             raise RegovarException("Job not found (id={}).".format(job_id))
         # Security, force call stop/delete the container
         if asynch: 
-            run_async(self.__finalize_job, (job.id, asynch,))
+            run_async(self.__finalize_job, job.id, asynch)
         else:
             self.__finalize_job(job.id, asynch)
         # Deleting file in the filesystem
@@ -295,29 +292,29 @@ class JobManager:
         from core.core import core
         # Avoid useless notification
         # Impossible to change state of a job in error or canceled
-        if (new_status != "running" and job.status == new_status) or job.status in  ["error", "canceled"]:
+        if job.status == new_status or job.status in  ["error", "canceled"]:
             return
         # Update status
         job.status = new_status
         job.save()
-
+        
         # Need to do something according to the new status ?
         # Nothing to do for status : "waiting", "initializing", "running", "finalizing"
         if job.status in ["pause", "error", "done", "canceled"]:
             next_jobs = Session().query(Job).filter_by(status="waiting").order_by("priority").all()
             if len(next_jobs) > 0:
                 if asynch: 
-                    run_async(self.start, (next_jobs[0].id, asynch,))
+                    run_async(self.start, next_jobs[0].id, asynch)
                 else:
                     self.start(next_jobs[0].id, asynch)
         elif job.status == "finalizing":
             # if asynch: 
-            #     run_async(self.finalize, (job.id, asynch,))
+            #     run_async(self.finalize, job.id, asynch)
             # else:
             self.finalize(job.id, asynch)
         # Push notification
         if notify:
-            core.notify_all({"action": "job_updated", "data" : [job.to_json()]})
+            core.notify_all({"action": "job_updated", "data" : job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs"])})
 
 
     def __init_job(self, job_id, asynch, auto_notify):
@@ -325,7 +322,6 @@ class JobManager:
             Call manager to prepare the container for the job.
         """
         from core.core import core
-
         job = Job.from_id(job_id, 1)
         if job and job.status == "initializing":
             try:
@@ -367,7 +363,7 @@ class JobManager:
                 war("INPUTS of the run not ready. waiting")
                 self.set_status(job, "waiting", asynch=asynch)
                 return False
-            
+
         # TODO : check that enough reszources to run the job
         # Inputs files ready to use, looking for lxd resources now
         # count = 0

@@ -32,6 +32,17 @@ class JobHandler:
     def __init__(self):
         pass
 
+    #@staticmethod
+    #def format_job_json(job_json):
+        #if not isinstance(job_json, dict): return job_json
+        #if "logs" in job_json.keys():
+            #logs = []
+            #for l in job_json["logs"]:
+                #logs.append("http://{}/dl/job{}".format(HOST_P, l[len(JOBS_DIR):]))
+            #job_json["logs"] = logs        
+        #return job_json
+    
+    
     def list(self, request):
         return rest_success(core.jobs.list())
 
@@ -39,78 +50,20 @@ class JobHandler:
     def delete(self, request):
         job_id = request.match_info.get('job_id', "")
         try:
-            return rest_success(core.jobs.delete(job_id).to_json())
+            return rest_success(check_local_path(core.jobs.delete(job_id).to_json()))
         except Exception as error:
             return rest_error("Unable to delete the job (id={}) : {}".format(job_id, error.msg))
 
 
     def get(self, request):
         job_id = request.match_info.get('job_id', -1)
-        job = Job.from_id(job_id, 2)
+        job = Job.from_id(job_id, 1)
         if not job:
             return rest_error("Unable to find the job (id={})".format(job_id))
-        return rest_success(job.to_json(Job.public_fields))
+        result = job.to_json(Job.public_fields)
+        return rest_success(check_local_path(result))
 
 
-    def download_file(self, job_id, filename, location=JOBS_DIR):
-        job = Job.from_id(job_id, 1)
-        if job == None:
-            return rest_error("Unable to find the job (id={})".format(job_id))
-        path = os.path.join(job.path, filename)
-
-        if not os.path.exists(path):
-            return rest_error("File not found. {} doesn't exists for the job (id={})".format(filename, job_id))
-        content = ""
-        if os.path.isfile(path):
-            with open(path, 'br') as content_file:
-                file = content_file.read()
-        return web.Response(
-            # TODO: creating header as Multidict no more exists with aio>1.1
-            #headers=MultiDict({'Content-Disposition': 'Attachment; filename='+filename}),
-            body=file
-        )
-
-    def get_olog(self, request):
-        job_id = request.match_info.get('job_id', -1)
-        return self.download_file(job_id, "logs/out.log")
-
-    def get_elog(self, request):
-        job_id = request.match_info.get('job_id', -1)
-        return self.download_file(job_id, "logs/err.log")
-
-    def get_plog(self, request):
-        job_id = request.match_info.get('job_id', -1)
-        return self.download_file(job_id, "logs/core.log")
-
-    def get_olog_tail(self, request):
-        job_id = request.match_info.get('job_id', -1)
-        return self.download_file(job_id, "logs/out.log")
-
-    def get_elog_tail(self, request):
-        job_id = request.match_info.get('job_id', -1)
-        return self.download_file(job_id, "logs/err.log")
-
-    def get_plog_tail(self, request):
-        job_id = request.match_info.get('job_id', -1)
-        return self.download_file(job_id, "logs/core.log")
-
-    def get_io(self, request):
-        job_id  = request.match_info.get('job_id',  -1)
-        if job_id == -1:
-            return rest_error("Id not found")
-        job = Job.from_id(job_id, 1)
-        if job == None:
-            return rest_error("Unable to find the job with id {}".format(job_id))
-        result={
-            "inputs" : [f.to_json() for f in job.inputs],
-            "outputs": [f.to_json() for f in job.outputs],
-        }
-        return rest_success(result)
-
-    def get_file(self, request):
-        job_id  = request.match_info.get('job_id',  -1)
-        filename = request.match_info.get('filename', "")
-        return self.download_file(job_id, filename)
 
 
     async def update_status(self, request):
@@ -118,15 +71,19 @@ class JobHandler:
         data = await request.json()
         job_id = request.match_info.get('job_id', -1)
         try:
-            ipdb.set_trace()
-            if "status" in data.keys():
-                core.jobs.set_status(job_id, data["status"])
             job = Job.from_id(job_id)
+            new_status = data.pop("status") if "status" in data else None
             job.load(data)
+            if new_status:
+                print("JOB STATUS CHANGE: " + new_status)
+                core.jobs.set_status(job, new_status)
+            else:
+                core.notify_all({"action": "job_updated", "data" : job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs"])})
+            
         except Exception as ex:
             return rest_error("Unable to update information for the jobs with id {}. {}".format(job_id, ex))
 
-        return rest_success(job.to_json())
+        return rest_success(check_local_path(job.to_json()))
 
 
 
@@ -150,39 +107,43 @@ class JobHandler:
         inputs_ids = data["inputs_ids"]
         # Create the job 
         try:
-            job = core.jobs.new(pipe_id, name, config, inputs_ids, asynch=True)
+            job = core.jobs.new(pipe_id, name, config, inputs_ids, asynch=False)
         except Exception as ex:
             return rest_error("Error occured when initializing the new job. {}".format(ex))
         if job is None:
             return rest_error("Unable to create a new job.")
-        return rest_success(job.to_json())
+        job.init(1)
+        return rest_success(check_local_path(job.to_json()))
 
 
     def pause(self, request):
         job_id  = request.match_info.get('job_id',  -1)
         try:
             core.jobs.pause(job_id, False)
+            job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to pause the job {}. {}".format(job.id, ex))
-        return rest_success()
+        return rest_success(check_local_path(job.to_json()))
 
 
     def start(self, request):
         job_id  = request.match_info.get('job_id', -1)
         try:
             core.jobs.start(job_id, False)
+            job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to start the job {}. {}".format(job.id, ex))
-        return rest_success()
+        return rest_success(check_local_path(job.to_json()))
 
 
     def cancel(self, request):
         job_id  = request.match_info.get('job_id',  -1)
         try:
             core.jobs.stop(job_id, False)
+            job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to stop the job {}. {}".format(job_id, ex))
-        return rest_success()
+        return rest_success(check_local_path(job.to_json()))
 
 
     def monitoring(self, request):
@@ -192,7 +153,7 @@ class JobHandler:
         except Exception as ex:
             return rest_error("Unable to retrieve monitoring info for the jobs with id={}. {}".format(job_id, ex))
         if job:
-            return rest_success(format_job_json(job, ["id", "pipeline_id", "start_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "logs", "logs_tails"]))
+            return rest_success(check_local_path(job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs", "monitoring"])))
         return rest_error("Unable to get monitoring information for the job {}.".format(job_id))
 
 
@@ -200,10 +161,11 @@ class JobHandler:
         job_id  = request.match_info.get('job_id', -1)
         try:
             core.jobs.finalize(job_id, False)
+            job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to finalize the job {}. {}".format(job_id, ex))
         job = Job.from_id(job_id)
-        return rest_success(format_job_json(job))
+        return rest_success(check_local_path(job))
 
 
 

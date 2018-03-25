@@ -22,16 +22,15 @@ install:
   - cd /var/regovar/databases/hg38
   - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
   - gunzip refGene.txt.gz
-  - cd /var/regovar/databases/hg19
-  - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz
-  - gunzip refGene.txt.gz
+#  - cd /var/regovar/databases/hg19
+#  - wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz
+#  - gunzip refGene.txt.gz
 
 
 
 before_script:
   - cd /home/travis/build/REGOVAR/Regovar
   - psql -c "CREATE USER regovar WITH PASSWORD 'regovar';" -U postgres
-  - psql -c "CREATE DATABASE regovar_test OWNER regovar;" -U postgres
 
 script:
   - pip install -r requirements.txt
@@ -39,7 +38,7 @@ script:
   - cd regovar
   - make init
   - sed -i 's/^\(\s*DATABASE_NAME\s*=\s*"[^"]\+\)\(".*\)/\1_test\2/' config.py
-  - make install
+  - make install_travis
   - make update_hpo
   - psql -U regovar -d regovar_test -f tests/init_fake_data.sql
   - coverage run tests.py
