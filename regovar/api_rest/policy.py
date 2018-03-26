@@ -23,6 +23,7 @@ class RegovarAuthorizationPolicy(AbstractAuthorizationPolicy):
     async def permits(self, identity, permission, context=None):
         # TODO : check user authorisation 
         await asyncio.sleep(0)
+        ipdb.set_trace()
         user = User.from_id(identity)
         if user:
             if permission == 'Authenticated':

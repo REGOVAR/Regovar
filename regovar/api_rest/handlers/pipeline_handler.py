@@ -70,16 +70,13 @@ class PipelineHandler:
 
     def install(self, request):
         file_id = request.match_info.get('file_id', -1)
-        container_type = request.match_info.get('container_type', -1)
-        if container_type not in CONTAINERS_CONFIG.keys():
-            return rest_error("Container manager of type {} not supported by the server.".format(container_type))
         file = File.from_id(file_id)
         if not file:
             return rest_error("Unable to find file with id {}.".format(file_id))
         if file.status not in ["uploading", "uploaded", "checked"]:
             return rest_error("File status is {}, this file cannot be used as pipeline image (status shall be \"uploading\", \"uploaded\" or \"checked\"".format(file_id))
         
-        p = core.pipelines.install_init_image_local(file.path, False, {"type" : container_type})
+        p = core.pipelines.install_init_image_local(file.path, False)
         try:
             if core.pipelines.install(p.id, asynch=False):
                 return rest_success(check_local_path(pipe.to_json()))

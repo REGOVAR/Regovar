@@ -3,6 +3,7 @@
 import ipdb
 import json
 import core.model as Model
+from config import *
 from core.framework.common import *
 from core.framework.postgresql import execute
 

@@ -100,15 +100,15 @@ class UserHandler:
 
 
     async def login(self, request):
-        params = await request.post()
+        params = await request.json()
+        params = json.loads(params) if isinstance(params, str) else params
         login = params.get('login', None)
         pwd = params.get('password', "")
         print ("{} {}".format(login, pwd))
         user = core.user_authentication(login, pwd)
         if user:
-            # response = rest_success(user.to_json())
-            response = rest_success(user.to_json()) # web.HTTPFound('/')
             # Ok, user's credential are correct, remember user for the session
+            response = rest_success(user.to_json())
             await remember(request, response, str(user.id))
             return response
         raise web.HTTPForbidden()
@@ -139,7 +139,7 @@ class UserHandler:
             Tool for this manager to retrieve data from put/post request 
             and build json 
         """
-        params = await request.post()
+        params = await request.json()
         user_id = request.match_info.get('user_id', 0)
         login = params.get('login', None)
         password = params.get('password', None)
@@ -161,3 +161,6 @@ class UserHandler:
         if avatar : user.update({"avatar" : avatar})
 
         return user
+    
+    
+    
