@@ -7,7 +7,7 @@ DEBUG = True
 
 
 # HOST (internal)
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = 8500
 HOSTNAME = "{}:{}".format(HOST, PORT)  # This is the internal host on which aioHTTP will run the service.
 # HOST (public)
@@ -17,7 +17,7 @@ HOST_P = "dev.regovar.org"  # THIS url must be change if the annso server is rea
 
 
 # SECURITY
-PRIVATE_KEY32 = "723c88d556b150effbafca7c1d1b2f9f" # 32bits server secret key, default generated with $ date | md5sum
+PRIVATE_KEY32 = "9e764e059530a332f6a15003330dee8d" # 32bits server secret key, default generated with $ date | md5sum
 SESSION_MAX_DURATION = 86400
 OMIM_API_KEY = "OMIMKey" # To be set with your key. (get it for free here : https://omim.org/api )
 
@@ -44,7 +44,6 @@ CACHE_EXPIRATION_SECONDS = 2592000 # 30 days = 60*60*24*30
 
 
 
-
 # AUTOCOMPUTED VALUES
 REGOVAR_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_DIR = REGOVAR_DIR
@@ -54,20 +53,13 @@ NOTIFY_URL = "http://" + HOST_P + "/job/{}/notify"
 
 
 
-
-
-
-
 # REST API
-RANGE_DEFAULT = 100
-RANGE_MAX = 1000
+RANGE_DEFAULT = 1000
+RANGE_MAX = 10000
 
 
-#
+
 # CONTAINER CONFIG
-#
-
-PIPELINE_DEFAULT_ICON_PATH = os.path.join(TEMPLATE_DIR , "pipeline_icon.png")
 MAX_JOB_RUNNING = 5
 
 
@@ -82,18 +74,18 @@ CONTAINERS_CONFIG = {
         "job_name" : "pirus-job-{}",
         "image_name" : "pirus-pipe-{}",
         "manifest" : {
-            "mandatory" : {
-                "name"        : "The displayed name of the pirus pipeline", 
-                "job"         : "The command line that will executed by pirus to run the pipeline.", 
+            "mandatory" : 
+            {
+                "name"      : "The displayed name of the pirus pipeline", 
+                "job"       : "The command line that will executed by pirus to run the pipeline.", 
             },
-            "default" : {
-                "pirus_api"   : 0.5,                   # The version of the pirus api used by the pipeline
-                "inputs"      : "/pipeline/inputs",    # The absolute path in the pipeline lxd container to the directory where input files have to be mount.
-                "outputs"     : "/pipeline/outputs",   # The absolute path in the pipeline lxd container to the directory where output files will be write.
-                "logs"        : "/pipeline/logs",      # The absolute path in the pipeline lxd container to the directory where logs files will be write. Note that out.log, err.log and pirus.log will be automatically created in this directory.
-                "databases"   : "/pipeline/databases", # The absolute path in the pipeline lxd container to the directory where common databases have to be mount.
-                "form"        : None,                  # The absolute path in the pipeline lxd container to the json file use to describe the form that will be used by the user to configure the run.
-                "icon"        : None,                  # The absolute path in the pipeline lxd container to the icon of the pipe.
+            "default" : 
+            {
+                "api"       : "pirus.1",             # The version of the pirus api used by the pipeline
+                "inputs"    : "/pipeline/inputs",    # The absolute path in the pipeline lxd container to the directory where input files have to be mount.
+                "outputs"   : "/pipeline/outputs",   # The absolute path in the pipeline lxd container to the directory where output files will be write.
+                "logs"      : "/pipeline/logs",      # The absolute path in the pipeline lxd container to the directory where logs files will be write. Note that out.log, err.log and pirus.log will be automatically created in this directory.
+                "databases" : "/pipeline/databases", # The absolute path in the pipeline lxd container to the directory where common databases have to be mount.
             }
         }
     }

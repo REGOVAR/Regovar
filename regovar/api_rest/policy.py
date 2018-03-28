@@ -23,15 +23,13 @@ class RegovarAuthorizationPolicy(AbstractAuthorizationPolicy):
     async def permits(self, identity, permission, context=None):
         # TODO : check user authorisation 
         await asyncio.sleep(0)
-        ipdb.set_trace()
         user = User.from_id(identity)
         if user:
             if permission == 'Authenticated':
                 return True
 
-            role, access = permission.split(':')
-            print ("Check authent [{}+{}] for {} ({})".format(role, access, user.login, user.roles_dic))
-            if role in user.roles_dic.keys() and user.roles_dic[role] == access:
-                return True
+            
+            print ("Check authent [{}] for {} ({})".format(permission, user.login, user.roles_dic))
+            print ("TODO")
         return False
 

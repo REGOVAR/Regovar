@@ -40,6 +40,8 @@ class ApiHandler:
     def __init__(self):
         pass
 
+    
+    @user_role('Authenticated')
     def welcom(self, request):
         """
             Get all data to init/refresh data client side

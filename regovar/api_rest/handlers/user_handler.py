@@ -68,7 +68,7 @@ class UserHandler:
         return rest_success("todo get")
 
 
-    @user_role('Administration:Write')
+    @user_role('Admin')
     async def new(self, request):
         '''
             Add a new user in database. 
@@ -118,11 +118,11 @@ class UserHandler:
     async def logout(self, request):
         # response = rest_success("Your are disconnected")
         response = web.Response(body=b'You have been logged out')
-        await  forget(request, response)
+        await forget(request, response)
         return response
 
 
-    @user_role('Administration:Write')
+    @user_role('Admin')
     async def delete(self, request):
         # Check that user is admin, and is not deleting himself (to ensure that there is always at least one admin)
         remote_user_id = await authorized_userid(request)
@@ -132,6 +132,7 @@ class UserHandler:
         except Exception as err:
             return rest_exception(err)
         return rest_success()
+
 
 
     async def get_user_data_from_request(self, request):
