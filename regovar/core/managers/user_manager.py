@@ -14,7 +14,26 @@ from core.framework.postgresql import execute
 class UserManager:
 
     def list(self):
-        return []
+        """
+            List all users with minimal data
+        """
+        sql = "SELECT id, login, firstname, lastname, email, create_date, update_date, is_activated, is_admin, function, location FROM \"user\" ORDER BY lastname, firstname, id"
+        result = []
+        for res in execute(sql): 
+            result.append({
+                "id": res.id,
+                "login": res.login,
+                "firstname": res.firstname,
+                "lastname": res.lastname,
+                "email": res.email,
+                "is_activated": res.is_activated,
+                "is_admin": res.is_admin,
+                "function": res.function,
+                "location": res.location,
+                "create_date": res.create_date.isoformat(),
+                "update_date": res.update_date.isoformat()
+            })
+        return result
 
 
     def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
@@ -46,7 +65,7 @@ class UserManager:
         admin = Model.User.from_id(admin_id)
         user = Model.User.from_id(user_to_delete_id)
 
-        if admin is None or "Administration" not in admin.roles_dic.keys() or admin.roles_dic["Administration"] != "Write" :
+        if admin is None or not admin.is_admin():
             raise RegovarException(code="E101003")
         if user is None:
             raise RegovarException(code="E101001")

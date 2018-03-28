@@ -113,8 +113,6 @@ def user_load(self, data):
         Note that following properties cannot be set by this ways :
             - sandbox_id / sandbox (which MUST not be changed)
             - update_date / create_date (which are managed automaticaly by the server)
-            - projects_ids / projects / subjects_ids / subjects (which are too complex to be set directly. 
-              Need to use UserProjectSharing and UserSubjectSharing objects to update these associations)
     """
     try:
         # Required fields
@@ -213,7 +211,7 @@ def user_new(login=None):
 
 
 User = Base.classes.user
-User.public_fields = ["id", "firstname", "lastname", "login", "email", "function", "location", "update_date", "create_date", "settings", "roles", "sandbox_id", "sandbox"]
+User.public_fields = ["id", "firstname", "lastname", "login", "email", "function", "location", "update_date", "create_date", "sandbox_id", "sandbox", "is_activated", "is_admin"]
 User.init = user_init
 User.from_id = user_from_id
 User.from_ids = user_from_ids
