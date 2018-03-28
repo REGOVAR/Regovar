@@ -11,7 +11,7 @@ HOST = "0.0.0.0"
 PORT = 8500
 HOSTNAME = "{}:{}".format(HOST, PORT)  # This is the internal host on which aioHTTP will run the service.
 # HOST (public)
-HOST_P = "dev.regovar.org"  # THIS url must be change if the annso server is reach via a public namespace that user
+HOST_P = "test.regovar.org"  # THIS url must be change if the annso server is reach via a public namespace that user
 
 
 
@@ -40,7 +40,11 @@ DATABASES_DIR = "/var/regovar/databases"
 PIPELINES_DIR = "/var/regovar/pipelines"
 JOBS_DIR = "/var/regovar/jobs"
 
+
+# REST API
 CACHE_EXPIRATION_SECONDS = 2592000 # 30 days = 60*60*24*30
+RANGE_DEFAULT = 1000
+RANGE_MAX = 10000
 
 
 
@@ -53,9 +57,6 @@ NOTIFY_URL = "http://" + HOST_P + "/job/{}/notify"
 
 
 
-# REST API
-RANGE_DEFAULT = 1000
-RANGE_MAX = 10000
 
 
 
