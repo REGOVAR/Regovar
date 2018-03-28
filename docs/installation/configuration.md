@@ -13,7 +13,7 @@ Ci-dessous la liste des paramètres du fichier de configuration python du server
 | --- | ---- | ------ | ----------- |
 | `DEBUG` | `bool` | `False` | Affiche plus de logs et les affiches en plus directement dans la sortie "écran" de l'application |
 | | | | |
-| `HOST` | `string` | `127.0.0.1` | L'adresse utilisé par le serveur Regovar |
+| `HOST` | `string` | `0.0.0.0` | L'adresse utilisé par le serveur Regovar. Il est recommandé de gardé 0.0.0.0 (broadcast) au lieu de 127.0.0.1 (localhost) afin de permettre la communication entre le serveur et les machines virtuelle LXD. |
 | `PORT` | `int` | `8500` | Le port utilisé par le serveur Regovar |
 | `HOSTNAME` | `string` | `<HOST>:<PORT>` | Il s'agit des deux informations précédentes concaténée. C'est l'adresse qu'utilisera en interne aioHTTP pour le service Regovar. |
 | `HOST_P` | `string` | `dev.regovar.org` | Il s'agit de l'adresse publique/externe par laquelle on accédera au serveur Regovar. En général, aioHTTP utilisé une adresse privée local (127.0.0.1) et c'est le serveur Apache ou NginX qui va faire office de proxy entre l'adresse publique utilisé par les utilisateur et l'adresse interne de Regovar.|
@@ -47,7 +47,6 @@ Ci-dessous la liste des paramètres du fichier de configuration python du server
 | `ERROR_ROOT_URL` | `string` | `<HOST_P>/errorcode/` | L'adresse qui sera utilisé par le serveur pour guider l'utilisateur à trouver l'aide automatique correspondant aux codes d'erreurs |
 | `NOTIFY_URL` | `string` | `...` | L'adresse utilisé en interne par les containers Docker/LXD pour notifier le serveur de leur progression |
 | | | | |
-| `PIPELINE_DEFAULT_ICON_PATH` | `string` | `...` | L'icone par défaut utilisé pour les Pipelines quand ce dernier n'est pas fournis à l'installation.  |
 | `MAX_JOB_RUNNING` | `string` | `5` | Le nombre maximum de pipeline qui pourront être exécuté en parallèle |
 | `CONTAINERS_CONFIG` | `json` |  | Configuration du manager LXD. Voir la section dédiée.   |
 
