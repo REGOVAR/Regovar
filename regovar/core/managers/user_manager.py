@@ -90,12 +90,9 @@ class UserManager:
         user_id = None
         if "id" in user_data.keys():
             user_id = user_data["id"]
-        if remote_user.is_admin() or user_id == remote_user.id:
+        if remote_user.is_admin or user_id == remote_user.id:
             user = Model.User.from_id(user_id) or Model.User.new()
             user.load(user_data)
-            # Todo : save file in statics assets directory (remove old avatar if necessary), and store new url into db
-            #if "avatar" in user_data.keys() : user.avatar = user_data["avatar"]
-            
             user.save()
             return user
         return None

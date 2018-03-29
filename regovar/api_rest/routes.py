@@ -46,7 +46,7 @@ key = base64.b64encode(PRIVATE_KEY32.encode()).decode()
 
 # Create server app
 app = web.Application()
-setup_session(app, EncryptedCookieStorage(key, max_age=SESSION_MAX_DURATION))
+setup_session(app, EncryptedCookieStorage(key, max_age=SESSION_MAX_DURATION, cookie_name="regovar_session"))
 setup_security(app, SessionIdentityPolicy(session_key='regovar_session_token'), RegovarAuthorizationPolicy())
 app['websockets'] = []
 aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(TEMPLATE_DIR)) 
