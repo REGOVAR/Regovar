@@ -59,13 +59,14 @@ class UserHandler:
 
     @user_role('Authenticated')
     def get(self, request):
-        # TODO : manage query parameters for fields
+        '''
+            Return the requested user
+        '''
         user_id = request.match_info.get('user_id', 0)
-        try:
-            user = core.users.get(user_id)
-        except Exception as ex:
-            return rest_exception(ex)
-        return rest_success("todo get")
+        user = User.from_id(user_id)
+        if not user:
+            return rest_exception("No user with id {}".format(user_id))
+        return rest_success(user.to_json())
 
 
     @user_role('Admin')

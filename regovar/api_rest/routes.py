@@ -70,10 +70,10 @@ app.router.add_route('GET',    "/ws",     websocket.get)                        
 
 app.router.add_route('GET',    "/users", userHandler.list)                                                       # Get list of all users (allow search parameters)
 app.router.add_route('POST',   "/user", userHandler.new)                                                         # Create new users with provided data
-app.router.add_route('GET',    "/user/{user_id}", userHandler.get)                                               # Get details about one user
-app.router.add_route('PUT',    "/user/{user_id}", userHandler.edit)                                              # Edit user with provided data
 app.router.add_route('POST',   "/user/login", userHandler.login)                                                 # Start user's session if provided credentials are correct
 app.router.add_route('GET',    "/user/logout", userHandler.logout)                                               # Kill user's session
+app.router.add_route('GET',    "/user/{user_id}", userHandler.get)                                               # Get details about one user
+app.router.add_route('PUT',    "/user/{user_id}", userHandler.edit)                                              # Edit user with provided data
 app.router.add_route('DELETE', "/user/{user_id}", userHandler.delete)                                            # Delete a user
 
 #app.router.add_route('GET',    "/project/browserTree",           projHandler.tree)                               # Get projects as tree (allow search parameters)
