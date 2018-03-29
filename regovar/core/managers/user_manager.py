@@ -94,6 +94,10 @@ class UserManager:
             user = Model.User.from_id(user_id) or Model.User.new()
             user.load(user_data)
             user.save()
+            
+            if remote_user.is_admin and "password" in user_data.keys() and check_string(user_data["password"]):
+                user.erase_password(check_string(user_data["password"]))
+                
             return user
         return None
     

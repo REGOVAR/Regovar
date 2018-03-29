@@ -125,8 +125,8 @@ def user_load(self, data):
         if "is_admin" in data.keys() : self.is_admin = data["is_admin"]
         if "is_activated" in data.keys() : self.is_activated = check_bool(data["is_activated"])
         # Update password
-        if "password" in data.keys() and check_string(data["password"]): 
-            self.erase_password(check_string(data["password"]))
+        if "password" in data.keys() and check_string(data["password"]) and "oldpassword" in data.keys() and check_string(data["oldpassword"]): 
+            self.set_password(check_string(data["oldpassword"]), check_string(data["password"]))
         self.save()
     
         # reload dynamics properties
