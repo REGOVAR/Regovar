@@ -1,4 +1,4 @@
-# Encapsuler son pipeline dans Regovar (conceptes de base)
+# Encapsuler son pipeline dans Regovar (notions de base)
 
 Ce tutoriel présente les notions de base à connaître avant de s'attaquer à l'encapsulation de son pipeline dans Regovar. 
 La réalisation technique de cette encapsulation dépend de la technologie utilisé et est développé dans des tutoriels suivants :
