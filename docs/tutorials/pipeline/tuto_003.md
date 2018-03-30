@@ -36,16 +36,20 @@ En plus des respecter les [exigences de base](tuto_002.md#exigences-et-options) 
 
 
 
-## Procédure
-###Prérequis
+
+## Prérequis
 - Dans l'idéal, vous travaillez sur un ordinateur (LOCAL) où sont installé et fonctionnent parfaitement LXC/LXD et votre pipeline.
 - Vous avez identifier localement les répertoires INPUTS, OUTPUTS, LOGS et DATABASES pour votre pipeline.
   - Votre pipeline est capable de récupérer si besoin ses paramètres depuis un fichier `config.json` qui se trouve dans le répertoire INPUTS
   - Votre pipeline s'attends à trouver les fichiers à analyser dans le réperoire INPUTS (à noter que ce répertoire sera en read-only dans le container. Il ne faut donc pas que votre pipeline essaye d'écrire quoi que ce soit dedans)
   - Votre pipeline produit ses résultats dans le répertoire OUTPUTS
   - Les logs de votre pipeline sont placés dans le répertoire LOGS
-  - 
 
+## INPUTS/config.json et notification temps-réel
+Le fichier config.
+Si vous voulez que la progression de votre pipeline soit mis à jour en temps réel, il faut que votre pipeline récu
+
+## Procédure
 ```
 # Création du CONTAINER
 lxc launch images:ubuntu/xenial mypipelineVM
