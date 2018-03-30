@@ -11,11 +11,11 @@ La réalisation technique de cette encapsulation dépend de la technologie utili
 Regovar permet d'utiliser n'importe quel pipeline bioinformatique. 
 Pour ce faire chaque pipeline doit être "packagé" d'une certaine façon. En effet pour des raisons de sécurité et de maintenance, chaque pipeline est encapsulé dans un container qui va l'isoler virtuellement du serveur qui va vous permettre de démarrer et superviser son exécution. 
 
-## Technologies
+###Technologies
 L'encapsulation repose en fait sur le concepte de machine virtuelle. A l'heure actuelle, le technologie utilisé est [LXC](https://linuxcontainers.org/fr/). Un module pour supporter la technologie [Docker](https://www.docker.com/what-docker) est prévu mais n'a pas encore été developpé. Si celà vous intéresse vous pouvez participer (et accélérer) le développement de ce module en contactant les développeurs via github ou à l'adresse dev@regovar.org
 
 
-## Les points positifs
+###Les points positifs
 * Sécurité assuré et maintenance facilité: chaque pipeline est isolé dans son container comme si il est tout seul. Pas de risque de conflits avec les autres logiciels installé sur le serveur;
 * Archivage des différentes versions des pipelines;
 * Automatisation;
@@ -27,12 +27,12 @@ L'encapsulation repose en fait sur le concepte de machine virtuelle. A l'heure a
 
 
 
-## Les points négatifs
+###Les points négatifs
 * Contrainte à respecter pour l'exécution du pipeline (API);
 * Travail supplémentaire pour encapsuler son pipeline. Celà peut prendre 1/2 à 1 journée en fonction des problèmes rencontrés.
 
 
-## Encapsulation: exigences et options
+## Exigences et options
 
 Quelque soit la technologie utilisé ([LXD](pipeline/tuto_003.md) ou [Docker](pipeline/tuto_004.md)), votre pipeline encapsulé se présentera sous la forme d'un fichier zip avec à sa racine un fichier `manifest.json`.
 
@@ -87,3 +87,138 @@ MyPipeline_v1.8.zip
   |  manifest.json
   |  README.txt
 ```
+
+## Configuration via le fichier config.json
+Regovar offre à ses utilisateurs une interface simple et conviviale pour démarrer et superviser soit-même les pipelines. 
+
+La configuration se déroule en 3 étapes :
+- Choix du pipeline parmi la liste des pipeline installé sur le serveur
+- Choix des fichiers sur lequel devra travailler le pipeline.
+- Configuration du pipeline via un formulaire spécifique à celui-ci
+
+Pour cette troisième et dernière étape, les développeurs doivent fournir avec leur pipeline un fichier `form.json` (cf `manifest.json`) qui va décrire les paramètres de ce dernier. Regovar s'occupera ensuite de générer le formulaire correspondant afin de récupérer les réglages de l'utilisateur. Ces valeurs sont ensuite stockées dans un fichier qui se nommera `config.json` et qui se trouvera dans le répertoire INPUTS du contenaire du pipeline (cf `manifest.json`)
+
+L'exemple ci-dessous montre la structure attendu pour le fichier `form.json` ainsi que les différents types de paramètre supportés.
+```
+{
+    "$schema": "http://json-schema.org/draft-03/schema#",
+    "type": "object",
+    "properties":
+    {
+        "param1_key":
+        {
+            "title": "Mon paramètre 1",
+            "description": "Premier paramètre obligatoire de mon pipeline",
+            "type": "integer",
+            "required": true,
+            "default": 20,
+            "minimum": 0,
+            "maximum": 100
+        },
+        "param2_key":
+        {
+            "title": "Mon paramètre 2",
+            "description": "Deuxième paramètre optionnel de mon pipeline",
+            "type": "string",
+            "required": false,
+            "default": "",
+        },
+        "param3_key":
+        {
+            "title": "Mon paramètre 3",
+            "description": "Ce troisième paramètre est une liste à choix unique (combobox)",
+            "type": "enum",
+            "required": true,
+            "enum": ["choix 1", "choix 2", "choix 3"]
+            "default": "choix 1"
+        },
+        "param4_key":
+        {
+            "title": "Mon paramètre 4",
+            "description": "Les type integer pour les entiers, et number pour les réels (float)",
+            "type": "number",
+            "required": false,
+            "default": 1.75,
+            "minimum": -75,
+            "maximum": 106.5
+        }
+    }
+}
+```
+
+###Les différents types de champs
+
+**integer**
+
+Pour saisir des entiers (int). 
+```
+"param_key":
+{
+    "title": "Param name",
+    "description": "Param description",
+    "type": "integer",
+    "required": true,
+    "default": 20,
+    "minimum": 0,
+    "maximum": 100
+}
+```
+
+**number**
+
+Pour saisir des réels (float)
+```
+"param_key":
+{
+    "title": "Param name",
+    "description": "Param description",
+    "type": "number",
+    "required": true,
+    "default": 20,
+    "minimum": 0,
+    "maximum": 100
+}
+```
+
+**string**
+
+Pour saisir du texte (string)
+```
+"param_key":
+{
+    "title": "Param name",
+    "description": "Param description",
+    "type": "string",
+    "required": true,
+    "default": "default value",
+}
+```
+
+**enum**
+
+Pour proposer une liste à choix unique (liste de string)
+```
+"param_key":
+{
+    "title": "Param name",
+    "description": "Param description",
+    "type": "enum",
+    "enum": ["choix 1", "choix 2", "choix 3"]
+    "required": true,
+    "default": "choix 1"
+}
+```
+
+Pour les enum, vous pouvez soit proposer une liste de valeur manuellement comme dans l'exemple soit opter pour les listes générés autamtiquement grâce aux mots clés suivant :
+
+- `__INPUTS_FILES__` va générer la liste des fichiers qui ont été sélectionnés lors de l'étape précédente de la configuration du pipeline. Celà permet ainsi de pouvoir sélectionner un fichier en particulier parmis plusieurs et de l'indiquer au pipeline.
+```
+    "enum": "__INPUTS_FILES__",
+```
+
+- `__GENOMES_REFS__` va générer la liste des génomes de références (Hg19, Hg38, ...) qui ont été installés sur le serveur et dont les fichiers et bases de données associés seront accessible par le pipeline via le répertoire DATABASES.
+```
+    "enum": "__GENOMES_REFS__",
+```
+
+
