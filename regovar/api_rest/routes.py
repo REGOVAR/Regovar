@@ -46,7 +46,7 @@ key = base64.b64encode(PRIVATE_KEY32.encode()).decode()
 
 # Create server app
 app = web.Application()
-setup_session(app, EncryptedCookieStorage(key, max_age=SESSION_MAX_DURATION))
+setup_session(app, EncryptedCookieStorage(key, max_age=SESSION_MAX_DURATION, cookie_name="regovar_session"))
 setup_security(app, SessionIdentityPolicy(session_key='regovar_session_token'), RegovarAuthorizationPolicy())
 app['websockets'] = []
 aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(TEMPLATE_DIR)) 
@@ -70,10 +70,10 @@ app.router.add_route('GET',    "/ws",     websocket.get)                        
 
 app.router.add_route('GET',    "/users", userHandler.list)                                                       # Get list of all users (allow search parameters)
 app.router.add_route('POST',   "/user", userHandler.new)                                                         # Create new users with provided data
-app.router.add_route('GET',    "/user/{user_id}", userHandler.get)                                               # Get details about one user
-app.router.add_route('PUT',    "/user/{user_id}", userHandler.edit)                                              # Edit user with provided data
 app.router.add_route('POST',   "/user/login", userHandler.login)                                                 # Start user's session if provided credentials are correct
 app.router.add_route('GET',    "/user/logout", userHandler.logout)                                               # Kill user's session
+app.router.add_route('GET',    "/user/{user_id}", userHandler.get)                                               # Get details about one user
+app.router.add_route('PUT',    "/user/{user_id}", userHandler.edit)                                              # Edit user with provided data
 app.router.add_route('DELETE', "/user/{user_id}", userHandler.delete)                                            # Delete a user
 
 #app.router.add_route('GET',    "/project/browserTree",           projHandler.tree)                               # Get projects as tree (allow search parameters)
@@ -114,11 +114,11 @@ app.router.add_route('HEAD',   "/file/upload/{file_id}", fileHdl.tus_upload_resu
 app.router.add_route('PATCH',  "/file/upload/{file_id}", fileHdl.tus_upload_chunk)
 app.router.add_route('DELETE', "/file/upload/{file_id}", fileHdl.tus_upload_delete)
 
-app.router.add_route('GET',    "/pipelines",                                   pipeHdl.list)
-app.router.add_route('GET',    "/pipeline/{pipe_id}",                          pipeHdl.get)
-app.router.add_route('DELETE', "/pipeline/{pipe_id}",                          pipeHdl.delete)
-app.router.add_route('GET',    "/pipeline/install/{file_id}/{container_type}", pipeHdl.install)
-app.router.add_route('POST',   "/pipeline/install",                            pipeHdl.install_json)
+app.router.add_route('GET',    "/pipelines",                  pipeHdl.list)
+app.router.add_route('GET',    "/pipeline/{pipe_id}",         pipeHdl.get)
+app.router.add_route('DELETE', "/pipeline/{pipe_id}",         pipeHdl.delete)
+app.router.add_route('GET',    "/pipeline/install/{file_id}", pipeHdl.install)
+app.router.add_route('POST',   "/pipeline/install",           pipeHdl.install_json)
 
 app.router.add_route('GET',    "/jobs",                    jobHdl.list)
 app.router.add_route('POST',   "/job",                     jobHdl.new)

@@ -59,16 +59,17 @@ class UserHandler:
 
     @user_role('Authenticated')
     def get(self, request):
-        # TODO : manage query parameters for fields
+        '''
+            Return the requested user
+        '''
         user_id = request.match_info.get('user_id', 0)
-        try:
-            user = core.users.get(user_id)
-        except Exception as ex:
-            return rest_exception(ex)
-        return rest_success("todo get")
+        user = User.from_id(user_id)
+        if not user:
+            return rest_exception("No user with id {}".format(user_id))
+        return rest_success(user.to_json())
 
 
-    @user_role('Administration:Write')
+    @user_role('Admin')
     async def new(self, request):
         '''
             Add a new user in database. 
@@ -100,15 +101,15 @@ class UserHandler:
 
 
     async def login(self, request):
-        params = await request.post()
+        params = await request.json()
+        params = json.loads(params) if isinstance(params, str) else params
         login = params.get('login', None)
         pwd = params.get('password', "")
         print ("{} {}".format(login, pwd))
         user = core.user_authentication(login, pwd)
         if user:
-            # response = rest_success(user.to_json())
-            response = rest_success(user.to_json()) # web.HTTPFound('/')
             # Ok, user's credential are correct, remember user for the session
+            response = rest_success(user.to_json())
             await remember(request, response, str(user.id))
             return response
         raise web.HTTPForbidden()
@@ -118,11 +119,11 @@ class UserHandler:
     async def logout(self, request):
         # response = rest_success("Your are disconnected")
         response = web.Response(body=b'You have been logged out')
-        await  forget(request, response)
+        await forget(request, response)
         return response
 
 
-    @user_role('Administration:Write')
+    @user_role('Admin')
     async def delete(self, request):
         # Check that user is admin, and is not deleting himself (to ensure that there is always at least one admin)
         remote_user_id = await authorized_userid(request)
@@ -134,12 +135,13 @@ class UserHandler:
         return rest_success()
 
 
+
     async def get_user_data_from_request(self, request):
         """
             Tool for this manager to retrieve data from put/post request 
             and build json 
         """
-        params = await request.post()
+        params = await request.json()
         user_id = request.match_info.get('user_id', 0)
         login = params.get('login', None)
         password = params.get('password', None)
@@ -161,3 +163,6 @@ class UserHandler:
         if avatar : user.update({"avatar" : avatar})
 
         return user
+    
+    
+    

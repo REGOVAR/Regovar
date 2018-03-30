@@ -45,103 +45,48 @@ class LxdManager(AbstractContainerManager):
         """
         if not pipeline or not isinstance(pipeline, Pipeline) :
             raise RegovarException("Pipeline's data error.")
-        pipeline.load_depth(1)
+        pipeline.init(1)
         if not pipeline.image_file or not pipeline.image_file.path:
             raise RegovarException("Pipeline image file's data error.")
+        root_path = os.path.join(PIPELINES_DIR, str(pipeline.id))
 
         # 0- retrieve conf related to LXD
         if not CONTAINERS_CONFIG or "lxd" not in CONTAINERS_CONFIG.keys() or not CONTAINERS_CONFIG["lxd"]:
             raise RegovarException("No configuration settings found for lxd")
         conf = CONTAINERS_CONFIG["lxd"]
-        lxd_alias = str(pipeline.id)
-        root_path = os.path.join(PIPELINES_DIR, lxd_alias)
-        old_file_path = pipeline.image_file.path
-        #pipeline.image_file.path = os.path.join(root_path, pipeline.name)
         
-        # 1- Copy file into final folder
-        log('Installation of the pipeline package : ' + root_path)
-        os.makedirs(root_path)
-        #os.rename(old_file_path, pipeline.image_file.path)
-        os.chmod(pipeline.image_file.path, 0o777)
-
-        # 2- Extract pipeline metadata
-        try:
-            tar = tarfile.open(pipeline.image_file.path)
-            tar_data = [info for info in tar.getmembers() if info.name == "metadata.yaml"]
-            metadata = tar.extractfile(member=tar_data[0])
-            metadata = metadata.read()
-            metadata = yaml.load(metadata)  # using yaml as it can also load json
-            metadata = metadata["pirus"]
-        except:
-            # TODO : manage error + remove package file
-            err('FAILLED Extraction of ' + pipeline.image_file.path)
-            raise RegovarException("XXXX", "Unable to extract package. Corrupted file or wrong format")
-        log('Extraction of metadata from ' + pipeline.image_file.path)
-
-        # 2- Check that mandatory fields exists
+        # 1- Check that mandatory fields exists
+        manifest = pipeline.manifest
         missing = ""
         for k in conf["manifest"]["mandatory"].keys():
-            if k not in metadata.keys():
+            if k not in manifest.keys():
                 missing += k + ", "                
         if missing != "":
             missing = missing[:-2]
-            raise RegovarException("FAILLED Checking validity of metadata (missing : {})".format(missing))
-        log('Validity of metadata checked')
+            raise RegovarException("FAILLED Checking validity of manifest (missing : {})".format(missing))
+        log('Validity of manifest checked')
 
-        # 3- Default value for optional fields in mandatory file
+        # 2- Default value for optional fields in mandatory file
         for k in conf["manifest"]["default"].keys():
-            if k not in metadata.keys():
-                metadata[k] = conf["manifest"]["default"][k]
+            if k not in manifest.keys():
+                manifest[k] = conf["manifest"]["default"][k]
 
-        # 4- Extract pirus technicals files from the tar file
-        formfile = False
-        iconfile = False
-        documents = []
-        for filepath in metadata["documents"]:
-            try:
-                source = os.path.join("rootfs", filepath[1:] if filepath[0]=="/" else filepath)
-                filename = clean_filename(os.path.basename(filepath))
-                tar_data = [info for info in tar.getmembers() if info.name == source]
-                file = tar.extractfile(member=tar_data[0])
-                source = os.path.join(root_path, source)
-                pirus_file = os.path.join(root_path, filename)
-                with open(pirus_file, 'bw+') as f:
-                    f.write(file.read())
-                    documents.append(pirus_file)
-                    log('Document extraction : {} => {}'.format(source, pirus_file))
-                if filename == "form.json": formfile = True
-                if filename in ["icon.png", "icon.jpg"] : iconfile = True
-            except Exception as ex:
-                err("Document extraction failed : {}".format(filepath))
-        if not formfile:
-            pirus_file = os.path.join(root_path, "form.json")
-            with open(pirus_file, 'bw+') as f:
-                f.write(b'{}')
-                documents.append(pirus_file)
-        if not iconfile:
-            war("Icon file not found in the image archive. Using default icon.")
-            shutil.copyfile(PIPELINE_DEFAULT_ICON_PATH, os.path.join(root_path, "icon.png"))
-            documents.append(os.path.join(root_path, "icon.png"))
-        log('Extraction of pipeline technical files (pipeline\'s documents)')
-
-        # 5- Save pipeline into database
-        lxd_alias = conf["image_name"].format(lxd_alias)
-        metadata["lxd_alias"] = lxd_alias
-        metadata.pop("documents")
-        pipeline.load(metadata)
-        pipeline.status = "installing"
-        pipeline.documents = json.dumps(documents, sort_keys=True, indent=2)
-        pipeline.manifest = json.dumps(metadata, sort_keys=True, indent=2)
+        # 3- Save checked manifest/config into database
+        lxd_alias = conf["image_name"].format(pipeline.id)
+        manifest["lxd_alias"] = lxd_alias
+        pipeline.load(manifest)
+        pipeline.manifest = manifest
         pipeline.path = root_path
+        
         try:
             pipeline.save()
         except Exception as ex:
             raise RegovarException("FAILLED to save the new pipeline in database (already exists or wrong name ?).", "", ex)
-
         log("Pipeline saved in database with id={}".format(pipeline.id))
 
-        # 6- Install lxd container
-        cmd = ["lxc", "image", "import", pipeline.image_file.path, "--alias", lxd_alias]
+        # 4- Install lxd container
+        image_file_path = os.path.join(root_path, "lxc_image.tar.gz")
+        cmd = ["lxc", "image", "import", image_file_path, "--alias", lxd_alias]
         try:
             out_tmp = '/tmp/' + lxd_alias + '-out'
             err_tmp = '/tmp/' + lxd_alias + '-err'
@@ -150,7 +95,6 @@ class LxdManager(AbstractContainerManager):
             raise RegovarException("FAILLED Installation of the lxd image. ($: {})\nPlease, check logs {}".format(" ".join(cmd), err_tmp), "", ex)
         error = open(err_tmp, "r").read()
         if error != "":
-
             pipeline.delete()
             shutil.rmtree(root_path)
             if "fingerprint" in error:
@@ -159,20 +103,12 @@ class LxdManager(AbstractContainerManager):
         else:
             log('Installation of the lxd image.')
 
-        # 7- Clean directory
+        # 5- Clean repo (removing image file)
         try:
-            keep = documents
-            keep = documents.append(pipeline.image_file.path)
-            for f in os.listdir(root_path):
-                fullpath = os.path.join(root_path, f)
-                if fullpath not in keep:
-                    if os.path.isfile(fullpath):
-                        os.remove(fullpath)
-                    else:
-                        shutil.rmtree(fullpath)
-        except Exception as ex:
-            err('FAILLED to clean repository : {}'.format(ex))
-        log('Cleaning repository.')
+            os.remove(image_file_path)
+        except OSError:
+            pass
+
         log('Pipeline is ready !')
 
         pipeline.status = "ready"

@@ -73,7 +73,7 @@ $$ LANGUAGE sql;
 -- --------------------------------------------
 CREATE TYPE file_status AS ENUM ('uploading', 'uploaded', 'checked', 'error');
 CREATE TYPE file_usage AS ENUM ('none', 'pipeline', 'job', 'subject', 'sample', 'analysis', 'mix');
-CREATE TYPE pipe_status AS ENUM ('initializing', 'installing', 'ready', 'error');
+CREATE TYPE pipe_status AS ENUM ('downloaded', 'initializing', 'installing', 'ready', 'error');
 CREATE TYPE job_status AS ENUM ('waiting', 'initializing', 'running', 'pause', 'finalizing', 'done', 'canceled', 'error');
 CREATE TYPE field_type AS ENUM ('int', 'string', 'float', 'enum', 'range', 'bool', 'sequence', 'list', 'sample_array');
 CREATE TYPE annotation_db_type AS ENUM ('site', 'variant', 'transcript');
@@ -103,8 +103,7 @@ CREATE TABLE public.user
     lastname text COLLATE pg_catalog."C",
     function text COLLATE pg_catalog."C",
     location text COLLATE pg_catalog."C",
-    settings json,
-    roles json,
+    is_admin boolean DEFAULT False,
     is_activated boolean DEFAULT True,
     sandbox_id integer,
     create_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
@@ -660,17 +659,17 @@ INSERT INTO "project" (id, name, comment) VALUES
   (0, 'Trash', 'Special project that contains all analyses that have been deleted by non admin users');
 INSERT INTO "project" (comment, is_sandbox) VALUES
   ('My sandbox', True);
-INSERT INTO "user" (login, firstname, lastname, roles, sandbox_id) VALUES
-  ('admin', 'Root', 'Administrator', '{"Administration": "Write"}', 1);
+INSERT INTO "user" (login, firstname, lastname, is_admin, sandbox_id) VALUES
+  ('admin', 'Root', 'Administrator', True, 1);
 
 
 
 INSERT INTO "event" (message, type) VALUES
-  ('Regovar database 7.1 creation', 'technical'),
+  ('Regovar database 8.0 creation', 'technical'),
   ('Default root admin user created', 'technical');
   
 INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           '7.1'),
+    ('database_version',          'The current version of the database',           '8.0'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
     ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
   

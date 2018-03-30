@@ -130,9 +130,13 @@ class JobManager:
                 self.set_status(job, "waiting", asynch=asynch)
                 return Job.from_id(job.id)
         for f in job.inputs:
-            link_path = os.path.join(inputs_path, f.name)
-            os.link(f.path, link_path)
-            #os.chmod(link_path, 0o644)
+            # copy all file in the f folder (because some file may have attached files like index bam.bai for bam files)
+            file_directory = os.path.dirname(f.path)
+            for fname in os.listdir(file_directory) :
+                file_path = os.path.join(file_directory, fname)
+                link_path = os.path.join(inputs_path, fname)
+                os.link(file_path, link_path)
+                os.chmod(link_path, 0o644)
 
         # Call init of the container
         # if asynch: 

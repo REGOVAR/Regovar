@@ -6,6 +6,7 @@ import os
 import shutil
 import json
 import tarfile
+import zipfile
 import datetime
 import time
 import uuid
@@ -145,11 +146,10 @@ class PipelineManager:
 
 
 
-    def install(self, pipeline_id, pipeline_type=None, asynch=True):
+    def install(self, pipeline_id, asynch=True):
         """
             Start the installation of the pipeline. (done in another thread)
-            The initialization shall be done (image ready to be used), 
-            Except for 'github' pipeline's type which don't need image (manager.need_image_file set to False)
+            The initialization shall be done (image ready to be used)
         """
         from core.core import core
 
@@ -157,17 +157,17 @@ class PipelineManager:
         if not pipeline : 
             raise RegovarException("Pipeline not found (id={}).".format(pipeline_id))
         if pipeline.status != "initializing":
-            raise RegovarException("Pipeline status ({}) is not \"initializing\". Cannot perform an installation.".format(pipeline.status))
+            raise RegovarException("Pipeline status ({}) is not \"initializing\". Cannot perform another installation.".format(pipeline.status))
         if pipeline.image_file and pipeline.image_file.status not in ["uploading", "uploaded", "checked"]:
             raise RegovarException("Wrong pipeline image (status={}).".format(pipeline.image_file.status))
 
-        if not pipeline.type: pipeline.type = pipeline_type
-        if not pipeline.type :
-            raise RegovarException("Pipeline type not set. Unable to know which kind of installation shall be performed.")
-        if pipeline.type not in core.container_managers.keys():
-            raise RegovarException("Unknow pipeline's type ({}). Installation cannot be performed.".format(pipeline.type))
-        if core.container_managers[pipeline.type].need_image_file and not pipeline.image_file:
-            raise RegovarException("This kind of pipeline need a valid image file to be uploaded on the server.")
+        #if not pipeline.type: pipeline.type = pipeline_type
+        #if not pipeline.type :
+            #raise RegovarException("Pipeline type not set. Unable to know which kind of installation shall be performed.")
+        #if pipeline.type not in core.container_managers.keys():
+            #raise RegovarException("Unknow pipeline's type ({}). Installation cannot be performed.".format(pipeline.type))
+        #if core.container_managers[pipeline.type].need_image_file and not pipeline.image_file:
+            #raise RegovarException("This kind of pipeline need a valid image file to be uploaded on the server.")
 
         if not pipeline.image_file or pipeline.image_file.status in ["uploaded", "checked"]:
             if asynch:
@@ -179,14 +179,54 @@ class PipelineManager:
 
     def __install(self, pipeline):
         from core.core import core
-
+        # Dezip pirus package in the pirus pipeline directory
+        root_path = os.path.join(PIPELINES_DIR, str(pipeline.id))
+        log('Installation of the pipeline package : ' + root_path)
+        os.makedirs(root_path)
+        os.chmod(pipeline.image_file.path, 0o777)
+        with zipfile.ZipFile(pipeline.image_file.path,"r") as zip_ref:
+            zip_ref.extractall(root_path)
+        
+        # Load manifest
+        try:
+            with open(os.path.join(root_path, "manifest.json"), "r") as f:
+                data = f.read()
+                manifest = json.loads(data)
+                if "documents" in manifest.keys():
+                    pipeline.documents = manifest.pop("documents")
+                    for k in pipeline.documents.keys():
+                        pipeline.documents[k] = os.path.join(root_path, pipeline.documents[k])
+                if "developpers" in manifest.keys():
+                    pipeline.developpers = manifest.pop("developpers")
+                if "api" in manifest.keys():
+                    pipeline.version_api = manifest.pop("api")
+                pipeline.manifest = manifest 
+                pipeline.save()
+        except Exception as ex:
+            pipeline.status = "error"
+            pipeline.save()
+            raise RegovarException("Unable to open and read manifest.json. The pipeline package is wrong or corrupt.", "", ex)
+        
+        # Check that pipeline type is supported
+        if "type" not in manifest.keys():
+            pipeline.status = "error"
+            pipeline.save()
+            raise RegovarException("Pipeline virtualization type not specified. Installation aborded.")
+        pipeline.type = manifest["type"]
+        pipeline.installation_date = datetime.datetime.now()
+        pipeline.status = "installing"
+        pipeline.save()
+        if pipeline.type not in CONTAINERS_CONFIG.keys():
+            pipeline.status = "error"
+            pipeline.save()
+            raise RegovarException("Container manager of type {} not supported by the server.".format(pipeline.type))
+        
+        # Install pipeline according to the type
         try:
             result = core.container_managers[pipeline.type].install_pipeline(pipeline)
         except Exception as ex:
             if isinstance(ex, RegovarException): raise ex
             raise RegovarException("Error occured during installation of the pipeline. Installation aborded.", "", ex)
-        pipeline.status = "ready" if result else "error"
-        pipeline.save()
 
 
 

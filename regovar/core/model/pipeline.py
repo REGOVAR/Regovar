@@ -103,6 +103,7 @@ def pipeline_to_json(self, fields=None, loading_depth=-1):
 
 
 def pipeline_load(self, data):
+    from core.model.file import File
     try:
         # Required fields
         if "name" in data.keys(): self.name = check_string(data['name'])
