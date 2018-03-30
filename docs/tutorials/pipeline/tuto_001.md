@@ -6,7 +6,7 @@ Pour voir comment packager son pipeline, veuillez vous référer au [tutoriel su
 ## Cas 1 : Manuellement depuis le serveur via la console
 
 ### Prérequis:
-* Le pipeline est correctement packagé pour regovar et vous n'avez plus qu'à le déployer sur le serveur Regovar;
+* Le pipeline est correctement [packagé](tuto_002.md) pour regovar et vous n'avez plus qu'à le déployer sur le serveur Regovar;
 * Vous êtes connecté sur le serveur avec l'utilisateur et les droits suffisant pour exécuter les commandes bash de l'application regovar;
 
 ### Procédure:
