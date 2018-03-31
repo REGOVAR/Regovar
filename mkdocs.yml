@@ -26,6 +26,7 @@ pages:
  - 'TUTORIELS':
     - 'Filtrage': 'tutorials/filtering.md'
     - 'Pipeline': 'tutorials/pipeline.md'
+       - 'T1': 'tutorials/pipeline/tuto_001.md'
     - 'Autres': 'tutorials/global.md'
  - 'DÉVELOPPEUR':
     - 'Communauté': 'developper/community.md'
