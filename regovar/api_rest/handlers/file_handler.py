@@ -117,6 +117,7 @@ class FileHandler:
     
     
     
+    @user_role('Authenticated')
     def list(self, request):
         # Generic processing of the get query
         fields, query, order, offset, limit = process_generic_get(request.query_string, File.public_fields)
@@ -135,6 +136,7 @@ class FileHandler:
 
 
 
+    @user_role('Authenticated')
     async def edit(self, request):
         # TODO : implement PUT to edit file metadata (and remove the obsolete  "simple post" replaced by TUS upload )
         file_id = request.match_info.get('file_id', "")
@@ -143,6 +145,7 @@ class FileHandler:
         
 
 
+    @user_role('Authenticated')
     def delete(self, request):
         file_id = request.match_info.get('file_id', "")
         try:
@@ -152,6 +155,7 @@ class FileHandler:
 
 
 
+    @user_role('Authenticated')
     def get(self, request):
         file_id = request.match_info.get('file_id', -1)
         file = File.from_id(file_id, 2)
@@ -162,19 +166,24 @@ class FileHandler:
 
 
     # Resumable download implement the TUS.IO protocol.
+    @user_role('Authenticated')
     def tus_config(self, request):
         return tus_manager.options(request)
 
+    @user_role('Authenticated')
     def tus_upload_init(self, request):
         return tus_manager.creation(request)
 
+    @user_role('Authenticated')
     def tus_upload_resume(self, request):
         return tus_manager.resume(request)
 
+    @user_role('Authenticated')
     async def tus_upload_chunk(self, request):
         result = await tus_manager.patch(request)
         return result
 
+    @user_role('Authenticated')
     def tus_upload_delete(self, request):
         return tus_manager.delete_file(request)
 

@@ -63,6 +63,7 @@ class ProjectHandler:
     #     return rest_success(ProjectHandler.build_tree(None))
 
 
+    @user_role('Authenticated')
     def list(self, request):
         """
             Get list of all projects
@@ -70,6 +71,7 @@ class ProjectHandler:
         return rest_success(core.projects.list())
         
     
+    @user_role('Authenticated')
     async def create_or_update(self, request):
         """
             Create or update a project with provided data
@@ -92,6 +94,7 @@ class ProjectHandler:
         return rest_success(project.to_json())
         
         
+    @user_role('Authenticated')
     def get(self, request):
         """
             Get details about the project
@@ -105,6 +108,7 @@ class ProjectHandler:
     
     
     
+    @user_role('Authenticated')
     def delete(self, request):
         """
             Delete the project
@@ -119,6 +123,7 @@ class ProjectHandler:
     
     
     
+    @user_role('Authenticated')
     def events(self, request):
         """
             Get list of events of the project (allow search parameters)
@@ -139,6 +144,7 @@ class ProjectHandler:
         return rest_success([e.to_json() for e in events], range_data)
 
 
+    @user_role('Authenticated')
     def subjects(self, request):
         """
             Get list of subjects of the project (allow search parameters)
@@ -158,6 +164,7 @@ class ProjectHandler:
         return rest_success([s.to_json() for s in subjects], range_data)
     
     
+    @user_role('Authenticated')
     def analyses(self, request):
         """
              Get list of tasks (jobs and analyses) of the project (allow search parameters)
@@ -178,6 +185,7 @@ class ProjectHandler:
         return rest_success([t.to_json() for t in tasks], range_data)
 
 
+    @user_role('Authenticated')
     def files(self, request):
         """
             Get list of subjects of the project (allow search parameters)

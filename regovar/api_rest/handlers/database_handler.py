@@ -18,6 +18,8 @@ from api_rest.rest import *
 
 class DatabaseHandler:
 
+
+    @user_role('Authenticated')
     def get(self, request):
         ref = request.match_info.get('ref', None)
         

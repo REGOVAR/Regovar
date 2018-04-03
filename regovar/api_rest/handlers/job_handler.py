@@ -43,10 +43,12 @@ class JobHandler:
         #return job_json
     
     
+    @user_role('Authenticated')
     def list(self, request):
         return rest_success(core.jobs.list())
 
 
+    @user_role('Authenticated')
     def delete(self, request):
         job_id = request.match_info.get('job_id', "")
         try:
@@ -55,6 +57,7 @@ class JobHandler:
             return rest_error("Unable to delete the job (id={}) : {}".format(job_id, error.msg))
 
 
+    @user_role('Authenticated')
     def get(self, request):
         job_id = request.match_info.get('job_id', -1)
         job = Job.from_id(job_id, 1)
@@ -66,6 +69,7 @@ class JobHandler:
 
 
 
+    @user_role('Authenticated')
     async def update_status(self, request):
         # 1- Retrieve data from request
         data = await request.json()
@@ -88,6 +92,7 @@ class JobHandler:
 
 
 
+    @user_role('Authenticated')
     async def new(self, request):
         # 1- Retrieve data from request
         try:
@@ -116,6 +121,7 @@ class JobHandler:
         return rest_success(check_local_path(job.to_json()))
 
 
+    @user_role('Authenticated')
     def pause(self, request):
         job_id  = request.match_info.get('job_id',  -1)
         try:
@@ -126,6 +132,7 @@ class JobHandler:
         return rest_success(check_local_path(job.to_json()))
 
 
+    @user_role('Authenticated')
     def start(self, request):
         job_id  = request.match_info.get('job_id', -1)
         try:
@@ -136,6 +143,7 @@ class JobHandler:
         return rest_success(check_local_path(job.to_json()))
 
 
+    @user_role('Authenticated')
     def cancel(self, request):
         job_id  = request.match_info.get('job_id',  -1)
         try:
@@ -146,6 +154,7 @@ class JobHandler:
         return rest_success(check_local_path(job.to_json()))
 
 
+    @user_role('Authenticated')
     def monitoring(self, request):
         job_id  = request.match_info.get('job_id',  -1)
         try:
@@ -157,6 +166,7 @@ class JobHandler:
         return rest_error("Unable to get monitoring information for the job {}.".format(job_id))
 
 
+    @user_role('Administrator')
     def finalize(self, request):
         job_id  = request.match_info.get('job_id', -1)
         try:

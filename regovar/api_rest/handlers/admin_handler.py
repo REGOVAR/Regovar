@@ -26,6 +26,8 @@ from api_rest.rest import *
 
 class AdminHandler:
 
+
+    @user_role('Administrator')
     async def stats(self, request):
         """ 
             Return list of all annotation's databases and, for each, the list of availables versions and the list of their fields for the latest version

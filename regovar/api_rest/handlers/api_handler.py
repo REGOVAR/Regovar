@@ -103,6 +103,16 @@ class ApiHandler:
         }
     
 
+
+
+
+
+
+
+
+
+
+
     def get_all_tools(self):
         """
             Lazy loading all installed tools to export/import files on Regovar server

@@ -35,6 +35,7 @@ class SubjectHandler:
 
 
 
+    @user_role('Authenticated')
     def list(self, request):
         """
             Get list of all subjects
@@ -44,6 +45,7 @@ class SubjectHandler:
 
         
     
+    @user_role('Authenticated')
     async def create_or_update(self, request):
         """
             Create or update a subject with provided data
@@ -65,7 +67,8 @@ class SubjectHandler:
             return rest_error("Unable to create a new subject.")
         return rest_success(subject.to_json())
         
-        
+       
+    @user_role('Authenticated') 
     def get(self, request):
         """
             Get details about the subject
@@ -79,6 +82,7 @@ class SubjectHandler:
     
     
     
+    @user_role('Authenticated')
     def delete(self, request):
         """
             Delete the subject
@@ -92,6 +96,7 @@ class SubjectHandler:
     
     
     
+    @user_role('Authenticated')
     def events(self, request):
         """
             Get list of events of the subject (allow search parameters)
@@ -112,6 +117,7 @@ class SubjectHandler:
         return rest_success([e.to_json() for e in events], range_data)
 
 
+    @user_role('Authenticated')
     def samples(self, request):
         """
             Get list of subjects of the subject (allow search parameters)
@@ -131,6 +137,7 @@ class SubjectHandler:
         return rest_success([s.to_json() for s in subjects], range_data)
     
     
+    @user_role('Authenticated')
     def analyses(self, request):
         """
              Get list of tasks (jobs and analyses) of the subject (allow search parameters)
@@ -151,6 +158,7 @@ class SubjectHandler:
         return rest_success([t.to_json() for t in tasks], range_data)
 
 
+    @user_role('Authenticated')
     def files(self, request):
         """
             Get list of subjects of the subject (allow search parameters)

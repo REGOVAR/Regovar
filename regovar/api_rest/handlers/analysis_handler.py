@@ -32,6 +32,7 @@ class AnalysisHandler:
 
 
 
+    @user_role('Authenticated')
     def list(self, request):
         """
             List all analyses
@@ -40,6 +41,7 @@ class AnalysisHandler:
 
 
 
+    @user_role('Authenticated')
     def get(self, request):
         """
             Return all data about the analysis with the provided id (analysis metadata: name, settings, template data, samples used, filters, ... )
@@ -55,6 +57,7 @@ class AnalysisHandler:
 
 
 
+    @user_role('Authenticated')
     async def new(self, request):
         """
             Create new analysis
@@ -76,6 +79,7 @@ class AnalysisHandler:
         return rest_success(analysis.to_json())
 
 
+    @user_role('Authenticated')
     def delete(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
         try:
@@ -85,6 +89,7 @@ class AnalysisHandler:
         return rest_success(result) 
 
 
+    @user_role('Authenticated')
     async def update(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
         data = await request.json()
@@ -98,6 +103,7 @@ class AnalysisHandler:
 
         
 
+    @user_role('Authenticated')
     async def filtering(self, request):
         # 1- Retrieve data from request
         data = await request.json()
@@ -128,6 +134,7 @@ class AnalysisHandler:
         return rest_success(result)
     
     
+    @user_role('Authenticated')
     async def select(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
         variant_id = request.match_info.get('variant_id', None)
@@ -137,6 +144,7 @@ class AnalysisHandler:
     
     
     
+    @user_role('Authenticated')
     async def unselect(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
         variant_id = request.match_info.get('variant_id', None)
@@ -153,6 +161,7 @@ class AnalysisHandler:
         return rest_success([f.to_json() for f in filters])
 
 
+    @user_role('Authenticated')
     async def create_update_filter(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
         filter_id = request.match_info.get('filter_id', None)
@@ -167,6 +176,7 @@ class AnalysisHandler:
 
 
 
+    @user_role('Authenticated')
     def delete_filter(self, request):
         filter_id = request.match_info.get('filter_id', -1)
         # Remove column if exists in the analysis working table
@@ -185,6 +195,7 @@ class AnalysisHandler:
 
 
 
+    @user_role('Administrator')
     def clear_temps_data(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
         try:
@@ -195,6 +206,7 @@ class AnalysisHandler:
 
 
 
+    @user_role('Authenticated')
     def get_selection(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
 
@@ -206,6 +218,7 @@ class AnalysisHandler:
 
 
 
+    @user_role('Authenticated')
     async def get_export(self, request):
         """
             Export selection of the requested analysis in the requested format
@@ -225,6 +238,7 @@ class AnalysisHandler:
 
 
 
+    @user_role('Authenticated')
     async def get_report(self, request):
         """
             Generate report for the selection of the requested analysis with the requested report generator

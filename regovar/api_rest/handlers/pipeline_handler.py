@@ -50,6 +50,7 @@ class PipelineHandler:
             #pipe_json.pop("path")
         #return pipe_json
 
+    @user_role('Authenticated')
     def list(self, request):
         """
             List all pipelines
@@ -58,6 +59,7 @@ class PipelineHandler:
         return rest_success(check_local_path(pipes))
 
 
+    @user_role('Authenticated')
     def get(self, request):
         pipe_id = request.match_info.get('pipe_id', -1)
         pipe = Pipeline.from_id(pipe_id, -1)
@@ -68,6 +70,7 @@ class PipelineHandler:
         return rest_success(check_local_path(pipe))
 
 
+    @user_role('Administrator')
     def install(self, request):
         file_id = request.match_info.get('file_id', -1)
         file = File.from_id(file_id)
@@ -85,12 +88,14 @@ class PipelineHandler:
         return rest_error("Error occured during installation of the pipeline.")
 
 
+    @user_role('Administrator')
     async def install_json(self, request):
         params = await request.json()
         # TO DO 
         return rest_error("Not implemented")
 
 
+    @user_role('Administrator')
     def delete(self, request):
         pipe_id = request.match_info.get('pipe_id', -1)
         try:
