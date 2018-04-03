@@ -8,6 +8,7 @@ markdown_extensions:
  - attr_list
  - def_list
  - tables 
+docs_dir: docs
 pages:
  - 'ACCUEIL': 'index.md'
  - 'INSTALLATION':
