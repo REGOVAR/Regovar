@@ -2,8 +2,8 @@
 
 Ce tutoriel présente les notions de base à connaître avant de s'attaquer à l'encapsulation de son pipeline dans Regovar. 
 La réalisation technique de cette encapsulation dépend de la technologie utilisé et est développé dans des tutoriels suivants :
-* [Créer un pipeline pour Regovar avec LXD](pipeline/tuto_003.md)
-* [Créer un pipeline pour Regovar avec Docker](pipeline/tuto_004.md)
+* [Créer un pipeline pour Regovar avec LXD](tuto_003.md)
+* [Créer un pipeline pour Regovar avec Docker](tuto_004.md)
 
 
 
