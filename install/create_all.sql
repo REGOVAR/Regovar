@@ -605,13 +605,14 @@ CREATE INDEX panel_entry_idx
   ON public.panel_entry
   USING btree (panel_id, version);
   
-  
 
 CREATE INDEX event_meta_idx 
     ON event 
     USING GIN (meta jsonb_path_ops);
 
-
+CREATE INDEX hpo_term_idx 
+    ON hpo_term 
+    USING btree (hpo_id);
 
 
 
