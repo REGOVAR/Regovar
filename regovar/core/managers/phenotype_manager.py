@@ -46,32 +46,30 @@ class PhenotypeManager:
     
     def search(self, search):
         """
-            Return all phenotypes matching the search term
+            Return all phenotypes (minimal info) matching the search term
+            To be used for autocomplete search by example
         """
         # TODO: escape search
         if not isinstance(search, str) or search.strip() == "":
             raise RegovarException("Invalid search query")
-        query = "SELECT DISTINCT hpo_id, hpo_label FROM hpo_phenotype WHERE hpo_label ILIKE '%{0}%' ORDER BY hpo_label LIMIT 100".format(search)
+        query = "SELECT DISTINCT hpo_id, label FROM hpo_term WHERE label ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
         
         result = []
         for row in execute(query):
-            result.append({"id": row.hpo_id, "label": row.hpo_label})
-        return result
+            result.append({"id": row.hpo_id, "label": row.label})
 
+        # Search also among synonyms if needed
+        if len(result) == 0:
+            query = "SELECT DISTINCT hpo_id, label FROM hpo_term WHERE search ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+            for row in execute(query):
+                result.append({"id": row.hpo_id, "label": row.label})
 
-    
-    def search_disease(self, search):
-        """
-            Return all disease matching the search term
-        """
-        # TODO: escape search
-        if not isinstance(search, str) or search.strip() == "":
-            raise RegovarException("Invalid search query")
-        query = "SELECT disease_id, array_agg(gene_name) as genes, max(hpo_label) as label FROM hpo_disease WHERE hpo_label ILIKE '%{0}%' GROUP BY disease_id ORDER BY label LIMIT 100".format(search)
-        
-        result = []
-        for row in execute(query):
-            result.append({"id": row.disease_id, "label": row.label, "genes": row.genes})
+        # Search also among description if needed
+        if len(result) == 0:
+            query = "SELECT DISTINCT hpo_id, label FROM hpo_term WHERE description ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+            for row in execute(query):
+                result.append({"id": row.hpo_id, "label": row.label})
+
         return result
 
 
@@ -81,41 +79,111 @@ class PhenotypeManager:
             Return all phenotypics information (disease and associated gene) for the requested id
             id can be hpo (HP:000000), omim (OMIM:000000), orphanet (ORPHA:000000) or a gene name
         """
-        result = {
-            "hpo_id": token,
-            "label": "",
-            "diseases": {}
-        }
-        
+        result = None
         if token.startswith("HP:"):
-            query = "SELECT disease_id, string_agg(gene_name, ', ') as genes, max(hpo_label) as label FROM hpo_disease WHERE hpo_id='{0}' GROUP BY disease_id".format(token)
-            for row in execute(query):
-                result["label"] = row.label
-                if row.disease_id in result["diseases"]:
-                    result["diseases"][row.disease_id].append(row.genes)
-                else:
-                    result["diseases"][row.disease_id] = [row.genes]
-        elif token.startswith("OMIM:"): #or hpo_id.startswith("ORPHA:"):
-            # Get omim data
-            omim = token.split(':')[1]
-            omim = get_cached_url("https://api.omim.org/api/entry?mimNumber={}&include=all".format(omim), "omim_",  headers={"Accept": "application/json", "apiKey": OMIM_API_KEY})
-            result = omim["omim"]["entryList"][0]["entry"]
-            
+            result = self._get_hp(token)
+        elif token.startswith("OMIM:"):
+            result = self._get_omim(token)
+        elif token.startswith("ORPHA:"):
+            result = self._get_orpha(token)
         else:
-            # we supposed that it's a gene name
-            result = {"diseases": [], "phenotypes": []}
-            query = "SELECT distinct disease_id FROM hpo_disease WHERE gene_name='{0}' ORDER BY disease_id".format(token)
-            for row in execute(query):
-                result["diseases"].append({"id": row.disease_id})
-            query = "SELECT distinct hpo_id, hpo_label FROM hpo_phenotype WHERE gene_name ILIKE '%{}%' ORDER BY hpo_label".format(token)
-            for row in execute(query):
-                result["phenotypes"].append({"id": row.hpo_id, "label": row.hpo_label})
-            
+            result = self._get_gene(token)
         return result
 
 
 
 
+
+
+
+
+
+
+    def _get_hp(self, hpo_id):
+        """
+            Internal method, called by get(token) to retrieve phenotypics data from a provided hpo id
+        """
+        sql = "SELECT hpo_id, label, definition, parent, childs FROM hpo_term WHERE hpo_id='{}'".format(hpo_id)
+        row = execute(sql).first()
+        result = {
+            "id": hpo_id,
+            "type" : "phenotype",
+            "label": row.label,
+            "definition": row.definition,
+            "parent": None,
+            "childs": [],
+            "diseases": {},
+            "genes": []
+        }
+
+        # Related phenotypes
+        rel = ["'{}'".format(row.parent)] if row.parent else []
+        rel += ["'{}'".format(i) for i in row.childs] if row.childs is not None else []
+        sql = "SELECT hpo_id, label from hpo_term WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
+        for r in execute(sql):
+            if r.hpo_id == row.parent:
+                result["parent"] = {"id": r.hpo_id, "label": r.label}
+            else:
+                result["childs"].append({"id": r.hpo_id, "label": r.label})
+
+        # Related diseases
+        sql = "SELECT disease_id, string_agg(gene_name, ',') as genes FROM hpo_disease WHERE hpo_id='{0}' GROUP BY disease_id".format(hpo_id)
+        for row in execute(sql):
+            result["diseases"][row.disease_id] = remove_duplicates(row.genes.split(','))
+            result["diseases"][row.disease_id].sort()
+            
+        # List all genes linked to the phenotype via diseases
+        for d in result["diseases"]:
+            result["genes"] += result["diseases"][d]
+        result["genes"] = remove_duplicates(result["genes"])
+        result["genes"].sort()
+        return result
+
+
+    def _get_omim(self, omim_id):
+        """
+            Internal method, called by get(token) to retrieve disease data from a provided omim id
+        """
+        omim = omim_id.split(':')[1]
+        omim = get_cached_url("https://api.omim.org/api/entry?mimNumber={}&include=all".format(omim), "omim_",  headers={"Accept": "application/json", "apiKey": OMIM_API_KEY})
+        result = omim["omim"]["entryList"][0]["entry"]
+        
+        # result = {
+        #     "id": omim_id,
+        #     "type" : "disease",
+        #     "label": row.label,
+        #     "definition": row.definition,
+        #     "parent": None,
+        #     "childs": [],
+        #     "phenotypes": [],
+        #     "genes": []
+        # }
+        return result
+
+
+    def _get_orpha(self, orpha_id):
+        """
+            Internal method, called by get(token) to retrieve disease data from a provided orpha id
+        """
+        result = {
+            "id": orpha_id,
+            "type" : "disease",
+            "label": "",
+            "definition": "",
+            "parent": None,
+            "childs": [],
+            "phenotypes": [],
+            "genes": []
+        }
+        return result
+
+
+    def _get_gene(self, gname):
+        """
+            Internal method, called by get(token) to retrieve disease data from a provided gene name
+        """
+        from core.core import core
+        return core.search.fetch_gene(gname)
 
 
 

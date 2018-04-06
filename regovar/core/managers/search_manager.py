@@ -525,25 +525,17 @@ class SearchManager:
                                 "trx": res.trxcount})
             data.update({"refgene": refgene})
 
-            # Get phenotype
-            query = "SELECT chr, trxrange, cdsrange, exoncount, trxcount FROM refgene_{} WHERE name2 ilike '{}'"
-            refgene = []
-            if ref_id:
-                res = execute(query.format(core.annotations.ref_list[ref_id].lower(), genename)).first()
-                if res:
-                  refgene.append({
-                      "id": ref_id, 
-                      "name": core.annotations.ref_list[ref_id], 
-                      "start": res.trxrange.lower,
-                      "size": res.trxrange.upper - res.trxrange.lower,
-                      "exon": res.exoncount,
-                      "trx": res.trxcount})
+            # Get hpo data
+            hpo = {"diseases": [], "phenotypes": []}
+            query = "SELECT distinct disease_id FROM hpo_disease WHERE gene_name='{0}' ORDER BY disease_id".format(token)
+            for row in execute(query):
+                hpo["diseases"].append({"id": row.disease_id})
+            query = "SELECT distinct hpo_id, hpo_label FROM hpo_phenotype WHERE gene_name ILIKE '%{}%' ORDER BY hpo_label".format(token)
+            for row in execute(query):
+                hpo["phenotypes"].append({"id": row.hpo_id, "label": row.hpo_label})
+
+            data.update({"hpo": hpo})
         return data
-
-
-    def fetch_phenotype(self, phenotype_id):
-        pass
-
 
 
 
