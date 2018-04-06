@@ -517,6 +517,24 @@ CREATE TABLE public.panel_entry
 
 
 
+
+
+
+CREATE TABLE hpo_term
+(
+    hpo_id character varying(10) COLLATE pg_catalog."C",
+    parent character varying(10) COLLATE pg_catalog."C" DEFAULT NULL,
+    childs character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    label text COLLATE pg_catalog."C",
+    definition text COLLATE pg_catalog."C",
+    search text COLLATE pg_catalog."C"
+);
+
+
+
+
+
+
 -- --------------------------------------------
 -- SHARING SERVER TABLES
 -- --------------------------------------------
