@@ -7,13 +7,26 @@ CREATE TABLE hpo_term
     childs character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
     label text COLLATE pg_catalog."C",
     definition text COLLATE pg_catalog."C",
-    search text COLLATE pg_catalog."C"
+    search text COLLATE pg_catalog."C",
+    allsubs_genes text COLLATE pg_catalog."C" DEFAULT NULL,
+    allsubs_diseases text COLLATE pg_catalog."C" DEFAULT NULL,
+    allsubs_genes_count integer DEFAULT 0,
+    allsubs_diseases_count integer DEFAULT 0,
+    allsubs_count integer DEFAULT 0
 );
 
 CREATE INDEX hpo_term_idx 
     ON hpo_term 
     USING btree (hpo_id);
 
+-- Create new phenotype table
+CREATE TABLE public.subject_phenotype
+(
+    subject_id integer NOT NULL,
+    hpo_id character varying(10) COLLATE pg_catalog."C" NOT NULL,
+    added_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT sp_pkey PRIMARY KEY (subject_id, hpo_id)
+);
 
 
 -- Update database version

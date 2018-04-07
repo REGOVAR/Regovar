@@ -28,6 +28,7 @@ def subject_init(self, loading_depth=0, force=False):
             - analyses_ids  : [int]         : The list of ids of analyses that are using subject's sample as inputs
             - samples_ids   : [int]         : The list of ids of samples of the subject
             - files_ids     : [int]         : The list of ids of files that contains the subject
+            - hpo_ids       : [str]         : The list of ids of phenotypes associated to the subject
             - projects_ids  : [int]         : The list of ids of projects associated to the subject
             - indicators    : [Indicator]   : The list of Indicator define for this subject
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
@@ -35,6 +36,7 @@ def subject_init(self, loading_depth=0, force=False):
             - samples       : [Sample]      : The list of Sample owns by the subject
             - analyses      : [Analysis]    : The list of Analysis that are using subject's sample as inputs
             - files         : [File]        : The list of File owns by the subject
+            - hpo           : [json]        : The list of phenotypes associated to the subject
             - projects      : [Project]     : The list of Project that contains this subject
             - events        : [json]        : The list of events linked to this subject
     """
@@ -51,6 +53,7 @@ def subject_init(self, loading_depth=0, force=False):
         self.samples_ids = [r.id for r in execute("SELECT id FROM sample WHERE subject_id={}".format(self.id))]
         self.files_ids = [r.id for r in execute("SELECT file_id FROM subject_file WHERE subject_id={}".format(self.id))]
         self.projects_ids = self.get_projects_ids()
+        self.hpo_ids = self.get_phenotypes_ids()
         self.analyses_ids = []
         self.jobs_ids = []
 
@@ -65,6 +68,7 @@ def subject_init(self, loading_depth=0, force=False):
         self.samples = []
         self.analyses = []
         self.files = []
+        self.hpo = []
         self.projects = []
         self.events = []
         if self.loading_depth > 0:
@@ -72,6 +76,7 @@ def subject_init(self, loading_depth=0, force=False):
             self.jobs = self.get_jobs(self.loading_depth-1)
             self.analyses = self.get_analyses(self.loading_depth-1)
             self.files = self.get_files(self.loading_depth-1)
+            self.hpo = self.get_phenotypes()
             self.projects = self.get_projects(self.loading_depth-1)
             self.events = core.events.list(subject_id=self.id)
     except Exception as ex:
@@ -150,7 +155,22 @@ def subject_load(self, data):
             self.files_ids = data["files_ids"]
             for fid in data["files_ids"]:
                 SubjectFile.set(self.id, fid)
-        
+        # update phenotype linkeds
+        if "hpo_ids" in data.keys():
+            # Delete all associations
+            Session().query(SubjectPhenotype).filter_by(subject_id=self.id).delete(synchronize_session=False)
+            # Create new associations
+            self.hpo_ids = data["hpo_ids"]
+            for pid in data["hpo_ids"]:
+                SubjectPhenotype.set(self.id, pid)
+                    
+
+            
+            # Create new associations
+            self.files_ids = data["files_ids"]
+            for fid in data["files_ids"]:
+                SubjectFile.set(self.id, fid)
+
         # TODO : projects
         # TODO : samples
 
@@ -261,7 +281,43 @@ def subject_get_files(self, loading_depth=0):
     return File.from_ids([i.file_id for i in ids], loading_depth)
 
 
+def subject_get_phenotypes_ids(self):
+    """
+        Return the list of phenotypes ids linked to the subject
+    """
+    sql  = "SELECT hpo_id FROM subject_phenotype WHERE subject_id={}".format(self.id)
+    return [r.id for r in execute(sql)]
+
+
+def subject_get_phenotypes(self):
+    """
+        Return the list of phenotypes ids linked to the subject
+    """
+    result = []
+    sql = "SELECT h.hpo_id, h.label, h.definition, h.allsubs_genes, h.allsubs_diseases, h.allsubs_genes_count, h.allsubs_diseases_count, h.allsubs_count "
+    sql += " FROM hpo_term h INNER JOIN subject_phenotype s ON s.hpo_id=h.hpo_id WHERE s.subject_id={}".format(self.id)
+    for r in execute(sql):
+        r.append({"id": r.hpo_id, "label": r.label})
+        row = execute(sql).first()
+        result = {
+            "id": hpo_id,
+            "type" : "phenotype",
+            "label": row.label,
+            "definition": row.definition,
+            "parent": None,
+            "childs": [],
+            "diseases": {},
+            "genes": []
+        }
+
+    sql  = "SELECT hpo_id, label, definition,  FROM subject_phenotype WHERE subject_id={}".format(self.id)
+    return [r.id for r in execute(sql)]
+
+
 def subject_get_projects_ids(self):
+    """
+        Return the list of projects ids linked to the subject
+    """
     sql  = "SELECT distinct(t3.id) FROM project t3 INNER JOIN analysis t2 ON t3.id=t2.project_id "
     sql += "INNER JOIN analysis_sample t1 ON t2.id=t1.analysis_id INNER JOIN sample t0 ON t1.sample_id=t0.id "
     sql += "WHERE t0.subject_id={}"
@@ -296,6 +352,8 @@ Subject.get_projects_ids = subject_get_projects_ids
 Subject.get_projects = subject_get_projects
 Subject.get_analyses = subject_get_analyses
 Subject.get_files = subject_get_files
+Subject.get_phenotypes_ids = subject_get_phenotypes_ids
+Subject.get_phenotypes = subject_get_phenotypes
 
 
 
@@ -340,5 +398,37 @@ SubjectFile.save = sf_save
 
 
 
+# =====================================================================================================================
+# SUBJECT PHENOTYPE associations
+# =====================================================================================================================
 
+def sp_set(subject_id, hpo_id):
+    """
+        Create or update the link between subject and the phenotype
+    """
+    # Get or create the association
+    sp = Session().query(SubjectPhenotype).filter_by(subject_id=subject_id, hpo_id=hpo_id).first()
+    if not sp: 
+        sp = SubjectPhenotype(subject_id=subject_id, hpo_id=hpo_id)
+        sp.save()
+    return sp
+
+
+
+def sp_unset(subject_id, file_id):
+    """
+        Delete a the link between the subject and the phenotype
+    """
+    Session().query(SubjectPhenotype).filter_by(subject_id=subject_id, file_id=file_id).delete(synchronize_session=False)
+
+
+
+def sp_save(self):
+    generic_save(self)
+
+
+SubjectPhenotype = Base.classes.subject_phenotype
+SubjectPhenotype.set = sp_set
+SubjectPhenotype.unset = sp_unset
+SubjectPhenotype.save = sp_save
 
