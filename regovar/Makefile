@@ -37,14 +37,14 @@ setup:
 
 #HPO
 install_hpo:
-	# wget http://purl.obolibrary.org/obo/hp.obo -O $(database_path)/hp.obo
-	# wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $(database_path)/hpo_disease.txt
-	# wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
-	# cp ../install/update_hpo.py update_hpo.py
-	# chmod u+x update_hpo.py
+	wget http://purl.obolibrary.org/obo/hp.obo -O $(database_path)/hp.obo
+	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $(database_path)/hpo_disease.txt
+	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
+	cp ../install/update_hpo.py update_hpo.py
+	chmod u+x update_hpo.py
 	python3 update_hpo.py $(database_path)/hp.obo $(database_path)/hpo_disease.txt $(database_path)/hpo_phenotype.txt
-	# rm update_hpo.py
-	# psql -U regovar -d $(database_name) -f ../install/update_hpo.sql
+	rm update_hpo.py
+	psql -U regovar -d $(database_name) -f ../install/update_hpo.sql
 	
 update_hpo: terminate_queries install_hpo
 
