@@ -14,11 +14,14 @@ phenopath = sys.argv[3]
 # phenopath = "/var/regovar/databases/hpo_phenotype.txt"
 
 # Clear HPO tables
+print('Clear database: ', end='', flush=True)
 Model.execute("DELETE FROM hpo_phenotype")
 Model.execute("DELETE FROM hpo_disease")
+print('Done')
 
 
 # STEP 1: Load HPO terms data from file
+print('step 1: ', end='', flush=True)
 def escape(value):
     if type(value) is str:
         value = value.replace('%', '%%')
@@ -51,9 +54,11 @@ with open(obopath, "r") as f:
             p_data[current_id]["parent"] = pid
         elif l.startswith("synonym: "):
             p_data[current_id]["synonym"].append(l[10:l.rfind('"')])
+print('Done')
 
 
 # STEP 2: Get diseases and genes associated to each phenotypes
+print('step 2: ', end='', flush=True)
 with open(diseapath, "r") as f:
     lines = f.readlines()
     for l in lines:
@@ -66,10 +71,10 @@ with open(diseapath, "r") as f:
             p_data[pid]["diseases"].append(did)
             p_data[pid]["genes"].append(gene)
         if did in d_data:
-            d_data[did]["phenotypes"].append(did)
-            d_data[pid]["genes"].append(gene)
+            d_data[did]["phenotypes"].append(pid)
+            d_data[did]["genes"].append(gene)
         else:
-            d_data[did] = {"phenotypes":[did], "genes": [gene]}
+            d_data[did] = {"phenotypes":[pid], "genes": [gene]}
 
 
 with open(phenopath, "r") as f:
@@ -87,12 +92,18 @@ for pid in p_data:
     p_data[pid]["genes"] = remove_duplicates(p_data[pid]["genes"])
     p_data[pid]["diseases"].sort()
     p_data[pid]["genes"].sort()
-
+for did in d_data:
+    d_data[did]["phenotypes"] = remove_duplicates(d_data[did]["phenotypes"])
+    d_data[did]["genes"] = remove_duplicates(d_data[did]["genes"])
+    d_data[did]["phenotypes"].sort()
+    d_data[did]["genes"].sort()
+print('Done')
 
 
 
 
 # STEP 3: Compute for each term the list of all its sublevels childs/diseases/genes
+print('step 3: ', end='', flush=True)
 def get_sublevel_data(hpo_id):
     result = { "sub_total": 0, "sub_genes": [], "sub_diseases": []}
     if hpo_id not in p_data: 
@@ -125,6 +136,7 @@ def get_sublevel_data(hpo_id):
 
 for pid in p_data:
     get_sublevel_data(pid)
+print('Done')
 
 
 # "Disable" terchnical's root hpo entry to avoid to retrieve it when searching phenotype via disease or gene
@@ -132,8 +144,9 @@ p_data["HP:0000001"]["sub_genes"] = []
 p_data["HP:0000001"]["sub_diseases"] = []
 
 # STEP 4: Process sql query
-pattern = "('{}', '{}', '{}', {}, {}, {}, '{}', '{}', {}, {}, {}), "
-sql = "INSERT INTO hpo_phenotype (hpo_id, label, definition, parent, childs, search, allsubs_genes, allsubs_diseases, allsubs_genes_count, allsubs_diseases_count, allsubs_count) VALUES "
+print('step 4: ', end='', flush=True)
+pattern = "('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, {}, {}, {}), "
+sql = "INSERT INTO hpo_phenotype (hpo_id, label, definition, parent, childs, search, genes, diseases, allsubs_genes, allsubs_diseases, allsubs_genes_count, allsubs_diseases_count, allsubs_count) VALUES "
 for pid in p_data:
     label = escape(p_data[pid]["label"])
     definition = escape(p_data[pid]["definition"])
@@ -141,35 +154,45 @@ for pid in p_data:
     childs = "NULL"
     if len(p_data[pid]["subs"]) > 0:
         childs = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["subs"]]))
-    search = label + " " + definition + " "
-    if len(p_data[pid]["synonym"]) > 0:
-        search = "'{}'".format(escape(' '.join(p_data[pid]["synonym"])))
-    as_g = ", ".join(p_data[pid]["sub_genes"])
-    as_d = ", ".join(p_data[pid]["sub_diseases"])
-    as_gc = len(p_data[pid]["sub_genes"])
-    as_dc = len(p_data[pid]["sub_diseases"])
-    as_c = p_data[pid]["sub_total"]
-    sql += pattern.format(pid, label, definition, parent, childs, search, as_g, as_d, as_gc, as_dc, as_c)
-sql = sql[:-2]
-Model.execute(sql)
-
-
-pattern = "('{}', '{}', '{}', {}, {}), "
-sql = "INSERT INTO hpo_disease (hpo_id, label, search, genes, phenotypes) VALUES "
-for did in d_data:
-    label = "" # escape(d_data[pid]["label"])
-    definition = "" # escape(p_data[pid]["definition"])
     search = "NULL"
     if len(p_data[pid]["synonym"]) > 0:
         search = "'{}'".format(escape(' '.join(p_data[pid]["synonym"])))
-    as_g = ", ".join(p_data[pid]["sub_genes"])
-    as_d = ", ".join(p_data[pid]["sub_diseases"])
+    genes = "NULL"
+    if len(p_data[pid]["genes"]) > 0:
+        genes = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["genes"]]))
+    diseases = "NULL"
+    if len(p_data[pid]["diseases"]) > 0:
+        diseases = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["diseases"]]))
+    as_g = "NULL"
+    if len(p_data[pid]["sub_genes"]) > 0:
+        as_g = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["sub_genes"]]))
+    as_d = "NULL"
+    if len(p_data[pid]["sub_diseases"]) > 0:
+        as_d = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["sub_diseases"]]))
     as_gc = len(p_data[pid]["sub_genes"])
     as_dc = len(p_data[pid]["sub_diseases"])
     as_c = p_data[pid]["sub_total"]
-    sql += pattern.format(pid, label, definition, parent, childs, search, as_g, as_d, as_gc, as_dc, as_c)
+    sql += pattern.format(pid, label, definition, parent, childs, search, genes, diseases, as_g, as_d, as_gc, as_dc, as_c)
 sql = sql[:-2]
 Model.execute(sql)
+
+
+pattern = "('{}', '{}', '{}', {}, {}, {}), "
+sql = "INSERT INTO hpo_disease (hpo_id, label, definition, search, genes, phenotypes) VALUES "
+for did in d_data:
+    label = "" # escape(d_data[did]["label"])
+    definition = "" # escape(d_data[did]["definition"])
+    search = "NULL" # label " " + definition
+    genes = "NULL"
+    if len(d_data[did]["genes"]) > 0:
+        genes = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in d_data[did]["genes"]]))
+    phenotypes = "NULL"
+    if len(d_data[did]["phenotypes"]) > 0:
+        phenotypes = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in d_data[did]["phenotypes"]]))
+    sql += pattern.format(did, label, definition, search, genes, phenotypes)
+sql = sql[:-2]
+Model.execute(sql)
+print('Done')
 
 
 # Load HPO terms-gene-diseases relations

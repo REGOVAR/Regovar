@@ -44,7 +44,6 @@ install_hpo:
 	chmod u+x update_hpo.py
 	python3 update_hpo.py $(database_path)/hp.obo $(database_path)/hpo_disease.txt $(database_path)/hpo_phenotype.txt
 	rm update_hpo.py
-	psql -U regovar -d $(database_name) -f ../install/update_hpo.sql
 	
 update_hpo: terminate_queries install_hpo
 

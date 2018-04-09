@@ -11,8 +11,8 @@ CREATE TABLE hpo_phenotype
     label text COLLATE pg_catalog."C",
     definition text COLLATE pg_catalog."C",
     search text COLLATE pg_catalog."C",
-    genes text COLLATE pg_catalog."C" DEFAULT NULL,
-    diseases text COLLATE pg_catalog."C" DEFAULT NULL,
+    genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    diseases character varying(30)[] COLLATE pg_catalog."C" DEFAULT NULL,
     allsubs_genes text COLLATE pg_catalog."C" DEFAULT NULL,
     allsubs_diseases text COLLATE pg_catalog."C" DEFAULT NULL,
     allsubs_genes_count integer DEFAULT 0,
@@ -21,17 +21,21 @@ CREATE TABLE hpo_phenotype
 );
 CREATE TABLE hpo_disease
 (
-    hpo_id character varying(10) COLLATE pg_catalog."C",
+    hpo_id character varying(30) COLLATE pg_catalog."C",
     label text COLLATE pg_catalog."C",
     definition text COLLATE pg_catalog."C",
     search text COLLATE pg_catalog."C",
-    genes character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
     phenotypes character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL
 ); 
 
-CREATE INDEX hpo_term_idx 
-    ON hpo_term 
+CREATE INDEX hpo_phenotype_idx 
+    ON hpo_phenotype 
     USING btree (hpo_id);
+CREATE INDEX hpo_disease_idx 
+    ON hpo_disease 
+    USING btree (hpo_id);
+    
 
 -- Create new phenotype table
 CREATE TABLE public.subject_phenotype
