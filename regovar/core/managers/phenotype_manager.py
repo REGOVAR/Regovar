@@ -52,7 +52,7 @@ class PhenotypeManager:
         # TODO: escape search
         if not isinstance(search, str) or search.strip() == "":
             raise RegovarException("Invalid search query")
-        query = "SELECT DISTINCT hpo_id, label FROM hpo_term WHERE label ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+        query = "SELECT DISTINCT hpo_id, label FROM hpo_phenotype WHERE label ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
         
         result = []
         for row in execute(query):
@@ -60,13 +60,13 @@ class PhenotypeManager:
 
         # Search also among synonyms if needed
         if len(result) == 0:
-            query = "SELECT DISTINCT hpo_id, label FROM hpo_term WHERE search ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+            query = "SELECT DISTINCT hpo_id, label FROM hpo_phenotype WHERE search ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
             for row in execute(query):
                 result.append({"id": row.hpo_id, "label": row.label})
 
         # Search also among description if needed
         if len(result) == 0:
-            query = "SELECT DISTINCT hpo_id, label FROM hpo_term WHERE description ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+            query = "SELECT DISTINCT hpo_id, label FROM hpo_phenotype WHERE description ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
             for row in execute(query):
                 result.append({"id": row.hpo_id, "label": row.label})
 
@@ -103,7 +103,7 @@ class PhenotypeManager:
         """
             Internal method, called by get(token) to retrieve phenotypics data from a provided hpo id
         """
-        sql = "SELECT hpo_id, label, definition, parent, childs FROM hpo_term WHERE hpo_id='{}'".format(hpo_id)
+        sql = "SELECT hpo_id, label, definition, parent, childs, allsubs_diseases, allsubs_genes, meta FROM hpo_phenotype WHERE hpo_id='{}'".format(hpo_id)
         row = execute(sql).first()
         result = {
             "id": hpo_id,
@@ -112,32 +112,23 @@ class PhenotypeManager:
             "definition": row.definition,
             "parent": None,
             "childs": [],
-            "diseases": {},
-            "genes": []
+            "diseases": row.allsubs_diseases,
+            "genes": row.allsubs_genes,
+            "meta": row.meta
         }
 
         # Related phenotypes
         rel = ["'{}'".format(row.parent)] if row.parent else []
         rel += ["'{}'".format(i) for i in row.childs] if row.childs is not None else []
-        sql = "SELECT hpo_id, label from hpo_term WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
+        sql = "SELECT hpo_id, label FROM hpo_phenotype WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
         for r in execute(sql):
             if r.hpo_id == row.parent:
                 result["parent"] = {"id": r.hpo_id, "label": r.label}
             else:
                 result["childs"].append({"id": r.hpo_id, "label": r.label})
 
-        # Related diseases
-        sql = "SELECT disease_id, string_agg(gene_name, ',') as genes FROM hpo_disease WHERE hpo_id='{0}' GROUP BY disease_id".format(hpo_id)
-        for row in execute(sql):
-            result["diseases"][row.disease_id] = remove_duplicates(row.genes.split(','))
-            result["diseases"][row.disease_id].sort()
-            
-        # List all genes linked to the phenotype via diseases
-        for d in result["diseases"]:
-            result["genes"] += result["diseases"][d]
-        result["genes"] = remove_duplicates(result["genes"])
-        result["genes"].sort()
         return result
+
 
 
     def _get_omim(self, omim_id):

@@ -1,17 +1,23 @@
 #!/usr/bin/python
 import sys
 import core.model as Model
+import json
 from core.framework.common import remove_duplicates
 
 
-# Prerequisite: Download HPO data (Done in makefile that call this script)
-obopath = sys.argv[1]
-diseapath = sys.argv[2]
-phenopath = sys.argv[3]
+# Prerequisites: Download HPO dumps (Done in makefile that call this script)
+hpopath = sys.argv[1]
+version = sys.argv[2]
+#hpopath = "/var/regovar/databases/"
+#version = "2018-03-09 09:06"
 
-# obopath = "/var/regovar/databases/hp.obo"
-# diseapath = "/var/regovar/databases/hpo_disease.txt"
-# phenopath = "/var/regovar/databases/hpo_phenotype.txt"
+# create path to hpo files to import
+obopath = hpopath + "hpo.obo"
+annotpath = hpopath + "hpo_annotation.txt"
+nannotpath = hpopath + "hpo_annotation_neg.txt"
+diseapath = hpopath + "hpo_disease.txt"
+phenopath = hpopath + "hpo_phenotype.txt"
+
 
 # Clear HPO tables
 print('Clear database: ', end='', flush=True)
@@ -20,20 +26,24 @@ Model.execute("DELETE FROM hpo_disease")
 print('Done')
 
 
-# STEP 1: Load HPO terms data from file
-print('step 1: ', end='', flush=True)
-def escape(value):
-    if type(value) is str:
-        value = value.replace('%', '%%')
-        value = value.replace("'", "''")
-        # Workaround for some annotations that can crash the script
-        value = value.replace('-:0', '-: 0')   # VEP aa_maf = "-:0.1254..." for weird raison: -:0 is interpreted as {0} by format method
-    return value
-
 
 # temp dict that store direct child relation between a term and all its childs
 p_data = {}  # phenotype oriented data
 d_data = {}  # disease oriented data
+
+
+def escape(value):
+    if type(value) is str:
+        value = value.replace('%', '%%')
+        value = value.replace("'", "''")
+    return value
+
+
+
+
+# STEP 1: Load HPO terms data from file
+print('Step 1: parsing hpo.obo file. ', end='', flush=True)
+meta_pattern = {"qualifiers": {}, "sources": []}
 with open(obopath, "r") as f:
     current_id = None
     lines = f.readlines()
@@ -57,8 +67,58 @@ with open(obopath, "r") as f:
 print('Done')
 
 
-# STEP 2: Get diseases and genes associated to each phenotypes
-print('step 2: ', end='', flush=True)
+# finds roots sections
+meta_pattern = {"sections": {f:[] for f in p_data["HP:0000001"]["subs"]}}
+
+
+# STEP 2: Load diseases entries
+print('Step 2: parsing diseases annotations files. ', end='', flush=True)
+with open(annotpath, "r") as f:
+    lines = f.readlines()
+    for l in lines:
+        if l.startswith("#"): continue
+        ldata = l.split("\t")
+        db = ldata[0].strip()
+        db_id = ldata[1].strip()
+        label = ldata[2].strip()
+        qualifier = ldata[3].strip()
+        pid = ldata[4].strip()
+        source_id = ldata[5].strip()
+        #onset_id = ldata[7].strip()  # Not used
+        #freq_id = ldata[8].strip()  # Not used
+        #aspect = ldata[10].strip()  # Not used
+        synonyms = ldata[11].strip()
+        
+        
+        if pid not in p_data:
+            print("WARNING: unknow pid... skipped: " + pid)
+            continue
+        
+        did = "{}:{}".format(db, db_id)
+        p_data[pid]["diseases"].append(did)
+        
+        if did not in d_data:
+            d_data[did] = {"label": label, "search": synonyms, "phenotypes":[], "phenotypes_neg": [], "genes": [], "sources": []}
+            
+        if qualifier == "NOT":
+            d_data[did]["phenotypes_neg"].append(pid)
+        else:
+            d_data[did]["phenotypes"].append(pid)
+        if qualifier != "":
+            p_data[pid]["meta"]["qualifiers"][did] = qualifier
+            
+        if source_id != did:
+            p_data[pid]["meta"]["sources"].append(source_id)
+            d_data[did]["sources"].append(source_id)
+print('Done')
+
+
+
+
+
+
+# STEP 3: diseases, genes and phenotypes associations
+print('Step 3: ', end='', flush=True)
 with open(diseapath, "r") as f:
     lines = f.readlines()
     for l in lines:
@@ -75,7 +135,6 @@ with open(diseapath, "r") as f:
             d_data[did]["genes"].append(gene)
         else:
             d_data[did] = {"phenotypes":[pid], "genes": [gene]}
-
 
 with open(phenopath, "r") as f:
     lines = f.readlines()
@@ -102,14 +161,27 @@ print('Done')
 
 
 
-# STEP 3: Compute for each term the list of all its sublevels childs/diseases/genes
-print('step 3: ', end='', flush=True)
-def get_sublevel_data(hpo_id):
-    result = { "sub_total": 0, "sub_genes": [], "sub_diseases": []}
+# STEP 4: Compute for each term the list of all its sublevels childs/diseases/genes
+print('step 4: ', end='', flush=True)
+
+
+
+
+def get_sublevel_data(hpo_id, root_id, root_path):
+    result = { "sub_total": 0, "sub_genes": [], "sub_diseases": [], "meta": meta_pattern, "genes_score":0, "diseases_score":0}
     if hpo_id not in p_data: 
         print ("Link to an unknown id: " + hpo_id)
         return None
 
+    # Compute parent path
+    if hpo_id != "HP:0000001":
+        meta = p_data[hpo_id]["meta"] if "meta" in p_data[hpo_id] else meta_pattern
+        if root_id in meta["sections"] and hpo_id not in meta["sections"][root_id] and root_id != hpo_id:
+            root_path.append(hpo_id)
+            meta["sections"][root_id] = root_path
+        p_data[hpo_id]["meta"] = meta
+        
+    # Escape if already done
     if p_data[hpo_id]["sub_total"] != -1 :
         return p_data[hpo_id]
 
@@ -120,7 +192,7 @@ def get_sublevel_data(hpo_id):
 
     # Adding data from childs
     for cid in p_data[hpo_id]["subs"]:
-        cres = get_sublevel_data(cid)
+        cres = get_sublevel_data(cid, root_id, root_path)
         if cres:
             result["sub_total"] += cres["sub_total"]
             result["sub_genes"] += cres["sub_genes"]
@@ -134,19 +206,24 @@ def get_sublevel_data(hpo_id):
     p_data[hpo_id].update(result)
     return result
 
+# recursive call for each section
+for f in p_data["HP:0000001"]["subs"]:
+    get_sublevel_data(pid, pid, [])
+
 for pid in p_data:
-    get_sublevel_data(pid)
+    get_sublevel_data(pid, pid, [])
 print('Done')
 
 
 # "Disable" terchnical's root hpo entry to avoid to retrieve it when searching phenotype via disease or gene
 p_data["HP:0000001"]["sub_genes"] = []
 p_data["HP:0000001"]["sub_diseases"] = []
+p_data["HP:0000001"]["meta"] = {}
 
 # STEP 4: Process sql query
 print('step 4: ', end='', flush=True)
-pattern = "('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, {}, {}, {}), "
-sql = "INSERT INTO hpo_phenotype (hpo_id, label, definition, parent, childs, search, genes, diseases, allsubs_genes, allsubs_diseases, allsubs_genes_count, allsubs_diseases_count, allsubs_count) VALUES "
+pattern = "('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, '{}'), "
+sql = "INSERT INTO hpo_phenotype (hpo_id, label, definition, parent, childs, search, genes, diseases, allsubs_genes, allsubs_diseases, meta) VALUES "
 for pid in p_data:
     label = escape(p_data[pid]["label"])
     definition = escape(p_data[pid]["definition"])
@@ -169,10 +246,10 @@ for pid in p_data:
     as_d = "NULL"
     if len(p_data[pid]["sub_diseases"]) > 0:
         as_d = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["sub_diseases"]]))
-    as_gc = len(p_data[pid]["sub_genes"])
-    as_dc = len(p_data[pid]["sub_diseases"])
-    as_c = p_data[pid]["sub_total"]
-    sql += pattern.format(pid, label, definition, parent, childs, search, genes, diseases, as_g, as_d, as_gc, as_dc, as_c)
+    meta = p_data[pid]["meta"]
+    meta.update({"all_childs_count": p_data[pid]["sub_total"]})
+    meta = escape(json.dumps(meta))
+    sql += pattern.format(pid, label, definition, parent, childs, search, genes, diseases, as_g, as_d, meta)
 sql = sql[:-2]
 Model.execute(sql)
 

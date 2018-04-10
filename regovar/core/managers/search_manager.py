@@ -527,12 +527,12 @@ class SearchManager:
 
             # Get hpo data
             hpo = {"diseases": [], "phenotypes": []}
-            query = "SELECT distinct disease_id FROM hpo_disease WHERE gene_name='{0}' ORDER BY disease_id".format(token)
+            query = "SELECT distinct hpo_id FROM hpo_disease WHERE genes @> '{0}' ORDER BY hpo_id".format(token)
             for row in execute(query):
-                hpo["diseases"].append({"id": row.disease_id})
-            query = "SELECT distinct hpo_id, hpo_label FROM hpo_term WHERE gene_name ILIKE '%{}%' ORDER BY hpo_label".format(token)
+                hpo["diseases"].append({"id": row.hpo_id})
+            query = "SELECT distinct hpo_id, label FROM hpo_phenotype WHERE genes @> '{}' ORDER BY label".format(token)
             for row in execute(query):
-                hpo["phenotypes"].append({"id": row.hpo_id, "label": row.hpo_label})
+                hpo["phenotypes"].append({"id": row.hpo_id, "label": row.label})
 
             data.update({"hpo": hpo})
         return data

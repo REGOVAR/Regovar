@@ -1,6 +1,10 @@
 
-DROP TABLE IF EXISTS hpo_phenotype;
-DROP TABLE IF EXISTS hpo_disease;
+CREATE TYPE phenotype_subontology AS ENUM ('phenotypic', 'inheritance', 'frequency', 'clinical');
+
+
+DROP TABLE IF EXISTS subject_phenotype CASCADE;
+DROP TABLE IF EXISTS hpo_phenotype CASCADE;
+DROP TABLE IF EXISTS hpo_disease CASCADE;
 
 -- Create new hpo table
 CREATE TABLE hpo_phenotype
@@ -13,11 +17,12 @@ CREATE TABLE hpo_phenotype
     search text COLLATE pg_catalog."C",
     genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
     diseases character varying(30)[] COLLATE pg_catalog."C" DEFAULT NULL,
-    allsubs_genes text COLLATE pg_catalog."C" DEFAULT NULL,
-    allsubs_diseases text COLLATE pg_catalog."C" DEFAULT NULL,
-    allsubs_genes_count integer DEFAULT 0,
-    allsubs_diseases_count integer DEFAULT 0,
-    allsubs_count integer DEFAULT 0
+    genes_score real DEFAULT 0,
+    diseases_score real DEFAULT 0,
+    allsubs_genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    allsubs_diseases character varying(30)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    subontology phenotype_subontology DEFAULT 'phenotypic',
+    meta JSON
 );
 CREATE TABLE hpo_disease
 (
@@ -26,7 +31,9 @@ CREATE TABLE hpo_disease
     definition text COLLATE pg_catalog."C",
     search text COLLATE pg_catalog."C",
     genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
-    phenotypes character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL
+    phenotypes character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    phenotypes_neg character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    sources character varying(30)[] COLLATE pg_catalog."C" DEFAULT NULL
 ); 
 
 CREATE INDEX hpo_phenotype_idx 
@@ -38,10 +45,12 @@ CREATE INDEX hpo_disease_idx
     
 
 -- Create new phenotype table
-CREATE TABLE public.subject_phenotype
+CREATE TYPE phenotype_operator AS ENUM ('unknow', 'present', 'absent');
+CREATE TABLE subject_phenotype
 (
     subject_id integer NOT NULL,
     hpo_id character varying(10) COLLATE pg_catalog."C" NOT NULL,
+    operator phenotype_operator DEFAULT 'unknow',
     added_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT sp_pkey PRIMARY KEY (subject_id, hpo_id)
 );
