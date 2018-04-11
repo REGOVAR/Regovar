@@ -37,7 +37,7 @@ d_data = {}  # disease oriented data
 # TOOLS
 def escape(value):
     if type(value) is str:
-        value = value.replace('%', '%%')
+        value = value.replace('%%', '%')
         value = value.replace("'", "''")
     return value
 
@@ -256,7 +256,7 @@ for pid in p_data["HP:0000001"]["subs"]:
 for pid in p_data:
     get_sublevel_data(pid, "phenotypic")
 
-p_data["HP:0000001"].update({ "sub_total": 0, "sub_genes": [], "sub_diseases": [], "genes_score":0, "diseases_score":0})
+
 
 print('Done')
 
@@ -265,6 +265,7 @@ print('Done')
 print('step 5: Populating database. ', end='', flush=True)
 genes_total = len(all_genes)
 diseases_total = len(d_data)
+p_data["HP:0000001"].update({ "sub_total": 0, "sub_genes": [], "sub_diseases": [], "genes_score":0, "diseases_score":0, "meta":{"genes_total": genes_total, "diseases_total": diseases_total}})
 pattern = "('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, {}, {}, '{}', '{}'), "
 sql = "INSERT INTO hpo_phenotype (hpo_id, label, definition, parents, childs, search, genes, diseases, genes_score, diseases_score, allsubs_genes, allsubs_diseases, subontology, meta) VALUES "
 for pid in p_data:
@@ -285,8 +286,8 @@ for pid in p_data:
     diseases = "NULL"
     if len(p_data[pid]["diseases"]) > 0:
         diseases = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["diseases"]]))
-    genes_score = len(p_data[pid]["genes"]) / genes_total
-    diseases_score = len(p_data[pid]["genes"]) / genes_total
+    genes_score = len(p_data[pid]["sub_genes"]) / genes_total
+    diseases_score = len(p_data[pid]["sub_diseases"]) / diseases_total
     as_g = "NULL"
     if len(p_data[pid]["sub_genes"]) > 0:
         as_g = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["sub_genes"]]))
@@ -325,5 +326,6 @@ print('Done')
 
 Model.execute("DELETE FROM parameter WHERE key='hpo_version'")
 Model.execute("INSERT INTO parameter (key, value, description) VALUES ('hpo_version', '{}', 'Version of the HPO database dumps used');".format(escape(version)))
+Model.execute("INSERT INTO \"event\" (message, type) VALUES ('Update hpo data to version \"{}\"', 'technical');".format(escape(version)))
 # Load HPO terms-gene-diseases relations
 # Done in update_hpo.sql script call in the makefile that called this script

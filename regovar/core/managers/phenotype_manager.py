@@ -82,10 +82,14 @@ class PhenotypeManager:
         result = None
         if token.startswith("HP:"):
             result = self._get_hp(token)
-        elif token.startswith("OMIM:"):
-            result = self._get_omim(token)
-        elif token.startswith("ORPHA:"):
-            result = self._get_orpha(token)
+        elif token.startswith("OMIM:") or token.startswith("ORPHA:") or token.startswith("DECIPHER:"):
+            result = self._get_disease(token)
+            if token.startswith("OMIM:"):
+                result.update(self._get_omim(token))
+            elif token.startswith("ORPHA:"):
+                result.update(self._get_orpha(token))
+            elif token.startswith("DECIPHER:"):
+                result.update(self._get_decipher(token))
         else:
             result = self._get_gene(token)
         return result
@@ -103,70 +107,112 @@ class PhenotypeManager:
         """
             Internal method, called by get(token) to retrieve phenotypics data from a provided hpo id
         """
-        sql = "SELECT hpo_id, label, definition, parent, childs, allsubs_diseases, allsubs_genes, meta FROM hpo_phenotype WHERE hpo_id='{}'".format(hpo_id)
+        sql = "SELECT hpo_id, label, definition, parents, childs, genes_score, diseases_score, allsubs_diseases, allsubs_genes, subontology, meta FROM hpo_phenotype WHERE hpo_id='{}'".format(hpo_id)
         row = execute(sql).first()
         result = {
             "id": hpo_id,
-            "type" : "phenotype",
+            "type" : "phenotypic",
             "label": row.label,
             "definition": row.definition,
-            "parent": None,
+            "parents": [],
             "childs": [],
             "diseases": row.allsubs_diseases,
             "genes": row.allsubs_genes,
+            "genes_score": row.genes_score,
+            "diseases_score": row.diseases_score,
+            "subontology": row.subontology,
             "meta": row.meta
         }
-
         # Related phenotypes
-        rel = ["'{}'".format(row.parent)] if row.parent else []
-        rel += ["'{}'".format(i) for i in row.childs] if row.childs is not None else []
+        parents = row.parents if row.parents is not None else []
+        childs = row.childs if row.childs is not None else []
+        rel = ["'{}'".format(i) for i in parents] 
+        rel += ["'{}'".format(i) for i in childs] 
         sql = "SELECT hpo_id, label FROM hpo_phenotype WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
         for r in execute(sql):
-            if r.hpo_id == row.parent:
-                result["parent"] = {"id": r.hpo_id, "label": r.label}
+            if r.hpo_id in parents:
+                result["parents"].append({"id": r.hpo_id, "label": r.label})
             else:
                 result["childs"].append({"id": r.hpo_id, "label": r.label})
 
         return result
 
 
+    def _get_disease(self, hpo_id):
+        """
+            Internal method, called by get(token) to retrieve generic disease data from a provided hpo id
+        """
+        sql = "SELECT hpo_id, label, genes, phenotypes, phenotypes_neg, sources FROM hpo_disease WHERE hpo_id='{}'".format(hpo_id)
+        row = execute(sql).first()
+        result = {
+            "id": hpo_id,
+            "type" : "disease",
+            "label": row.label,
+            "genes": row.genes,
+            "phenotypes": [],
+            "phenotypes_neg": [],
+            "sources": row.sources
+        }
+        # Related phenotypes
+        pheno = row.phenotypes if row.phenotypes is not None else []
+        npheno = row.phenotypes_neg if row.phenotypes_neg is not None else []
+        rel = ["'{}'".format(i) for i in pheno] 
+        rel += ["'{}'".format(i) for i in npheno] 
+        sql = "SELECT hpo_id, label, definition, meta FROM hpo_phenotype WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
+        rel = []
+        for r in execute(sql):
+            p = {"id": r.hpo_id, "label": r.label, "definition": r.definition}
+            if hpo_id in r.meta["qualifiers"]:
+                p["qualifiers"] = r.meta["qualifiers"][hpo_id]
+                rel += p["qualifiers"]
+            if r.hpo_id in pheno:
+                result["phenotypes"].append(p)
+            else:
+                result["phenotypes_neg"].append(p)
+
+        # Qualifiers phenotypes
+        rel =remove_duplicates(rel)
+        rel.sort()
+        rel = ["'{}'".format(p) for p in rel] 
+        if len(rel) > 0:
+            sql = "SELECT hpo_id, label, definition FROM hpo_phenotype WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
+            for r in execute(sql):
+                p = {"id": r.hpo_id, "label": r.label, "definition": r.definition}
+                for pdata in result["phenotypes"]:
+                    if "qualifiers" in pdata and r.hpo_id in pdata["qualifiers"]:
+                        pdata["qualifiers"].remove(r.hpo_id)
+                        pdata["qualifiers"].append(p)
+                for pdata in result["phenotypes_neg"]:
+                    if "qualifiers" in pdata and r.hpo_id in pdata["qualifiers"]:
+                        pdata["qualifiers"].remove(r.hpo_id)
+                        pdata["qualifiers"].append(p)
+
+        return result
+
 
     def _get_omim(self, omim_id):
         """
-            Internal method, called by get(token) to retrieve disease data from a provided omim id
+            Internal method, called by get(token) to retrieve disease data from omim
         """
         omim = omim_id.split(':')[1]
         omim = get_cached_url("https://api.omim.org/api/entry?mimNumber={}&include=all".format(omim), "omim_",  headers={"Accept": "application/json", "apiKey": OMIM_API_KEY})
-        result = omim["omim"]["entryList"][0]["entry"]
-        
-        # result = {
-        #     "id": omim_id,
-        #     "type" : "disease",
-        #     "label": row.label,
-        #     "definition": row.definition,
-        #     "parent": None,
-        #     "childs": [],
-        #     "phenotypes": [],
-        #     "genes": []
-        # }
-        return result
+        return {"omim": omim["omim"]["entryList"][0]["entry"]}
 
 
     def _get_orpha(self, orpha_id):
         """
             Internal method, called by get(token) to retrieve disease data from a provided orpha id
         """
-        result = {
-            "id": orpha_id,
-            "type" : "disease",
-            "label": "",
-            "definition": "",
-            "parent": None,
-            "childs": [],
-            "phenotypes": [],
-            "genes": []
-        }
-        return result
+        # TODO
+        return {"orphanet": None}
+
+
+    def _get_decipher(self, decipher_id):
+        """
+            Internal method, called by get(token) to retrieve disease data from a provided decipher id
+        """
+        # TODO
+        return {"decipher": None}
 
 
     def _get_gene(self, gname):
