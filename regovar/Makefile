@@ -46,7 +46,7 @@ install_hpo:
 	#wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
 	cp ../install/update_hpo.py update_hpo.py
 	chmod u+x update_hpo.py
-	python3 update_hpo.py $(database_path)/ `cat $(database_path)/hpo_version.txt`
+	python3 update_hpo.py $(database_path)/ "`cat $(database_path)/hpo_version.txt`"
 	#rm update_hpo.py
 	
 update_hpo: terminate_queries install_hpo

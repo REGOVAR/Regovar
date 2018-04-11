@@ -3,6 +3,7 @@ import sys
 import core.model as Model
 import json
 from core.framework.common import remove_duplicates
+import copy
 
 
 # Prerequisites: Download HPO dumps (Done in makefile that call this script)
@@ -10,6 +11,8 @@ hpopath = sys.argv[1]
 version = sys.argv[2]
 #hpopath = "/var/regovar/databases/"
 #version = "2018-03-09 09:06"
+
+print (version)
 
 # create path to hpo files to import
 obopath = hpopath + "hpo.obo"
@@ -31,7 +34,7 @@ print('Done')
 p_data = {}  # phenotype oriented data
 d_data = {}  # disease oriented data
 
-
+# TOOLS
 def escape(value):
     if type(value) is str:
         value = value.replace('%', '%%')
@@ -39,36 +42,57 @@ def escape(value):
     return value
 
 
+def append_qual(did, qual):
+    if did not in p_data[pid]["meta"]["qualifiers"]:
+            p_data[pid]["meta"]["qualifiers"][did] = [qual]
+    elif qual not in p_data[pid]["meta"]["qualifiers"][did]:
+        p_data[pid]["meta"]["qualifiers"][did].append(qual)
+
+
+
+
 
 
 # STEP 1: Load HPO terms data from file
 print('Step 1: parsing hpo.obo file. ', end='', flush=True)
-meta_pattern = {"qualifiers": {}, "sources": []}
+data_pattern = {
+    "id": -1, 
+    "label":None, 
+    "definition": None, 
+    "synonym":[], 
+    "parents": [], 
+    "subs": [], 
+    "diseases": [], 
+    "genes": [], 
+    "sub_total": -1,
+    "subontology": "phenotypic",
+    "meta": {"qualifiers": {}, "sources": []}
+}
+
 with open(obopath, "r") as f:
     current_id = None
     lines = f.readlines()
     for l in lines:
         if l.startswith("id: "):
             current_id = l[4:-1]
-            p_data[current_id] = {"id": current_id, "label":None, "definition": None, "synonym":[], "parent": None, "subs": [], "diseases": [], "genes": [], "sub_total": -1}
+            if current_id not in p_data:
+                p_data[current_id] = copy.deepcopy(data_pattern)
+                p_data[current_id]["id"] = current_id
         elif l.startswith("name: "):
             p_data[current_id]["label"] = l[6:-1]
         elif l.startswith("def: "):
             p_data[current_id]["definition"] = l[6:l.rfind('"')]
         elif l.startswith("is_a: "):
             pid = l[6:16]
-            if pid in p_data:
-                p_data[pid]["subs"].append(current_id)
-            else:
-                p_data[pid] = {"id": pid, "label":None, "definition": None, "synonym":[], "parent": None, "subs": [current_id], "diseases": [], "genes": [], "sub_total": -1}
-            p_data[current_id]["parent"] = pid
+            if pid not in p_data:
+                p_data[pid] = copy.deepcopy(data_pattern)
+                p_data[pid]["id"] = pid
+            p_data[pid]["subs"].append(current_id)
+            p_data[current_id]["parents"].append(pid)
         elif l.startswith("synonym: "):
             p_data[current_id]["synonym"].append(l[10:l.rfind('"')])
 print('Done')
 
-
-# finds roots sections
-meta_pattern = {"sections": {f:[] for f in p_data["HP:0000001"]["subs"]}}
 
 
 # STEP 2: Load diseases entries
@@ -84,8 +108,8 @@ with open(annotpath, "r") as f:
         qualifier = ldata[3].strip()
         pid = ldata[4].strip()
         source_id = ldata[5].strip()
-        #onset_id = ldata[7].strip()  # Not used
-        #freq_id = ldata[8].strip()  # Not used
+        onset_id = ldata[7].strip()
+        freq_id = ldata[8].strip()
         #aspect = ldata[10].strip()  # Not used
         synonyms = ldata[11].strip()
         
@@ -104,12 +128,17 @@ with open(annotpath, "r") as f:
             d_data[did]["phenotypes_neg"].append(pid)
         else:
             d_data[did]["phenotypes"].append(pid)
-        if qualifier != "":
-            p_data[pid]["meta"]["qualifiers"][did] = qualifier
+
+
+        if qualifier != "" and qualifier != "NOT": append_qual(did, qualifier)
+        if onset_id != "": append_qual(did, onset_id)
+        if freq_id != "": append_qual(did, freq_id)
             
-        if source_id != did:
-            p_data[pid]["meta"]["sources"].append(source_id)
-            d_data[did]["sources"].append(source_id)
+        if source_id != did and source_id != "":
+            source_id = source_id.split(";")
+            for s in source_id:
+                p_data[pid]["meta"]["sources"] += s.split(",")
+                d_data[did]["sources"] += s.split(",")
 print('Done')
 
 
@@ -118,7 +147,8 @@ print('Done')
 
 
 # STEP 3: diseases, genes and phenotypes associations
-print('Step 3: ', end='', flush=True)
+print('Step 3: parsing diseases/genes associations files.', end='', flush=True)
+all_genes = []
 with open(diseapath, "r") as f:
     lines = f.readlines()
     for l in lines:
@@ -127,6 +157,8 @@ with open(diseapath, "r") as f:
         pid = ldata[3].strip()
         did = ldata[0].strip()
         gene = ldata[1].strip()
+        if gene not in all_genes: 
+            all_genes.append(gene)
         if pid in p_data:
             p_data[pid]["diseases"].append(did)
             p_data[pid]["genes"].append(gene)
@@ -142,48 +174,59 @@ with open(phenopath, "r") as f:
         if l.startswith("#"): continue
         ldata = l.split("\t")
         pid = ldata[0].strip()
+        gene = ldata[3].strip()
+        if gene not in all_genes: 
+            all_genes.append(gene)
         if pid in p_data:
-            p_data[pid]["genes"].append(ldata[3].strip())
+            p_data[pid]["genes"].append(gene)
 
 
 for pid in p_data:
     p_data[pid]["diseases"] = remove_duplicates(p_data[pid]["diseases"])
     p_data[pid]["genes"] = remove_duplicates(p_data[pid]["genes"])
+    p_data[pid]["meta"]["sources"] = remove_duplicates(p_data[pid]["meta"]["sources"])
     p_data[pid]["diseases"].sort()
     p_data[pid]["genes"].sort()
+    p_data[pid]["meta"]["sources"].sort()
 for did in d_data:
     d_data[did]["phenotypes"] = remove_duplicates(d_data[did]["phenotypes"])
+    d_data[did]["phenotypes_neg"] = remove_duplicates(d_data[did]["phenotypes_neg"])
     d_data[did]["genes"] = remove_duplicates(d_data[did]["genes"])
+    d_data[did]["sources"] = remove_duplicates(d_data[did]["sources"])
     d_data[did]["phenotypes"].sort()
+    d_data[did]["phenotypes_neg"].sort()
     d_data[did]["genes"].sort()
+    d_data[did]["sources"].sort()
 print('Done')
 
 
 
 
 # STEP 4: Compute for each term the list of all its sublevels childs/diseases/genes
-print('step 4: ', end='', flush=True)
+print('step 4: computing subontologies. ', end='', flush=True)
 
 
+subontologies = {
+    "HP:0000005": "inheritance",
+    "HP:0000118": "phenotypic",
+    "HP:0012823": "clinical",
+    "HP:0031797": "clinical",
+    "HP:0040279": "frequency"
+}
 
-
-def get_sublevel_data(hpo_id, root_id, root_path):
-    result = { "sub_total": 0, "sub_genes": [], "sub_diseases": [], "meta": meta_pattern, "genes_score":0, "diseases_score":0}
+def get_sublevel_data(hpo_id, subontology):
+    result = { "sub_total": 0, "sub_genes": [], "sub_diseases": [], "genes_score":0, "diseases_score":0}
     if hpo_id not in p_data: 
         print ("Link to an unknown id: " + hpo_id)
         return None
-
-    # Compute parent path
-    if hpo_id != "HP:0000001":
-        meta = p_data[hpo_id]["meta"] if "meta" in p_data[hpo_id] else meta_pattern
-        if root_id in meta["sections"] and hpo_id not in meta["sections"][root_id] and root_id != hpo_id:
-            root_path.append(hpo_id)
-            meta["sections"][root_id] = root_path
-        p_data[hpo_id]["meta"] = meta
         
     # Escape if already done
     if p_data[hpo_id]["sub_total"] != -1 :
         return p_data[hpo_id]
+
+    # Compute parent subontology
+    if hpo_id in subontologies: subontology = subontologies[hpo_id]
+    p_data[hpo_id]["subontology"] = subontology
 
     # Compute data for current entry
     result["sub_total"] = len(p_data[hpo_id]["subs"])
@@ -192,7 +235,7 @@ def get_sublevel_data(hpo_id, root_id, root_path):
 
     # Adding data from childs
     for cid in p_data[hpo_id]["subs"]:
-        cres = get_sublevel_data(cid, root_id, root_path)
+        cres = get_sublevel_data(cid, subontology)
         if cres:
             result["sub_total"] += cres["sub_total"]
             result["sub_genes"] += cres["sub_genes"]
@@ -206,28 +249,30 @@ def get_sublevel_data(hpo_id, root_id, root_path):
     p_data[hpo_id].update(result)
     return result
 
-# recursive call for each section
-for f in p_data["HP:0000001"]["subs"]:
-    get_sublevel_data(pid, pid, [])
-
+# recursive call for each subonthologies
+for pid in p_data["HP:0000001"]["subs"]:
+    get_sublevel_data(pid, "")
+# call again on all phenotypes for which one that have not been 
 for pid in p_data:
-    get_sublevel_data(pid, pid, [])
+    get_sublevel_data(pid, "phenotypic")
+
+p_data["HP:0000001"].update({ "sub_total": 0, "sub_genes": [], "sub_diseases": [], "genes_score":0, "diseases_score":0})
+
 print('Done')
 
 
-# "Disable" terchnical's root hpo entry to avoid to retrieve it when searching phenotype via disease or gene
-p_data["HP:0000001"]["sub_genes"] = []
-p_data["HP:0000001"]["sub_diseases"] = []
-p_data["HP:0000001"]["meta"] = {}
-
-# STEP 4: Process sql query
-print('step 4: ', end='', flush=True)
-pattern = "('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, '{}'), "
-sql = "INSERT INTO hpo_phenotype (hpo_id, label, definition, parent, childs, search, genes, diseases, allsubs_genes, allsubs_diseases, meta) VALUES "
+# STEP 5: Process sql query
+print('step 5: Populating database. ', end='', flush=True)
+genes_total = len(all_genes)
+diseases_total = len(d_data)
+pattern = "('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, {}, {}, '{}', '{}'), "
+sql = "INSERT INTO hpo_phenotype (hpo_id, label, definition, parents, childs, search, genes, diseases, genes_score, diseases_score, allsubs_genes, allsubs_diseases, subontology, meta) VALUES "
 for pid in p_data:
     label = escape(p_data[pid]["label"])
     definition = escape(p_data[pid]["definition"])
-    parent = "'{}'".format(p_data[pid]["parent"]) if p_data[pid]["parent"] is not None else "NULL"
+    parents = "NULL"
+    if len(p_data[pid]["parents"]) > 0:
+        parents = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["parents"]]))
     childs = "NULL"
     if len(p_data[pid]["subs"]) > 0:
         childs = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["subs"]]))
@@ -240,37 +285,45 @@ for pid in p_data:
     diseases = "NULL"
     if len(p_data[pid]["diseases"]) > 0:
         diseases = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["diseases"]]))
+    genes_score = len(p_data[pid]["genes"]) / genes_total
+    diseases_score = len(p_data[pid]["genes"]) / genes_total
     as_g = "NULL"
     if len(p_data[pid]["sub_genes"]) > 0:
         as_g = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["sub_genes"]]))
     as_d = "NULL"
     if len(p_data[pid]["sub_diseases"]) > 0:
         as_d = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["sub_diseases"]]))
+    subontology = p_data[pid]["subontology"]
     meta = p_data[pid]["meta"]
     meta.update({"all_childs_count": p_data[pid]["sub_total"]})
     meta = escape(json.dumps(meta))
-    sql += pattern.format(pid, label, definition, parent, childs, search, genes, diseases, as_g, as_d, meta)
+    sql += pattern.format(pid, label, definition, parents, childs, search, genes, diseases, genes_score, diseases_score, as_g, as_d, subontology, meta)
 sql = sql[:-2]
 Model.execute(sql)
 
 
-pattern = "('{}', '{}', '{}', {}, {}, {}), "
-sql = "INSERT INTO hpo_disease (hpo_id, label, definition, search, genes, phenotypes) VALUES "
+pattern = "('{}', '{}', '{}', {}, {}, {}, '{}'), "
+sql = "INSERT INTO hpo_disease (hpo_id, label, search, genes, phenotypes, phenotypes_neg, sources) VALUES "
 for did in d_data:
-    label = "" # escape(d_data[did]["label"])
-    definition = "" # escape(d_data[did]["definition"])
-    search = "NULL" # label " " + definition
+    label = escape(d_data[did]["label"])
+    search = label + " " + escape(d_data[did]["search"])
     genes = "NULL"
     if len(d_data[did]["genes"]) > 0:
         genes = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in d_data[did]["genes"]]))
     phenotypes = "NULL"
     if len(d_data[did]["phenotypes"]) > 0:
         phenotypes = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in d_data[did]["phenotypes"]]))
-    sql += pattern.format(did, label, definition, search, genes, phenotypes)
+    phenotypes_neg = "NULL"
+    if len(d_data[did]["phenotypes_neg"]) > 0:
+        phenotypes_neg = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in d_data[did]["phenotypes_neg"]]))
+    sources = escape(json.dumps(d_data[did]["sources"]))
+    sql += pattern.format(did, label, search, genes, phenotypes, phenotypes_neg, sources)
 sql = sql[:-2]
 Model.execute(sql)
 print('Done')
 
 
+Model.execute("DELETE FROM parameter WHERE key='hpo_version'")
+Model.execute("INSERT INTO parameter (key, value, description) VALUES ('hpo_version', '{}', 'Version of the HPO database dumps used');".format(escape(version)))
 # Load HPO terms-gene-diseases relations
 # Done in update_hpo.sql script call in the makefile that called this script
