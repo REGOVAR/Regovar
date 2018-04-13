@@ -69,7 +69,7 @@ class UserHandler:
         return rest_success(user.to_json())
 
 
-    @user_role('Admin')
+    @user_role('Administrator')
     async def new(self, request):
         '''
             Add a new user in database. 
@@ -123,7 +123,7 @@ class UserHandler:
         return response
 
 
-    @user_role('Admin')
+    @user_role('Administrator')
     async def delete(self, request):
         # Check that user is admin, and is not deleting himself (to ensure that there is always at least one admin)
         remote_user_id = await authorized_userid(request)
@@ -136,6 +136,7 @@ class UserHandler:
 
 
 
+    @user_role('Authenticated')
     async def get_user_data_from_request(self, request):
         """
             Tool for this manager to retrieve data from put/post request 

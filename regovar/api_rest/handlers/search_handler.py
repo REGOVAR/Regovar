@@ -20,6 +20,7 @@ from api_rest.rest import *
 class SearchHandler:
 
 
+    @user_role('Authenticated')
     def search(self, request):
         """ 
             Search provided query
@@ -38,6 +39,7 @@ class SearchHandler:
 
 
 
+    @user_role('Authenticated')
     def fetch_variant(self, request):
         """
             Return all data available for the requested variant in the context of the analysis
@@ -53,6 +55,7 @@ class SearchHandler:
 
 
 
+    @user_role('Authenticated')
     def fetch_gene(self, request):
         genename = request.match_info.get('gene_name', None)
         if genename is None :
@@ -67,6 +70,7 @@ class SearchHandler:
 
 
 
+    @user_role('Authenticated')
     def fetch_hpo(self, request):
         return rest_error("Not yet implemented")
 

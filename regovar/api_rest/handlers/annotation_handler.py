@@ -28,6 +28,8 @@ from api_rest.rest import *
 # ANNOTATION DATABASES HANDLER
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 class AnnotationDBHandler:
+
+    @user_role('Authenticated')
     def list(self, request):
         """ 
             Return list of genom's referencials supported
@@ -35,6 +37,7 @@ class AnnotationDBHandler:
         return rest_success(core.annotations.ref_list)
 
 
+    @user_role('Authenticated')
     async def get(self, request):
         """ 
             Return list of all annotation's databases and, for each, the list of availables versions and the list of their fields for the latest version
@@ -83,6 +86,7 @@ class AnnotationDBHandler:
         return rest_success(result)
 
 
+    @user_role('Authenticated')
     async def get_database(self, request):
         """
             Return the annotation database description and the list of available versions
@@ -95,6 +99,7 @@ class AnnotationDBHandler:
         return rest_success(result)
 
 
+    @user_role('Authenticated')
     async def get_field(self, request):
         """
             Return the annotation field details
@@ -104,6 +109,7 @@ class AnnotationDBHandler:
         return rest_success(core.annotations.fields_map[field_id])
 
 
+    @user_role('Administrator')
     async def delete(self, request):
         """
             Delete an annotations database and all its fields

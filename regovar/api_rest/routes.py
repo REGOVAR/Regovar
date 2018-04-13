@@ -135,7 +135,7 @@ app.router.add_route('GET',    "/db/{ref}", dbHdl.get)
 
 app.router.add_route('GET',   "/phenotypes",           phenoHandler.list)
 app.router.add_route('POST',   "/phenotypes/search",   phenoHandler.search)
-app.router.add_route('GET',    "/phenotype/{hpo_id}",  phenoHandler.get)
+app.router.add_route('GET',    "/phenotype/{hpo_id}",  phenoHandler.get)                # Get all available information about the given phenotype or disease (HPO/OMIM/ORPHA)
 
 
 
@@ -174,7 +174,7 @@ app.router.add_route('GET',    "/search/{query}",                               
 app.router.add_route('GET',    "/search/variant/{ref_id}/{variant_id}",               searchHandler.fetch_variant)   # Get all available information about the given variant
 app.router.add_route('GET',    "/search/variant/{ref_id}/{variant_id}/{analysis_id}", searchHandler.fetch_variant)   # Get all available information about the given variant + data in the context of the analysis
 app.router.add_route('GET',    "/search/gene/{gene_name}",                            searchHandler.fetch_gene)      # Get all available information about the given gene
-app.router.add_route('GET',    "/search/phenotype/{hpo_id}",                          searchHandler.fetch_hpo)       # Get all available information about the given phenotype or disease (HPO/OMIM/ORPHA)
+app.router.add_route('GET',    "/search/phenotype/{hpo_id}",                          phenoHandler.get)              # Get all available information about the given phenotype or disease (HPO/OMIM/ORPHA)
 
 
 app.router.add_route('GET',    "/panels",                     panelHandler.list)               # Get list of all panels

@@ -35,6 +35,7 @@ class PanelHandler:
 
 
 
+    @user_role('Authenticated')
     def list(self, request):
         """
             List all panels
@@ -44,6 +45,7 @@ class PanelHandler:
 
         
     
+    @user_role('Authenticated')
     async def create_or_update(self, request):
         """
             Create or update a panel with provided data
@@ -66,6 +68,7 @@ class PanelHandler:
         return rest_success(panel.to_json())
         
         
+    @user_role('Authenticated')
     def get(self, request):
         """
             Get details about the panel
@@ -80,6 +83,7 @@ class PanelHandler:
     
     
     
+    @user_role('Authenticated')
     def delete(self, request):
         """
             Delete the panel
@@ -95,6 +99,7 @@ class PanelHandler:
 
 
 
+    @user_role('Authenticated')
     def search(self, request):
         """
             Search gene and phenotype that match the query (used to help user to populate panel regions)
@@ -112,6 +117,7 @@ class PanelHandler:
     
     
     
+    @user_role('Authenticated')
     def import_file(self, request):
         """
             Import region from a bed file already in database

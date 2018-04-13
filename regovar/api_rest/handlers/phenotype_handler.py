@@ -28,6 +28,7 @@ from api_rest.rest import *
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 class PhenotypeHandler:
 
+    @user_role('Authenticated')
     def list(self, request):
         """
             Return all phenotypes entries
@@ -36,6 +37,7 @@ class PhenotypeHandler:
 
 
 
+    @user_role('Authenticated')
     def get(self, request):
         """
             Return all data available for the requested phenotype
@@ -49,6 +51,7 @@ class PhenotypeHandler:
         return rest_success(hpo)
 
 
+    @user_role('Authenticated')
     async def search(self, request):
         """
             Return all data available phenotype that match the search terms

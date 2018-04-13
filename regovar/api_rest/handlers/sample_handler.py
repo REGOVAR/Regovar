@@ -80,6 +80,7 @@ class SampleHandler:
 
 
 
+    @user_role('Authenticated')
     def list(self, request):
         """
             List all samples to init data of Client
@@ -88,6 +89,7 @@ class SampleHandler:
         return rest_success(core.samples.list(ref_id))
 
 
+    @user_role('Authenticated')
     def get(self, request):
         sid = request.match_info.get('sample_id', None)
         if sid is None:
@@ -100,6 +102,7 @@ class SampleHandler:
 
 
 
+    @user_role('Authenticated')
     async def import_from_file(self, request):
         params = get_query_parameters(request.query_string, ["subject_id", "analysis_id"])
         file_id = request.match_info.get('file_id', None)
@@ -123,6 +126,7 @@ class SampleHandler:
     
     
     
+    @user_role('Authenticated')
     async def update(self, request):
         """
             Update a sample with provided data

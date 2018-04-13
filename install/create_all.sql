@@ -81,7 +81,8 @@ CREATE TYPE sample_status AS ENUM ('empty', 'loading', 'ready', 'error');
 CREATE TYPE analysis_status AS ENUM ('empty', 'waiting', 'computing', 'ready', 'close', 'error');
 CREATE TYPE event_type AS ENUM ('custom', 'info', 'warning', 'error', 'technical');
 CREATE TYPE sex_type AS ENUM ('male', 'female', 'unknow');
-
+CREATE TYPE phenotype_presence AS ENUM ('unknow', 'present', 'absent');
+CREATE TYPE phenotype_category AS ENUM ('phenotypic', 'inheritance', 'frequency', 'clinical');
 
 
 
@@ -93,7 +94,7 @@ CREATE TYPE sex_type AS ENUM ('male', 'female', 'unknow');
 -- --------------------------------------------
 -- TABLES
 -- --------------------------------------------
-CREATE TABLE public.user
+CREATE TABLE "user"
 (
     id serial NOT NULL,
     login character varying(255) COLLATE pg_catalog."C" NOT NULL,
@@ -114,7 +115,7 @@ CREATE TABLE public.user
 );
 
 
-CREATE TABLE public.project
+CREATE TABLE project
 (
     id serial NOT NULL,
     name character varying(255) COLLATE pg_catalog."C",
@@ -147,7 +148,7 @@ CREATE TABLE subject
 
 
 
-CREATE TABLE public.file
+CREATE TABLE file
 (
     id serial NOT NULL,
     name character varying(255) COLLATE pg_catalog."C",
@@ -167,7 +168,7 @@ CREATE TABLE public.file
 );
 
 
-CREATE TABLE public.pipeline
+CREATE TABLE pipeline
 (
     id serial NOT NULL,
     name character varying(255) COLLATE pg_catalog."C",
@@ -189,7 +190,7 @@ CREATE TABLE public.pipeline
 );
 
 
-CREATE TABLE public.job
+CREATE TABLE job
 (
     id serial NOT NULL,
     pipeline_id int,
@@ -211,7 +212,7 @@ CREATE TABLE public.job
 );
 
 
-CREATE TABLE public.job_file
+CREATE TABLE job_file
 (
     job_id int NOT NULL,
     file_id int NOT NULL,
@@ -230,7 +231,7 @@ CREATE TABLE public.job_file
 
 
 
-CREATE TABLE public.template
+CREATE TABLE template
 (
     id serial NOT NULL,
     name character varying(255) COLLATE pg_catalog."C",
@@ -247,7 +248,7 @@ CREATE TABLE public.template
 
 
 
-CREATE TABLE public.analysis
+CREATE TABLE analysis
 (
     id serial NOT NULL,
     project_id integer,
@@ -271,7 +272,7 @@ CREATE TABLE public.analysis
 
 
 
-CREATE TABLE public.filter
+CREATE TABLE filter
 (
     id serial NOT NULL,
     analysis_id integer,
@@ -296,7 +297,7 @@ CREATE TABLE public.filter
 
 
 
-CREATE TABLE public."reference"
+CREATE TABLE "reference"
 (
     id serial NOT NULL,
     name character varying(50) COLLATE pg_catalog."C",
@@ -314,7 +315,7 @@ CREATE TABLE public."reference"
 
 
 
-CREATE TABLE public.sample
+CREATE TABLE sample
 (
     id serial NOT NULL,
     subject_id integer,
@@ -336,7 +337,7 @@ CREATE TABLE public.sample
 
 
 
-CREATE TABLE public.analysis_sample
+CREATE TABLE analysis_sample
 (
     analysis_id integer NOT NULL,
     sample_id integer NOT NULL,
@@ -345,7 +346,7 @@ CREATE TABLE public.analysis_sample
 );
 
 
-CREATE TABLE public.attribute
+CREATE TABLE attribute
 (
     analysis_id integer NOT NULL,
     sample_id integer NOT NULL,
@@ -359,7 +360,7 @@ CREATE TABLE public.attribute
 
 
 
-CREATE TABLE public.annotation_database
+CREATE TABLE annotation_database
 (
     uid character varying(32) COLLATE pg_catalog."C",
     reference_id integer NOT NULL,
@@ -377,7 +378,7 @@ CREATE TABLE public.annotation_database
 );
 
 
-CREATE TABLE public.annotation_field
+CREATE TABLE annotation_field
 (
     uid character varying(32) COLLATE pg_catalog."C",
     database_uid character varying(32) COLLATE pg_catalog."C" NOT NULL,
@@ -394,7 +395,7 @@ CREATE TABLE public.annotation_field
 
 
 
-CREATE TABLE public."parameter"
+CREATE TABLE "parameter"
 (
     key character varying(255) COLLATE pg_catalog."C" NOT NULL ,
     value character varying(255) COLLATE pg_catalog."C" NOT NULL,
@@ -406,7 +407,7 @@ CREATE TABLE public."parameter"
 
 
 
-CREATE TABLE public.event
+CREATE TABLE event
 (
     id bigserial NOT NULL,
     "date" timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -422,29 +423,15 @@ CREATE TABLE public.event
 
 
 
-/*
-CREATE TABLE public.project_subject
-(
-    project_id integer NOT NULL,
-    subject_id integer NOT NULL,
-    CONSTRAINT ps_pkey PRIMARY KEY (project_id, subject_id)
-);
 
-CREATE TABLE public.project_file
-(
-    project_id integer NOT NULL,
-    file_id integer NOT NULL,
-    CONSTRAINT pf_pkey PRIMARY KEY (project_id, file_id)
-);*/
-
-CREATE TABLE public.subject_file
+CREATE TABLE subject_file
 (
     subject_id integer NOT NULL,
     file_id integer NOT NULL,
     CONSTRAINT sf_pkey PRIMARY KEY (subject_id, file_id)
 );
 
-CREATE TABLE public.analysis_file
+CREATE TABLE analysis_file
 (
     analysis_id integer NOT NULL,
     file_id integer NOT NULL,
@@ -456,7 +443,8 @@ CREATE TABLE public.analysis_file
 
 
 
-CREATE TABLE public.indicator
+
+CREATE TABLE indicator
 (
     id serial NOT NULL,
     name text COLLATE pg_catalog."C" NOT NULL,
@@ -464,21 +452,21 @@ CREATE TABLE public.indicator
     meta JSON,
     CONSTRAINT indicator_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.subject_indicator_value
+CREATE TABLE subject_indicator_value
 (
     subject_id integer NOT NULL,
     indicator_id integer NOT NULL,
     value character varying(50) COLLATE pg_catalog."C",
     CONSTRAINT siv_pkey PRIMARY KEY (subject_id, indicator_id)
 );
-CREATE TABLE public.analysis_indicator_value
+CREATE TABLE analysis_indicator_value
 (
     analysis_id integer NOT NULL,
     indicator_id integer NOT NULL,
     value character varying(50) COLLATE pg_catalog."C",
     CONSTRAINT aiv_pkey PRIMARY KEY (analysis_id, indicator_id)
 );
-CREATE TABLE public.job_indicator_value
+CREATE TABLE job_indicator_value
 (
     job_id integer NOT NULL,
     indicator_id integer NOT NULL,
@@ -489,7 +477,7 @@ CREATE TABLE public.job_indicator_value
 
 
 
-CREATE TABLE public.panel
+CREATE TABLE panel
 (
     id character varying(50) COLLATE pg_catalog."C",
     name text COLLATE pg_catalog."C",
@@ -500,7 +488,7 @@ CREATE TABLE public.panel
     shared boolean DEFAULT False,
     CONSTRAINT panel_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.panel_entry
+CREATE TABLE panel_entry
 (
     id character varying(50) COLLATE pg_catalog."C" NOT NULL,
     panel_id character varying(50) COLLATE pg_catalog."C" NOT NULL,
@@ -510,6 +498,47 @@ CREATE TABLE public.panel_entry
     create_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT panel_entry_pkey PRIMARY KEY (panel_id, version)
+);
+
+
+
+
+
+
+
+
+CREATE TABLE subject_phenotype
+(
+    subject_id integer NOT NULL,
+    hpo_id character varying(50) COLLATE pg_catalog."C" NOT NULL,
+    presence phenotype_presence DEFAULT 'present',
+    added_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT sp_pkey PRIMARY KEY (subject_id, hpo_id)
+);
+CREATE TABLE hpo_phenotype
+(
+    hpo_id character varying(10) COLLATE pg_catalog."C",
+    parents character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    childs character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    label text COLLATE pg_catalog."C",
+    definition text COLLATE pg_catalog."C",
+    search text COLLATE pg_catalog."C",
+    genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    diseases character varying(30)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    allsubs_genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    allsubs_diseases character varying(30)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    category phenotype_category DEFAULT 'phenotypic',
+    meta JSON
+);
+CREATE TABLE hpo_disease
+(
+    hpo_id character varying(30) COLLATE pg_catalog."C",
+    label text COLLATE pg_catalog."C",
+    search text COLLATE pg_catalog."C",
+    genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    phenotypes character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    phenotypes_neg character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
+    meta JSON
 );
 
 
@@ -587,13 +616,17 @@ CREATE INDEX panel_entry_idx
   ON public.panel_entry
   USING btree (panel_id, version);
   
-  
 
 CREATE INDEX event_meta_idx 
     ON event 
     USING GIN (meta jsonb_path_ops);
 
-
+CREATE INDEX hpo_phenotype_idx 
+    ON hpo_phenotype 
+    USING btree (hpo_id);
+CREATE INDEX hpo_disease_idx 
+    ON hpo_disease 
+    USING btree (hpo_id);
 
 
 

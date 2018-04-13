@@ -348,7 +348,7 @@ class SearchManager:
             Return disease that match the search query
         """
         from core.core import core
-        if search.startswith("OMIM:") or search.startswith("ORPHA:"):
+        if search.startswith("OMIM:") or search.startswith("ORPHA:") or search.startswith("DECIPHER:"):
             return core.phenotypes.get(search)
         # TODO: search disease by name (need to integrate OMIM/ORPHA public data (id<->title) into Regovar database)
         #else:
@@ -525,25 +525,17 @@ class SearchManager:
                                 "trx": res.trxcount})
             data.update({"refgene": refgene})
 
-            # Get phenotype
-            query = "SELECT chr, trxrange, cdsrange, exoncount, trxcount FROM refgene_{} WHERE name2 ilike '{}'"
-            refgene = []
-            if ref_id:
-                res = execute(query.format(core.annotations.ref_list[ref_id].lower(), genename)).first()
-                if res:
-                  refgene.append({
-                      "id": ref_id, 
-                      "name": core.annotations.ref_list[ref_id], 
-                      "start": res.trxrange.lower,
-                      "size": res.trxrange.upper - res.trxrange.lower,
-                      "exon": res.exoncount,
-                      "trx": res.trxcount})
+            # Get hpo data
+            hpo = {"diseases": [], "phenotypes": []}
+            query = "SELECT distinct hpo_id, label FROM hpo_disease WHERE genes @> '{{{}}}' ORDER BY hpo_id".format(genename)
+            for row in execute(query):
+                hpo["diseases"].append({"id": row.hpo_id, "label": row.label})
+            query = "SELECT distinct hpo_id, label FROM hpo_phenotype WHERE genes @> '{{{}}}' ORDER BY label".format(genename)
+            for row in execute(query):
+                hpo["phenotypes"].append({"id": row.hpo_id, "label": row.label})
+
+            data.update({"hpo": hpo})
         return data
-
-
-    def fetch_phenotype(self, phenotype_id):
-        pass
-
 
 
 

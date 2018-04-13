@@ -37,9 +37,17 @@ setup:
 
 #HPO
 install_hpo:
+	#rm $(database_path)/hpo_*
+	wget http://purl.obolibrary.org/obo/hp.obo -O $(database_path)/hpo.obo
+	wget http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/data_version.txt -O $(database_path)/hpo_version.txt
+	wget http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/phenotype_annotation.tab -O $(database_path)/hpo_annotation.txt
+	wget http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/negative_phenotype_annotation.tab -O $(database_path)/hpo_annotation_neg.txt
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $(database_path)/hpo_disease.txt
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
-	psql -U regovar -d $(database_name) -f ../install/update_hpo.sql
+	cp ../install/update_hpo.py update_hpo.py
+	chmod u+x update_hpo.py
+	python3 update_hpo.py $(database_path)/ "`cat $(database_path)/hpo_version.txt`"
+	rm update_hpo.py
 	
 update_hpo: terminate_queries install_hpo
 

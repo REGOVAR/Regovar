@@ -29,6 +29,8 @@ from api_rest.rest import *
 
 class EventHandler:
     
+
+    @user_role('Authenticated')
     def list(self, request):
         """
             Get list of last 100 events
@@ -36,6 +38,8 @@ class EventHandler:
         return rest_success(core.events.list())
     
     
+    
+    @user_role('Authenticated')
     async def search(self, request):
         """
             Get events list corresponding to provided filters
@@ -49,6 +53,7 @@ class EventHandler:
     
     
     
+    @user_role('Authenticated')
     def get(self, request):
         """
             Get details about the event
@@ -61,6 +66,7 @@ class EventHandler:
         
         
     
+    @user_role('Authenticated')
     async def new(self, request):
         """
             Create new event with provided data
@@ -82,6 +88,7 @@ class EventHandler:
         
         
         
+    @user_role('Authenticated')
     async def edit(self, request):
         """
             Edit event data
@@ -102,6 +109,7 @@ class EventHandler:
     
     
     
+    @user_role('Authenticated')
     def delete(self, request):
         """
             Delete the event
