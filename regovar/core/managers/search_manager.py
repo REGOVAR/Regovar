@@ -348,7 +348,7 @@ class SearchManager:
             Return disease that match the search query
         """
         from core.core import core
-        if search.startswith("OMIM:") or search.startswith("ORPHA:"):
+        if search.startswith("OMIM:") or search.startswith("ORPHA:") or search.startswith("DECIPHER:"):
             return core.phenotypes.get(search)
         # TODO: search disease by name (need to integrate OMIM/ORPHA public data (id<->title) into Regovar database)
         #else:

@@ -65,8 +65,8 @@ data_pattern = {
     "diseases": [], 
     "genes": [], 
     "sub_total": -1,
-    "subontology": "phenotypic",
-    "meta": {"qualifiers": {}, "sources": []}
+    "category": "phenotypic",
+    "meta": {"qualifiers": {}, "sources": [], "genes_freq": {"label":"", "value": 0}, "diseases_freq": {"label":"", "value": 0}, "subcategory": None}
 }
 
 with open(obopath, "r") as f:
@@ -113,6 +113,10 @@ with open(annotpath, "r") as f:
         #aspect = ldata[10].strip()  # Not used
         synonyms = ldata[11].strip()
         
+        # clean label
+        if label.startswith("#"): label = label[1:]
+        if label.startswith(str(db_id)): label = label[len(str(db_id)):]
+        label = label.strip()
         
         if pid not in p_data:
             print("WARNING: unknow pid... skipped: " + pid)
@@ -122,7 +126,7 @@ with open(annotpath, "r") as f:
         p_data[pid]["diseases"].append(did)
         
         if did not in d_data:
-            d_data[did] = {"label": label, "search": synonyms, "phenotypes":[], "phenotypes_neg": [], "genes": [], "sources": []}
+            d_data[did] = {"label": label, "search": synonyms, "phenotypes":[], "phenotypes_neg": [], "genes": [], "meta": {"sources":[], "genes_freq": {"label":"", "value": 0}}}
             
         if qualifier == "NOT":
             d_data[did]["phenotypes_neg"].append(pid)
@@ -138,7 +142,7 @@ with open(annotpath, "r") as f:
             source_id = source_id.split(";")
             for s in source_id:
                 p_data[pid]["meta"]["sources"] += s.split(",")
-                d_data[did]["sources"] += s.split(",")
+                d_data[did]["meta"]["sources"] += s.split(",")
 print('Done')
 
 
@@ -192,21 +196,21 @@ for did in d_data:
     d_data[did]["phenotypes"] = remove_duplicates(d_data[did]["phenotypes"])
     d_data[did]["phenotypes_neg"] = remove_duplicates(d_data[did]["phenotypes_neg"])
     d_data[did]["genes"] = remove_duplicates(d_data[did]["genes"])
-    d_data[did]["sources"] = remove_duplicates(d_data[did]["sources"])
+    d_data[did]["meta"]["sources"] = remove_duplicates(d_data[did]["meta"]["sources"])
     d_data[did]["phenotypes"].sort()
     d_data[did]["phenotypes_neg"].sort()
     d_data[did]["genes"].sort()
-    d_data[did]["sources"].sort()
+    d_data[did]["meta"]["sources"].sort()
 print('Done')
 
 
 
 
 # STEP 4: Compute for each term the list of all its sublevels childs/diseases/genes
-print('step 4: computing subontologies. ', end='', flush=True)
+print('step 4: computing sub ontologies. ', end='', flush=True)
 
 
-subontologies = {
+categories = {
     "HP:0000005": "inheritance",
     "HP:0000118": "phenotypic",
     "HP:0012823": "clinical",
@@ -214,8 +218,8 @@ subontologies = {
     "HP:0040279": "frequency"
 }
 
-def get_sublevel_data(hpo_id, subontology):
-    result = { "sub_total": 0, "sub_genes": [], "sub_diseases": [], "genes_score":0, "diseases_score":0}
+def get_sublevel_data(hpo_id, category):
+    result = { "sub_total": 0, "sub_genes": [], "sub_diseases": []}
     if hpo_id not in p_data: 
         print ("Link to an unknown id: " + hpo_id)
         return None
@@ -224,9 +228,9 @@ def get_sublevel_data(hpo_id, subontology):
     if p_data[hpo_id]["sub_total"] != -1 :
         return p_data[hpo_id]
 
-    # Compute parent subontology
-    if hpo_id in subontologies: subontology = subontologies[hpo_id]
-    p_data[hpo_id]["subontology"] = subontology
+    # Compute parent category
+    if hpo_id in categories: category = categories[hpo_id]
+    p_data[hpo_id]["category"] = category
 
     # Compute data for current entry
     result["sub_total"] = len(p_data[hpo_id]["subs"])
@@ -235,7 +239,7 @@ def get_sublevel_data(hpo_id, subontology):
 
     # Adding data from childs
     for cid in p_data[hpo_id]["subs"]:
-        cres = get_sublevel_data(cid, subontology)
+        cres = get_sublevel_data(cid, category)
         if cres:
             result["sub_total"] += cres["sub_total"]
             result["sub_genes"] += cres["sub_genes"]
@@ -265,9 +269,9 @@ print('Done')
 print('step 5: Populating database. ', end='', flush=True)
 genes_total = len(all_genes)
 diseases_total = len(d_data)
-p_data["HP:0000001"].update({ "sub_total": 0, "sub_genes": [], "sub_diseases": [], "genes_score":0, "diseases_score":0, "meta":{"genes_total": genes_total, "diseases_total": diseases_total}})
-pattern = "('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, {}, {}, '{}', '{}'), "
-sql = "INSERT INTO hpo_phenotype (hpo_id, label, definition, parents, childs, search, genes, diseases, genes_score, diseases_score, allsubs_genes, allsubs_diseases, subontology, meta) VALUES "
+p_data["HP:0000001"].update({ "sub_total": 0, "sub_genes": [], "sub_diseases": []})
+pattern = "('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, '{}', '{}'), "
+sql = "INSERT INTO hpo_phenotype (hpo_id, label, definition, parents, childs, search, genes, diseases, allsubs_genes, allsubs_diseases, category, meta) VALUES "
 for pid in p_data:
     label = escape(p_data[pid]["label"])
     definition = escape(p_data[pid]["definition"])
@@ -286,25 +290,27 @@ for pid in p_data:
     diseases = "NULL"
     if len(p_data[pid]["diseases"]) > 0:
         diseases = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["diseases"]]))
-    genes_score = len(p_data[pid]["sub_genes"]) / genes_total
-    diseases_score = len(p_data[pid]["sub_diseases"]) / diseases_total
     as_g = "NULL"
     if len(p_data[pid]["sub_genes"]) > 0:
         as_g = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["sub_genes"]]))
     as_d = "NULL"
     if len(p_data[pid]["sub_diseases"]) > 0:
         as_d = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in p_data[pid]["sub_diseases"]]))
-    subontology = p_data[pid]["subontology"]
+    category = p_data[pid]["category"]
     meta = p_data[pid]["meta"]
+    meta["genes_freq"]["label"] = "{} / {}".format(len(p_data[pid]["sub_genes"]), genes_total)
+    meta["genes_freq"]["value"] = len(p_data[pid]["sub_genes"]) / genes_total
+    meta["diseases_freq"]["label"] = "{} / {}".format(len(p_data[pid]["sub_diseases"]), diseases_total)
+    meta["diseases_freq"]["value"] = len(p_data[pid]["sub_diseases"]) / diseases_total
     meta.update({"all_childs_count": p_data[pid]["sub_total"]})
     meta = escape(json.dumps(meta))
-    sql += pattern.format(pid, label, definition, parents, childs, search, genes, diseases, genes_score, diseases_score, as_g, as_d, subontology, meta)
+    sql += pattern.format(pid, label, definition, parents, childs, search, genes, diseases, as_g, as_d, category, meta)
 sql = sql[:-2]
 Model.execute(sql)
 
 
 pattern = "('{}', '{}', '{}', {}, {}, {}, '{}'), "
-sql = "INSERT INTO hpo_disease (hpo_id, label, search, genes, phenotypes, phenotypes_neg, sources) VALUES "
+sql = "INSERT INTO hpo_disease (hpo_id, label, search, genes, phenotypes, phenotypes_neg, meta) VALUES "
 for did in d_data:
     label = escape(d_data[did]["label"])
     search = label + " " + escape(d_data[did]["search"])
@@ -317,8 +323,11 @@ for did in d_data:
     phenotypes_neg = "NULL"
     if len(d_data[did]["phenotypes_neg"]) > 0:
         phenotypes_neg = "ARRAY[{}]".format(",".join(["'{}'".format(l) for l in d_data[did]["phenotypes_neg"]]))
-    sources = escape(json.dumps(d_data[did]["sources"]))
-    sql += pattern.format(did, label, search, genes, phenotypes, phenotypes_neg, sources)
+    meta = d_data[did]["meta"]
+    meta["genes_freq"]["label"] = "{} / {}".format(len(d_data[did]["genes"]), genes_total)
+    meta["genes_freq"]["value"] = len(d_data[did]["genes"]) / genes_total
+    meta = escape(json.dumps(meta))
+    sql += pattern.format(did, label, search, genes, phenotypes, phenotypes_neg, meta)
 sql = sql[:-2]
 Model.execute(sql)
 print('Done')

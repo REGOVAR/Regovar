@@ -81,8 +81,8 @@ CREATE TYPE sample_status AS ENUM ('empty', 'loading', 'ready', 'error');
 CREATE TYPE analysis_status AS ENUM ('empty', 'waiting', 'computing', 'ready', 'close', 'error');
 CREATE TYPE event_type AS ENUM ('custom', 'info', 'warning', 'error', 'technical');
 CREATE TYPE sex_type AS ENUM ('male', 'female', 'unknow');
-CREATE TYPE phenotype_operator AS ENUM ('unknow', 'present', 'absent');
-CREATE TYPE phenotype_subontology AS ENUM ('phenotypic', 'inheritance', 'frequency', 'clinical');
+CREATE TYPE phenotype_presence AS ENUM ('unknow', 'present', 'absent');
+CREATE TYPE phenotype_category AS ENUM ('phenotypic', 'inheritance', 'frequency', 'clinical');
 
 
 
@@ -510,8 +510,8 @@ CREATE TABLE panel_entry
 CREATE TABLE subject_phenotype
 (
     subject_id integer NOT NULL,
-    hpo_id character varying(10) COLLATE pg_catalog."C" NOT NULL,
-    operator phenotype_operator DEFAULT 'unknow',
+    hpo_id character varying(50) COLLATE pg_catalog."C" NOT NULL,
+    presence phenotype_presence DEFAULT 'present',
     added_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT sp_pkey PRIMARY KEY (subject_id, hpo_id)
 );
@@ -525,11 +525,9 @@ CREATE TABLE hpo_phenotype
     search text COLLATE pg_catalog."C",
     genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
     diseases character varying(30)[] COLLATE pg_catalog."C" DEFAULT NULL,
-    genes_score real DEFAULT 0,
-    diseases_score real DEFAULT 0,
     allsubs_genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
     allsubs_diseases character varying(30)[] COLLATE pg_catalog."C" DEFAULT NULL,
-    subontology phenotype_subontology DEFAULT 'phenotypic',
+    category phenotype_category DEFAULT 'phenotypic',
     meta JSON
 );
 CREATE TABLE hpo_disease
@@ -540,7 +538,7 @@ CREATE TABLE hpo_disease
     genes character varying(50)[] COLLATE pg_catalog."C" DEFAULT NULL,
     phenotypes character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
     phenotypes_neg character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
-    sources JSON
+    meta JSON
 );
 
 

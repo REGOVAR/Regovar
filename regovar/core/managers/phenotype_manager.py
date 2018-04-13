@@ -107,7 +107,7 @@ class PhenotypeManager:
         """
             Internal method, called by get(token) to retrieve phenotypics data from a provided hpo id
         """
-        sql = "SELECT hpo_id, label, definition, parents, childs, genes_score, diseases_score, allsubs_diseases, allsubs_genes, subontology, meta FROM hpo_phenotype WHERE hpo_id='{}'".format(hpo_id)
+        sql = "SELECT hpo_id, label, definition, parents, childs, allsubs_diseases, allsubs_genes, category, meta FROM hpo_phenotype WHERE hpo_id='{}'".format(hpo_id)
         row = execute(sql).first()
         result = {
             "id": hpo_id,
@@ -116,11 +116,9 @@ class PhenotypeManager:
             "definition": row.definition,
             "parents": [],
             "childs": [],
-            "diseases": row.allsubs_diseases,
+            "diseases": [],
             "genes": row.allsubs_genes,
-            "genes_score": row.genes_score,
-            "diseases_score": row.diseases_score,
-            "subontology": row.subontology,
+            "category": row.category,
             "meta": row.meta
         }
         # Related phenotypes
@@ -134,7 +132,24 @@ class PhenotypeManager:
                 result["parents"].append({"id": r.hpo_id, "label": r.label})
             else:
                 result["childs"].append({"id": r.hpo_id, "label": r.label})
-
+        # Related diseases
+        rel = ["'{}'".format(i) for i in row.allsubs_diseases]
+        sql = "SELECT hpo_id, label FROM hpo_disease WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
+        for r in execute(sql):
+            result["diseases"].append({"id": r.hpo_id, "label": r.label})
+        # Qualifiers phenotypes
+        rel = []
+        for did in row.meta["qualifiers"]:
+            rel += ["'{}'".format(i) for i in row.meta["qualifiers"][did]]
+        rel = remove_duplicates(rel)
+        if len(rel) > 0:
+            sql = "SELECT hpo_id, label, definition FROM hpo_phenotype WHERE hpo_id IN ({})".format(",".join(rel))
+            for r in execute(sql):
+                p = {"id": r.hpo_id, "label": r.label, "definition": r.definition}
+                for did in row.meta["qualifiers"]:
+                    if r.hpo_id in row.meta["qualifiers"][did]:
+                        row.meta["qualifiers"][did].remove(r.hpo_id)
+                        row.meta["qualifiers"][did].append(p)
         return result
 
 
@@ -142,7 +157,7 @@ class PhenotypeManager:
         """
             Internal method, called by get(token) to retrieve generic disease data from a provided hpo id
         """
-        sql = "SELECT hpo_id, label, genes, phenotypes, phenotypes_neg, sources FROM hpo_disease WHERE hpo_id='{}'".format(hpo_id)
+        sql = "SELECT hpo_id, label, genes, phenotypes, phenotypes_neg, meta FROM hpo_disease WHERE hpo_id='{}'".format(hpo_id)
         row = execute(sql).first()
         result = {
             "id": hpo_id,
@@ -151,7 +166,7 @@ class PhenotypeManager:
             "genes": row.genes,
             "phenotypes": [],
             "phenotypes_neg": [],
-            "sources": row.sources
+            "meta": row.meta
         }
         # Related phenotypes
         pheno = row.phenotypes if row.phenotypes is not None else []
@@ -186,7 +201,6 @@ class PhenotypeManager:
                     if "qualifiers" in pdata and r.hpo_id in pdata["qualifiers"]:
                         pdata["qualifiers"].remove(r.hpo_id)
                         pdata["qualifiers"].append(p)
-
         return result
 
 
