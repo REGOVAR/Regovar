@@ -118,6 +118,7 @@ class PhenotypeManager:
             "childs": [],
             "diseases": [],
             "genes": row.allsubs_genes,
+            "subjects": [],
             "category": row.category,
             "meta": row.meta
         }
@@ -137,6 +138,11 @@ class PhenotypeManager:
         sql = "SELECT hpo_id, label FROM hpo_disease WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
         for r in execute(sql):
             result["diseases"].append({"id": r.hpo_id, "label": r.label})
+        # Related subjects
+        sql = "SELECT s.id, s.identifier, s.firstname, s.lastname, s.sex FROM subject s INNER JOIN subject_phenotype p ON p.subject_id=s.id WHERE p.presence='present' AND p.hpo_id='{}'".format(hpo_id)
+        for r in execute(sql):
+            result["subjects"].append({"id": r.hpo_id, "identifier": r.identifier, "firstname": r.firstname, "lastname": r.lastname, "sex": r.sex})
+        
         # Qualifiers phenotypes
         rel = []
         for did in row.meta["qualifiers"]:
