@@ -52,25 +52,49 @@ class PhenotypeManager:
         # TODO: escape search
         if not isinstance(search, str) or search.strip() == "":
             raise RegovarException("Invalid search query")
-        query = "SELECT DISTINCT hpo_id, label FROM hpo_phenotype WHERE label ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
         
-        result = []
+        ids = []
+        # Search among diseases
+        diseases = []
+        query = "SELECT hpo_id, label, meta FROM hpo_disease WHERE label ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
         for row in execute(query):
-            result.append({"id": row.hpo_id, "label": row.label})
+            if row.hpo_id not in ids:
+                diseases.append({"id": row.hpo_id, "label": row.label, "meta": row.meta})
+                ids.append(row.hpo_id)
+
+        # Search also among diseases synonyms if needed
+        if len(diseases) == 0:
+            query = "SELECT hpo_id, label, meta FROM hpo_phenotype WHERE search ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+            for row in execute(query):
+                if row.hpo_id not in ids:
+                    diseases.append({"id": row.hpo_id, "label": row.label, "meta": row.meta})
+                    ids.append(row.hpo_id)
+        
+        # Search among phenotypes
+        phenotypes = []
+        query = "SELECT hpo_id, label, meta FROM hpo_phenotype WHERE label ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+        for row in execute(query):
+            if row.hpo_id not in ids:
+                phenotypes.append({"id": row.hpo_id, "label": row.label, "meta": row.meta})
+                ids.append(row.hpo_id)
 
         # Search also among synonyms if needed
-        if len(result) == 0:
-            query = "SELECT DISTINCT hpo_id, label FROM hpo_phenotype WHERE search ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+        if len(phenotypes) == 0:
+            query = "SELECT hpo_id, label, meta FROM hpo_phenotype WHERE search ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
             for row in execute(query):
-                result.append({"id": row.hpo_id, "label": row.label})
+                if row.hpo_id not in ids:
+                    phenotypes.append({"id": row.hpo_id, "label": row.label, "meta": row.meta})
+                    ids.append(row.hpo_id)
 
         # Search also among description if needed
-        if len(result) == 0:
-            query = "SELECT DISTINCT hpo_id, label FROM hpo_phenotype WHERE description ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+        if len(phenotypes) == 0:
+            query = "SELECT hpo_id, label, meta FROM hpo_phenotype WHERE description ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
             for row in execute(query):
-                result.append({"id": row.hpo_id, "label": row.label})
+                if row.hpo_id not in ids:
+                    phenotypes.append({"id": row.hpo_id, "label": row.label, "meta": row.meta})
+                    ids.append(row.hpo_id)
 
-        return result
+        return diseases + phenotypes
 
 
 
@@ -125,31 +149,33 @@ class PhenotypeManager:
         # Related phenotypes
         parents = row.parents if row.parents is not None else []
         childs = row.childs if row.childs is not None else []
-        rel = ["'{}'".format(i) for i in parents] 
-        rel += ["'{}'".format(i) for i in childs] 
+        rel = ["'{}'".format(i) for i in parents]
+        rel += ["'{}'".format(i) for i in childs]
         sql = "SELECT hpo_id, label FROM hpo_phenotype WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
-        for r in execute(sql):
-            if r.hpo_id in parents:
-                result["parents"].append({"id": r.hpo_id, "label": r.label})
-            else:
-                result["childs"].append({"id": r.hpo_id, "label": r.label})
+        if len(rel) > 0:
+            for r in execute(sql):
+                if r.hpo_id in parents:
+                    result["parents"].append({"id": r.hpo_id, "label": r.label})
+                else:
+                    result["childs"].append({"id": r.hpo_id, "label": r.label})
         # Related diseases
-        rel = ["'{}'".format(i) for i in row.allsubs_diseases]
+        rel = ["'{}'".format(i) for i in row.allsubs_diseases] if row.allsubs_diseases else []
         sql = "SELECT hpo_id, label FROM hpo_disease WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
-        for r in execute(sql):
-            result["diseases"].append({"id": r.hpo_id, "label": r.label})
+        if len(rel) > 0:
+            for r in execute(sql):
+                result["diseases"].append({"id": r.hpo_id, "label": r.label})
         # Related subjects
-        sql = "SELECT s.id, s.identifier, s.firstname, s.lastname, s.sex FROM subject s INNER JOIN subject_phenotype p ON p.subject_id=s.id WHERE p.presence='present' AND p.hpo_id='{}'".format(hpo_id)
+        sql = "SELECT s.id, s.identifier, s.firstname, s.lastname, s.sex, s.dateofbirth, s.comment FROM subject s INNER JOIN subject_phenotype p ON p.subject_id=s.id WHERE p.presence='present' AND p.hpo_id='{}'".format(hpo_id)
         for r in execute(sql):
-            result["subjects"].append({"id": r.hpo_id, "identifier": r.identifier, "firstname": r.firstname, "lastname": r.lastname, "sex": r.sex})
+            result["subjects"].append({"id": r.id, "identifier": r.identifier, "firstname": r.firstname, "lastname": r.lastname, "sex": r.sex, "dateofbirth": r.dateofbirth.isoformat() if r.dateofbirth else None, "comment": r.comment})
         
         # Qualifiers phenotypes
         rel = []
         for did in row.meta["qualifiers"]:
             rel += ["'{}'".format(i) for i in row.meta["qualifiers"][did]]
         rel = remove_duplicates(rel)
+        sql = "SELECT hpo_id, label, definition FROM hpo_phenotype WHERE hpo_id IN ({})".format(",".join(rel))
         if len(rel) > 0:
-            sql = "SELECT hpo_id, label, definition FROM hpo_phenotype WHERE hpo_id IN ({})".format(",".join(rel))
             for r in execute(sql):
                 p = {"id": r.hpo_id, "label": r.label, "definition": r.definition}
                 for did in row.meta["qualifiers"]:
@@ -159,19 +185,20 @@ class PhenotypeManager:
         return result
 
 
-    def _get_disease(self, hpo_id):
+    def _get_disease(self, disease_id):
         """
             Internal method, called by get(token) to retrieve generic disease data from a provided hpo id
         """
-        sql = "SELECT hpo_id, label, genes, phenotypes, phenotypes_neg, meta FROM hpo_disease WHERE hpo_id='{}'".format(hpo_id)
+        sql = "SELECT hpo_id, label, genes, phenotypes, phenotypes_neg, meta FROM hpo_disease WHERE hpo_id='{}'".format(disease_id)
         row = execute(sql).first()
         result = {
-            "id": hpo_id,
+            "id": disease_id,
             "type" : "disease",
             "label": row.label,
             "genes": row.genes,
             "phenotypes": [],
             "phenotypes_neg": [],
+            "subjects": [],
             "meta": row.meta
         }
         # Related phenotypes
@@ -180,16 +207,17 @@ class PhenotypeManager:
         rel = ["'{}'".format(i) for i in pheno] 
         rel += ["'{}'".format(i) for i in npheno] 
         sql = "SELECT hpo_id, label, definition, meta FROM hpo_phenotype WHERE hpo_id IN ({}) ORDER BY label".format(",".join(rel))
-        rel = []
-        for r in execute(sql):
-            p = {"id": r.hpo_id, "label": r.label, "definition": r.definition}
-            if hpo_id in r.meta["qualifiers"]:
-                p["qualifiers"] = r.meta["qualifiers"][hpo_id]
-                rel += p["qualifiers"]
-            if r.hpo_id in pheno:
-                result["phenotypes"].append(p)
-            else:
-                result["phenotypes_neg"].append(p)
+        if len(rel) > 0:
+            rel = []
+            for r in execute(sql):
+                p = {"id": r.hpo_id, "label": r.label, "definition": r.definition, "meta": {"qualifiers": { disease_id: []}}}
+                if disease_id in r.meta["qualifiers"]:
+                    p["meta"]["qualifiers"][disease_id] = r.meta["qualifiers"][disease_id]
+                    rel += p["meta"]["qualifiers"][disease_id]
+                if r.hpo_id in pheno:
+                    result["phenotypes"].append(p)
+                else:
+                    result["phenotypes_neg"].append(p)
 
         # Qualifiers phenotypes
         rel =remove_duplicates(rel)
@@ -200,13 +228,19 @@ class PhenotypeManager:
             for r in execute(sql):
                 p = {"id": r.hpo_id, "label": r.label, "definition": r.definition}
                 for pdata in result["phenotypes"]:
-                    if "qualifiers" in pdata and r.hpo_id in pdata["qualifiers"]:
-                        pdata["qualifiers"].remove(r.hpo_id)
-                        pdata["qualifiers"].append(p)
+                    if r.hpo_id in pdata["meta"]["qualifiers"][disease_id]:
+                        pdata["meta"]["qualifiers"][disease_id].remove(r.hpo_id)
+                        pdata["meta"]["qualifiers"][disease_id].append(p)
                 for pdata in result["phenotypes_neg"]:
-                    if "qualifiers" in pdata and r.hpo_id in pdata["qualifiers"]:
-                        pdata["qualifiers"].remove(r.hpo_id)
-                        pdata["qualifiers"].append(p)
+                    if r.hpo_id in pdata["meta"]["qualifiers"][disease_id]:
+                        pdata["meta"]["qualifiers"][disease_id].remove(r.hpo_id)
+                        pdata["meta"]["qualifiers"][disease_id].append(p)
+                        
+        # Related subjects
+        sql = "SELECT s.id, s.identifier, s.firstname, s.lastname, s.sex, s.dateofbirth, s.comment FROM subject s INNER JOIN subject_phenotype p ON p.subject_id=s.id WHERE p.presence='present' AND p.hpo_id='{}'".format(disease_id)
+        for r in execute(sql):
+            result["subjects"].append({"id": r.id, "identifier": r.identifier, "firstname": r.firstname, "lastname": r.lastname, "sex": r.sex, "dateofbirth": r.dateofbirth.isoformat() if r.dateofbirth else None, "comment": r.comment})
+            
         return result
 
 
