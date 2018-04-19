@@ -88,7 +88,7 @@ class PhenotypeManager:
 
         # Search also among description if needed
         if len(phenotypes) == 0:
-            query = "SELECT hpo_id, label, meta FROM hpo_phenotype WHERE description ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
+            query = "SELECT hpo_id, label, meta FROM hpo_phenotype WHERE definition ILIKE '%{0}%' ORDER BY label LIMIT 100".format(search)
             for row in execute(query):
                 if row.hpo_id not in ids:
                     phenotypes.append({"id": row.hpo_id, "label": row.label, "meta": row.meta})

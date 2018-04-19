@@ -275,10 +275,17 @@ class SearchManager:
         """
             Return analyses that match the search query
         """
-        result = Session().query(Analysis).filter(Analysis.name.ilike("%{0}%".format(search))).all()
-        for res in result: res.init(1)
+        analyses = Session().query(Analysis).filter(Analysis.name.ilike("%{0}%".format(search))).all()
+        for a in analyses: a.init(1)
+        jobs = Session().query(Job).filter(Job.name.ilike("%{0}%".format(search))).all()
+        for j in jobs: j.init(1)
+        
         fields = Analysis.public_fields + ["project"]
-        return [r.to_json(fields) for r in result]
+        result = [a.to_json(fields) for a in analyses]
+        fields = Job.public_fields + ["project"]
+        result += [j.to_json(fields) for j in jobs]
+        
+        return result
     
 
 
