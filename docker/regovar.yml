@@ -1,0 +1,37 @@
+ 
+version: '3'
+
+services:
+
+
+  regovar_pg:
+    container_name: regovar_pg
+    image: postgres
+    restart: always
+    volumes:
+      - /var/regovar/pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=regovar
+      - POSTGRES_PASSWORD=regovar
+      - POSTGRES_DB=regovar
+    ports:
+      - "10032:5432"
+
+  # 
+  regovar_app:
+    container_name: regovar_app
+    build: .
+    command: make app
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/regovar/app:/var/regovar/app
+      - /var/regovar/cache:/var/regovar/cache
+      - /var/regovar/downloads:/var/regovar/downloads
+      - /var/regovar/files:/var/regovar/files
+      - /var/regovar/pipelines:/var/regovar/pipelines
+      - /var/regovar/jobs:/var/regovar/jobs
+      - /var/regovar/databases:/var/regovar/databases
+    ports:
+      - "8500:80" # 8500 is the port defined in HOST nginx config file for regovar app.
+    depends_on:
+      - regovar_pg
