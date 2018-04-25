@@ -15,7 +15,7 @@ class EventManager:
 
     def list(self, **kargs):
         """
-            By default (without any argument) : Return last 100 events logged"
+            By default (without any argument) : Return last 100 "not technical" events logged"
         """
         # Build limit condition
         limit = max(0, min(RANGE_MAX, int(kargs["limit"]))) if "limit" in kargs else 100
@@ -23,6 +23,7 @@ class EventManager:
         where = []
         if "event_id" in kargs:  where.append("id={0}".format(kargs["event_id"]))
         if "event_type" in kargs:  where.append("type='{0}'".format(kargs["event_type"]))
+        else:  where.append("type<>'technical'")
         if "user_id" in kargs:  where.append("meta @> '{{\"user_id\": {} }}'".format(kargs["user_id"]))
         if "pipeline_id" in kargs:  where.append("meta @> '{{\"pipeline_id\": {} }}'".format(kargs["pipeline_id"]))
         if "job_id" in kargs:  where.append("meta @> '{{\"job_id\": {} }}'".format(kargs["job_id"]))

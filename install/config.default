@@ -68,6 +68,7 @@ MAX_JOB_RUNNING = 5
 
 CONTAINERS_CONFIG = {
     "lxd" : {
+        "shell_commands": "lxd",  # lxd if lxd installed on OS; "lxc" otherwise
         "pirus_uid" : 1000,
         "pirus_gid" : 1000,
         "lxd_uid" : 165537,
