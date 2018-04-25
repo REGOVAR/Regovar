@@ -104,8 +104,9 @@ class SearchManager:
         subject_res = self.search_subject(search_query)
         file_res = self.search_file(search_query)
         gene_res = self.search_gene(search_query)
-        phenotype_res = self.search_phenotype(search_query)
-        disease_res = self.search_disease(search_query)
+        hpo_res = self.search_hpo(search_query)
+        phenotype_res = hpo_res[0]
+        disease_res = hpo_res[1]
         user_res = self.search_user(search_query)
         pipeline_res = self.search_pipeline(search_query)
         panel_res = self.search_panel(search_query)
@@ -338,30 +339,18 @@ class SearchManager:
     
 
 
-    def search_phenotype(self, search):
+    def search_hpo(self, search):
         """
-            Return phenotype that match the search query
-        """
-        from core.core import core
-        if search.startswith("HP:"):
-            return core.phenotypes.get(search)
-        else:
-            return core.phenotypes.search(search.lower())
-    
-    
-
-    def search_disease(self, search):
-        """
-            Return disease that match the search query
+            Return phenotypes and diseases that match the search query
         """
         from core.core import core
-        if search.startswith("OMIM:") or search.startswith("ORPHA:") or search.startswith("DECIPHER:"):
-            return core.phenotypes.get(search)
-        # TODO: search disease by name (need to integrate OMIM/ORPHA public data (id<->title) into Regovar database)
-        #else:
-            #return core.phenotypes.search_disease(query.lower())
-        return []
+        result = core.phenotypes.search(search)
+        phenos = [i for i in  result if i["id"].startswith("HP:")]
+        diseases = [i for i in  result if i["id"].startswith("OMIM:") or i["id"].startswith("ORPHA:") or i["id"].startswith("DECIPHER:")]
+        return phenos, diseases
     
+    
+   
     
     
     def search_user(self, search):
