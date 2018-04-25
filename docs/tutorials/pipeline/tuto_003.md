@@ -53,13 +53,14 @@ Si vous voulez que la progression de votre pipeline soit mis à jour en temps r�
 ```
 # Création du CONTAINER
 lxc launch images:ubuntu/xenial mypipelineVM
-# Démarrer la console en mode interractif sur le CONTAINER
+
+# Démarrer la console en mode interractif sur le conteneur
 lxc exec mypipelineVM /bin/bash
 
-# Création des dossiers imposés par l'api Regovar
+# Création des dossiers imposés par l'API Regovar
 mkdir -p /pipeline/{job,inputs,outputs,logs,db}
 
-# Installation des paquets nécessaier au pipeline et à Regovar
+# Installation des paquets nécessaires au pipeline et à Regovar
 apt install curl ... --fix-missing
 exit # sortir du container
 
