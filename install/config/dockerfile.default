@@ -20,27 +20,14 @@ RUN apt-get update && \
 
 # Regovar directories
 RUN cd /
-RUN git clone https://github.com/REGOVAR/Regovar.git
-RUN mkdir -p /Regovar/{cache,downloads,files,pipelines,jobs,databases/hg18,databases/hg19,databases/hg38}
-# RUN mkdir -p /Regovar/cache
-# RUN mkdir -p /Regovar/downloads
-# RUN mkdir -p /Regovar/files
-# RUN mkdir -p /Regovar/pipelines
-# RUN mkdir -p /Regovar/jobs
-# RUN mkdir -p /Regovar/databases/hg18
-# RUN mkdir -p /Regovar/databases/hg19
-# RUN mkdir -p /Regovar/databases/hg38
+RUN git clone https://github.com/REGOVAR/Regovar.git /regovar
 
 
 
-WORKDIR /Regovar
-RUN cd /Regovar
+WORKDIR /regovar
+RUN cd /regovar
 RUN pip install -r requirements.txt
 RUN pip install -r requirements-dev.txt
-
-
-# Expose disks volumes and ports
-VOLUME  ["/Regovar/regovar", "/Regovar/cache", "/Regovar/downloads", "/Regovar/files", "/Regovar/pipelines", "/Regovar/jobs", "/Regovar/databases"]
 
 
 EXPOSE 80
