@@ -1,6 +1,8 @@
 #!/bin/bash
 
 
+
+
 # =======================================================================================
 # Script tools
 # =======================================================================================
@@ -28,6 +30,9 @@ if [[ $EUID -ne 0 ]]; then
    echo "Note that the regovar service don't need root priviledges as it is virtualized in docker"
    exit 1
 fi
+
+# TODO: better way to retrieve parent folder of the script ?
+git_path=$PWD/..
 
 
 
@@ -203,6 +208,8 @@ sed -i s/"^\(\s*DATABASE_USER\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_user\3"/ $root_fo
 sed -i s/"^\(\s*DATABASE_PWD\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_pwd\3"/ $root_folder/config/config.py
 sed -i s/"^\(\s*DATABASE_NAME\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_name\3"/ $root_folder/config/config.py
 echo -e "\r${GREEN}Done${NC}: Generating regovar app python config file"
+ln -s $root_folder/config/config.py $git_path/regovar/config.py
+ln -s $git_path/regovar/ $root_folder/app
 
 
 
@@ -221,12 +228,13 @@ if test "$(ls -A "/etc/nginx/sites-available/regovar")"; then
 fi
 mv -f $root_folder/config/regovar /etc/nginx/sites-available
 ln -s /etc/nginx/sites-available/regovar $root_folder/config/nginx
+ln -s /etc/nginx/sites-available/regovar /etc/nginx/sites-enabled/regovar
 /etc/init.d/nginx restart
 
 
 
-# TODO: qu'est-ce qu'on fait ? probleme du sudo
-chown olivier:olivier -R $root_folder
+
+
 
 
 
@@ -235,14 +243,14 @@ chown olivier:olivier -R $root_folder
 # Build regovar container
 # =======================================================================================
 echo -e "\nBuilding docker containers:\n======================================================================================="
-cp *.sql $root_folder/config/
 cd $root_folder/config
 docker rm --force regovar_pg
 docker rm --force regovar_app
-docker rmi --force docker_regovar_app:latest
-docker-compose -f regovar.yml build -d
-echo -e "${GREEN}Done${NC}: Docker containers ready to use"
-rm *.sql 
+docker-compose -f regovar.yml up -d
+docker start -a -i `docker ps -q -l`
+
+echo -e "${GREEN}Done${NC}: Docker containers ready"
+
 
 
 
@@ -251,6 +259,12 @@ rm *.sql
 # Install regovar application and database
 # =======================================================================================
 echo -e "\nDatabase creation:\n======================================================================================="
+curl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > $root_folder/databases/hg19/refGene.txt:
+curl http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $root_folder/databases/hg38/refGene.txt:
+docker exec regovar_pg mkdir /var/regovar/install
+docker cp $git_path/install/create_all.sql regovar_pg:/var/regovar/install/create_all.sql
+docker cp $git_path/install/install_hg19.sql regovar_pg:/var/regovar/install/install_hg19.sql
+docker cp $git_path/install/install_hg38.sql regovar_pg:/var/regovar/install/install_hg38.sql
 docker exec regovar_pg psql -U postgres -c "DROP DATABASE IF EXISTS $db_name"
 docker exec regovar_pg psql -U postgres -c "CREATE DATABASE $db_name OWNER $db_user"
 docker exec regovar_pg psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
@@ -259,10 +273,14 @@ docker exec regovar_pg psql -U $db_user -d $db_name -f /var/regovar/install/inst
 docker exec regovar_pg psql -U $db_user -d $db_name -f /var/regovar/install/install_hg38.sql
 echo -e "${GREEN}Done${NC}: Database created"
 
-echo -e "\nRegovar application installation:\n======================================================================================="
-docker exec regovar_app make install_hpo
-echo -e "${GREEN}Done${NC}: Regovar application installation"
 
+echo -e "\nRegovar application installation:\n======================================================================================="
+docker cp $git_path/requirements.txt regovar_app:/tmp/requirements.txt
+docker cp $git_path/requirements-dev.txt regovar_app:/tmp/requirements-dev.txt
+docker exec regovar_app -t pip install -r /tmp/requirements.txt
+docker exec regovar_app -t pip install -r /tmp/requirements-dev.txt
+docker exec regovar_app -t make update_hpo
+echo -e "${GREEN}Done${NC}: Regovar application installation"
 
 
 
@@ -270,9 +288,15 @@ echo -e "${GREEN}Done${NC}: Regovar application installation"
 # =======================================================================================
 # Test
 # =======================================================================================
+echo -e "\n${GREEN}Installation completed!${NC} Enjoy :)"
+docker exec regovar_app -d make start
+echo -e "Start Regovar application"
+echo "  $ make start: to start or restart the server"
+echo "  $ make stop: to kill the server"
+echo "  $ make debug: to start the server with an interactive terminal"
+echo "  $ make update_hpo: to update hpo data (server must be stopped to avoid data corruption)"
 
 
-echo -e "\nFinnish ! "
 
 
 

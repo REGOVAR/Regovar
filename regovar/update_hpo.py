@@ -1,9 +1,61 @@
 #!/usr/bin/python
 import sys
-import core.model as Model
 import json
-from core.framework.common import remove_duplicates
 import copy
+import sqlalchemy
+import config as C
+
+# Tools & DB connection
+def remove_duplicates(source):
+    """
+        Remove duplicates in the provided list (keeping elements order)
+    """
+    if isinstance(source, list):
+        result = []
+        for i in source:
+            if i not in result:
+                result.append(i)
+        return result
+    return source
+
+
+
+def init_pg(user, password, host, port, db):
+    '''Returns a connection and a metadata object'''
+    try:
+        url = 'postgresql://{}:{}@{}:{}/{}'.format(user, password, host, port, db)
+        con = sqlalchemy.create_engine(url, client_encoding='utf8')
+    except Exception as ex:
+        raise RegovarException(code="E000001", exception=ex)
+    return con
+    
+
+# Connect and map the engine to the database
+Base = automap_base()
+__db_engine = init_pg(C.DATABASE_USER, C.DATABASE_PWD, C.DATABASE_HOST, C.DATABASE_PORT, C.DATABASE_NAME)
+try:
+    Base.prepare(__db_engine, reflect=True)
+    Base.metadata.create_all(__db_engine)
+    Session = scoped_session(sessionmaker(bind=__db_engine))
+except Exception as ex:
+    print("ERROR when trying to connect to Postgresql database")
+    exit(1)
+    
+
+
+
+def execute_sql(query):
+    result = None
+    s = Session()
+    result = s.execute(query)
+    s.commit() 
+    return result
+
+
+
+
+
+
 
 
 # Prerequisites: Download HPO dumps (Done in makefile that call this script)
@@ -24,8 +76,8 @@ phenopath = hpopath + "hpo_phenotype.txt"
 
 # Clear HPO tables
 print('Clear database: ', end='', flush=True)
-Model.execute("DELETE FROM hpo_phenotype")
-Model.execute("DELETE FROM hpo_disease")
+execute_sql("DELETE FROM hpo_phenotype")
+execute_sql("DELETE FROM hpo_disease")
 print('Done')
 
 
@@ -306,7 +358,7 @@ for pid in p_data:
     meta = escape(json.dumps(meta))
     sql += pattern.format(pid, label, definition, parents, childs, search, genes, diseases, as_g, as_d, category, meta)
 sql = sql[:-2]
-Model.execute(sql)
+execute_sql(sql)
 
 
 pattern = "('{}', '{}', '{}', {}, {}, {}, '{}'), "
@@ -329,12 +381,12 @@ for did in d_data:
     meta = escape(json.dumps(meta))
     sql += pattern.format(did, label, search, genes, phenotypes, phenotypes_neg, meta)
 sql = sql[:-2]
-Model.execute(sql)
+execute_sql(sql)
 print('Done')
 
 
-Model.execute("DELETE FROM parameter WHERE key='hpo_version'")
-Model.execute("INSERT INTO parameter (key, value, description) VALUES ('hpo_version', '{}', 'Version of the HPO database dumps used');".format(escape(version)))
-Model.execute("INSERT INTO \"event\" (message, type) VALUES ('Update hpo data to version \"{}\"', 'technical');".format(escape(version)))
+execute_sql("DELETE FROM parameter WHERE key='hpo_version'")
+execute_sql("INSERT INTO parameter (key, value, description) VALUES ('hpo_version', '{}', 'Version of the HPO database dumps used');".format(escape(version)))
+execute_sql("INSERT INTO \"event\" (message, type) VALUES ('Update hpo data to version \"{}\"', 'technical');".format(escape(version)))
 # Load HPO terms-gene-diseases relations
 # Done in update_hpo.sql script call in the makefile that called this script
