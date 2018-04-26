@@ -19,7 +19,6 @@ RUN apt-get update && \
 
 
 # Regovar directories
-RUN cd /
 RUN git clone https://github.com/REGOVAR/Regovar.git /regovar
 
 
@@ -28,7 +27,3 @@ WORKDIR /regovar
 RUN cd /regovar
 RUN pip install -r requirements.txt
 RUN pip install -r requirements-dev.txt
-
-
-EXPOSE 80
-EXPOSE 443

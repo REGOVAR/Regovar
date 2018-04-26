@@ -1,28 +1,63 @@
 upstream aiohttp_regovar
-    {
-        server 127.0.0.1:8500 fail_timeout=0;
+{
+    server 127.0.0.1:8500 fail_timeout=0;
+}
+
+server
+{
+    listen 80;
+    listen [::]:80;
+    server_name test.regovar.org;
+
+    location / {
+        # Need for websockets
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_redirect off;
+        proxy_buffering off;
+        proxy_pass http://aiohttp_regovar;
     }
 
-    server
-    {
-        listen 80;
-        listen [::]:80;
-	server_name dev.regovar.org;
-
-        location / {
-            # Need for websockets
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-
-            proxy_set_header Host $http_host;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_redirect off;
-            proxy_buffering off;
-            proxy_pass http://aiohttp_regovar;
-        }
-
-        location /static {
-            root /var/regovar;
-        }
+    location /static {
+        root /var/regovar;
     }
+}
+
+
+# server 
+# {
+#     listen 443 ssl;
+#     listen [::]:443 ssl;
+#     server_name test.regovar.org;
+# 
+#     ssl_certificate /etc/letsencrypt/live/test.regovar.org/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/test.regovar.org/privkey.pem;
+# 
+#     location / {
+#         # Need for websockets
+#         proxy_http_version 1.1;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection "upgrade";
+# 
+#         proxy_set_header Host $http_host;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_redirect off;
+#         proxy_buffering off;
+#         proxy_pass http://aiohttp_regovar;
+# 
+#         # auth_basic "Please enter user name and password";
+#         # auth_basic_user_file passwd;
+# 
+#         
+#         add_header Strict-Transport-Security max-age=15768000; # Empeche de se reco en http. /!\ A désactiver lors du premier test :)
+#     }
+# 
+#     location /static {
+#         add_header Strict-Transport-Security max-age=15768000; # Empeche de se reco en http. /!\ A désactiver lors du premier test :)
+#         root /var/regovar/annso;
+#     }
+# }
