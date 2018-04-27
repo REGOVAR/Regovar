@@ -16,13 +16,10 @@ RUN apt-get update && \
     apt-get -y install docker-ce
 
 
-# To deals easily with config files and git, (to allow developpeur to work)
-# The installation of the application is done on the HOST and then volumes 
-# are bind with the container for the execution of the application
-# see Regovar/install/init.sh
-
-RUN mkdir -p /var/regovar/app
-WORKDIR /var/regovar/app
-
-
-# Command to keep the container alive
+COPY requirements.txt /tmp/requirements.txt
+COPY requirements-dev.txt /tmp/requirements-dev.txt
+# RUN ls -l
+RUN pip install -r /tmp/requirements.txt
+RUN pip install -r /tmp/requirements-dev.txt
+EXPOSE 8500
+ENTRYPOINT ["sh"]

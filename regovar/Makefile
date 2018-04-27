@@ -3,20 +3,21 @@ database_name=$(shell sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' con
 database_path=$(shell sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py)
 
 start:
-	docker exec regovar_app python3 regovar.py
+	docker start regovar_app python3 regovar.py
 
 debug:
-	docker exec regovar_app -it python3 regovar.py
+	docker start -ai regovar_app python3 regovar.py
 	
+
 
 #Database utils
 terminate_queries:
-	sudo -u postgres psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$(database_name)'"
+	docker exec regovar_pg psql -U regovar -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$(database_name)'"
 
 
 
 list_db:
-	psql -U regovar -d $(database_name) -c "SELECT relname as Table, pg_size_pretty(pg_total_relation_size(relid)) As Size, pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) as ExternalSize, rowcount as RowCount \
+	docker exec regovar_pg psql -U regovar -d $(database_name) -c "SELECT relname as Table, pg_size_pretty(pg_total_relation_size(relid)) As Size, pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) as ExternalSize, rowcount as RowCount \
     FROM pg_catalog.pg_statio_user_tables  \
     LEFT JOIN ( \
         SELECT table_name, n_tup_ins - n_tup_del as rowcount  \
@@ -32,7 +33,7 @@ update_hpo:
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/negative_phenotype_annotation.tab -O $(database_path)/hpo_annotation_neg.txt
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $(database_path)/hpo_disease.txt
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
-	python3 update_hpo.py $(database_path)/ "`cat $(database_path)/hpo_version.txt`"
+	docker exec regovar_app python3 update_hpo.py $(database_path)/ "`cat $(database_path)/hpo_version.txt`"
 	
 
 #Tests
@@ -51,7 +52,8 @@ test:
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)_test"
 
 
-
-
+install:
+	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
 
 .PHONY: start list_db test update_hpo

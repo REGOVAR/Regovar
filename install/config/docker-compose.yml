@@ -12,6 +12,8 @@ services:
       - POSTGRES_USER=regovar
       - POSTGRES_PASSWORD=regovar
       - POSTGRES_DB=regovar
+    networks:
+      - regovar_net
     ports:
       - "8501:5432"
 
@@ -21,15 +23,19 @@ services:
     build: .
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /var/regovar/git/regovar:/var/regovar/app
-      - /var/regovar/cache:/var/regovar/cache
-      - /var/regovar/databases:/var/regovar/databases
-      - /var/regovar/downloads:/var/regovar/downloads
-      - /var/regovar/files:/var/regovar/files
-      - /var/regovar/jobs:/var/regovar/jobs
-      - /var/regovar/pipelines:/var/regovar/pipelines
+      - /var/regovar:/var/regovar
+      - localgit/regovar:/var/regovar_app
+    networks:
+      - regovar_net
     ports:
       - "8500:8500"
     depends_on:
       - regovar_pg
 
+      
+networks:
+  regovar_net:
+    driver: bridge
+    
+    
+    
