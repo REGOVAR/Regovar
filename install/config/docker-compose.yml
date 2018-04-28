@@ -8,14 +8,14 @@ services:
     volumes:
       - /var/regovar/pgdata:/var/lib/postgresql/data
       - /var/regovar/databases:/var/regovar/databases
+      - /etc/passwd:/etc/passwd:ro
     environment:
       - POSTGRES_USER=regovar
       - POSTGRES_PASSWORD=regovar
       - POSTGRES_DB=regovar
-    networks:
-      - regovar_net
     ports:
       - "8501:5432"
+    user: regovar_user
 
 
   regovar_app:
@@ -25,17 +25,14 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/regovar:/var/regovar
       - localgit/regovar:/var/regovar_app
-    networks:
-      - regovar_net
     ports:
       - "8500:8500"
     depends_on:
       - regovar_pg
+    user: regovar_user
+    working_dir: /var/regovar_app
 
       
-networks:
-  regovar_net:
-    driver: bridge
     
     
     

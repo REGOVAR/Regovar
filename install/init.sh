@@ -40,6 +40,7 @@ git_path=$PWD/..
 # Default config value
 # =======================================================================================
 debug="n"
+regovar_user="$(id -u):$(id -g)"
 root_folder="/var/regovar"
 random_key32=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
 omim_key=""
@@ -130,6 +131,7 @@ fi
 # Resume user settings
 # =======================================================================================
 echo -e "\nThanks!\nWe will generate for you the configs files with provided informations:"
+echo -e " - ${WHITE}HOST_USER:${NC}\t\t$regovar_user"
 echo -e " - ${WHITE}HOST_ROOT:${NC}\t\t$root_folder"
 echo -e " - ${WHITE}DEBUG:${NC}\t\t$debug"
 echo -e " - ${WHITE}PRIVATE_KEY32:${NC}\t$random_key32"
@@ -160,7 +162,7 @@ if test "$(ls -A "$root_folder")"; then
     fi
 fi
 sudo mkdir -p ${root_folder}/{config,cache,downloads,files,pipelines,jobs,pgdata,databases/hg19,databases/hg38}
-sudo chown -R $EUID:$EUID ${root_folder}
+sudo chown -R $regovar_user ${root_folder}
 echo -e "${GREEN}Done:${NC} Regovar folders created on HOST: $root_folder"
 
 ln -s $git_path/regovar $root_folder/app
@@ -191,6 +193,7 @@ sed -i s/"\/var\/regovar"/"$sed_root_folder"/ $root_folder/config/regovar.yml
 sed -i s/"8501"/"$regovar_pg_port"/ $root_folder/config/regovar.yml
 sed -i s/"8500"/"$regovar_app_port"/ $root_folder/config/regovar.yml
 sed -i s/"localgit"/"${git_path//\//\\/}"/ $root_folder/config/regovar.yml
+sed -i s/"regovar_user"/"$regovar_user"/ $root_folder/config/regovar.yml
 sed -i s/"^\(\s*POSTGRES_USER\s*=\s*\)\(.*\)"/"\1$db_user"/ $root_folder/config/regovar.yml
 sed -i s/"^\(\s*POSTGRES_PASSWORD\s*=\s*\)\(.*\)"/"\1$db_pwd"/ $root_folder/config/regovar.yml
 sed -i s/"^\(\s*POSTGRES_DB\s*=\s*\)\(.*\)"/"\1$db_name"/ $root_folder/config/regovar.yml
@@ -215,7 +218,7 @@ sed -i s/"^\(\s*DATABASE_USER\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_user\3"/ $root_fo
 sed -i s/"^\(\s*DATABASE_PWD\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_pwd\3"/ $root_folder/config/config.py
 sed -i s/"^\(\s*DATABASE_NAME\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_name\3"/ $root_folder/config/config.py
 ln -s $root_folder/config/config.py $git_path/regovar/config.py
-sudo chown $EUID:$EUID $git_path/regovar/config.py
+sudo chown $regovar_user $git_path/regovar/config.py
 echo -e "\r${GREEN}Done${NC}: Generating regovar app python config file"
 
 
@@ -237,7 +240,7 @@ fi
 sudo mv -f $root_folder/config/nginx /etc/nginx/sites-available/regovar
 ln -s /etc/nginx/sites-available/regovar $root_folder/config/nginx
 sudo ln -s /etc/nginx/sites-available/regovar /etc/nginx/sites-enabled/regovar
-sudo chown $EUID:$EUID $root_folder/config/nginx
+sudo chown $regovar_user $root_folder/config/nginx
 /etc/init.d/nginx restart
 
 
@@ -267,19 +270,19 @@ echo -e "${GREEN}Done${NC}: Docker containers ready"
 echo -e "\nDatabase creation:\n======================================================================================="
 curl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > $root_folder/databases/hg19/refGene.txt
 curl http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $root_folder/databases/hg38/refGene.txt
-docker exec regovar_pg mkdir /var/regovar/install
-docker cp $git_path/install/create_all.sql regovar_pg:/var/regovar/install/create_all.sql
-docker cp $git_path/install/install_hg19.sql regovar_pg:/var/regovar/install/install_hg19.sql
-docker cp $git_path/install/install_hg38.sql regovar_pg:/var/regovar/install/install_hg38.sql
+docker exec regovar_pg mkdir /tmp/install
+docker cp $git_path/install/create_all.sql regovar_pg:/tmp/install/create_all.sql
+docker cp $git_path/install/install_hg19.sql regovar_pg:/tmp/install/install_hg19.sql
+docker cp $git_path/install/install_hg38.sql regovar_pg:/tmp/install/install_hg38.sql
 echo "Create Database ------------------"
 docker exec regovar_pg psql -U postgres -c "DROP DATABASE IF EXISTS $db_name"
 docker exec regovar_pg psql -U postgres -c "CREATE DATABASE $db_name OWNER $db_user"
 docker exec regovar_pg psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
-docker exec regovar_pg psql -U $db_user -d $db_name -f /var/regovar/install/create_all.sql
+docker exec regovar_pg psql -U $db_user -d $db_name -f /tmp/install/create_all.sql
 echo "Import Hg19 ----------------------"
-docker exec regovar_pg psql -U $db_user -d $db_name -f /var/regovar/install/install_hg19.sql
+docker exec regovar_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg19.sql
 echo "Import Hg38 ----------------------"
-docker exec regovar_pg psql -U $db_user -d $db_name -f /var/regovar/install/install_hg38.sql
+docker exec regovar_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg38.sql
 echo -e "${GREEN}Done${NC}: Database created"
 
 echo -e "\nRegovar application installation:\n======================================================================================="
