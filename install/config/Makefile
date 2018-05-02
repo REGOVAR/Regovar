@@ -6,12 +6,10 @@ database_path=$(shell sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' con
 # docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net -p 8500:8500 --name regovar_app --user 1000:1000 regovar_img python regovar.py
 
 start:
-	docker rm -f regovar_app
 	docker start regovar_app
 
 
 debug:
-	docker rm -f regovar_app
 	docker start -ai regovar_app
 
 
