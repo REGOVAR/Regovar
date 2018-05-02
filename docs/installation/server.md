@@ -27,8 +27,6 @@ sudo usermod -a -G docker $USER
  
 ####Procédure
 
-Les commandes sont à exécuter en tant que root.
-
 ```sh
 git clone https://github.com/REGOVAR/Regovar.git ~/Regovar
 cd ~/Regovar/install
