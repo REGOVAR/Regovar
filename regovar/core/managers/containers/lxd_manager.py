@@ -34,7 +34,9 @@ class LxdManager(AbstractContainerManager):
         }
 
         if not CONTAINERS_CONFIG or "lxd" not in CONTAINERS_CONFIG.keys() or not CONTAINERS_CONFIG["lxd"]:
-            raise RegovarException("No configuration settings found for lxd")
+            self.supported_features["enabled"] = False
+            war("No configuration settings found for lxd")
+            CONTAINERS_CONFIG["lxd"] = None
         self.config = CONTAINERS_CONFIG["lxd"]
 
 
@@ -43,6 +45,9 @@ class LxdManager(AbstractContainerManager):
         """
             Perform the installation of a pipeline that use LXD container
         """
+        if not self.config: 
+          err("Lxd not available. Pipeline installation abord")
+          return None
         if not pipeline or not isinstance(pipeline, Pipeline) :
             raise RegovarException("Pipeline's data error.")
         pipeline.init(1)
@@ -123,6 +128,9 @@ class LxdManager(AbstractContainerManager):
             Uninstall the pipeline lxd image.
             Database & filesystem clean is done by the core
         """
+        if not self.config: 
+          err("Lxd not available. Pipeline uninstallation abord")
+          return None
         if not pipeline or not isinstance(pipeline, Pipeline) :
             raise RegovarException("Pipeline's data error.")
         # Retrieve container settings
@@ -158,6 +166,9 @@ class LxdManager(AbstractContainerManager):
                           if set to false, you will have to monitore yourself the execution of the job
                           to finalize it when its done.
         """
+        if not self.config: 
+          err("Lxd not available. Job init abord")
+          return None
         # Setting up the lxc container for the job
         lxd_container = os.path.basename(job.path)
         manifest = job.pipeline.manifest if isinstance(job.pipeline.manifest, dict) else yaml.load(job.pipeline.manifest)
@@ -245,6 +256,9 @@ class LxdManager(AbstractContainerManager):
         """
             (Re)Start the job execution. By unfreezing the 
         """
+        if not self.config: 
+          err("Lxd not available. Job cannot be start")
+          return None
         # Setting up the lxc container for the job
         lxd_container = os.path.basename(job.path)
         r, o, e = exec_cmd(["lxc", "start", lxd_container])
@@ -261,6 +275,9 @@ class LxdManager(AbstractContainerManager):
         """
             Pause the execution of the job.
         """
+        if not self.config: 
+          err("Lxd not available. Job cannot be pause")
+          return None
         lxd_container = os.path.basename(job.path)
         r, o, e = exec_cmd(["lxc", "pause", lxd_container])
         if r != 0:
@@ -274,6 +291,9 @@ class LxdManager(AbstractContainerManager):
         """
             Stop the job. The job is canceled and the container is destroyed.
         """
+        if not self.config: 
+          err("Lxd not available. Job cannot be stop")
+          return None
         lxd_container = os.path.basename(job.path)
         r, o, e = exec_cmd(["lxc", "delete", lxd_container, "--force"])
         if r != 0:
@@ -286,6 +306,9 @@ class LxdManager(AbstractContainerManager):
         """
             Provide monitoring information about the container (CPU/RAM used, etc)
         """
+        if not self.config: 
+          err("Lxd not available. Job cannot be monitored")
+          return None
         lxd_container = os.path.basename(job.path)
         # Result
         result = {}
@@ -311,6 +334,9 @@ class LxdManager(AbstractContainerManager):
             Clean temp resources created by the container (log shall be kept), copy outputs file from the container
             to the right place on the server, register them into the database and associates them to the job.
         """
+        if not self.config: 
+          err("Lxd not available. Job cannot be finalized")
+          return None
         lxd_container = os.path.basename(job.path)
         # Stop container and clear resource
         try:

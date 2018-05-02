@@ -90,4 +90,5 @@ ENV/
 
 *.test
 config.py
+Makefile
 coverage.xml

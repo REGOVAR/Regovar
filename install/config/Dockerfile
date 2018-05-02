@@ -21,5 +21,6 @@ COPY requirements-dev.txt /tmp/requirements-dev.txt
 # RUN ls -l
 RUN pip install -r /tmp/requirements.txt
 RUN pip install -r /tmp/requirements-dev.txt
-EXPOSE 8500
-ENTRYPOINT ["sh"]
+
+WORKDIR "/var/regovar_app"
+CMD ["python regovar.py"]

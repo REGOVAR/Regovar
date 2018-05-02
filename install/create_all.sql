@@ -539,7 +539,7 @@ CREATE TABLE hpo_disease
     phenotypes character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
     phenotypes_neg character varying(10)[] COLLATE pg_catalog."C" DEFAULT NULL,
     meta JSON
-);
+); 
 
 
 
@@ -702,7 +702,7 @@ INSERT INTO "event" (message, type) VALUES
   ('Default root admin user created', 'technical');
   
 INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           '8.0'),
+    ('database_version',          'The current version of the database',           '9.0'),
     ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
     ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
   

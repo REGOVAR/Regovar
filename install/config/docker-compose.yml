@@ -1,6 +1,6 @@
-version: '3'
+version: '3.5'
 services:
-
+    
   regovar_pg:
     container_name: regovar_pg
     image: postgres
@@ -9,18 +9,22 @@ services:
       - /var/regovar/pgdata:/var/lib/postgresql/data
       - /var/regovar/databases:/var/regovar/databases
       - /etc/passwd:/etc/passwd:ro
+      - /var/regovar/config/postgres.conf:/etc/postgresql/postgresql.conf
     environment:
       - POSTGRES_USER=regovar
       - POSTGRES_PASSWORD=regovar
       - POSTGRES_DB=regovar
-    ports:
-      - "8501:5432"
     user: regovar_user
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - regovar_net
+
 
 
   regovar_app:
     container_name: regovar_app
     build: .
+    image: regovar
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/regovar:/var/regovar
@@ -31,8 +35,14 @@ services:
       - regovar_pg
     user: regovar_user
     working_dir: /var/regovar_app
+    command: python regovar.py
+    networks:
+      - regovar_net
 
-      
+
+networks:
+  regovar_net:
+    name: regovar_net
     
     
     
