@@ -34,6 +34,14 @@ cd ~/Regovar/install
 ```
 Laissez vous guider en répondant aux différentes questions.
 
+Une fois l'installation terminé, vous devez mettre à jour les informations HPO
+```
+cd /var/regovar/app
+make update_hpo
+```
+
+####Check final
+
 Si vous laissez tout les choix par défaut, à la fin de l'installation vous pourrez voir 2 containers dans docker
 ```
 ➜  regovar git:(dev) docker ps
