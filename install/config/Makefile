@@ -42,7 +42,8 @@ update_hpo:
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/negative_phenotype_annotation.tab -O $(database_path)/hpo_annotation_neg.txt
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $(database_path)/hpo_disease.txt
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
-	docker exec regovar_app python3 update_hpo.py $(database_path)/ "`cat $(database_path)/hpo_version.txt`"
+	docker stop regovar_update_hpo || true && docker rm regovar_update_hpo || true
+	docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_update_hpo --user 1000:1000 regovar python update_hpo.py /var/regovar/databases/ "`cat $(database_path)/hpo_version.txt`"
 	
 
 #Tests
@@ -61,8 +62,5 @@ test:
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)_test"
 
 
-install:
-	pip install -r requirements.txt
-	pip install -r requirements-dev.txt
 
 .PHONY: start list_db test update_hpo

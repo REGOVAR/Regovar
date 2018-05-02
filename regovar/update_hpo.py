@@ -5,6 +5,12 @@ import copy
 import sqlalchemy
 import config as C
 
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.expression import ClauseElement
+from sqlalchemy.orm import sessionmaker, scoped_session
+
 # Tools & DB connection
 def remove_duplicates(source):
     """
