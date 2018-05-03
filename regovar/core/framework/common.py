@@ -19,9 +19,11 @@ import concurrent.futures
 from config import LOG_DIR, CACHE_DIR, CACHE_EXPIRATION_SECONDS, DEBUG
 
 
+main_loop = asyncio.get_event_loop()
+
 
 if DEBUG:
-    asyncio.get_event_loop().set_debug(enabled=True)
+    main_loop.set_debug(enabled=True)
 
 
 #
@@ -46,7 +48,8 @@ def run_until_complete(future):
     """
         Allow calling of an async method into a "normal" method (which is not a coroutine)
     """
-    asyncio.get_event_loop().run_until_complete(future)
+    #main_loop.run_until_complete(future)
+    asyncio.run_coroutine_threadsafe(future, main_loop)
 
 
 def run_async(future, *args):
@@ -57,7 +60,7 @@ def run_async(future, *args):
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             # Execute the query in another thread via coroutine
-            asyncio.get_event_loop().run_in_executor(None, future, *args)
+            main_loop.run_in_executor(None, future, *args)
     except Exception as ex:
         err("Asynch method failed.", ex) 
 
@@ -81,11 +84,6 @@ def exec_cmd(cmd, asynch=False):
     return res, out, err
 
 
-def notify_all(msg):
-    """
-        Default delegate used by the core for notification.
-    """
-    print(str(msg))
 
 
 

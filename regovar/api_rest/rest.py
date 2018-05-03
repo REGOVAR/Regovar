@@ -10,7 +10,7 @@ import aiohttp_jinja2
 import datetime
 import time
 import uuid
-
+import asyncio
 import aiohttp_security
 from aiohttp_session import get_session
 from aiohttp_security import permits
@@ -25,8 +25,6 @@ from config import *
 from core.framework.common import *
 from core.framework.postgresql import *
 from core.core import core
-
-
 
 
 
@@ -120,18 +118,35 @@ def user_role(role):
 
 
 
+
+
 def rest_notify_all(data):
     data = check_local_path(data)
     msg = json.dumps(data)
     
     if 'action' not in data.keys() or data['action'] != 'hello':
         log ("API_rest Notify All: {0}".format(msg))
+    #loop = asyncio.new_event_loop()
+    #for ws in WebsocketHandler.socket_list:
+        #loop.run_until_complete(ws[0].send_str(msg))
+    #loop.close()
     for ws in WebsocketHandler.socket_list:
-        ws[0].send_str(msg)
+        run_until_complete(ws[0].send_str(msg))
+
+
+async def rest_notify_all_co(data):
+    data = check_local_path(data)
+    msg = json.dumps(data)
+    
+    if 'action' not in data.keys() or data['action'] != 'hello':
+        log ("API_rest Notify All: {0}".format(msg))
+    for ws in WebsocketHandler.socket_list:
+        await ws[0].send_str(msg)
+        
 
 # Give to the core the delegate to call to notify all users via websockets
 core.notify_all = rest_notify_all
-
+core.notify_all_co = rest_notify_all_co
 
 
 
@@ -230,7 +245,7 @@ class WebsocketHandler:
 
         WebsocketHandler.socket_list.append((ws, ws_id))
         msg = {'action':'hello', 'data': [[str(_ws[1]) for _ws in WebsocketHandler.socket_list]]}
-        core.notify_all(msg)
+        await core.notify_all_co(msg)
 
         try:
             async for msg in ws:

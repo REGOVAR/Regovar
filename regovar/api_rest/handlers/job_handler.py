@@ -82,7 +82,7 @@ class JobHandler:
                 print("JOB STATUS CHANGE: " + new_status)
                 core.jobs.set_status(job, new_status)
             else:
-                core.notify_all({"action": "job_updated", "data" : job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs"])})
+                await core.notify_all_co({"action": "job_updated", "data" : job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs"])})
             
         except Exception as ex:
             return rest_error("Unable to update information for the jobs with id {}. {}".format(job_id, ex))

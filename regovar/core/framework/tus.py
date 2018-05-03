@@ -33,15 +33,12 @@ class TusFileWrapper:
     path = "<path where the file is saved on the server>"
     upload_url = "<url that the client shall used to upload the file>"
     
-    def start(self):
-        # Do something to start an upload (creating index in db by example)
-        pass
 
-    def save(self):
+    async def save(self):
         # Do something when the upload of a chunk of the file is done. Basicaly : save new offset position in a database
         pass
 
-    def complete(self, checksum=None, checksum_type="md5"):
+    async def complete(self, checksum=None, checksum_type="md5"):
         # Do something when the upload of the file is finished
         pass
 
@@ -121,10 +118,10 @@ class TusManager:
             return TusManager.build_response(code=500, body="Unable to write file chunk on the the server :(")
 
         fw.upload_offset += chunk_size
-        fw.save()
+        await fw.save()
         # file transfer complete
         if fw.size == fw.upload_offset: 
-            fw.complete()
+            await fw.complete()
         headers = { 'Upload-Offset' : str(fw.upload_offset), 'Tus-Temp-Filename' : str(fw.id) }
         return TusManager.build_response(code=200, headers=headers)
 
