@@ -748,7 +748,7 @@ class FilterEngine:
             err("Not able to save current filter")
         
         progress.update({"progress": 1})
-        await core.notify_all({'action':'filtering_prepare', 'data': progress})
+        await core.notify_all_co({'action':'filtering_prepare', 'data': progress})
 
 
     def update_wt(self, analysis, column, filter_json):
