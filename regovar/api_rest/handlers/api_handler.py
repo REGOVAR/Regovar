@@ -80,6 +80,12 @@ class ApiHandler:
         if response.ok:
             sdata = json.loads(response.content.decode())
 
+        # Get message
+        sql = "SELECT value FROM parameter WHERE key = 'message'"
+        message = {"type": "info", "message": ""}
+        for res in execute(sql):
+            message = json.loads(res.value)
+
         return rest_success({
             "website": "http://regovar.org",
             "version" : core.version,
@@ -89,7 +95,8 @@ class ApiHandler:
             "pagination_max_range": RANGE_MAX,
             "tools": self.get_all_tools(),
             "server_milestones" : sdata,
-            "client_milestones" : cdata
+            "client_milestones" : cdata,
+            "message": message
             })
     
     
