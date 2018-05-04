@@ -20,37 +20,54 @@ class PanelManager:
         """
             List all panels with minimal data
         """
-        sql = "SELECT id, name, description, owner, create_date, update_date, shared FROM panel ORDER BY id"
+        sql = "SELECT p.id, p.name, p.description, p.owner, p.shared, e.id as vid, e.version, e.comment, e.create_date, e.update_date FROM panel p INNER JOIN panel_entry e ON p.id=e.panel_id ORDER BY p.name, e.update_date"
         result = []
+        current = None
         for res in execute(sql): 
-            result.append({
-                "id": res.id,
-                "name": res.name,
-                "description": res.description,
-                "owner": res.owner,
-                "shared": res.shared,
+            if not current or current["id"] != res.id:
+                if current != None: result.append(current)
+                current = current = {
+                    "id": res.id,
+                    "name": res.name,
+                    "description": res.description,
+                    "owner": res.owner,
+                    "shared": res.shared,
+                    "create_date": res.create_date.isoformat(),
+                    "update_date": res.update_date.isoformat(),
+                    "versions": []
+                }
+            
+            current["versions"].append({
+                "id": res.vid,
+                "name": res.version,
+                "comment": res.comment,
                 "create_date": res.create_date.isoformat(),
                 "update_date": res.update_date.isoformat()
             })
+            
+        if current != None: result.append(current)
         return result
 
-    def get(self, fields=None, query=None, order=None, offset=None, limit=None, depth=0):
+    def get(self, panel_id=None, version=None):
         """
             Generic method to get panels data according to provided filtering options
         """
-        if not isinstance(fields, dict):
-            fields = None
-        if query is None:
-            query = {}
-        if order is None:
-            order = ["name"]
-        if offset is None:
-            offset = 0
-        if limit is None:
-            limit = RANGE_MAX
-        panels = Model.Session().query(Model.Panel).filter_by(**query).order_by(",".join(order)).limit(limit).offset(offset).all()
-        for p in panels: p.init(depth)
-        return panels
+        panel = Model.Panel.from_id(panel_id, 1)
+        return  panel
+
+        # if not isinstance(fields, dict):
+        #     fields = None
+        # if query is None:
+        #     query = {}
+        # if order is None:
+        #     order = ["name"]
+        # if offset is None:
+        #     offset = 0
+        # if limit is None:
+        #     limit = RANGE_MAX
+        # panels = Model.Session().query(Model.Panel).filter_by(**query).order_by(",".join(order)).limit(limit).offset(offset).all()
+        # for p in panels: p.init(depth)
+        # return panels
 
 
 
@@ -91,17 +108,8 @@ class PanelManager:
         # Search gene, phenotype and disease that match the query
         from core.core import core
         gene_res = core.search.search_gene(query)
-        phenotype_res = core.search.search_phenotype(query)
-        disease_res = core.search.search_disease(query)
+        phenotype_res, disease_res = core.search.search_hpo(query)
 
-        # For diseases and phenotypes, get corresponding gene
-        #for pheno in phenotype_res:
-            #res = [r.gene_name for r in execute("SELECT DISTINCT gene_name FROM hpo_phenotype WHERE hpo_id='{}'".format(pheno["id"]))]
-            #pheno.update({"genes": res})
-        #for disease in disease_res:
-            #res = [r.gene_name for r in execute("SELECT DISTINCT gene_name FROM hpo_disease WHERE disease_id='{}'".format(pheno["id"]))]
-            #disease.update({"genes": res})
-        
         # Format result
         result = { 
             "total_result": len(gene_res) + len(phenotype_res) + len (disease_res),

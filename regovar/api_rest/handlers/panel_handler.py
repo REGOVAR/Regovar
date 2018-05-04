@@ -73,9 +73,10 @@ class PanelHandler:
         """
             Get details about the panel
         """
+        from core.core import core
         panel_id = request.match_info.get('panel_id', -1)
-        version = request.match_info.get('version', "")
-        panel = Panel.from_id(panel_id, 1)
+        version = request.match_info.get('version', None)
+        panel = core.panels.get(panel_id, version)
         if not panel:
             return rest_error("Unable to find the panel (id={})".format(panel_id))
         return rest_success(panel.to_json())
