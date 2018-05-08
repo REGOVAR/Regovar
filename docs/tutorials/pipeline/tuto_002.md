@@ -46,6 +46,7 @@ Seront décrit dans ce fichier tout ce qui permettra à Regovar et aux administr
     "type": TYPE,
     "license" : LICENSE_NAME,
     "developpers" : ["Olivier Gueudelot", ...],
+    "regovar_db_access": DB_ACCESS,
     "job" : JOB,
     "inputs" : INPUTS,
     "outputs" : OUTPUTS,
@@ -67,6 +68,7 @@ Seront décrit dans ce fichier tout ce qui permettra à Regovar et aux administr
 - VERSION : ce renseignement permet de différencier et d'installer plusieurs version de votre pipeline sur un même serveur. Sans ça, il est impossible d'installer deux pipelines qui ont le même nom sur le serveur ;
 - TYPE : vous devrez indiquer impérativement quel est la technologie utilisée pour cotre container (actuellement, seul le type `"lxd"` est supporté) ;
 - INPUTS, OUTPUTS, LOGS et DATABASES : vous pouvez librement choisir où et comment sont nommés ces dossiers dans votre container, mais ceux-ci doivent être présents et permettra au serveur Regovar et à votre pipeline de travailler correctement ensemble;
+- DB_ACCESS: True ou False, ce booléen indique si oui ou non votre pipeline nécessite un accès à la base de donnée postgreSQL de Regovar, si oui, alors votre container sera relié à la base de donnée, et les informations de connection seront transmise à votre script;
 - JOB : la ligne de commande pour démarrer votre pipeline ;
 - FORMULAIRE : si votre pipeline a des paramètres configurable, vous pouvez décrire ces paramètres dans un fichier json afin que Regovar puisse permettre à l'utilisateur de les régler via un formulaire qui sera automatiquement généré depuis ce fichier json;
 - ICON : si vous le souhaitez, vous pouvez fournir un icone qui sera associé à votre pipeline dans Regovar ;
