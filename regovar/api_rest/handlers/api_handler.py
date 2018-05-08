@@ -1,6 +1,6 @@
 #!env/python3
 # coding: utf-8
-import ipdb; 
+import ipdb
 
 
 import os
