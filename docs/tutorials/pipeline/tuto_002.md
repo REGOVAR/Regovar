@@ -1,8 +1,8 @@
 # Encapsuler son pipeline dans Regovar (notions de base)
 
-Ce tutoriel présente les notions de base à connaître avant de s'attaquer à [l'encapsulation de son pipeline dans Regovar](tuto_002.md). Ensuite 2 exemples concrets d'encapsulation détaillent pas à pas ce qu'il faut faire pour vous exercer:
-* [Ex1: Pipeline non paramétrable](tuto_003.md)
-* [Ex2: Pipeline paramétrable](tuto_004.md)
+Ce tutoriel présente les notions de base à connaître avant de s'attaquer à [l'encapsulation de son pipeline dans Regovar](tuto_003.md). Ensuite 2 exemples concrets d'encapsulation détaillent pas à pas ce qu'il faut faire pour vous exercer:
+* [Ex1: Pipeline non paramétrable](tuto_004.md)
+* [Ex2: Pipeline paramétrable](tuto_005.md)
 
 
 ## Qu'est-ce que l'encapsulation ?
