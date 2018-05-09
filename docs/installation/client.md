@@ -1,5 +1,5 @@
 
-# Procédure
+# Installation du client
 
 Le client lourd Regovar est l'application officiel compatible pour Windows, Linux et MacOS.
 
