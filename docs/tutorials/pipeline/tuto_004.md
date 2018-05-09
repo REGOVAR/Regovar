@@ -1,114 +1,120 @@
-# Créer un pipeline pour Regovar avec Docker
+# Ex1: Créer un pipeline simple
 
-Le module [Docker](https://www.docker.com/what-docker) est prévu mais n'a pas encore été developpé. 
-Si celà vous intéresse vous pouvez participer (et accélérer) le développement de ce module en contactant 
-les développeurs via github ou à l'adresse dev@regovar.org
+Dans ce tutoriel, nous allons créer un pipeline simple, qui génère un rapport [multiqc](http://multiqc.info/).
+
+Difficultés abordées par ce tutoriel :
+- [x] Dockerisation d'un pipeline bioinformatique
+- [x] Fichiers INPUTS (type bam)
+- [x] Génèration OUTPUTS (rapport html)
+- [ ] Génèration de LOGS
+- [ ] Paramètres personnalisables
+- [ ] Notifications temps réel de la progression
+- [ ] Connection base de donnée Regovar
 
 
-## La base Docker
+## Les instructions
 
-- Pour ce qui ne connaissent pas Docker, ou savoir comment l'installer, il est recommandé de lire [la doc officielle](https://docs.docker.com/get-started/) avant de commencer
-- Nous appellons HOST, le serveur sur lequel vous installé Docker et sur lequel est déployé la machine virtuelle
-- Nous appellons CONTAINER, la machine virtuelle.
+Voici d'emblé tout ce qu'il faut faire. Les explications sont dans la section suivante
 
-Résumé des commandes Docker qui vont nous servir
+Etape 1: init package folder
+```
+mkdir ~/mypipeline
+cd ~/mypipeline
+mkdir doc
+cd doc
+wget https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/tutorials/pipeline/tuto_003/about.html
+wget https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/tutorials/pipeline/tuto_003/help.html
+wget https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/tutorials/pipeline/tuto_003/icon.png
+cd ..
+```
+Etape 2: create docker file
+```
+nano Dockerfile
+```
+Ecrire le contenu suivant dans le fichier
+```
+FROM biocontainers/samtools:latest
 
+# Install multiqc
+USER root
+RUN \
+  apt-get update && apt-get install -y --no-install-recommends \
+  g++ \
+  git \
+  wget \
+  && wget --quiet -O /opt/get-pip.py https://bootstrap.pypa.io/get-pip.py \
+  && python /opt/get-pip.py \
+  && rm -rf /var/lib/apt/lists/* /opt/get-pip.py
+RUN pip install git+git://github.com/ewels/MultiQC.git
+RUN mkdir /outputs && chown biodocker:biodocker /outputs
+
+# Generate start script sh
+USER biodocker
+RUN echo "#!/bin/sh\nmkdir /tmp/analysis\nsamtools stats /data/*.bam > /outputs/report.bam.sas.txt\nmultiqc ." > /home/biodocker/run.sh
+RUN chmod +x /home/biodocker/run.sh
+
+WORKDIR /outputs/
+CMD ["/home/biodocker/run.sh"]
+```
+Etape 3: create manifest
+```
+nano manifest.json
+```
+Ecrire le contenu suivant dans le fichier
+```
+{
+    "name" : "Multiqc",
+    "description" : "Aggregate bioinformatics results across many samples into a single report.",
+    "version": "1.0",
+    "type": "job",
+    "contacts" : [],
+    "regovar_db_access": False,
+    "inputs" : "/data/",
+    "outputs" : "/outputs/",
+    "databases": "/tmp/regovar_db/",
+    "logs" : "/tmp/regovar_logs/"
+}
+```
+Etape 4 (optionnel): test with docker
 ```
 
-docker run        # Télécharge et déployer une nouvelle machine virtuelle avec un OS de base prêt à l'emploi
-docker exec          # Exécuter une commande dans la machine virtuelle depuis le serveur
-docker ls          # Donne la liste des CONTAINERS actuellement déployés sur votre HOST
-docker rm        # Désinstalle et supprime un CONTAINER
-docker stop          # Stop "brutalement" l'exécution d'un CONTAINER (équivalent à éteindre votre PC)
-docker pause        # Suspens l'exécution d'un CONTAINER (sauvegarde l'état de sa RAM etc)
-docker start         # Démarrer ou reprend l'éxécution d'un CONTAINER qui a été freeze
-
-docker add      # Copie un fichier de votre HOST vers un CONTAINER
-lxc file pull       # Copie un fichier de votre CONTAINER vers l'HOST
-
-$ docker image ls    # Donne la liste des images installées sur votre HOST
-$ docker rmi  # Supprime une image
-$ docker image export  # Exporte une image au format tar.gz
-$ docker image import  # Installe une image au format tar.gz sur votre HOST
-
+mkdir /tmp/test_inputs 
+# put a bam+bai in this folder
+mkdir /tmp/test_ouputs
+ls -l /tmp/test_ouputs
+docker build -t regovar_pipe_test .
+docker image ls
+docker run -a stdin -a stdout -it -v /tmp/test_inputs:/data -v /tmp/test_ouputs:/outputs --name regovar_test --user 1000:1000 regovar_pipe_test
+ls -l /tmp/test_ouputs
+docker rm --force regovar_test
+docker rmi regovar_pipe_test
+```
+Etape 5: create package
+```
+cd ..
+zip -r multiqc_pipeline_1.0.zip mypipeline
 ```
 
-## Les recommandations et contraintes
-Le CONTAINER doit respecter les [exigences de base](tuto_002.md#exigences-et-options) de regovar.
+Voilà, il ne reste plus qu'à [tester dans Regovar](tuto_001.md)
 
 
 
 
-## Prérequis
-- Dans l'idéal, vous travaillez sur un ordinateur (LOCAL) où est installé et fonctionnent parfaitement Docker et votre pipeline.
-- Vous avez identifier localement les répertoires INPUTS, OUTPUTS, LOGS et DATABASES pour votre pipeline.
-  - Votre pipeline est capable de récupérer si besoin ses paramètres depuis un fichier `config.json` qui se trouve dans le répertoire INPUTS
-  - Votre pipeline s'attends à trouver les fichiers à analyser dans le réperoire INPUTS (à noter que ce répertoire sera en read-only dans le container. Il ne faut donc pas que votre pipeline essaye d'écrire quoi que ce soit dedans)
-  - Votre pipeline produit ses résultats dans le répertoire OUTPUTS
-  - Les logs de votre pipeline sont placés dans le répertoire LOGS
+## Explications
 
-## INPUTS/config.json et notification temps-réel
-Le fichier config.
-Si vous voulez que la progression de votre pipeline soit mis à jour en temps réel, il faut que votre pipeline récupère l'adresse de notification qui sera indiqué dans le fichier `INPUTS/config.json` 
+###Etape 1
 
-## Procédure
-Commencez par créer le dossier qui va contenir toutes données nécessaire à la création du pipeline. [exigences de base](tuto_002.md#exigences-et-options)
 
-```
-# Placer vous dans le doss
-# Création du CONTAINER manuellement
-docker build -t regovar_test:1.0 .
-lxc launch images:ubuntu/xenial mypipelineVM
+###Etape 2
 
-# Démarrer la console en mode interractif sur le conteneur
-lxc exec mypipelineVM /bin/bash
 
-# Création des dossiers imposés par l'API Regovar
-mkdir -p /pipeline/{job,inputs,outputs,logs,db}
+###Etape 3
 
-# Installation des paquets nécessaires au pipeline et à Regovar
-apt install curl ... --fix-missing
-exit # sortir du container
 
-# Copier le pipeline dans le CONTAINER
-lxc image push LOCAL/mypeline/* mypipelineVM/pipeline/job/*
+###Etape 4
 
-# Tester votre pipeline dans votre container afin de vérifier qu'il fonctionne:
-# Copier si besoin des fichiers d'entrées
-lxc file push LOCAL/inputsTests/* mypipelineVM/INPUTS/*
-lxc file push LOCAL/configTest/config.json mypipelineVM/INPUTS/config.json
 
-# Exécuter la ligne de commande JOB
-lxc exec mypipelineVM JOB
-
-# Vérifier les fichiers produits par votre pipeline
-lxc exec mypipelineVM ls -la OUTPUTS
-
-# Vérifier les logs produits par votre pipeline
-lxc exec mypipelineVM ls -la LOGS
-
-# Nettoyer votre container (il convient d'alléger au maximum votre image)
-lxc exec mypipelineVM rm -Rf INPUTS/*
-lxc exec mypipelineVM rm -Rf OUTPUTS/*
-lxc exec mypipelineVM rm -Rf LOGS/*
-lxc exec mypipelineVM rm -Rf /tmp/*
-
-# Créer une image LXC depuis votre Container
-lxc stop mypipelineVM
-lxc publish mypipelineVM --alias=MyPipelineV1.0
-lxc image export MyPipelineV1.0 # celà va vous créer un fichier du genre <a8d44d24fcs...8fzef54e5>.tar.gz
-
-# Création du package final
-mkdir MyPipeline
-mv <a8d44d24fcs...8fzef54e5>.tar.gz MyPipeline/lxc_image.tar.gz
-
-# Ajouter dans le répertoire MyPipeline le fichier manifest.json, form.json, LICENSE, README, ... 
-
-# Créer le zip final
-zip -r  MyPipelineV1.0.zip MyPipeline/*
-exit
-```
-Et voilà il ne vous reste plus qu'à télécharger votre archive sur le serveur Regovar et à [l'installer](tuto_001.md)
+###Etape 5
 
 
  
