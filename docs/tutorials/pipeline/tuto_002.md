@@ -108,7 +108,7 @@ Dans Regovar il existe 4 types de pipelines qui ne seront pas utilisés de la m�
 
 
 
-## Configuration via le fichier config.json
+## Configuration via le fichier form.json
 Regovar offre à ses utilisateurs une interface simple et conviviale pour démarrer et superviser soit-même les pipelines. 
 
 La configuration se déroule en 3 étapes :
@@ -241,4 +241,29 @@ Pour les enum, vous pouvez soit proposer une liste de valeur manuellement comme 
     "enum": "__GENOMES_REFS__",
 ```
 
+## INPUTS/config.json
+Le fichier `INPUTS/config.json` sera généré par Regovar. Il permet de transmettre au pipeline, les paramètres saisie par l'utilisateur, ainsi que des paramètres techniques spécifique au serveur comme les paramètres pour se connecter à la base de donnée postgreSQL, ou bien l'url à utiliser pour les notifications en temps réel de la progression du pipeline.
+
+Voici à quoi ressemblera le fichier `config.json` (si on considère le fichier `form.json` vu précédemment)
+
+```
+{
+    "parameters":
+    {
+        "param1_key": 20,
+        "param2_key": "",
+        "param3_key": "choix 1"
+        "param4_key": "default": 1.75
+    },
+    "regovar":
+    {
+        "notify_url": "http://127.0.0.1/notify/<job_id>",
+        "db_host": "http://127.0.0.2",
+        "db_port": "4532",
+        "db_user": "regovar",
+        "db_name": "regovar",
+        "db_pwd": "regovar"
+    }
+}
+```
 
