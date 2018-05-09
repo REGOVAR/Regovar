@@ -61,7 +61,7 @@ MyPipeline_v1.0.zip
 | `README.txt` | html | si l'installation de votre pipeline nécessite des actions particulières de la part des administrateurs. Par exemple si votre pipeline nécessite d'accéder en local à des base de données volumineuses, il vous faudra indiquer dans le README où et comment se procurer/générer ces bases. Ces bases doivent impérativement être sous forme de fichiers qui seront installés par les administrateurs et seront par la suite automatiquement accessible par votre pipeline dans son container via le répertoire DATABASES |
 
 
-Seul le fichier `Dockerfile` et `manifest.json` sont obligatoire. Mais tous sont vivement recommandé afin de garantir une meilleur intégration de votre pipeline dans Regovar, et une meilleur "expérience" pour l'utilisateur.
+Seul le fichier `Dockerfile` et `manifest.json` sont obligatoires. Mais tous sont vivement recommandés afin de garantir une meilleure intégration de votre pipeline dans Regovar, et une meilleure "expérience" pour l'utilisateur.
 
 ## Le fichier manifest.json
 Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et utiliser votre pipeline. Ci-dessous se trouve le format attendu pour le fichier `manifest.json`:
@@ -84,7 +84,7 @@ Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et
 | Data | Type | Description |
 | ---- | ---- |  ---------- |
 | NAME        | `string` | **\[obligatoire]** Votre pipeline doit impérativement avoir un nom :) |
-| DESCRIPTION | `string` | Une phrase ou deux pour expliquer le but de votre pipeline (cf PRESENTATION pour une présentation plus complète de votre pipeline) |
+| DESCRIPTION | `string` | Une phrase ou deux pour expliquer le but de votre pipeline (cf `help.html` pour une présentation plus complète de votre pipeline) |
 | VERSION     | `string` | **\[obligatoire]** Ce renseignement permet de différencier et d'installer plusieurs version de votre pipeline sur un même serveur. Sans ça, il est impossible d'installer deux pipelines qui ont le même nom sur le serveur |
 | TYPE | `string` | Le type de pipeline peut être `importer`, `exporter`, `reporter`, `job`. (cf la section consacré ci-dessous) |
 | CONTACTS | `dict` | La liste des personnes (nom+email) à contacter en cas de problème |
