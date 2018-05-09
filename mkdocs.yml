@@ -27,10 +27,10 @@ pages:
  - 'TUTORIELS':
     - 'Filtrage': 'tutorials/filtering.md'
     - 'Pipeline': 'tutorials/pipeline.md'
-    - 'hidden': 'tutorials/pipeline/tuto_001.md'
-    - 'hidden': 'tutorials/pipeline/tuto_002.md'
-    - 'hidden': 'tutorials/pipeline/tuto_003.md'
-    - 'hidden': 'tutorials/pipeline/tuto_004.md'
+    - '_hidden': 'tutorials/pipeline/tuto_001.md'
+    - '_hidden': 'tutorials/pipeline/tuto_002.md'
+    - '_hidden': 'tutorials/pipeline/tuto_003.md'
+    - '_hidden': 'tutorials/pipeline/tuto_004.md'
     - 'Autres': 'tutorials/global.md'
  - 'DÉVELOPPEUR':
     - 'Communauté': 'developper/community.md'
