@@ -69,7 +69,7 @@ drwxr-xr-x  2 olivier olivier 4.0K May  2 13:14 pipelines
 ```
  
 Le répertoire `var/regovar/config` contient l'ensemble des fichiers générés automatiquement par le script. Ces fichiers sont ensuite utilisé via des liens symboliques
- ```
+```
  ➜  regovar git:(dev) ll /var/regovar/app/
 total 64K
 drwxrwxr-x 5 olivier olivier 4.0K Apr 30 15:16 api_rest
