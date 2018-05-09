@@ -13,19 +13,19 @@ Une fois les notions de base assimilés, voyons les différentes étapes pour en
 Résumé des commandes Docker qui peuvent nous servir:
 
 ```
-docker run        # Télécharge et déployer une nouvelle machine virtuelle avec un OS de base prêt à l'emploi
-docker exec          # Exécuter une commande dans la machine virtuelle depuis le serveur
-docker ls          # Donne la liste des CONTAINERS actuellement déployés sur votre HOST
-docker rm        # Désinstalle et supprime un CONTAINER
-docker stop          # Stop "brutalement" l'exécution d'un CONTAINER (équivalent à éteindre votre PC)
-docker pause        # Suspens l'exécution d'un CONTAINER (sauvegarde l'état de sa RAM etc)
-docker start         # Démarrer ou reprend l'éxécution d'un CONTAINER qui a été freeze
+docker run             # Télécharge et déployer une nouvelle machine virtuelle avec un OS de base prêt à l'emploi
+docker exec            # Exécuter une commande dans la machine virtuelle depuis le serveur
+docker ls              # Donne la liste des CONTAINERS actuellement déployés sur votre HOST
+docker rm              # Désinstalle et supprime un CONTAINER
+docker stop            # Stop "brutalement" l'exécution d'un CONTAINER (équivalent à éteindre votre PC)
+docker pause           # Suspens l'exécution d'un CONTAINER (sauvegarde l'état de sa RAM etc)
+docker start           # Démarrer ou reprend l'éxécution d'un CONTAINER qui a été freeze
 
-docker add      # Copie un fichier de votre HOST vers un CONTAINER
-lxc file pull       # Copie un fichier de votre CONTAINER vers l'HOST
+docker add             # Copie un fichier de votre HOST vers un CONTAINER
+lxc file pull          # Copie un fichier de votre CONTAINER vers l'HOST
 
-$ docker image ls    # Donne la liste des images installées sur votre HOST
-$ docker rmi  # Supprime une image
+$ docker image ls      # Donne la liste des images installées sur votre HOST
+$ docker rmi           # Supprime une image
 $ docker image export  # Exporte une image au format tar.gz
 $ docker image import  # Installe une image au format tar.gz sur votre HOST
 
@@ -52,7 +52,7 @@ Malheuruesement nous ne pouvons pas traiter cette partie ici. C'est la tâche la
 
 ## Procédure
 
-1. Commencez par créer le dossier `mypipeline_v1.0`qui va contenir toutes données nécessaire à la création du pipeline. (cf [exigences de base](tuto_002.md#exigences-et-options))
+**1.** Commencez par créer le dossier `mypipeline_v1.0`qui va contenir toutes données nécessaire à la création du pipeline. (cf [exigences de base](tuto_002.md#exigences-et-options))
 ```
 MyPipeline_v1.0/
   |  doc/
@@ -67,21 +67,22 @@ MyPipeline_v1.0/
   |  ... <custom dirs/files>
 ```
 
-2. Tester votre PACKAGE. 
-    - Créer un répertoire `/tmp/inputs/` avec dedans vos fichiers de tests (et un fichier `config.json` [si besoin](tuto_002.md#inputsconfigjson))
-    - Placez-vous à la racine de votre dossier PACKAGE
-    - Construisez l'image du container
+**2.** Tester votre PACKAGE. 
+   - Créer un répertoire `/tmp/inputs/` avec dedans vos fichiers de tests (et un fichier `config.json` [si besoin](tuto_002.md#inputsconfigjson))
+   - Placez-vous à la racine de votre dossier PACKAGE
+   - Construisez l'image du container
+    
 ```
 docker build -t regovar_pipe_test .
 ```
-    - Executez votre pipeline
+   - Executez votre pipeline
 ```
 docker run -a stdin -a stdout -it -v /tmp/inputs:/INPUTS:ro -v /tmp/outputs:/OUTPUTS -v /var/regovar/databases:/DATABASES:ro -v /tmp/logs:/LOGS --network regovar_net --name regovar_test --user 1000:1000 regovar_pipe_test
 ```
 
-3. Vérifier que tout se déroule correctement et que le résultat est correctement généré dans le répertoire /tmp/outputs du HOST. En cas de problème, supprimez le container `docker rm regovar_test --force` et recommancez l'étape 2.
+**3.** Vérifier que tout se déroule correctement et que le résultat est correctement généré dans le répertoire /tmp/outputs du HOST. En cas de problème, supprimez le container `docker rm regovar_test --force` et recommancez l'étape 2.
 
-4. Créez le zip du PACKAGE
+**4.** Créez le zip du PACKAGE
 ```
 zip -r MyPipeline_v1.0.zip MyPipeline_v1.0
 ```
