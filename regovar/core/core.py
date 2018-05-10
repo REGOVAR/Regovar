@@ -59,8 +59,7 @@ class Core:
         self.files = FileManager()
         self.pipelines = PipelineManager()
         self.jobs = JobManager()
-        self.container_managers = {}
-        self.container_managers["lxd"] = LxdManager()
+        self.container_manager = DockerManager()
         # Annotations and variant management (Annso part)
         self.analyses = AnalysisManager()
         self.samples = SampleManager()

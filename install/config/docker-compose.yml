@@ -28,12 +28,13 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/regovar:/var/regovar
+      - /etc/passwd:/etc/passwd:ro
       - localgit/regovar:/var/regovar_app
     ports:
       - "8500:8500"
     depends_on:
       - regovar_pg
-    user: regovar_user
+    #user: regovar_user
     working_dir: /var/regovar_app
     command: python regovar.py
     networks:

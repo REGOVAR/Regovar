@@ -81,7 +81,8 @@ class PipelineHandler:
         
         p = core.pipelines.install_init_image_local(file.path, False)
         try:
-            if core.pipelines.install(p.id, asynch=False):
+            pipe = core.pipelines.install(p.id, asynch=False)
+            if pipe:
                 return rest_success(check_local_path(pipe.to_json()))
         except RegovarException as ex:
             return rest_error(str(ex))

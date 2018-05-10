@@ -16,6 +16,12 @@ debug:
 stop: 
 	docker stop regovar_app
 
+pp:
+	docker rm -f regovar_debug || true
+	docker run -a stdin -a stdout -it -v /var/run/docker.sock:/var/run/docker.sock -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_debug regovar sh
+
+
+	
 
 #Database utils
 terminate_queries:
@@ -41,7 +47,16 @@ update_hpo:
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $(database_path)/hpo_disease.txt
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
 	docker stop regovar_update_hpo || true && docker rm regovar_update_hpo || true
-	docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_update_hpo --user 1000:1000 regovar python update_hpo.py /var/regovar/databases/ "`cat $(database_path)/hpo_version.txt`"
+	docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_update_hpo --user 1000:1000 regovar python extratools/hpo.py hpo /var/regovar/databases/ "`cat $(database_path)/hpo_version.txt`"
+	
+
+update_panels:
+	wget https://github.com/REGOVAR/GenesPanel/archive/master.zip -O $(database_path)/panels.zip
+	unzip -qq $(database_path)/panels.zip -d /var/regovar/databases/
+	docker stop regovar_update_panels || true && docker rm regovar_update_panels || true
+	docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_update_panels --user 1000:1000 regovar python extradata.py panels
+	rm -Rf /var/regovar/databases/GenesPanel-master
+
 	
 
 #Tests
@@ -58,7 +73,6 @@ test:
 	mv config.py config.test
 	mv config.py.bak config.py
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)_test"
-
 
 
 .PHONY: start list_db test update_hpo
