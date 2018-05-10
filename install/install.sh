@@ -144,7 +144,7 @@ fi
 # =======================================================================================
 # Resume user settings
 # =======================================================================================
-echo -e "\nThanks!\nWe will generate for you the configs files with provided informations:"
+echo -e "\nThanks!\nWe will generate for you the configuration files with provided information:"
 echo -e " - ${WHITE}HOST_USER:${NC}\t\t$regovar_user"
 echo -e " - ${WHITE}HOST_ROOT:${NC}\t\t$root_folder"
 
