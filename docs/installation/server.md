@@ -9,7 +9,7 @@ Référez-vous au [README de la configuration utilisée pour le déploiement au 
 
 ### Via Docker
 
-La procédure manuelle reste relativement simple grâce à un script.sh qui va vous poser quelques questions afin de configurer et créer pour vous les containers docker, le proxy nginx et l'application regovar.  
+La procédure reste relativement simple grâce à un script `install.sh` qui va vous poser quelques questions afin de configurer et créer pour vous les containers docker, le proxy nginx et l'application regovar.  
 
 ####Pré-requis
 
