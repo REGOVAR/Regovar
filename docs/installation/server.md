@@ -5,7 +5,7 @@
 
 ### Via SaltStack
 
-Référez-vous au [SLS utilisé pour le déploiement au CHU d'Angers et de Nancy](https://github.com/REGOVAR/ServerConfiguration/blob/master/README.md).
+Référez-vous au [README de la configuration utilisée pour le déploiement au CHU d'Angers et de Nancy](https://github.com/REGOVAR/ServerConfiguration/blob/master/README.md).
 
 ### Manuellement
 
