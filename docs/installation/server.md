@@ -15,18 +15,19 @@ La procédure reste relativement simple grâce à un script `install.sh` qui va 
 
 ####Pré-requis
 
- * Ubuntu Xenial LTS (pipelines et analyse de variants) ou Debian Stretch (analyse de variants uniquement).
+ * Ubuntu Xenial LTS (pipelines et analyse de variants) ou Debian Stretch ou supérieur (analyse de variants uniquement).
  * Droits root sur le serveur
  * Accès internet depuis le serveur
- * git
+ * Git
  * [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
  * [Docker-compose](https://docs.docker.com/compose/install/#install-compose)
- * Ne pas oublier de s'autoriser à utiliser docker directement
-```
+ * Ne pas oublier de s'autoriser à utiliser Docker directement avec la commande ci-dessous.
+
+```sh
 sudo usermod -a -G docker $USER
 ```
 
-N'oubliez pas de vous logout-login pour que l'ajout au groupe soit pris en compte
+N'oubliez pas de vous déconnecter de la session en cours et de vous reconnecter pour que l'ajout au groupe soit pris en compte.
 
 ####Procédure
 
@@ -35,9 +36,9 @@ git clone https://github.com/REGOVAR/Regovar.git ~/Regovar
 cd ~/Regovar/install
 ./install.sh
 ```
-Laissez vous guider en répondant aux différentes questions.
+Laissez vous guider en répondant aux différentes questions. Il vous sera demandé une clé API OMIM, que vous pouvez obtenir à [cette adresse](https://www.omim.org/api).
 
-Une fois l'installation terminé, vous devez mettre à jour les informations HPO
+Une fois l'installation terminée, vous devez mettre à jour les informations HPO.
 ```
 cd /var/regovar/app
 make update_hpo
