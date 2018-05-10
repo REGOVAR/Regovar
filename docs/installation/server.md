@@ -1,11 +1,11 @@
 
 # Installation du serveur Regovar
 
-À terme, Regovar pourra être installé via un paquet .deb. D'ici là, il est possible de l'installer via SaltStack, ou manuellement.
+À terme, Regovar pourra être installé via un paquet .deb. D'ici là, il est possible de l'installer via SaltStack ou manuellement.
 
 ### Via SaltStack
 
-Référez-vous au [SLS utilisé pour le déploiement au CHU d'Angers](https://github.com/REGOVAR/ServerConfiguration/blob/master/regovar/init.sls).
+Référez-vous au [SLS utilisé pour le déploiement au CHU d'Angers et de Nancy](https://github.com/REGOVAR/ServerConfiguration/blob/master/README.md).
 
 ### Manuellement
 
