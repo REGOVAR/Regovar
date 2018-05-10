@@ -42,9 +42,9 @@ MyPipeline_v1.0.zip
   |   |  help.html
   |  Dockerfile
   |  form.json
-  |  LICENSE.txt
+  |  LICENSE
   |  manifest.json
-  |  README.txt
+  |  README
   |  ... <custom dirs/files>
 ```
 
@@ -56,9 +56,9 @@ MyPipeline_v1.0.zip
 | `help.html` | html | page d'aide du pipeline |
 | `Dockerfile` | Dockerfile | fichier [docker](https://docs.docker.com/engine/reference/builder/) nécessaire pour la création de votre pipeline dockerisé |
 | `form.json` | html | si votre pipeline a des paramètres configurable, vous pouvez décrire ces paramètres dans un fichier json afin que Regovar puisse permettre à l'utilisateur de les régler via un formulaire qui sera automatiquement généré depuis ce fichier json |
-| `LICENSE.txt` | txt | les pipelines de Regovar étant fournis sous forme de fichier zip clés en main, il y a de forte chance qu'il puisse se retrouver très vite tout seul dans la nature. Il est donc recommandé de joindre à votre pipeline un fichier LICENSE |
+| `LICENSE` | txt | les pipelines de Regovar étant fournis sous forme de fichier zip clés en main, il y a de forte chance qu'il puisse se retrouver très vite tout seul dans la nature. Il est donc recommandé de joindre à votre pipeline un fichier LICENSE |
 | `manifest.json` | json | page d'aide du pipeline |
-| `README.txt` | html | si l'installation de votre pipeline nécessite des actions particulières de la part des administrateurs. Par exemple si votre pipeline nécessite d'accéder en local à des base de données volumineuses, il vous faudra indiquer dans le README où et comment se procurer/générer ces bases. Ces bases doivent impérativement être sous forme de fichiers qui seront installés par les administrateurs et seront par la suite automatiquement accessible par votre pipeline dans son container via le répertoire DATABASES |
+| `README` | html | si l'installation de votre pipeline nécessite des actions particulières de la part des administrateurs. Par exemple si votre pipeline nécessite d'accéder en local à des base de données volumineuses, il vous faudra indiquer dans le README où et comment se procurer/générer ces bases. Ces bases doivent impérativement être sous forme de fichiers qui seront installés par les administrateurs et seront par la suite automatiquement accessible par votre pipeline dans son container via le répertoire DATABASES |
 
 
 Seul le fichier `Dockerfile` et `manifest.json` sont obligatoires. Mais tous sont vivement recommandés afin de garantir une meilleure intégration de votre pipeline dans Regovar, et une meilleure "expérience" pour l'utilisateur.
