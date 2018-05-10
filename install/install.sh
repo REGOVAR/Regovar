@@ -76,7 +76,7 @@ else
     debug=True
 fi
 
-echo -n "3) Private 32 bits key used to encrypts coockies and security token (HTTPS) (default: random generation): "
+echo -n "3) Private 32 bits key used to encrypts cookies and security token (HTTPS) (default: random generation): "
 read answer
 if [ -n "$answer" ]; then
     random_key32=$answer
