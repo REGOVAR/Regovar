@@ -239,7 +239,7 @@ echo -e "\r${GREEN}Done${NC}: Generating docker-compose file"
 # Generating: regovar config.py
 # =======================================================================================
 echo -e -n "${YELLOW}In progress${NC}: Generating regovar app python config file"
-cp config/config.py $root_folder/config/config.py
+cp config.default.py $root_folder/config/config.py
 # conver / into \/ and . into \.
 public_host=${public_host//\//\\/}
 public_host=${public_host//\./\\.}
