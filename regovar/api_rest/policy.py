@@ -27,9 +27,7 @@ class RegovarAuthorizationPolicy(AbstractAuthorizationPolicy):
         if user:
             if permission == 'Authenticated':
                 return True
-
-            
-            print ("Check authent [{}] for {} ({})".format(permission, user.login, user.roles_dic))
-            print ("TODO")
+            if permission == 'Administrator':
+                return user.is_admin
         return False
 

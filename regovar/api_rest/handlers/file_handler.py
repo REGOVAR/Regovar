@@ -50,23 +50,23 @@ class FileWrapper (TusFileWrapper):
 
     
 
-    def save(self):
+    async def save(self):
         from core.core import core
         try:
             f = File.from_id(self.id)
             f.upload_offset=self.upload_offset
             f.save()
-            core.notify_all(data={"action": "file_upload", "data" : f.to_json(["id", "size", "upload_offset", "status"])})
+            await core.notify_all_co(data={"action": "file_upload", "data" : f.to_json(["id", "size", "upload_offset", "status"])})
         except Exception as ex:
             return TusManager.build_response(code=500, body="Unexpected error occured: {}".format(ex))
 
 
-    def complete(self, checksum=None, checksum_type="md5"):
+    async def complete(self, checksum=None, checksum_type="md5"):
         try:
             log ('Upload of the file (id={0}) is complete.'.format(self.id))
             core.files.upload_finish(self.id, checksum, checksum_type)
             f = File.from_id(self.id)
-            core.notify_all(data={"action": "file_upload", "data" : f.to_json()})
+            await core.notify_all_co(data={"action": "file_upload", "data" : f.to_json()})
         except Exception as ex:
             return TusManager.build_response(code=500, body="Unexpected error occured: {}".format(ex))
 

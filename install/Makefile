@@ -6,6 +6,8 @@ database_path=/var/regovar/databases
 #database_path=$(shell sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' docker/config.py)
 
 
+
+
 # Init
 init:
 	curl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > $(database_path)/hg19/refGene.txt:
@@ -14,8 +16,6 @@ init:
 	echo "\n${RED}INIT DONE: Please check the `pwd`/docker/config.py and `pwd`/docker/regovar.yml files before continue the installation with the command 'make install'${NC}"
 
 
-terminate_queries:
-	docker exec regovar_pg psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$(database_name)'"
 
 
 clear_db: terminate_queries

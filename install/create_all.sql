@@ -701,10 +701,11 @@ INSERT INTO "event" (message, type) VALUES
   ('Regovar database 8.0 creation', 'technical'),
   ('Default root admin user created', 'technical');
   
-INSERT INTO public."parameter" (key, description, value) VALUES
-    ('database_version',          'The current version of the database',           '9.0'),
-    ('backup_date',               'The date of the last database dump',            to_char(current_timestamp, 'YYYY-MM-DD')),
-    ('stats_refresh_date',        'The date of the last refresh of statistics',    to_char(current_timestamp, 'YYYY-MM-DD'));
+INSERT INTO "parameter" (key, description, value) VALUES
+    ('message',             '{"type":"info", "message": ""}',               'Custom message to display on welcom screen on each client'),
+    ('database_version',    'The current version of the database',          '9.1'),
+    ('backup_date',         'The date of the last database dump',           to_char(current_timestamp, 'YYYY-MM-DD')),
+    ('stats_refresh_date',  'The date of the last refresh of statistics',   to_char(current_timestamp, 'YYYY-MM-DD'));
   
   
 

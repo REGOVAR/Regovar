@@ -100,12 +100,12 @@ class VepImporter(AbstractTranscriptDataImporter):
             for idx, col_name in enumerate(fields):
                 query += "('{0}', {1}, '{2}', '{3}', '{4}', '{5}', {6}),".format(
                     db_uid, 
-                    idx, 
                     self.columns_definitions[col_name]["order"], 
-                    col_name.title(), 
+                    col_name, 
+                    col_name.replace("_", " "), 
                     self.columns_definitions[col_name]["type"], 
                     self.escape_value_for_sql(self.columns_definitions[col_name]["description"]), 
-                    "'"+self.escape_value_for_sql(self.columns_definitions[col_name]["meta"])+"'" if "meta" in self.columns_definitions[col_name] else "NULL")
+                    "'{}'".format(self.escape_value_for_sql(json.dumps(self.columns_definitions[col_name]["meta"]))) if "meta" in self.columns_definitions[col_name] else "NULL")
             Model.execute(query[:-1])
             Model.execute("UPDATE annotation_field SET uid=MD5(concat(database_uid, name)) WHERE uid IS NULL;")
         

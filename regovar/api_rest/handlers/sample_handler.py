@@ -104,7 +104,8 @@ class SampleHandler:
 
     @user_role('Authenticated')
     async def import_from_file(self, request):
-        params = get_query_parameters(request.query_string, ["subject_id", "analysis_id"])
+
+        params = request.rel_url.query # get_query_parameters(request.query_string, ["subject_id", "analysis_id"])
         file_id = request.match_info.get('file_id', None)
         ref_id = request.match_info.get('ref_id', None)
         
@@ -115,9 +116,9 @@ class SampleHandler:
             return rest_error("Import error : Unable to import samples.", ex=ex)
         if samples:
             for s in samples:
-                if hasattr(params, "subject_id") and params["subject_id"]: 
+                if "subject_id" in params and params["subject_id"]: 
                     s.subject_id = params["subject_id"]
-                if hasattr(params, "analysis_id") and params["analysis_id"]: 
+                if "analysis_id" in params and params["analysis_id"]: 
                     AnalysisSample.new(s.id, params["analysis_id"])
             return rest_success(samples)
         

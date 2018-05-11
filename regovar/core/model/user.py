@@ -157,12 +157,6 @@ def user_erase_password(self, new):
     return True
 
 
-def user_is_admin(self):
-    """
-        Return True if user have administration rights; False otherwise
-    """
-    return self.is_admin
-
 
 
 
@@ -220,7 +214,6 @@ User.load = user_load
 User.to_json = user_to_json
 User.set_password = user_set_password
 User.erase_password = user_erase_password
-User.is_admin = user_is_admin
 User.save = generic_save
 User.new = user_new
 User.count = user_count

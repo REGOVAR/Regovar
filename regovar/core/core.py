@@ -1,6 +1,7 @@
 #!env/python3
 # coding: utf-8
 import os
+import asyncio
 from importlib import import_module
 
 import config as C
@@ -31,6 +32,14 @@ def default_notify_all(data):
         Default delegate used by the core for notification.
     """
     print(str(data))
+    
+    
+async def default_notify_all_co(data):
+    """
+        Default async delegate used by the core for notification.
+    """
+    await asyncio.sleep(0)
+    print(str(data))
 
 
 class Core:
@@ -50,8 +59,7 @@ class Core:
         self.files = FileManager()
         self.pipelines = PipelineManager()
         self.jobs = JobManager()
-        self.container_managers = {}
-        self.container_managers["lxd"] = LxdManager()
+        self.container_manager = DockerManager()
         # Annotations and variant management (Annso part)
         self.analyses = AnalysisManager()
         self.samples = SampleManager()
@@ -71,6 +79,7 @@ class Core:
         # according to api that will be pluged on the core, this method should be overriden 
         # (See how api_rest override this method in api_rest/rest.py)
         self.notify_all = default_notify_all
+        self.notify_all_co = default_notify_all_co
 
         # module loaded dynamicaly as this part of the server should be heavily customisable. 
         # Even is there is bug in these module, the server shall works. but the wrong module is unvailable
@@ -83,14 +92,6 @@ class Core:
         # All seams good ? let's go
         self.events.log(None, "technical", None, "Regovar core {} initialised. Server ready !".format(REGOVAR_CORE_VERSION))
 
-
-    def notify_all(self, data):
-        """
-            Default delegate used by the core for notification.
-            according to api that will be pluged on the core, this method should be overriden 
-            (See how api_rest override this method in api_rest/rest.py)
-        """
-        print(str(data))
     
 
     def user_authentication(self, login, pwd):

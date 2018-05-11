@@ -705,7 +705,7 @@ class FilterEngine:
 
 
 
-    def prepare(self, analysis, filter_json, order=[]):
+    async def prepare(self, analysis, filter_json, order=[]):
         """
             Build tmp table for the provided filter/order by parameters
             set also the total count of variant/transcript
@@ -713,7 +713,7 @@ class FilterEngine:
         from core.core import core
         log("---\nPrepare tmp working table for analysis {}".format(analysis.id))
         progress = {"start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0}
-        core.notify_all({'action':'filtering_prepare', 'data': progress})
+        await core.notify_all_co({'action':'filtering_prepare', 'data': progress})
         if order and len(order) == 0: order = None
         order = remove_duplicates(order)
 
@@ -748,7 +748,7 @@ class FilterEngine:
             err("Not able to save current filter")
         
         progress.update({"progress": 1})
-        core.notify_all({'action':'filtering_prepare', 'data': progress})
+        await core.notify_all_co({'action':'filtering_prepare', 'data': progress})
 
 
     def update_wt(self, analysis, column, filter_json):
@@ -913,7 +913,7 @@ class FilterEngine:
 
         if not wtmp_exists or former_filter != current_filter or former_order != current_order:
             # Need to prepare temp table
-            self.prepare(analysis, filter_json, order)
+            await self.prepare(analysis, filter_json, order)
         elif not analysis.filter:
             if filter_json is None:
                 raise RegovarException("Analysis {} is not ready. You need to 'prepare' your filter by providing the filter and ordering parameters before requesting results.".format(analysis.id))

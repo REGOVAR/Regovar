@@ -5,7 +5,6 @@ import ipdb
 import os
 import shutil
 import json
-import tarfile
 import zipfile
 import datetime
 import time
@@ -134,7 +133,7 @@ class PipelineManager:
         pfile = core.files.from_local(filepath, move)
         pipe = self.install_init(os.path.basename(filepath), pipe_metadata)
 
-        # Sometime getting sqlalchemy error 'is not bound to a Session' 
+        # FIXME: Sometime getting sqlalchemy error 'is not bound to a Session' 
         # why it occure here ... why sometime :/ 
         check_session(pfile)
         check_session(pipe)
@@ -161,19 +160,51 @@ class PipelineManager:
         if pipeline.image_file and pipeline.image_file.status not in ["uploading", "uploaded", "checked"]:
             raise RegovarException("Wrong pipeline image (status={}).".format(pipeline.image_file.status))
 
-        #if not pipeline.type: pipeline.type = pipeline_type
-        #if not pipeline.type :
-            #raise RegovarException("Pipeline type not set. Unable to know which kind of installation shall be performed.")
-        #if pipeline.type not in core.container_managers.keys():
-            #raise RegovarException("Unknow pipeline's type ({}). Installation cannot be performed.".format(pipeline.type))
-        #if core.container_managers[pipeline.type].need_image_file and not pipeline.image_file:
-            #raise RegovarException("This kind of pipeline need a valid image file to be uploaded on the server.")
-
         if not pipeline.image_file or pipeline.image_file.status in ["uploaded", "checked"]:
             if asynch:
                 run_async(self.__install, pipeline)
             else:
-                self.__install(pipeline)
+                pipeline = self.__install(pipeline)
+
+        return pipeline
+
+
+
+    def check_manifest(self, manifest):
+        """
+            Check that manifest (json) is valid and return the full version completed 
+            with default values if needed
+        """
+        missing = ""
+        for k in ["name", "version"]:
+            if k not in manifest.keys():
+                missing += k + ", "                
+        if missing != "":
+            missing = missing[:-2]
+            raise RegovarException("FAILLED Checking validity of manifest (missing : {})".format(missing))
+
+        # 2- Default value for optional fields in mandatory file
+        default = {
+            "description": "",
+            "type": "job",
+            "contacts": [],
+            "regovar_db_access": False,
+            "inputs": "/pipeline/inputs",
+            "outputs": "/pipeline/outputs",
+            "databases": "/pipeline/databases",
+            "logs": "/pipeline/logs"
+        }
+        for k in default.keys():
+            if k not in manifest.keys():
+                manifest[k] = default[k]
+
+        # 3- check type
+        if manifest["type"] not in ["job", "importer", "exporter", "reporter"]:
+            raise RegovarException("FAILLED Checking validity of manifest (type '{}' not supported)".format(manifest["type"]))
+
+
+        log('Validity of manifest checked')
+        return manifest
 
 
 
@@ -184,49 +215,68 @@ class PipelineManager:
         log('Installation of the pipeline package : ' + root_path)
         os.makedirs(root_path)
         os.chmod(pipeline.image_file.path, 0o777)
+
+        # TODO: Check zip integrity and security before extracting it
+        #       see python zipfile official doc
         with zipfile.ZipFile(pipeline.image_file.path,"r") as zip_ref:
             zip_ref.extractall(root_path)
-        
+
+            # check package tree
+            # find root folder
+            files = [i.filename for i in zip_ref.infolist()]
+            for f in files:
+                if f.endswith("manifest.json"): break
+            zip_root = os.path.dirname(f)
+            # remove intermediate folder
+            if zip_root != "":
+                zip_root = os.path.join(root_path, zip_root)
+                for filename in os.listdir(zip_root):
+                    shutil.move(os.path.join(zip_root, filename), os.path.join(root_path, filename))
+                os.rmdir(zip_root)
+
         # Load manifest
         try:
+            log(os.path.join(root_path, "manifest.json"))
             with open(os.path.join(root_path, "manifest.json"), "r") as f:
                 data = f.read()
+                log(data)
                 manifest = json.loads(data)
-                if "documents" in manifest.keys():
-                    pipeline.documents = manifest.pop("documents")
-                    for k in pipeline.documents.keys():
-                        pipeline.documents[k] = os.path.join(root_path, pipeline.documents[k])
-                if "developpers" in manifest.keys():
-                    pipeline.developpers = manifest.pop("developpers")
-                if "api" in manifest.keys():
-                    pipeline.version_api = manifest.pop("api")
+                manifest = self.check_manifest(manifest)
+                pipeline.developpers = manifest.pop("contacts")
                 pipeline.manifest = manifest 
+
+                # list documents available
+                pipeline.documents = {
+                    "about": os.path.join(root_path, "doc/about.html"),
+                    "help": os.path.join(root_path, "doc/help.html"),
+                    "icon": os.path.join(root_path, "doc/icon.png"),
+                    "icon2": os.path.join(root_path, "doc/icon.jpg"),
+                    "form": os.path.join(root_path, "form.json"),
+                    "license":os.path.join(root_path, "LICENSE"),
+                    "readme": os.path.join(root_path, "README")
+                }
+                for k in pipeline.documents.keys():
+                    if not os.path.exists(pipeline.documents[k]):
+                        pipeline.documents[k] = None
+                p = pipeline.documents.pop("icon2")
+                if not pipeline.documents["icon"]:
+                    pipeline.documents["icon"] = p
+
                 pipeline.save()
         except Exception as ex:
             pipeline.status = "error"
             pipeline.save()
-            raise RegovarException("Unable to open and read manifest.json. The pipeline package is wrong or corrupt.", "", ex)
+            raise RegovarException("Unable to open and read manifest.json. The pipeline package is wrong or corrupt.", exception=ex)
         
-        # Check that pipeline type is supported
-        if "type" not in manifest.keys():
-            pipeline.status = "error"
-            pipeline.save()
-            raise RegovarException("Pipeline virtualization type not specified. Installation aborded.")
+        # Update and save pipeline status
         pipeline.type = manifest["type"]
         pipeline.installation_date = datetime.datetime.now()
         pipeline.status = "installing"
         pipeline.save()
-        if pipeline.type not in CONTAINERS_CONFIG.keys():
-            pipeline.status = "error"
-            pipeline.save()
-            raise RegovarException("Container manager of type {} not supported by the server.".format(pipeline.type))
         
-        # Install pipeline according to the type
-        try:
-            result = core.container_managers[pipeline.type].install_pipeline(pipeline)
-        except Exception as ex:
-            if isinstance(ex, RegovarException): raise ex
-            raise RegovarException("Error occured during installation of the pipeline. Installation aborded.", "", ex)
+        # Install pipeline
+        result = core.container_manager.install_pipeline(pipeline)
+        return result
 
 
 
@@ -252,7 +302,7 @@ class PipelineManager:
                 else: 
                     self.__delete(pipeline)
             except Exception as ex:
-                err("core.PipelineManager.delete : Container manager failed to delete the pipeline with id {}." + str(pipeline.id), ex)
+                war("core.PipelineManager.delete : Container manager failed to delete the container with id {}.".format(pipeline.id))
             try:
                 # Clean filesystem
                 shutil.rmtree(pipeline.path, True)
@@ -260,7 +310,7 @@ class PipelineManager:
                 core.files.delete(pipeline.image_file_id)
                 Pipeline.delete(pipeline.id)
             except Exception as ex:
-                raise RegovarException("core.PipelineManager.delete : Unable to delete the pipeline's pirus data for the pipeline {}." + str(pipeline.id), ex)
+                raise RegovarException("core.PipelineManager.delete : Unable to delete the pipeline's pirus data for the pipeline {}.".format(pipeline.id), ex)
         return result
 
 
@@ -268,7 +318,7 @@ class PipelineManager:
         from core.core import core
         
         try:
-            core.container_managers[pipeline.type].uninstall_pipeline(pipeline)
+            core.container_manager.uninstall_pipeline(pipeline)
         except Exception as ex:
             raise RegovarException("Error occured during uninstallation of the pipeline. Uninstallation aborded.", ex)
  

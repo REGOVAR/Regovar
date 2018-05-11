@@ -190,7 +190,7 @@ class JobManager:
             raise RegovarException("Job status is \"initializing\". Cannot retrieve yet monitoring informations.")
         # Ask container manager to update data about container
         try:
-            job.monitoring = core.container_managers[job.pipeline.type].monitoring_job(job)
+            job.monitoring = core.container_manager.monitoring_job(job)
         except Exception as ex:
             err("Error occured when retrieving monitoring information for the job {} (id={})".format(os.path.basename(job.path), job.id), ex)
         return job
@@ -211,9 +211,7 @@ class JobManager:
             raise RegovarException("No Pipeline associated to this job.")
         if not job.pipeline.type:
             raise RegovarException("Type of pipeline for this job is not set.")
-        if job.pipeline.type not in core.container_managers.keys():
-            raise RegovarException("Pipeline type of this job is not managed.")
-        if not core.container_managers[job.pipeline.type].supported_features["pause_job"]:
+        if not core.container_manager.supported_features["pause_job"]:
             return False
         # Call pause of the container
         if asynch: 
@@ -329,7 +327,7 @@ class JobManager:
         job = Job.from_id(job_id, 1)
         if job and job.status == "initializing":
             try:
-                success = core.container_managers[job.pipeline.type].init_job(job, asynch, auto_notify)
+                success = core.container_manager.init_job(job, asynch, auto_notify)
             except Exception as ex:
                 # TODO : Manage error
                 self.set_status(job, "error", asynch)
@@ -381,7 +379,7 @@ class JobManager:
         #     return 1
 
         #Try to run the job
-        if core.container_managers[job.pipeline.type].start_job(job):
+        if core.container_manager.start_job(job):
             self.set_status(job, "running", asynch)
             return True
         return False
@@ -399,7 +397,7 @@ class JobManager:
         job = Job.from_id(job_id, 1)
         if job:
             try:
-                core.container_managers[job.pipeline.type].pause_job(job)
+                core.container_manager.pause_job(job)
             except Exception as ex:
                 # TODO : Log error
                 self.set_status(job, "error", asynch)
@@ -418,7 +416,7 @@ class JobManager:
         job = Job.from_id(job_id, 1)
         if job:
             try:
-                core.container_managers[job.pipeline.type].stop_job(job)
+                core.container_manager.stop_job(job)
             except Exception as ex:
                 # Log error
                 self.set_status(job, "error", asynch)
@@ -440,7 +438,7 @@ class JobManager:
             # TODO : log error
             return 
 
-        if core.container_managers[job.pipeline.type].finalize_job(job):
+        if core.container_manager.finalize_job(job):
             self.set_status(job, "done", asynch)
             return True
         else:

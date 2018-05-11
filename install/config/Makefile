@@ -6,18 +6,22 @@ database_path=$(shell sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' con
 # docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net -p 8500:8500 --name regovar_app --user 1000:1000 regovar_img python regovar.py
 
 start:
-	docker rm -f regovar_app
 	docker start regovar_app
 
 
 debug:
-	docker rm -f regovar_app
 	docker start -ai regovar_app
 
 
 stop:
 	docker stop regovar_app
 
+pp:
+	docker rm -f regovar_debug || true
+	docker run -a stdin -a stdout -it -v /var/run/docker.sock:/var/run/docker.sock -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_debug regovar sh
+
+
+	
 
 #Database utils
 terminate_queries:
@@ -47,8 +51,17 @@ install_hpo: download_hpo
 
 update_hpo: download_hpo
 	docker stop regovar_update_hpo || true && docker rm regovar_update_hpo || true
-	docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_update_hpo --user 1000:1000 regovar python update_hpo.py /var/regovar/databases/ "`cat $(database_path)/hpo_version.txt`"
+	docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_update_hpo --user 1000:1000 regovar python extratools/hpo.py hpo /var/regovar/databases/ "`cat $(database_path)/hpo_version.txt`"
+	
 
+update_panels:
+	wget https://github.com/REGOVAR/GenesPanel/archive/master.zip -O $(database_path)/panels.zip
+	unzip -qq $(database_path)/panels.zip -d /var/regovar/databases/
+	docker stop regovar_update_panels || true && docker rm regovar_update_panels || true
+	docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_update_panels --user 1000:1000 regovar python extradata.py panels
+	rm -Rf /var/regovar/databases/GenesPanel-master
+
+	
 
 #Tests
 test:
@@ -66,5 +79,4 @@ test:
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)_test"
 
 
-
-.PHONY: start debug stop terminate_queries list_db install_hpo update_hpo test
+.PHONY: start list_db test update_hpo

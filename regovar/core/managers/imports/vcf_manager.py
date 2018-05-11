@@ -740,7 +740,7 @@ class VcfManager(AbstractImportManager):
                 
             if len(samples.keys()) == 0 : 
                 war("VCF files without sample cannot be imported in the database.")
-                core.notify_all({"action": "import_vcf_error", "data" : {"reference_id": reference_id, "file_id" : file_id, "msg" : "VCF files without sample cannot be imported in the database."}})
+                await core.notify_all_co({"action": "import_vcf_error", "data" : {"reference_id": reference_id, "file_id" : file_id, "msg" : "VCF files without sample cannot be imported in the database."}})
                 return;
 
 
@@ -756,7 +756,7 @@ class VcfManager(AbstractImportManager):
                 self.workers.append(t)
 
 
-            core.notify_all({"action":"import_vcf_start", "data" : {"reference_id": reference_id, "file_id" : file_id, "samples" : [ {"id" : samples[sid]["id"], "name" : samples[sid]["name"]} for sid in samples.keys()]}})
+            await core.notify_all_co({"action":"import_vcf_start", "data" : {"reference_id": reference_id, "file_id" : file_id, "samples" : [ {"id" : samples[sid]["id"], "name" : samples[sid]["name"]} for sid in samples.keys()]}})
             records_count = vcf_metadata["count"]
             log ("Importing file {0}\n\r\trecords  : {1}\n\r\tsamples  :  ({2}) {3}\n\r\tstart    : {4}".format(filepath, records_count, len(samples.keys()), reprlib.repr([sid for sid in samples.keys()]), start))
             
