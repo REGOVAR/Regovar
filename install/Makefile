@@ -29,7 +29,7 @@ clear_db: terminate_queries
 
 
 
-	
+
 
 #Install
 install: clear_db install_hpo
@@ -41,16 +41,15 @@ clear_files:
 	rm -rf /var/regovar/downloads/*
 	rm -rf /var/regovar/pipelines/*
 	rm -rf /var/regovar/jobs/*
-	
-	
-	
-	
+
+
+
+
 install_travis:
 	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)"
 	sudo -u postgres psql -c "CREATE DATABASE $(database_name) OWNER regovar"
 	sudo -u postgres psql -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
 	psql -U regovar -d $(database_name) -f ../install/create_all.sql
 	psql -U regovar -d $(database_name) -f ../install/install_hg38.sql
-	
-	
-	
+
+.PHONY: init terminate_queries clear_db install clear_files install_travis
