@@ -1,4 +1,5 @@
-RED=\033[0;31m
+#/Regovar/Regovar/install/Makefile
+RED=\033[0;31m7
 NC=\033[0m
 database_name=$(shell sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' docker/config.py)
 database_path=/var/regovar/databases
