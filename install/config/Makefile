@@ -33,8 +33,7 @@ list_db:
         LEFT JOIN pg_stat_all_tables ON table_name=relname ORDER BY table_name) AS _sub ON table_name=relname \
     ORDER BY table_name ASC"
 
-
-install_hpo:
+download_hpo:
 	wget http://purl.obolibrary.org/obo/hp.obo -O $(database_path)/hpo.obo
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/data_version.txt -O $(database_path)/hpo_version.txt
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/phenotype_annotation.tab -O $(database_path)/hpo_annotation.txt
@@ -42,7 +41,10 @@ install_hpo:
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -O $(database_path)/hpo_disease.txt
 	wget http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -O $(database_path)/hpo_phenotype.txt
 
-update_hpo: install_hpo
+install_hpo: download_hpo
+	python3 update_hpo.py /var/regovar/databases/ "`cat $(database_path)/hpo_version.txt`"
+
+update_hpo: download_hpo
 	docker stop regovar_update_hpo || true && docker rm regovar_update_hpo || true
 	docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_update_hpo --user 1000:1000 regovar python update_hpo.py /var/regovar/databases/ "`cat $(database_path)/hpo_version.txt`"
 
