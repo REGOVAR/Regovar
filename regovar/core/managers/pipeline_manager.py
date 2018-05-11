@@ -235,7 +235,6 @@ class PipelineManager:
                 os.rmdir(zip_root)
 
         # Load manifest
-
         try:
             log(os.path.join(root_path, "manifest.json"))
             with open(os.path.join(root_path, "manifest.json"), "r") as f:
@@ -252,6 +251,7 @@ class PipelineManager:
                     "help": os.path.join(root_path, "doc/help.html"),
                     "icon": os.path.join(root_path, "doc/icon.png"),
                     "icon2": os.path.join(root_path, "doc/icon.jpg"),
+                    "form": os.path.join(root_path, "form.json"),
                     "license":os.path.join(root_path, "LICENSE"),
                     "readme": os.path.join(root_path, "README")
                 }
