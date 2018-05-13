@@ -1,7 +1,3 @@
-#Regovar/Regovar/install/config/Makefile
-
-include ../Makefile
-
 # Docker manual command
 # docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net -p 8500:8500 --name regovar_app --user 1000:1000 regovar_img python regovar.py
 
@@ -21,7 +17,7 @@ pp:
 	docker run -a stdin -a stdout -it -v /var/run/docker.sock:/var/run/docker.sock -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_debug regovar sh
 
 
-	
+
 
 #Database utils
 terminate_queries:
@@ -49,7 +45,7 @@ update_panels:
 	docker run -a stdin -a stdout -it -v /var/regovar:/var/regovar:rw -v /home/olivier/git/Regovar/regovar:/var/regovar_app:rw -w /var/regovar_app --network regovar_net --name regovar_update_panels --user 1000:1000 regovar python extradata.py panels
 	rm -Rf /var/regovar/databases/GenesPanel-master
 
-	
+
 
 #Tests
 test:

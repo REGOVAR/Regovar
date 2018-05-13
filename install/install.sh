@@ -302,7 +302,7 @@ sudo /etc/init.d/nginx restart
 # Generating: Makefile
 # =======================================================================================
 echo -e -n "${YELLOW}In progress${NC}: Generating Makefile"
-cp config/Makefile $root_folder/config/Makefile
+cat Makefile config/Makefile.in > $root_folder/config/Makefile
 # sed -i s/"regovar_pg"/"$docker_pg"/g $root_folder/app/Makefile
 # sed -i s/"regovar_app"/"$docker_app"/g $root_folder/app/Makefile
 

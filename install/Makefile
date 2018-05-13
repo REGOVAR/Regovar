@@ -1,12 +1,10 @@
-#/Regovar/Regovar/install/NewMakefile
-
 database_name=$(shell sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) # PostgreSQL
 databases_path=$(shell sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py) # RefGene
 
 download_refgene: \
 	$(databases_path)/hg19/refGene.txt \
 	$(databases_path)/hg38/refGene.txt
-	
+
 $(databases_path)/hg19/refGene.txt:
 	curl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > $@
 
@@ -23,7 +21,7 @@ download_hpo:
 
 install_hpo: download_hpo
 	python3 ../regovar/extratools/hpo.py $(databases_path) "`cat $(databases_path)/hpo_version.txt`"
-	
+
 init_config:
 	cp config.default.py ../config.py
 
@@ -35,6 +33,4 @@ setup_database:
 	psql -U regovar -d $(database_name) -f install_hg19.sql
 	psql -U regovar -d $(database_name) -f install_hg38.sql
 
-
-	
 .PHONY: download_refgene download_hpo install_hpo init_config setup_database
