@@ -67,7 +67,7 @@ class AbstractContainerManager():
 
     def pause_job(self, job):
         """
-            IMPLEMENTATION OPTIONAL (according to self.supported_features)
+            IMPLEMENTATION OPTIONAL
             Pause the execution of the job to save server resources by example
             Return True if success; False otherwise
         """
@@ -77,7 +77,7 @@ class AbstractContainerManager():
 
     def stop_job(self, job):
         """
-            IMPLEMENTATION OPTIONAL (according to self.supported_features)
+            IMPLEMENTATION OPTIONAL
             Stop the job. The job is canceled and the container shall be destroyed
             Return True if success; False otherwise
         """
@@ -87,7 +87,7 @@ class AbstractContainerManager():
 
     def list_jobs(self, job):
         """
-            IMPLEMENTATION OPTIONAL (according to self.supported_features)
+            IMPLEMENTATION OPTIONAL 
             Return list of all job (running or paused)
         """
         if self.supported_features["monitoring_job"]:
@@ -96,9 +96,9 @@ class AbstractContainerManager():
 
     def monitoring_job(self, job):
         """
-            IMPLEMENTATION OPTIONAL (according to self.supported_features)
-            Provide monitoring information about the container (CPU/RAM used, etc)
-            Return monitoring information as json.
+            IMPLEMENTATION OPTIONAL
+            Provide monitoring information about the container (CPU/RAM used, update logs files if needed, etc)
+            Return monitoring information as json; None otherwise
         """
         if self.supported_features["monitoring_job"]:
             raise RegovarException("The abstract method \"monitoring_job\" of PirusManager shall be implemented.")

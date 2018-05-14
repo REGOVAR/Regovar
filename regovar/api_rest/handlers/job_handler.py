@@ -112,7 +112,7 @@ class JobHandler:
         inputs_ids = data["inputs_ids"]
         # Create the job 
         try:
-            job = core.jobs.new(pipe_id, name, config, inputs_ids, asynch=False)
+            job = core.jobs.new(pipe_id, name, config, inputs_ids)
         except Exception as ex:
             return rest_error("Error occured when initializing the new job. {}".format(ex))
         if job is None:
@@ -125,7 +125,7 @@ class JobHandler:
     def pause(self, request):
         job_id  = request.match_info.get('job_id',  -1)
         try:
-            core.jobs.pause(job_id, False)
+            core.jobs.pause(job_id)
             job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to pause the job {}. {}".format(job.id, ex))
@@ -136,7 +136,7 @@ class JobHandler:
     def start(self, request):
         job_id  = request.match_info.get('job_id', -1)
         try:
-            core.jobs.start(job_id, False)
+            core.jobs.start(job_id)
             job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to start the job {}. {}".format(job.id, ex))
@@ -147,7 +147,7 @@ class JobHandler:
     def cancel(self, request):
         job_id  = request.match_info.get('job_id',  -1)
         try:
-            core.jobs.stop(job_id, False)
+            core.jobs.stop(job_id)
             job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to stop the job {}. {}".format(job_id, ex))
@@ -170,12 +170,12 @@ class JobHandler:
     def finalize(self, request):
         job_id  = request.match_info.get('job_id', -1)
         try:
-            core.jobs.finalize(job_id, False)
+            core.jobs.finalize(job_id)
             job = Job.from_id(job_id)
         except Exception as ex:
             return rest_error("Unable to finalize the job {}. {}".format(job_id, ex))
         job = Job.from_id(job_id)
-        return rest_success(check_local_path(job))
+        return rest_success(check_local_path(job.to_json()))
 
 
 

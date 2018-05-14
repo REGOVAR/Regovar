@@ -144,32 +144,6 @@ class PipelineManager:
 
 
 
-
-    def install(self, pipeline_id, asynch=True):
-        """
-            Start the installation of the pipeline. (done in another thread)
-            The initialization shall be done (image ready to be used)
-        """
-        from core.core import core
-
-        pipeline = Pipeline.from_id(pipeline_id, 1)
-        if not pipeline : 
-            raise RegovarException("Pipeline not found (id={}).".format(pipeline_id))
-        if pipeline.status != "initializing":
-            raise RegovarException("Pipeline status ({}) is not \"initializing\". Cannot perform another installation.".format(pipeline.status))
-        if pipeline.image_file and pipeline.image_file.status not in ["uploading", "uploaded", "checked"]:
-            raise RegovarException("Wrong pipeline image (status={}).".format(pipeline.image_file.status))
-
-        if not pipeline.image_file or pipeline.image_file.status in ["uploaded", "checked"]:
-            if asynch:
-                run_async(self.__install, pipeline)
-            else:
-                pipeline = self.__install(pipeline)
-
-        return pipeline
-
-
-
     def check_manifest(self, manifest):
         """
             Check that manifest (json) is valid and return the full version completed 
@@ -206,6 +180,30 @@ class PipelineManager:
         log('Validity of manifest checked')
         return manifest
 
+
+
+    def install(self, pipeline_id, asynch=True):
+        """
+            Start the installation of the pipeline. (done in another thread)
+            The initialization shall be done (image ready to be used)
+        """
+        from core.core import core
+
+        pipeline = Pipeline.from_id(pipeline_id, 1)
+        if not pipeline : 
+            raise RegovarException("Pipeline not found (id={}).".format(pipeline_id))
+        if pipeline.status != "initializing":
+            raise RegovarException("Pipeline status ({}) is not \"initializing\". Cannot perform another installation.".format(pipeline.status))
+        if pipeline.image_file and pipeline.image_file.status not in ["uploading", "uploaded", "checked"]:
+            raise RegovarException("Wrong pipeline image (status={}).".format(pipeline.image_file.status))
+
+        if not pipeline.image_file or pipeline.image_file.status in ["uploaded", "checked"]:
+            if asynch:
+                run_async(self.__install, pipeline)
+            else:
+                pipeline = self.__install(pipeline)
+
+        return pipeline
 
 
     def __install(self, pipeline):
@@ -277,9 +275,6 @@ class PipelineManager:
         # Install pipeline
         result = core.container_manager.install_pipeline(pipeline)
         return result
-
-
-
 
 
 

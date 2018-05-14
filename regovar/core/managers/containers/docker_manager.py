@@ -18,10 +18,43 @@ from core.model import *
 
 
 
+
+def waiting_container(job_id):
+    """
+        This method wait for the end of the execution of the container in another
+        thread (to not block the main application) and update job status accordingly)
+    """
+    from core.core import core
+    from core.model import Job
+    job = Job.from_id(job_id)
+    container_name = DOCKER_CONFIG["job_name"].format("{}_{}".format(job.pipeline_id, job.id))
+    
+    try:
+        container = docker.from_env().containers.get(container_name)
+    except Exception as ex:
+        pass
+    
+    # wait until the container stops
+    container.wait()
+    
+    # refresh job information
+    job = Job.from_id(job_id, 1)
+    if job.status == 'running':
+        # The container stop auto when its job is done, so have to finalyse it
+        core.jobs.finalize(job_id)
+    # else:
+    # The container have been stop by someone else (pause, stop, admin...)
+    # do nothing
+        
+        
+        
+
+
 class DockerManager(AbstractContainerManager):
     """
         Pirus manager to run pipeline from Docker container
     """
+    
     def __init__(self):
         # Job's control features supported by this bind of pipeline
         self.supported_features = {
@@ -35,6 +68,9 @@ class DockerManager(AbstractContainerManager):
             self.docker = None
             raise RegovarException("Docker not available.", exception=ex)
 
+
+        # Check list of docker container. 
+        # TODO: finalyse all regovar's containers that are in "exited" status
 
 
     def install_pipeline(self, pipeline):
@@ -53,6 +89,7 @@ class DockerManager(AbstractContainerManager):
         root_path = os.path.join(PIPELINES_DIR, str(pipeline.id))
         manifest = pipeline.manifest
         
+
         # 2- Save checked manifest/config into database
         image_alias = DOCKER_CONFIG["image_name"].format(pipeline.id)
         manifest["image_alias"] = image_alias
@@ -102,6 +139,9 @@ class DockerManager(AbstractContainerManager):
 
 
 
+        
+
+
 
     def init_job(self, job, auto_notify=True):
         """
@@ -117,12 +157,20 @@ class DockerManager(AbstractContainerManager):
                           to finalize it when its done.
         """
         if not self.docker: 
-          err("Docker not available. Job init abord")
-          return None
-        # Setting up the lxc container for the job
+            err("Docker not available. Job init abord")
+            return None
+      
         docker_container = os.path.basename(job.path)
+      
+        try:
+            container = self.docker.containers.get(docker_container)
+            err("Job container '{}' already exists, abord init.".format(docker_container))
+            return None
+        except Exception as ex:
+            pass
+      
+        # Setting up the docker container for the job
         manifest = job.pipeline.manifest if isinstance(job.pipeline.manifest, dict) else yaml.load(job.pipeline.manifest)
-        docker_job_cmd = manifest["job"]
         docker_logs_path = manifest["logs"]
         docker_inputs_path = manifest["inputs"]
         docker_outputs_path = manifest["outputs"]
@@ -132,67 +180,25 @@ class DockerManager(AbstractContainerManager):
         inputs_path = os.path.join(job.path, "inputs")
         outputs_path = os.path.join(job.path, "outputs")
         logs_path = os.path.join(job.path, "logs")
+        env = ["NOTIFY_URL={}".format(notify_url)]
         try:
-            # create job's start command file
-            job_file = os.path.join(job.path, "start_" + docker_container + ".sh")
-            log(job_file)
-            with open(job_file, 'w') as f:
-                f.write("#!/bin/bash\n")
-                if auto_notify:
-                    f.write("curl -X POST -d '{{\"status\" : \"running\"}}' {}\n".format(notify_url))
-                else:
-                    job.status = "running"
-                    job.save()
-
-                # TODO : catch if execution return error and notify pirus with error status
-                f.write("chmod +x {}\n".format(docker_job_cmd)) # ensure that we can execute the job's script
-                f.write("{} 1> {} 2> {}".format(docker_job_cmd, os.path.join(docker_logs_path, 'out.log'), os.path.join(docker_logs_path, "err.log\n"))) #  || curl -X POST -d '{\"status\" : \"error\"}' " + notify_url + "
-                f.write("chown -Rf {}:{} {}\n".format(DOCKER_CONFIG["pirus_uid"], DOCKER_CONFIG["pirus_gid"], docker_outputs_path))
-                if auto_notify:
-                    f.write("curl -X POST -d '{{\"status\" : \"finalizing\"}}' {}\n".format(notify_url))
-                os.chmod(job_file, 0o777)
-            # create container
-            exec_cmd(["lxc", "init", docker_image, docker_container])
-            # set up env
-            exec_cmd(["lxc", "config", "set", docker_container, "environment.PIRUS_NOTIFY_URL", notify_url ])
-            exec_cmd(["lxc", "config", "set", docker_container, "environment.PIRUS_CONFIG_FILE", os.path.join(docker_inputs_path, "config.json") ])
-            # Add write access to the container root user to the logsoutputs folders on the host
-            exec_cmd(["setfacl", "-Rm", "user:lxd:rwx,default:user:lxd:rwx,user:{0}:rwx,default:user:{0}:rwx".format(DOCKER_CONFIG["docker_uid"]), logs_path])
-            exec_cmd(["setfacl", "-Rm", "user:lxd:rwx,default:user:lxd:rwx,user:{0}:rwx,default:user:{0}:rwx".format(DOCKER_CONFIG["docker_uid"]), outputs_path])
-            # set up devices
-            exec_cmd(["lxc", "config", "device", "add", docker_container, "pirus_inputs",  "disk", "source=" + inputs_path,   "path=" + docker_inputs_path[1:], "readonly=True"])
-            exec_cmd(["lxc", "config", "device", "add", docker_container, "pirus_outputs", "disk", "source=" + outputs_path,  "path=" + docker_outputs_path[1:]])
-            exec_cmd(["lxc", "config", "device", "add", docker_container, "pirus_logs",    "disk", "source=" + logs_path,     "path=" + docker_logs_path[1:]])
-            exec_cmd(["lxc", "config", "device", "add", docker_container, "pirus_db",      "disk", "source=" + DATABASES_DIR, "path=" + docker_db_path[1:], "readonly=True"])
+            container = self.docker.containers.run(
+                docker_image,
+                environment = env,
+                name = docker_container,
+                network = DOCKER_CONFIG["network"],
+                user = DOCKER_CONFIG["user_mapping"],
+                volumes = {
+                    inputs_path: {'bind': docker_inputs_path, 'mode': 'ro'},
+                    DATABASES_DIR: {'bind': docker_db_path, 'mode': 'ro'},
+                    outputs_path: {'bind': docker_outputs_path, 'mode': 'rw'},
+                    logs_path: {'bind': logs_path, 'mode': 'rw'},
+                    },
+                detach = True)
         except Exception as ex:
-            raise RegovarException("Unexpected error.", "", ex)
+            raise RegovarException("Error when trying to run the container {} with docker.".format(docker_container), exception=ex)
 
-        # Execute the "job" command to start the pipe
-        try:
-            exec_cmd(["lxc", "start", docker_container])
-            docker_job_file = os.path.join("/", os.path.basename(job_file))
-            exec_cmd(["lxc", "file", "push", job_file, docker_container + docker_job_file])
-
-            cmd = ["lxc", "exec", "--mode=non-interactive", docker_container, "--",  "chmod", "+x", docker_job_file]
-            r, o, e = exec_cmd(cmd)
-
-            cmd = ["lxc", "exec", "--mode=non-interactive", docker_container, "--", docker_job_file]
-            exec_cmd(cmd, True)
-            # TODO : keep future callback and catch error if start command failled
-
-            # if not asynch:
-            #     r, o, e = exec_cmd(cmd)
-            #     if e.startswith("error: Container is not running."): # catch docker error
-            #         job.status = "error"
-            #         job.save()
-            #         err('Error occured when starting the job {} (id={}).\n{}'.format(job.name, job.id, e))
-            #     else:
-            #         log('New job {} (id={}) start with success.'.format(job.name, job.id))
-            # else:
-            #     subprocess.Popen(cmd)
-            #     return True
-        except Exception as ex:
-            raise RegovarException("Unexpected error.", "", ex)
+        run_async(waiting_container, job.id)
 
         return True
 
@@ -204,18 +210,29 @@ class DockerManager(AbstractContainerManager):
 
     def start_job(self, job):
         """
-            (Re)Start the job execution. By unfreezing the 
+            Start the job into the container. The container may already exists as this method can be call
+            after init_job and pause_job.
+            Return True if success; False otherwise
         """
-        if not DOCKER_CONFIG: 
-          err("Docker not available. Job cannot be start")
-          return None
-        # Setting up the lxc container for the job
         docker_container = os.path.basename(job.path)
-        r, o, e = exec_cmd(["lxc-start", "-n", docker_container, "-d"])
-        if r != 0:
-            err("Error occured when trying to start the job {} (id={})".format(docker_container, job.id), "$ lxc-start\nstdout ====\n{}\nstderr ====\n{}".format(o, e))
-        return r == 0
-
+        try:
+            container = self.docker.containers.get(docker_container)
+        except Exception as ex:
+            err("Job container '{}' do not exists, abord start operation.".format(docker_container))
+            return False
+        try:
+            if container.status == "paused":
+                container.unpause()
+                run_async(waiting_container, job.id)
+            elif container.status == "exited":
+                container.start()
+                run_async(waiting_container, job.id)
+            else:
+                err("Job container '{}' status do not allow start operation.".format(docker_container))
+                return False
+        except Exception as ex:
+            raise RegovarException("Error occured when trying to (re)start the docker container '{}'.".format(docker_container), exception=ex)
+        return True
 
 
 
@@ -223,79 +240,110 @@ class DockerManager(AbstractContainerManager):
 
     def pause_job(self, job):
         """
-            Pause the execution of the job.
+            Pause the execution of the job to save server resources by example
+            Return True if success; False otherwise
         """
-        if not DOCKER_CONFIG: 
-          err("Docker not available. Job cannot be pause")
-          return None
         docker_container = os.path.basename(job.path)
-        r, o, e = exec_cmd(["lxc-freeze", "-n", docker_container])
-        if r != 0:
-            err("Error occured when trying to pause the job {} (id={})".format(docker_container, job.id), "$ lxc-freeze\nstdout ====\n{}\nstderr ====\n{}".format(o, e))
-        return r == 0
+        try:
+            container = self.docker.containers.get(docker_container)
+        except Exception as ex:
+            err("Job container '{}' do not exists, abord start operation.".format(docker_container))
+            return False
+        try:
+            if container.status == "running":
+                container.pause()
+            else:
+                err("Job container '{}' status do not allow pause operation.".format(docker_container))
+                return False
+        except Exception as ex:
+            raise RegovarException("Error occured when trying to pause the docker container '{}'.".format(docker_container), exception=ex)
+        return True
 
 
 
 
     def stop_job(self, job):
         """
-            Stop the job. The job is canceled and the container is destroyed.
+            Stop the job. The job is canceled and the container shall be destroyed
+            Return True if success; False otherwise
         """
-        if not DOCKER_CONFIG: 
-          err("Docker not available. Job cannot be stop")
-          return None
         docker_container = os.path.basename(job.path)
-        r, o, e = exec_cmd(["lxc-destroy", "-n", docker_container, "--force"])
-        if r != 0:
-            err("Error occured when trying to stop the job {} (id={})".format(docker_container, job.id), "$ lxc-destroy --force\nstdout ====\n{}\nstderr ====\n{}".format(o, e))
-        return r == 0
+        try:
+            container = self.docker.containers.get(docker_container)
+        except Exception as ex:
+            err("Job container '{}' do not exists, abord stop operation.".format(docker_container))
+            return False
+        try:
+            container.remove(force=True, v=False)
+        except Exception as ex:
+            raise RegovarException("Error occured when trying to remove the docker container '{}'.".format(docker_container), exception=ex)
+        return True
+    
+    
+
+
+    def list_jobs(self, job):
+        """
+            Return list of all job (running or paused)
+        """
+        if self.supported_features["monitoring_job"]:
+            raise RegovarException("The abstract method \"monitoring_job\" of PirusManager shall be implemented.")
+
+
 
 
 
     def monitoring_job(self, job):
         """
-            Provide monitoring information about the container (CPU/RAM used, etc)
+            Provide monitoring information about the container (CPU/RAM used, update logs files if needed, etc)
+            Return monitoring information as json; None otherwise
         """
-        if not DOCKER_CONFIG: 
-          err("Docker not available. Job cannot be monitored")
-          return None
         docker_container = os.path.basename(job.path)
-        # Result
-        result = {}
-        # docker monitoring data
         try:
-            # TODO : to be reimplemented with pydocker api when this feature will be available :)
-
-            r, o, e = exec_cmd(["lxc-info", "-n", docker_container])
-            if r == 0:
-                for l in o.split('\n'):
-                    data = l.split(': ')
-                    if data[0].strip() in ["Name","Created", "Status", "Processes", "Memory (current)", "Memory (peak)"]:
-                        result.update({data[0].strip(): data[1]})
+            container = self.docker.containers.get(docker_container)
         except Exception as ex:
-            err("Error occured when retriving monitoring data for job {} (id={})".format(docker_container, job.id), ex)
-        return result
+            err("Job container '{}' do not exists, abord stop operation.".format(docker_container))
+            return False
+        
+        try:
+            manifest = job.pipeline.manifest if isinstance(job.pipeline.manifest, dict) else yaml.load(job.pipeline.manifest)
+            docker_logs_path = manifest["logs"]
+            # Refresh logs files out & err
+            with open(os.path.join(docker_logs_path, "out.log"), "w") as f:
+                f.write(container.logs(stdout=True, stderr=False))
+            with open(os.path.join(docker_logs_path, "err.log"), "w") as f:
+                f.write(container.logs(stdout=False, stderr=True))
+            # Get docker stats
+            stats = container.stats(stream=False)
+            stats["status"] = container.status
+            
+        except Exception as ex:
+            raise RegovarException("Error occured when trying to remove the docker container '{}'.".format(docker_container), exception=ex)
+        
+        return stats
+    
+
 
 
 
     def finalize_job(self, job):
         """
-            IMPLEMENTATION REQUIRED
-            Clean temp resources created by the container (log shall be kept), copy outputs file from the container
-            to the right place on the server, register them into the database and associates them to the job.
+            Clean temp resources created by the container (log shall be kept)
+            Return True if success; False otherwise
         """
-        if not DOCKER_CONFIG: 
-          err("Docker not available. Job cannot be finalized")
-          return None
+        print("==== > finalize_job")
         docker_container = os.path.basename(job.path)
-        # Stop container and clear resource
         try:
-            # Clean outputs
-            exec_cmd(["lxc-destroy", "-n", docker_container, "--force"], asynch)
+            container = self.docker.containers.get(docker_container)
         except Exception as ex:
-            err("Error occured when trying to finalize the job {} (id={})".format(docker_container, job.id), ex)
+            err("Job container '{}' do not exists, abord stop operation.".format(docker_container))
             return False
-        return True 
+        try:
+            container.remove(force=True, v=False)
+        except Exception as ex:
+            raise RegovarException("Error occured when trying to remove the docker container '{}'.".format(docker_container), exception=ex)
+        return True
+
 
 
 

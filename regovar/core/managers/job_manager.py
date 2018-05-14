@@ -71,7 +71,7 @@ class JobManager:
 
 
 
-    def new(self, pipeline_id:int, name:str, config:dict, inputs_ids=[], asynch=True, auto_notify=True):
+    def new(self, pipeline_id:int, name:str, config:dict, inputs_ids=[], asynch=False, auto_notify=True):
         """
             Create a new job for the specified pipepline (pipeline_id), with provided config and input's files ids
         """
@@ -95,7 +95,7 @@ class JobManager:
         # TODO : check if enough free resources to start the new job. otherwise, set status to waiting and return
         job.init(1, True)
         # Init directories entries for the container
-        job.path = os.path.join(JOBS_DIR, CONTAINERS_CONFIG[job.pipeline.type]["job_name"].format("{}-{}".format(job.pipeline_id, job.id)))
+        job.path = os.path.join(JOBS_DIR, DOCKER_CONFIG["job_name"].format("{}_{}".format(job.pipeline_id, job.id)))
         job.save()
         inputs_path = os.path.join(job.path, "inputs")
         outputs_path = os.path.join(job.path, "outputs")
@@ -115,6 +115,14 @@ class JobManager:
             "pirus" : {"notify_url" : NOTIFY_URL.format(job.id), "job_name" : job.name},
             "job" : config
         }
+
+        # TODO: adding admin security to know if db connection is allowed for this job
+        job_config["pirus"]["db_host"] = DATABASE_HOST
+        job_config["pirus"]["db_port"] = DATABASE_PORT
+        job_config["pirus"]["db_user"] = DATABASE_USER
+        job_config["pirus"]["db_name"] = DATABASE_NAME
+        job_config["pirus"]["db_pwd"] = DATABASE_PWD
+
         with open(config_path, 'w') as f:
             f.write(json.dumps(job_config, sort_keys=True, indent=4))
             os.chmod(config_path, 0o777)
@@ -122,12 +130,13 @@ class JobManager:
         # Check that all inputs files are ready to be used
         for f in job.inputs:
             if f is None :
-                self.set_status(job, "error", asynch=asynch)
+                print("new job.inputs none")
+                self.set_status(job, "error")
                 raise RegovarException("Inputs file deleted before the start of the job {} (id={}). Job aborded.".format(job.name, job.id))
             if f.status not in ["checked", "uploaded"]:
                 # inputs not ready, we keep the run in the waiting status
                 war("INPUTS of the run not ready. waiting")
-                self.set_status(job, "waiting", asynch=asynch)
+                self.set_status(job, "waiting")
                 return Job.from_id(job.id)
         for f in job.inputs:
             # copy all file in the f folder (because some file may have attached files like index bam.bai for bam files)
@@ -139,19 +148,17 @@ class JobManager:
                 os.chmod(link_path, 0o644)
 
         # Call init of the container
-        # if asynch: 
-        #     print("run init async")
-        #     run_async(self.__init_job, job.id, asynch, auto_notify)
-        # else:
-        #     print("run init")
-        self.__init_job(job.id, asynch, auto_notify)
+        if asynch: 
+            run_async(self.__init_job, job.id, auto_notify)
+        else:
+            self.__init_job(job.id, auto_notify)
 
         # Return job object
         return Job.from_id(job.id)
 
 
 
-    def start(self, job_id, asynch=True):
+    def start(self, job_id, asynch=False):
         """
             Start or restart the job
         """
@@ -161,19 +168,20 @@ class JobManager:
         # If job is still initializing
         if job.status == "initializing":
             if asynch: 
-                run_async(self.__init_job, job.id, asynch, True)
+                run_async(self.__init_job, job.id, True)
                 return True
             else:
-                return self.__init_job(job.id, asynch, True)
+                return self.__init_job(job.id, True)
 
         if job.status not in ["waiting", "pause"]:
             raise RegovarException("Job status ({}) is not \"pause\" or \"waiting\". Cannot start the job.".format(job.status))
         # Call start of the container
         if asynch: 
-            run_async(self.__start_job, job.id, asynch)
+            run_async(self.__start_job, job.id)
             return True
         else:
-            return self.__start_job(job.id, asynch)
+            return self.__start_job(job.id)
+
 
 
     def monitoring(self, job_id):
@@ -197,7 +205,7 @@ class JobManager:
 
 
 
-    def pause(self, job_id, asynch=True):
+    def pause(self, job_id, asynch=False):
         """
             Pause the job
             Return False if job cannot be pause; True otherwise
@@ -215,15 +223,15 @@ class JobManager:
             return False
         # Call pause of the container
         if asynch: 
-            run_async(self.__pause_job, job.id, asynch)
+            run_async(self.__pause_job, job.id)
             return True
         else:
-            return self.__pause_job(job.id, asynch)
+            return self.__pause_job(job.id)
 
 
 
 
-    def stop(self, job_id, asynch=True):
+    def stop(self, job_id, asynch=False):
         """
             Stop the job
         """
@@ -234,14 +242,14 @@ class JobManager:
             raise RegovarException("Job status is \"{}\". Cannot stop the job.".format(job.status))
         # Call stop of the container
         if asynch: 
-            run_async(self.__stop_job, job.id, asynch)
+            run_async(self.__stop_job, job.id)
             return True
         else:
-            return self.__stop_job(job.id, asynch)
+            return self.__stop_job(job.id)
 
 
 
-    def finalize(self, job_id, asynch=True):
+    def finalize(self, job_id, asynch=False):
         """
             Shall be called by the job itself when ending.
             save outputs files and ask the container manager to delete container
@@ -264,14 +272,14 @@ class JobManager:
                 JobFile.new(job_id, pf.id)
         # Stop container and delete it
         if asynch: 
-            run_async(self.__finalize_job, job.id, asynch)
+            run_async(self.__finalize_job, job.id)
             return True
         else:
-            return self.__finalize_job(job.id, asynch)
+            return self.__finalize_job(job.id)
 
 
 
-    def delete(self, job_id, asynch=True):
+    def delete(self, job_id, asynch=False):
         """
             Delete a Job. Outputs that have not yet been saved in Pirus, will be deleted.
         """
@@ -280,9 +288,9 @@ class JobManager:
             raise RegovarException("Job not found (id={}).".format(job_id))
         # Security, force call stop/delete the container
         if asynch: 
-            run_async(self.__finalize_job, job.id, asynch)
+            run_async(self.__finalize_job, job.id)
         else:
-            self.__finalize_job(job.id, asynch)
+            self.__finalize_job(job.id)
         # Deleting file in the filesystem
         shutil.rmtree(job.path, True)
         return job
@@ -290,7 +298,7 @@ class JobManager:
 
 
 
-    def set_status(self, job, new_status, notify=True, asynch=True):
+    def set_status(self, job, new_status, notify=True, asynch=False):
         from core.core import core
         # Avoid useless notification
         # Impossible to change state of a job in error or canceled
@@ -306,20 +314,20 @@ class JobManager:
             next_jobs = Session().query(Job).filter_by(status="waiting").order_by("priority").all()
             if len(next_jobs) > 0:
                 if asynch: 
-                    run_async(self.start, next_jobs[0].id, asynch)
+                    run_async(self.start, next_jobs[0].id)
                 else:
-                    self.start(next_jobs[0].id, asynch)
+                    self.start(next_jobs[0].id)
         elif job.status == "finalizing":
-            # if asynch: 
-            #     run_async(self.finalize, job.id, asynch)
-            # else:
-            self.finalize(job.id, asynch)
+            if asynch: 
+                run_async(self.finalize, job.id)
+            else:
+                self.finalize(job.id)
         # Push notification
         if notify:
             core.notify_all({"action": "job_updated", "data" : job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs"])})
 
 
-    def __init_job(self, job_id, asynch, auto_notify):
+    def __init_job(self, job_id, auto_notify):
         """
             Call manager to prepare the container for the job.
         """
@@ -327,19 +335,21 @@ class JobManager:
         job = Job.from_id(job_id, 1)
         if job and job.status == "initializing":
             try:
-                success = core.container_manager.init_job(job, asynch, auto_notify)
+                success = core.container_manager.init_job(job, auto_notify)
             except Exception as ex:
-                # TODO : Manage error
-                self.set_status(job, "error", asynch)
+                raise RegovarException("Error when trying to init the job.", exception=ex)
+                print("__init_job")
+                self.set_status(job, "error")
                 return False
-            self.set_status(job, "running" if success else "error", asynch) 
+            print("__init_job : " + "running" if success else "error")
+            self.set_status(job, "running" if success else "error") 
             return True
         err("Job initializing already done or failled. Not able to reinitialise it.")
         return False
 
 
 
-    def __start_job(self, job_id, asynch):
+    def __start_job(self, job_id):
         """
             Call the container manager to start or restart the execution of the job.
         """
@@ -358,12 +368,12 @@ class JobManager:
         for file in job.inputs:
             if file is None :
                 err("Inputs file deleted before the start of the job {} (id={}). Job aborded.".format(job.name, job.id))
-                self.set_status(job, "error", asynch=asynch)
+                self.set_status(job, "error")
                 return False
             if file.status not in ["checked", "uploaded"]:
                 # inputs not ready, we keep the run in the waiting status
                 war("INPUTS of the run not ready. waiting")
-                self.set_status(job, "waiting", asynch=asynch)
+                self.set_status(job, "waiting")
                 return False
 
         # TODO : check that enough reszources to run the job
@@ -380,7 +390,7 @@ class JobManager:
 
         #Try to run the job
         if core.container_manager.start_job(job):
-            self.set_status(job, "running", asynch)
+            self.set_status(job, "running")
             return True
         return False
 
@@ -388,7 +398,7 @@ class JobManager:
 
 
 
-    def __pause_job(self, job_id, asynch):
+    def __pause_job(self, job_id):
         """
             Call manager to suspend the execution of the job.
         """
@@ -400,14 +410,15 @@ class JobManager:
                 core.container_manager.pause_job(job)
             except Exception as ex:
                 # TODO : Log error
-                self.set_status(job, "error", asynch)
+                print("__pause_job")
+                self.set_status(job, "error")
                 return False
-            self.set_status(job, "pause", asynch)
+            self.set_status(job, "pause")
             return True
         return False
 
 
-    def __stop_job(self, job_id, asynch):
+    def __stop_job(self, job_id):
         """
             Call manager to stop execution of the job.
         """
@@ -419,15 +430,16 @@ class JobManager:
                 core.container_manager.stop_job(job)
             except Exception as ex:
                 # Log error
-                self.set_status(job, "error", asynch)
+                print("__stop_job")
+                self.set_status(job, "error")
                 return False
-            self.set_status(job, "canceled", asynch)
+            self.set_status(job, "canceled")
             return True
         return False
 
 
 
-    def __finalize_job(self, job_id, asynch):
+    def __finalize_job(self, job_id):
         """
             Ask the manager to clear the container
         """
@@ -439,9 +451,10 @@ class JobManager:
             return 
 
         if core.container_manager.finalize_job(job):
-            self.set_status(job, "done", asynch)
+            self.set_status(job, "done")
             return True
         else:
-            self.set_status(job, "error", asynch)
+            print("__finalize_job")
+            self.set_status(job, "error")
             return False
         return False
