@@ -153,7 +153,7 @@ class JobManager:
         else:
             self.__init_job(job.id, auto_notify)
 
-        # Return job object
+        # Return job object (refresh)
         return Job.from_id(job.id)
 
 

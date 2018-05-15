@@ -41,6 +41,8 @@ def waiting_container(job_id):
     job = Job.from_id(job_id, 1)
     if job.status == 'running':
         # The container stop auto when its job is done, so have to finalyse it
+        job.progress_value = 1.0
+        job.save()
         core.jobs.finalize(job_id)
     # else:
     # The container have been stop by someone else (pause, stop, admin...)
@@ -195,6 +197,7 @@ class DockerManager(AbstractContainerManager):
                     logs_path: {'bind': logs_path, 'mode': 'rw'},
                     },
                 detach = True)
+            self.update_logs(job)
         except Exception as ex:
             raise RegovarException("Error when trying to run the container {} with docker.".format(docker_container), exception=ex)
 
@@ -226,6 +229,7 @@ class DockerManager(AbstractContainerManager):
                 run_async(waiting_container, job.id)
             elif container.status == "exited":
                 container.start()
+                self.update_logs(job)
                 run_async(waiting_container, job.id)
             else:
                 err("Job container '{}' status do not allow start operation.".format(docker_container))
@@ -251,6 +255,7 @@ class DockerManager(AbstractContainerManager):
             return False
         try:
             if container.status == "running":
+                self.update_logs(job)
                 container.pause()
             else:
                 err("Job container '{}' status do not allow pause operation.".format(docker_container))
@@ -274,6 +279,7 @@ class DockerManager(AbstractContainerManager):
             err("Job container '{}' do not exists, abord stop operation.".format(docker_container))
             return False
         try:
+            self.update_logs(job)
             container.remove(force=True, v=False)
         except Exception as ex:
             raise RegovarException("Error occured when trying to remove the docker container '{}'.".format(docker_container), exception=ex)
@@ -306,16 +312,7 @@ class DockerManager(AbstractContainerManager):
             return False
         
         try:
-            manifest = job.pipeline.manifest if isinstance(job.pipeline.manifest, dict) else yaml.load(job.pipeline.manifest)
-            docker_logs_path = manifest["logs"]
-            # Refresh logs files out & err
-            with open(os.path.join(docker_logs_path, "out.log"), "w") as f:
-                f.write(container.logs(stdout=True, stderr=False))
-            with open(os.path.join(docker_logs_path, "err.log"), "w") as f:
-                f.write(container.logs(stdout=False, stderr=True))
-            # Get docker stats
-            stats = container.stats(stream=False)
-            stats["status"] = container.status
+            stats = self.update_logs(job)
             
         except Exception as ex:
             raise RegovarException("Error occured when trying to remove the docker container '{}'.".format(docker_container), exception=ex)
@@ -339,6 +336,7 @@ class DockerManager(AbstractContainerManager):
             err("Job container '{}' do not exists, abord stop operation.".format(docker_container))
             return False
         try:
+            self.update_logs(job)
             container.remove(force=True, v=False)
         except Exception as ex:
             raise RegovarException("Error occured when trying to remove the docker container '{}'.".format(docker_container), exception=ex)
@@ -348,4 +346,20 @@ class DockerManager(AbstractContainerManager):
 
 
 
+    def update_logs(self, job):
+        stats = {}
+        docker_container = os.path.basename(job.path)
+        logs_path = os.path.join(job.path, "logs")
+        container = self.docker.containers.get(docker_container)
 
+        # Refresh logs files out & err
+        with open(os.path.join(logs_path, "out.log"), "w") as f:
+            f.write(container.logs(stdout=False, stderr=True).decode())
+            f.close()
+        with open(os.path.join(logs_path, "err.log"), "w") as f:
+            f.write(container.logs(stdout=True, stderr=False).decode())
+            f.close()
+        # Get docker stats
+        stats = container.stats(stream=False)
+        stats["status"] = container.status
+        return stats
