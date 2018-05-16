@@ -328,7 +328,6 @@ class DockerManager(AbstractContainerManager):
             Clean temp resources created by the container (log shall be kept)
             Return True if success; False otherwise
         """
-        print("==== > finalize_job")
         docker_container = os.path.basename(job.path)
         try:
             container = self.docker.containers.get(docker_container)
@@ -347,7 +346,6 @@ class DockerManager(AbstractContainerManager):
 
 
     def update_logs(self, job):
-        stats = {}
         docker_container = os.path.basename(job.path)
         logs_path = os.path.join(job.path, "logs")
         container = self.docker.containers.get(docker_container)
@@ -360,6 +358,44 @@ class DockerManager(AbstractContainerManager):
             f.write(container.logs(stdout=True, stderr=False).decode())
             f.close()
         # Get docker stats
-        stats = container.stats(stream=False)
-        stats["status"] = container.status
+        data = container.stats(stream=False)
+        stats = {
+            "block_i": -1,
+            "block_o": -1,
+            "net_i": -1,
+            "net_o": -1,
+            "net_i": -1,
+            "net_o": -1,
+            "mem_u": -1,
+            "mem_l": -1,
+            "cpu" : -1
+        }
+        if data:
+            # Block IO
+            if data["blkio_stats"]["io_service_bytes_recursive"]:
+                for l in data["blkio_stats"]["io_service_bytes_recursive"]:
+                    if  l["op"] == "Read":
+                        stats["block_i"] = l["value"]
+                    elif  l["op"] == "Write":
+                        stats["block_o"] = l["value"]
+            # CPU
+            cpu_pu = data["precpu_stats"]["cpu_usage"]["usage_in_kernelmode"]
+            cpu_ps = data["precpu_stats"]["cpu_usage"]["usage_in_usermode"]
+            cpu_u = data["cpu_stats"]["cpu_usage"]["usage_in_kernelmode"]
+            cpu_s = data["cpu_stats"]["cpu_usage"]["usage_in_usermode"]
+            cpu_du = cpu_u - cpu_pu
+            cpu_ds = cpu_s - cpu_ps
+            if cpu_du > 0 and cpu_ds > 0:
+                stats["cpu"] = float(cpu_du / cpu_ds) * 100.0
+            # NET
+            if "networks" in data and "eth0" in data["networks"]:
+                stats["net_i"] = data["networks"]["eth0"]["rx_bytes"]
+                stats["net_o"] = data["networks"]["eth0"]["tx_bytes"]
+            # RAM
+            if "memory_stats" in data and "usage" in data["memory_stats"] and "limit" in data["memory_stats"]: 
+                stats["mem_u"] = data["memory_stats"]["usage"]
+                stats["mem_l"] = data["memory_stats"]["limit"]
+
         return stats
+
+

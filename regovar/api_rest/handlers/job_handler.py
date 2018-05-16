@@ -63,7 +63,7 @@ class JobHandler:
         job = Job.from_id(job_id, 1)
         if not job:
             return rest_error("Unable to find the job (id={})".format(job_id))
-        result = job.to_json(Job.public_fields)
+        result = job.to_json()
         return rest_success(check_local_path(result))
 
 
@@ -162,7 +162,7 @@ class JobHandler:
         except Exception as ex:
             return rest_error("Unable to retrieve monitoring info for the jobs with id={}. {}".format(job_id, ex))
         if job:
-            return rest_success(check_local_path(job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs", "monitoring"])))
+            return rest_success(check_local_path(job.to_json()))
         return rest_error("Unable to get monitoring information for the job {}.".format(job_id))
 
 

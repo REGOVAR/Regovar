@@ -186,21 +186,22 @@ class JobManager:
 
     def monitoring(self, job_id):
         """
-            Retrieve monitoring information about the job.
-            Return a Job object with a new attribute:
-             - logs : list of MonitoringLog (log file) write by the run/manager in the run's logs directory
+            Return a Job object with a new attribute 'monitoring'
+            monitoring = json with container monitoring informations; false otherwise when monitoring is not possible
         """
         from core.core import core
         job = Job.from_id(job_id, 1)
         if not job:
             raise RegovarException("Job not found (id={}).".format(job_id))
         if job.status == "initializing":
-            raise RegovarException("Job status is \"initializing\". Cannot retrieve yet monitoring informations.")
-        # Ask container manager to update data about container
-        try:
-            job.monitoring = core.container_manager.monitoring_job(job)
-        except Exception as ex:
-            err("Error occured when retrieving monitoring information for the job {} (id={})".format(os.path.basename(job.path), job.id), ex)
+            war("Job {} status is \"initializing\". Cannot retrieve yet monitoring informations.".format(job.id))
+            job.monitoring = False
+        else:
+            # Ask container manager to update data about container
+            try:
+                job.monitoring = core.container_manager.monitoring_job(job)
+            except Exception as ex:
+                err("Error occured when retrieving monitoring information for the job {} (id={})".format(os.path.basename(job.path), job.id), ex)
         return job
 
 
