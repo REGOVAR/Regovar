@@ -325,7 +325,12 @@ class JobManager:
                 self.finalize(job.id)
         # Push notification
         if notify:
-            core.notify_all({"action": "job_updated", "data" : job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs"])})
+            if new_status == "done":
+                # Force reload to get generated outputs
+                job.init(1, True)
+                core.notify_all({"action": "job_updated", "data" : job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs", "outputs"])})
+            else:
+                core.notify_all({"action": "job_updated", "data" : job.to_json(["id", "update_date", "status", "progress_value", "progress_label", "logs"])})
 
 
     def __init_job(self, job_id, auto_notify):

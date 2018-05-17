@@ -176,7 +176,7 @@ def job_to_json(self, fields=None, loading_depth=-1):
     if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
-        fields = ["id", "pipeline_id", "config", "create_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "logs", "name", "comment", "monitoring"]
+        fields = ["id", "pipeline_id", "config", "create_date", "update_date", "status", "progress_value", "progress_label", "inputs_ids", "outputs_ids", "inputs", "outputs", "logs", "name", "comment", "monitoring"]
     for f in fields:
         if f in Job.public_fields:
             if f in ["create_date","update_date"] :

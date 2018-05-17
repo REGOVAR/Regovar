@@ -197,6 +197,14 @@ class DockerManager(AbstractContainerManager):
                     logs_path: {'bind': logs_path, 'mode': 'rw'},
                     },
                 detach = True)
+            # Init logs files out & err
+            with open(os.path.join(logs_path, "out.log"), "w") as f:
+                f.write("Pipeline job {} init into docker container...".format(job.id))
+                f.close()
+            with open(os.path.join(logs_path, "err.log"), "w") as f:
+                f.write("")
+                f.close()
+            # update monitoring information
             self.update_logs(job)
         except Exception as ex:
             raise RegovarException("Error when trying to run the container {} with docker.".format(docker_container), exception=ex)
@@ -308,7 +316,7 @@ class DockerManager(AbstractContainerManager):
         try:
             container = self.docker.containers.get(docker_container)
         except Exception as ex:
-            err("Job container '{}' do not exists, abord stop operation.".format(docker_container))
+            log("Job container '{}' do not exists, connot retrieve monitoring information.".format(docker_container))
             return False
         
         try:
@@ -348,6 +356,7 @@ class DockerManager(AbstractContainerManager):
     def update_logs(self, job):
         docker_container = os.path.basename(job.path)
         logs_path = os.path.join(job.path, "logs")
+        
         container = self.docker.containers.get(docker_container)
 
         # Refresh logs files out & err
