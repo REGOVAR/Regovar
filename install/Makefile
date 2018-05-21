@@ -1,5 +1,5 @@
-database_name=$(shell sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py) # PostgreSQL
-databases_path=$(shell sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py) # RefGene
+database_name=$(shell test -f config.py && sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py || echo INVALID) # PostgreSQL
+databases_path=$(shell test -f config.py && sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py || echo INVALID) # RefGene
 
 download_refgene: \
 	$(databases_path)/hg19/refGene.txt \
@@ -23,7 +23,7 @@ install_hpo: download_hpo
 	python3 ../regovar/extratools/hpo.py $(databases_path) "`cat $(databases_path)/hpo_version.txt`"
 
 init_config:
-	cp config.default.py ../config.py
+	cp config.default.py config.py
 
 setup_database:
 	#psql -U postgres -c "DROP DATABASE IF EXISTS $(database_name)"
