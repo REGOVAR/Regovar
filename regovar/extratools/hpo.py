@@ -265,7 +265,7 @@ print('Done')
 
 
 # STEP 4: Compute for each term the list of all its sublevels childs/diseases/genes
-print('step 4: computing sub ontologies. ', end='', flush=True)
+print('Step 4: computing sub ontologies. ', end='', flush=True)
 
 
 categories = {
@@ -324,7 +324,7 @@ print('Done')
 
 
 # STEP 5: Process sql query
-print('step 5: Populating database. ', end='', flush=True)
+print('Step 5: Populating database. ', end='', flush=True)
 genes_total = len(all_genes)
 diseases_total = len(d_data)
 p_data["HP:0000001"].update({ "sub_total": 0, "sub_genes": [], "sub_diseases": []})
