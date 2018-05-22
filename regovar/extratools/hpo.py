@@ -228,7 +228,7 @@ with open(diseapath, "r") as f:
             d_data[did]["phenotypes"].append(pid)
             d_data[did]["genes"].append(gene)
         else:
-            d_data[did] = {"phenotypes":[pid], "genes": [gene]}
+            d_data[did] = {"label": None, "search": None, "phenotypes":[pid], "phenotypes_neg": [], "genes": [gene], "meta": {"sources":[], "genes_freq": {"label":"", "value": 0}}}
 
 with open(phenopath, "r") as f:
     lines = f.readlines()
