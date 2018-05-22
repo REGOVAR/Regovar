@@ -5,8 +5,6 @@
 
 ### Via SaltStack
 
-10 mai 2018 : l'installation via SaltStack est en cours de maintenance.
-
 Référez-vous au [README](https://github.com/REGOVAR/ServerConfiguration/blob/master/README.md) de la configuration utilisée pour le déploiement au CHU d'Angers et de Nancy.
 
 ### Via Docker
