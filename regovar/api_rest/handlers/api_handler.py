@@ -42,7 +42,7 @@ class ApiHandler:
 
     
     @user_role('Authenticated')
-    def welcom(self, request):
+    def welcome(self, request):
         """
             Get all data to init/refresh data client side
             /!\ Result answer may be heavy
@@ -153,6 +153,3 @@ class ApiHandler:
         sql = "SELECT id FROM subject ORDER BY update_date DESC LIMIT 10"
         result = [res.id for res in execute(sql)]
         return result
-
-    
-    
