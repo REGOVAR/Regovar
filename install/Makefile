@@ -27,12 +27,14 @@ install_hpo: download_hpo
 init_config:
 	cp config.default.py config.py
 
-setup_database:
+create_database:
 	#psql -U postgres -c "DROP DATABASE IF EXISTS $(database_name)"
-	psql -U postgres -c "CREATE DATABASE $(database_name) OWNER regovar"
-	psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
-	psql -U regovar -d $(database_name) -f create_all.sql
-	psql -U regovar -d $(database_name) -f install_hg19.sql
-	psql -U regovar -d $(database_name) -f install_hg38.sql
+	psql -c "CREATE DATABASE $(database_name) OWNER regovar"
+	psql -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
+	
+fill_database:	
+	psql -d $(database_name) -f create_all.sql
+	psql -d $(database_name) -f install_hg19.sql
+	psql -d $(database_name) -f install_hg38.sql
 
 .PHONY: download_refgene download_hpo install_hpo init_config setup_database
