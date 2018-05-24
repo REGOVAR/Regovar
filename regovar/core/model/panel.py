@@ -18,16 +18,21 @@ def format_entries(json):
     result = []
     for entry in json:
         fixed = {}
-        if "id" in entry and entry["id"].startswith("HGNC:") and "label" in entry:
-            fixed["id"] = str(entry["id"])
-            fixed["label"] = str(entry["label"])
-            result.append(fixed)
-        elif "chr" in entry and "start" in entry and "end" in entry:
+        if "type" in entry and entry["type"] == "gene":
             try:
+                fixed["type"] = "gene"
+                fixed["symbol"] = str(entry["symbol"])
+                fixed["details"] = str(entry["details"])
+                result.append(fixed)
+            except Exception as ex:
+                raise RegovarException("Unable to create panel with provided data", exception=ex)
+        else:
+            try:
+                fixed["type"] = "region"
                 fixed["label"] = str(entry["label"])
-                fixed["chr"] = CHR_DB_RMAP[str(entry["chr"])]
-                fixed["start"] = int(entry["start"])
-                fixed["end"] = int(entry["end"])
+                fixed["chr"] = str(CHR_DB_RMAP[str(entry["chr"])])
+                fixed["start"] = str(entry["start"])
+                fixed["end"] = str(entry["end"])
                 result.append(fixed)
             except Exception as ex:
                 raise RegovarException("Unable to create panel with provided data", exception=ex)
