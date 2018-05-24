@@ -180,9 +180,8 @@ app.router.add_route('GET',    "/search/phenotype/{hpo_id}",                    
 app.router.add_route('GET',    "/panels",                     panelHandler.list)               # Get list of all panels
 app.router.add_route('POST',   "/panel",                      panelHandler.create_or_update)   # Create a new panel with provided data
 app.router.add_route('GET',    "/panel/{panel_id}",           panelHandler.get)                # Get information about the panel
-app.router.add_route('PUT',    "/panel/{panel_id}",           panelHandler.create_or_update)   # Update the panel with provided data
-app.router.add_route('DELETE', "/panel/{panel_id}",           panelHandler.delete)             # Delete panel and all its versions
-app.router.add_route('DELETE', "/panel/{panel_id}",           panelHandler.delete)             # Delete a panel version
+app.router.add_route('PUT',    "/panel/{panel_id}",           panelHandler.create_or_update)   # Update the panel or panel version
+app.router.add_route('DELETE', "/panel/{panel_id}",           panelHandler.delete)             # Delete panel and all its versions or just a version
 app.router.add_route('GET',    "/panel/search/{query}",       panelHandler.search)             # Search gene and phenotype that match the query (used to help user to populate panel regions)
 app.router.add_route('GET',    "/panel/import/{file_id}",     panelHandler.import_file)        # Import region from a bed file already in database
 app.router.add_route('POST',   "/panel/import",               panelHandler.import_file)        # Import a new file store it on regovar server (as bed) and import as a panel
