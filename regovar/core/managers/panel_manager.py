@@ -85,10 +85,11 @@ class PanelManager:
 
 
 
-    def create_or_update(self, panel_data, loading_depth=1):
+    def create_or_update(self, panel_data, user_id=None):
         """
             Create or update a panel with provided data.
         """
+        from core.core import core
         if not isinstance(panel_data, dict): raise RegovarException(code="E202002")
 
         pid = None
@@ -96,7 +97,13 @@ class PanelManager:
             pid = panel_data["id"]
 
         # Get or create the panel
-        panel = Model.Panel.from_id(pid, loading_depth) or Model.Panel.new()
+        panel = Model.Panel.from_id(pid, 1) 
+        if panel:
+            core.events.log(user_id, "info", None, "Panel \"{}\" information updated.".format(panel.name))
+        else:
+            panel = Model.Panel.new()
+            core.events.log(user_id, "info", None, "New panel \"{}\" created.".format(panel_data["name"]))
+            
         panel.load(panel_data)
         return panel
 

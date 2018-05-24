@@ -89,7 +89,7 @@ for panel_path in lst_files:
         data = []
         for l in lines:
             name = l.strip()
-            data.append({"label": name, "symbol": name})
+            data.append({"symbol": name, "type": "gene"})
         sql_v += "('{}', '{}', 'v1', '{}'),".format(vid, pid, json.dumps(data))
 
 execute_sql(sql_p[:-1])
