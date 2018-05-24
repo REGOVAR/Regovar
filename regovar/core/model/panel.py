@@ -138,7 +138,7 @@ def panel_load(self, data):
         self.save()
         
         # if version id provided : update version  (can be done for one version at time)
-        if "version_id" in data.keys():
+        if "version_id" in data.keys() and data["version_id"]:
             version_id = data["version_id"]
             
             # Update internal collection

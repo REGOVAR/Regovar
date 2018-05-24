@@ -20,9 +20,10 @@ class PanelManager:
         """
             List all panels with minimal data
         """
-        sql = "SELECT p.id, p.name, p.description, p.owner, p.shared, e.id as vid, e.version, e.comment, e.create_date, e.update_date FROM panel p INNER JOIN panel_entry e ON p.id=e.panel_id ORDER BY p.name, e.update_date"
+        sql = "SELECT p.id, p.name, p.description, p.owner, p.shared, e.id as vid, e.version, e.comment, e.create_date, e.update_date, e.data FROM panel p INNER JOIN panel_entry e ON p.id=e.panel_id ORDER BY p.name ASC, e.create_date DESC"
         result = []
         current = None
+        headversion = False
         for res in execute(sql): 
             if not current or current["id"] != res.id:
                 if current != None: result.append(current)
@@ -36,14 +37,21 @@ class PanelManager:
                     "update_date": res.update_date.isoformat(),
                     "versions": []
                 }
-            
-            current["versions"].append({
+                headversion = True
+            # Add version
+            v = {
                 "id": res.vid,
                 "name": res.version,
                 "comment": res.comment,
                 "create_date": res.create_date.isoformat(),
                 "update_date": res.update_date.isoformat()
-            })
+            }
+            # Add entries for each panel head version
+            if headversion:
+                v["entries"] = res.data
+                headversion = False
+            # Append version to the panel
+            current["versions"].append(v)
             
         if current != None: result.append(current)
         return result
