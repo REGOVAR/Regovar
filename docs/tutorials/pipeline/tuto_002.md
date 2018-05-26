@@ -1,4 +1,4 @@
-# Packager son pipeline dans Regovar (notions de base)
+# Packager son pipeline dans Regovar (partie 1 : les différents fichiers)
 
 ## Qu'est-ce que l'encapsulation ?
 Regovar permet d'utiliser n'importe quel pipeline bioinformatique. Pour cela, chaque pipeline doit être « packagé » d'une certaine façon. En effet, pour des raisons de sécurité et de maintenance, chaque pipeline est encapsulé dans un conteneur qui va l'isoler virtuellement du serveur. Cela va vous permettre de démarrer et de superviser l'exécution de votre pipeline.
@@ -252,4 +252,4 @@ Voici à quoi ressemblera le fichier `config.json` (si on considère le fichier 
 
 ## Le fichier Dockerfile
 
-Pour créer le fichier Dockerfile, nous vous invitons à poursuivre la lecture de la documentation qui va vous expliquer comment créer un pipeline pour Regovar avec Docker.
+Pour créer le fichier Dockerfile, nous vous invitons à poursuivre la lecture de la documentation qui va vous expliquer comment encapsuler un pipeline avec Docker.

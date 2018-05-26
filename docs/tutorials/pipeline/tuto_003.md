@@ -1,11 +1,11 @@
-# Créer un pipeline pour Regovar avec Docker
+# Packager son pipeline dans Regovar (partie 2/2 : encapsulation du pipeline avec Docker)
 
-Une fois les notions de base assimilés, voyons les différentes étapes pour encapsuler son pipeline (de type `job`).
+Une fois les notions de base assimilées, voyons les différentes étapes pour encapsuler son pipeline (de type `job`).
 
 
 ## La base Docker
 
-- Pour ce qui ne connaissent pas Docker ou pour savoir comment l'installer, merci de vous référer à [la doc officielle](https://docs.docker.com/get-started/)
+- Pour ce qui ne connaissent pas Docker ou pour savoir comment l'installer, merci de vous référer à [la documentation officielle](https://docs.docker.com/get-started/)
 - Nous appellons HOST, le serveur sur lequel Docker est installé et sur lequel la machine virtuelle est déployée.
 - Nous appellons CONTAINER, la machine virtuelle (qui contient et execute votre pipeline).
 - Nous appellons PACKAGE le fichier zip à produire pour utiliser votre pipeline dans Regovar.
