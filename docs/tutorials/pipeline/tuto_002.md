@@ -1,4 +1,4 @@
-# Packager son pipeline dans Regovar (partie 1 : les différents fichiers)
+# Packager son pipeline dans Regovar
 
 ## Qu'est-ce que l'encapsulation ?
 Regovar permet d'utiliser n'importe quel pipeline bioinformatique. Pour cela, chaque pipeline doit être « packagé » d'une certaine façon. En effet, pour des raisons de sécurité et de maintenance, chaque pipeline est encapsulé dans un conteneur qui va l'isoler virtuellement du serveur. Cela va vous permettre de démarrer et de superviser l'exécution de votre pipeline.
@@ -20,7 +20,7 @@ L'encapsulation repose sur le concept des conteneurs. La technologie utilisé es
 * Contrainte à respecter pour l'exécution du pipeline (API).
 * Travail supplémentaire pour encapsuler son pipeline. Cela peut prendre 1/2 à 1 journée en fonction des problèmes rencontrés.
 
-## Packager un pipeline
+## Arborescence du package
 Votre pipeline encapsulé se présentera sous la forme d'une archive zip respectant l'arborescence suivante :
 
 ```
@@ -57,7 +57,7 @@ git clone https://github.com/REGOVAR-Pipelines/MyExamplePipeline.git
 
 Seuls les fichiers `Dockerfile`, `manifest.json` et `LICENSE` sont obligatoires, mais tous sont vivement recommandés afin de garantir une meilleure intégration de votre pipeline dans Regovar et une meilleure expérience pour l'utilisateur.
 
-###Le fichier manifest.json
+## Le fichier manifest.json
 Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et utiliser votre pipeline. Ci-dessous se trouve le format attendu pour le fichier `manifest.json` :
 
 ```
@@ -85,7 +85,7 @@ Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et
 | INPUTS, OUTPUTS, LOGS et DATABASES | `string` | Vous pouvez librement choisir où et comment sont nommés ces répertoires dans votre conteneur. Ces répertoires seront alors partagés (Docker volume) et permettront au serveur Regovar et à votre pipeline de travailler correctement ensemble. |
 | DB_ACCESS | `bool` | `true` ou `false` **\[par défaut]**, ce booléen indique si oui ou non votre pipeline nécessite un accès à la base de données PostgreSQL de Regovar. Si oui, alors votre conteneur sera relié à la base de données et les informations de connexion seront transmise à votre script. |
 
-###Les types de pipelines
+## Les types de pipelines
 Dans Regovar il existe quatre types de pipelines qui ne seront pas utilisés de la même manière, et ne seront pas présenté de la même façon à l'utilisateur.
 
 | Type | Description |
@@ -95,7 +95,7 @@ Dans Regovar il existe quatre types de pipelines qui ne seront pas utilisés de 
 | `exporter` |  Pipeline utilisé pour exporter les variants sélectionnés lors du filtrage dynamique (par exemple au format Excel ou CSV). |
 | `reporter` | Pipeline utilisé pour générer un rapport d'analyse à partir des variants sélectionnés lors du filtrage dynamique. |
 
-###Le fichier form.json (optionnel)
+## Le fichier form.json (optionnel)
 Ce fichier optionnel `form.json` est utile pour les pipelines configurables.
 
 Regovar offre à ses utilisateurs une interface simple et conviviale pour démarrer et superviser soi-même les pipelines. 
@@ -155,7 +155,7 @@ L'exemple ci-dessous montre la structure attendue pour le fichier `form.json` ai
 }
 ```
 
-####Les différents types de champs
+###Les différents types de champs
 
 **integer**
 
@@ -230,15 +230,15 @@ Pour les enum, vous pouvez soit proposer une liste de valeurs manuellement comme
     "enum": "__GENOMES_REFS__",
 ```
 
-###Le fichier Dockerfile
+## Le fichier Dockerfile
 
 Dockeriser un pipeline est une tâche dont la complexité dépend largement de votre pipeline. Nous vous conseillons de lire la [documentation de Docker](https://docs.docker.com/engine/reference/builder/). En cas de besoin, vous pouvez demander de l'aide sur leur forum ou sur le forum [Biostars](https://www.biostars.org/). Nous vous recommandons aussi de partir d'une [image docker biocontainers de base](https://hub.docker.com/u/biocontainers/) qui correspond le mieux à votre pipeline afin de vous faciliter le travail. Enfin, vous pouvez vous inspirer de notre tutoriel qui présente l'encapsultation de pipeline pas à pas : [Exemple de pipeline non paramétrable](tuto_004.md)
 
-####Termes utilisés
+###Termes utilisés
 - Nous appellons HOST, le serveur sur lequel Docker est installé et sur lequel la machine virtuelle est déployée.
 - Nous appellons CONTAINER, la machine virtuelle (qui contient et exécute votre pipeline).
 
-####La base Docker
+###La base Docker
 Résumé des commandes Docker qui peuvent nous servir :
 
 ```
@@ -262,7 +262,10 @@ $ docker image import  # Installer une image au format tar.gz sur votre HOST
 
 À chaque étape de votre processus de dockerisation, vous pouvez tester votre pipeline en suivant les instructions ci-dessous.
 
-####Testez votre Dockerfile
+###Testez votre Dockerfile
+
+Pour tester votre Dockerfile, il est indispensable de travailler sur un ordinateur où est installé Docker.
+
 - Placez-vous dans le répertoire où se trouve le Dockerfile
 - Construisez l'image du conteneur. Cela utilise le Dockerfile que vous avez préparé. Vous pouvez donner le nom que vous souhaitez à l'image, par exemple ici `my_example_pipeline`.
     
@@ -286,7 +289,9 @@ docker run -a stdin -a stdout -it -v /tmp/inputs:/regovar/inputs:ro -v /tmp/outp
 Si vous souhaitez supprimer le conteneur après le test, vous pouvez exécuter : `docker rm NOM_CONTAINER` (`docker rm regovar_test`)
 
 
-###Créez le zip du PACKAGE
+## Le zip du package
+
+Une fois l'ensemble de ces fichiers 
 
 ```sh
 zip -r MyExamplePipeline_v1.0.0.zip MyExamplePipeline_v1.0.0/*
@@ -294,7 +299,7 @@ zip -r MyExamplePipeline_v1.0.0.zip MyExamplePipeline_v1.0.0/*
 
 Il ne vous reste plus qu'à télécharger votre archive sur le serveur Regovar et à [l'installer](tuto_001.md).
 
-###INPUTS/config.json
+## INPUTS/config.json
 Le fichier `INPUTS/config.json` sera généré par Regovar pour tous les types de pipelines. Il permet de transmettre au pipeline les paramètres saisis par l'utilisateur, ainsi que des paramètres techniques spécifiques au serveur comme les paramètres pour se connecter à la base de données PostgreSQL, ou bien l'URL à utiliser pour les notifications en temps réel de la progression du pipeline.
 
 Voici à quoi ressemblera le fichier `config.json` (si on considère le fichier `form.json` vu précédemment).
