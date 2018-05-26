@@ -48,7 +48,7 @@ MyPipeline_v1.0.zip
 | `help.html` | html | Page d'aide du pipeline. |
 | `Dockerfile` | Dockerfile | Fichier [docker](https://docs.docker.com/engine/reference/builder/) nécessaire pour la création de votre pipeline dockerisé. |
 | `form.json` | html | Si votre pipeline a des paramètres configurables, vous pouvez décrire ces paramètres dans un fichier json afin que Regovar puisse permettre à l'utilisateur de les régler via un formulaire qui sera automatiquement généré depuis ce fichier json. |
-| `LICENSE` | txt | Licence de votre pipeline, par exemple [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.fr.html)|
+| `LICENSE` | txt | Licence de votre pipeline, par exemple [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.fr.html). |
 | `manifest.json` | json | Page d'aide du pipeline. |
 | `README` | html | Si l'installation de votre pipeline nécessite des actions particulières de la part des administrateurs. Par exemple, si votre pipeline nécessite d'accéder en local à des base de données volumineuses, il vous faudra indiquer dans le README où et comment se procurer/générer ces bases. Ces bases doivent impérativement être sous forme de fichiers qui seront installés par les administrateurs et seront par la suite automatiquement accessibles par votre pipeline dans son conteneur via le répertoire DATABASES. |
 
