@@ -1,33 +1,30 @@
 # Packager son pipeline dans Regovar (notions de base)
 
-Ce tutoriel présente les notions de base à connaître avant de s'attaquer à [l'encapsulation de son pipeline dans Regovar](tuto_003.md).
-
 ## Qu'est-ce que l'encapsulation ?
-Regovar permet d'utiliser n'importe quel pipeline bioinformatique. 
-Pour cela, chaque pipeline doit être « packagé » d'une certaine façon. En effet, pour des raisons de sécurité et de maintenance, chaque pipeline est encapsulé dans un conteneur qui va l'isoler virtuellement du serveur. Cela va vous permettre de démarrer et de superviser l'exécution de votre pipeline.
+Regovar permet d'utiliser n'importe quel pipeline bioinformatique. Pour cela, chaque pipeline doit être « packagé » d'une certaine façon. En effet, pour des raisons de sécurité et de maintenance, chaque pipeline est encapsulé dans un conteneur qui va l'isoler virtuellement du serveur. Cela va vous permettre de démarrer et de superviser l'exécution de votre pipeline.
 
 ###Technologies
-L'encapsulation repose sur le concept de conteneurisation. La technologie utilisé est [Docker](https://www.docker.com/what-docker). Docker a été choisi parce que la communauté autour de cette technologie est très active, la technologie est fiable, relativement simple à utiliser et performante. De nombreux projets bioinformatiques utilisent cette technologie, comme [biocontainers](http://biocontainers.pro) ou [Bioboxes](http://bioboxes.org/), ce qui offre la possibilité de partager les outils avec ces communautés.
+L'encapsulation repose sur le concept des conteneurs. La technologie utilisé est [Docker](https://www.docker.com/what-docker). Docker a été choisi parce que la communauté autour de cette technologie est très active, la technologie est fiable, relativement simple à utiliser et performante. De nombreux projets bioinformatiques utilisent cette technologie, comme [BioContainers](http://biocontainers.pro) ou [Bioboxes](http://bioboxes.org/), ce qui offre la possibilité de partager les outils avec ces communautés.
 
 ###Les points positifs
-* Sécurité assurée et maintenance facilitée : chaque pipeline est isolé dans son conteneur, absence de risque de conflits avec les autres logiciels installés sur le serveur ;
-* archivage des différentes versions des pipelines ;
-* automatisation ;
-* facilité d'utilisation pour les utilisateurs non experts ;
-* reproductibilité de l'analyse des données ;
-* interface commune pour contrôler tous les pipelines ;
-* possibilité de surveiller et de contrôler l'exécution des pipelines (logs, pause, start, cancel) ;
-* file d'attente pour l'exécution les pipelines.
+* Sécurité assurée et maintenance facilitée : chaque pipeline est isolé dans son conteneur, absence de risque de conflits avec les autres logiciels installés sur le serveur.
+* Archivage des différentes versions des pipelines.
+* Automatisation.
+* Facilité d'utilisation pour les utilisateurs non experts.
+* Reproductibilité de l'analyse des données.
+* Interface commune pour contrôler tous les pipelines.
+* Possibilité de surveiller et de contrôler l'exécution des pipelines (logs, pause, start, cancel).
+* File d'attente pour l'exécution les pipelines.
 
 ###Les points négatifs
-* Contrainte à respecter pour l'exécution du pipeline (API) ;
-* travail supplémentaire pour encapsuler son pipeline. Cela peut prendre 1/2 à 1 journée en fonction des problèmes rencontrés.
+* Contrainte à respecter pour l'exécution du pipeline (API).
+* Travail supplémentaire pour encapsuler son pipeline. Cela peut prendre 1/2 à 1 journée en fonction des problèmes rencontrés.
 
 ## Exigences et options
 Votre pipeline encapsulé se présentera sous la forme d'une archive zip respectant l'arborescence suivante :
 
 ```
-MyPipeline_v1.0.zip
+MyPipeline_v1.0.0.zip
   |  doc/
   |   |  icon.jpg
   |   |  about.html
@@ -50,7 +47,7 @@ MyPipeline_v1.0.zip
 | `form.json` | html | Si votre pipeline a des paramètres configurables, vous pouvez décrire ces paramètres dans un fichier json afin que Regovar puisse permettre à l'utilisateur de les régler via un formulaire qui sera automatiquement généré depuis ce fichier json. |
 | `LICENSE` | txt | Licence de votre pipeline, par exemple [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.fr.html). |
 | `manifest.json` | json | Page d'aide du pipeline. |
-| `README` | html | Si l'installation de votre pipeline nécessite des actions particulières de la part des administrateurs. Par exemple, si votre pipeline nécessite d'accéder en local à des base de données volumineuses, il vous faudra indiquer dans le README où et comment se procurer/générer ces bases. Ces bases doivent impérativement être sous forme de fichiers qui seront installés par les administrateurs et seront par la suite automatiquement accessibles par votre pipeline dans son conteneur via le répertoire DATABASES. |
+| `README` | txt | Si l'installation de votre pipeline nécessite des actions particulières de la part des administrateurs. Par exemple, si votre pipeline nécessite d'accéder en local à des base de données volumineuses, il vous faudra indiquer dans le README où et comment se procurer/générer ces bases. Ces bases doivent impérativement être sous forme de fichiers qui seront installés par les administrateurs et seront par la suite automatiquement accessibles par votre pipeline dans son conteneur via le répertoire DATABASES. |
 
 Seuls les fichiers `Dockerfile`, `manifest.json` et `LICENSE` sont obligatoires, mais tous sont vivement recommandés afin de garantir une meilleure intégration de votre pipeline dans Regovar et une meilleure expérience pour l'utilisateur.
 
@@ -76,14 +73,14 @@ Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et
 | ---- | ---- |  ---------- |
 | NAME        | `string` | **\[obligatoire]** Votre pipeline doit impérativement avoir un nom. :) |
 | DESCRIPTION | `string` | Une phrase ou deux pour expliquer le but de votre pipeline (cf. `help.html` pour une présentation plus complète de votre pipeline). |
-| VERSION     | `string` | **\[obligatoire]** Ce renseignement permet de différencier et d'installer plusieurs versions de votre pipeline sur un même serveur. Sans cela, il est impossible d'installer deux pipelines qui ont le même nom sur le serveur. |
-| TYPE | `string` | Le type de pipeline peut être `importer`, `exporter`, `reporter`, `job` (cf. section consacrée ci-dessous). |
+| VERSION     | `string` | **\[obligatoire]** Ce renseignement permet de différencier et d'installer plusieurs versions de votre pipeline sur un même serveur. Sans cela, il est impossible d'installer deux pipelines qui ont le même nom sur le serveur. Il est conseillé d'utiliser les numéros de version en suivant les recommandations [SemVer](https://semver.org/). tels que `"1.0.0"`. |
+| TYPE | `string` | Le type de pipeline peut être `importer`, `exporter`, `reporter`, `job` (cf. [section consacrée ci-dessous](tuto_002.md#les-types-de-pipelines). |
 | CONTACTS | `dict` | Liste des personnes (prénom + nom + email) à contacter en cas de problème. |
 | INPUTS, OUTPUTS, LOGS et DATABASES | `string` | Vous pouvez librement choisir où et comment sont nommés ces répertoires dans votre conteneur. Ces répertoires seront alors partagés (Docker volume) et permettront au serveur Regovar et à votre pipeline de travailler correctement ensemble. |
 | DB_ACCESS | `bool` | `True` ou `False` (par défaut), ce booléen indique si oui ou non votre pipeline nécessite un accès à la base de données postgreSQL de Regovar. Si oui, alors votre conteneur sera relié à la base de données et les informations de connexion seront transmise à votre script. |
 | ICON | `string` | Si vous le souhaitez, vous pouvez fournir une icône qui sera associée à votre pipeline dans Regovar. |
 
-## Les types de pipeline
+## Les types de pipelines
 Dans Regovar il existe quatre types de pipelines qui ne seront pas utilisés de la même manière, et ne seront pas présenté de la même façon à l'utilisateur.
 
 | Type | Description |
