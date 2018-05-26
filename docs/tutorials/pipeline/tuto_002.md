@@ -42,21 +42,20 @@ MyPipeline_v1.0.zip
 
 | Fichier | Type | Description |
 | ---- | ---- |  ---------- |
-| `doc/` | répertoire | contient les fichiers relatif à la présentation et à la documentation du pipeline |
-| `icon.jpg` | jpg ou png | petit icon optionnel qui sera utilisé dans Regovar |
-| `about.html` | html | page de présentation du pipeline |
-| `help.html` | html | page d'aide du pipeline |
-| `Dockerfile` | Dockerfile | fichier [docker](https://docs.docker.com/engine/reference/builder/) nécessaire pour la création de votre pipeline dockerisé |
-| `form.json` | html | si votre pipeline a des paramètres configurable, vous pouvez décrire ces paramètres dans un fichier json afin que Regovar puisse permettre à l'utilisateur de les régler via un formulaire qui sera automatiquement généré depuis ce fichier json |
-| `LICENSE` | txt | les pipelines de Regovar étant fournis sous forme de fichier zip clés en main, il y a de forte chance qu'il puisse se retrouver très vite tout seul dans la nature. Il est donc recommandé de joindre à votre pipeline un fichier LICENSE |
-| `manifest.json` | json | page d'aide du pipeline |
-| `README` | html | si l'installation de votre pipeline nécessite des actions particulières de la part des administrateurs. Par exemple si votre pipeline nécessite d'accéder en local à des base de données volumineuses, il vous faudra indiquer dans le README où et comment se procurer/générer ces bases. Ces bases doivent impérativement être sous forme de fichiers qui seront installés par les administrateurs et seront par la suite automatiquement accessible par votre pipeline dans son conteneur via le répertoire DATABASES |
+| `doc/` | répertoire | Contient les fichiers relatif à la présentation et à la documentation du pipeline. |
+| `icon.jpg` | jpg ou png | Petite icône optionnelle qui sera affichée dans Regovar. |
+| `about.html` | html | Page de présentation du pipeline. |
+| `help.html` | html | Page d'aide du pipeline. |
+| `Dockerfile` | Dockerfile | Fichier [docker](https://docs.docker.com/engine/reference/builder/) nécessaire pour la création de votre pipeline dockerisé. |
+| `form.json` | html | Si votre pipeline a des paramètres configurables, vous pouvez décrire ces paramètres dans un fichier json afin que Regovar puisse permettre à l'utilisateur de les régler via un formulaire qui sera automatiquement généré depuis ce fichier json. |
+| `LICENSE` | txt | Licence de votre pipeline, par exemple [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.fr.html)|
+| `manifest.json` | json | Page d'aide du pipeline. |
+| `README` | html | Si l'installation de votre pipeline nécessite des actions particulières de la part des administrateurs. Par exemple, si votre pipeline nécessite d'accéder en local à des base de données volumineuses, il vous faudra indiquer dans le README où et comment se procurer/générer ces bases. Ces bases doivent impérativement être sous forme de fichiers qui seront installés par les administrateurs et seront par la suite automatiquement accessibles par votre pipeline dans son conteneur via le répertoire DATABASES. |
 
-
-Seul le fichier `Dockerfile` et `manifest.json` sont obligatoires. Mais tous sont vivement recommandés afin de garantir une meilleure intégration de votre pipeline dans Regovar, et une meilleure "expérience" pour l'utilisateur.
+Seuls les fichiers `Dockerfile`, `manifest.json` et `LICENSE` sont obligatoires, mais tous sont vivement recommandés afin de garantir une meilleure intégration de votre pipeline dans Regovar et une meilleure expérience pour l'utilisateur.
 
 ## Le fichier manifest.json
-Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et utiliser votre pipeline. Ci-dessous se trouve le format attendu pour le fichier `manifest.json`:
+Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et utiliser votre pipeline. Ci-dessous se trouve le format attendu pour le fichier `manifest.json` :
 
 ```
 {
@@ -75,40 +74,34 @@ Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et
 
 | Data | Type | Description |
 | ---- | ---- |  ---------- |
-| NAME        | `string` | **\[obligatoire]** Votre pipeline doit impérativement avoir un nom :) |
-| DESCRIPTION | `string` | Une phrase ou deux pour expliquer le but de votre pipeline (cf `help.html` pour une présentation plus complète de votre pipeline) |
-| VERSION     | `string` | **\[obligatoire]** Ce renseignement permet de différencier et d'installer plusieurs version de votre pipeline sur un même serveur. Sans ça, il est impossible d'installer deux pipelines qui ont le même nom sur le serveur |
-| TYPE | `string` | Le type de pipeline peut être `importer`, `exporter`, `reporter`, `job`. (cf la section consacré ci-dessous) |
-| CONTACTS | `dict` | La liste des personnes (nom+email) à contacter en cas de problème |
-| INPUTS, OUTPUTS, LOGS et DATABASES | `string` | Vous pouvez librement choisir où et comment sont nommés ces dossiers dans votre conteneur. Ces dossiers seront alors partagés (Docker volume) et permettra au serveur Regovar et à votre pipeline de travailler correctement ensemble |
-| DB_ACCESS | `bool` | `True` ou `False` (par défaut), ce booléen indique si oui ou non votre pipeline nécessite un accès à la base de donnée postgreSQL de Regovar, si oui, alors votre conteneur sera relié à la base de donnée, et les informations de connection seront transmise à votre script |
-| ICON | `string` | si vous le souhaitez, vous pouvez fournir un icone qui sera associé à votre pipeline dans Regovar |
-
-
-
+| NAME        | `string` | **\[obligatoire]** Votre pipeline doit impérativement avoir un nom. :) |
+| DESCRIPTION | `string` | Une phrase ou deux pour expliquer le but de votre pipeline (cf. `help.html` pour une présentation plus complète de votre pipeline). |
+| VERSION     | `string` | **\[obligatoire]** Ce renseignement permet de différencier et d'installer plusieurs versions de votre pipeline sur un même serveur. Sans cela, il est impossible d'installer deux pipelines qui ont le même nom sur le serveur. |
+| TYPE | `string` | Le type de pipeline peut être `importer`, `exporter`, `reporter`, `job` (cf. section consacrée ci-dessous). |
+| CONTACTS | `dict` | Liste des personnes (prénom + nom + email) à contacter en cas de problème. |
+| INPUTS, OUTPUTS, LOGS et DATABASES | `string` | Vous pouvez librement choisir où et comment sont nommés ces répertoires dans votre conteneur. Ces répertoires seront alors partagés (Docker volume) et permettront au serveur Regovar et à votre pipeline de travailler correctement ensemble. |
+| DB_ACCESS | `bool` | `True` ou `False` (par défaut), ce booléen indique si oui ou non votre pipeline nécessite un accès à la base de donnée postgreSQL de Regovar. Si oui, alors votre conteneur sera relié à la base de donnée et les informations de connexion seront transmise à votre script. |
+| ICON | `string` | Si vous le souhaitez, vous pouvez fournir une icône qui sera associée à votre pipeline dans Regovar. |
 
 ## Les types de pipeline
-Dans Regovar il existe 4 types de pipelines qui ne seront pas utilisés de la même manière, et ne seront pas présenté de la même façon à l'utilisateur.
-
+Dans Regovar il existe quatre types de pipelines qui ne seront pas utilisés de la même manière, et ne seront pas présenté de la même façon à l'utilisateur.
 
 | Type | Description |
 | ---- |  ---------- |
-| `job` | **\[Par défault]** Pipeline générique qui prend en entré des INPUTS et génère des OUTPUTS  |
-| `importer` | Pipeline utilisé pour importer un fichier dans la base de donnée Regovar (par exemple pour parser un fichier vcf et enregistrer les variants et les annotations en base de donnée) |
-| `exporter` |  Pipeline utilisé pour exporter les variants sélectionnés lors du filtrage dynamique (par exemple au format excel ou csv) |
-| `reporter` | Pipeline utilisé pour générer un rapport à partir des variants sélectionnés lors du filtrage dynamiques |
-
-
+| `job` | **\[Par défault]** Pipeline générique qui prend en entrée des fichiers dans INPUTS et génère des fichiers dans OUTPUTS (exemple : FASTQ en entrée et VCF en sortie).  |
+| `importer` | Pipeline utilisé pour importer un fichier dans la base de donnée Regovar (par exemple pour parser un fichier VCF et enregistrer les variants et les annotations en base de données). |
+| `exporter` |  Pipeline utilisé pour exporter les variants sélectionnés lors du filtrage dynamique (par exemple au format Excel ou CSV). |
+| `reporter` | Pipeline utilisé pour générer un rapport d'analyse à partir des variants sélectionnés lors du filtrage dynamique. |
 
 ## Configuration via le fichier form.json
-Regovar offre à ses utilisateurs une interface simple et conviviale pour démarrer et superviser soit-même les pipelines. 
+Regovar offre à ses utilisateurs une interface simple et conviviale pour démarrer et superviser soi-même les pipelines. 
 
-La configuration se déroule en 3 étapes :
-- Choix du pipeline parmi la liste des pipelines installés sur le serveur
-- Choix des fichiers sur lesquels devra travailler le pipeline.
-- Configuration du pipeline via un formulaire spécifique à celui-ci
+La configuration se déroule en trois étapes :
+- choix du pipeline parmi la liste des pipelines installés sur le serveur ;
+- choix des fichiers sur lesquels devra travailler le pipeline ;
+- configuration du pipeline via un formulaire spécifique à celui-ci.
 
-Pour cette troisième et dernière étape, les développeurs doivent fournir avec leur pipeline un fichier `form.json` qui va décrire les paramètres de ce dernier. Regovar s'occupera ensuite de générer le formulaire correspondant afin de récupérer les réglages de l'utilisateur. Ces valeurs sont ensuite stockées dans un fichier qui se nommera `config.json` et qui se trouvera dans le répertoire INPUTS du contenaire du pipeline
+Pour cette troisième et dernière étape, les développeurs doivent fournir avec leur pipeline un fichier `form.json` qui va décrire les paramètres de ce dernier. Regovar s'occupera ensuite de générer le formulaire correspondant afin de récupérer les réglages de l'utilisateur. Ces valeurs sont stockées dans un fichier qui se nommera `config.json` et qui se trouvera dans le répertoire INPUTS du conteneur du pipeline.
 
 L'exemple ci-dessous montre la structure attendu pour le fichier `form.json` ainsi que les différents types de paramètre supportés.
 ```
