@@ -74,10 +74,10 @@ Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et
 | NAME        | `string` | **\[obligatoire]** Votre pipeline doit impérativement avoir un nom. :) |
 | DESCRIPTION | `string` | Une phrase ou deux pour expliquer le but de votre pipeline (cf. `help.html` pour une présentation plus complète de votre pipeline). |
 | VERSION     | `string` | **\[obligatoire]** Ce renseignement permet de différencier et d'installer plusieurs versions de votre pipeline sur un même serveur. Sans cela, il est impossible d'installer deux pipelines qui ont le même nom sur le serveur. Il est conseillé d'utiliser les numéros de version en suivant les recommandations [SemVer](https://semver.org/). tels que `"1.0.0"`. |
-| TYPE | `string` | Le type de pipeline peut être `job`, `importer`, `exporter`, `reporter` (cf. [section consacrée ci-dessous](tuto_002.md#les-types-de-pipelines). |
+| TYPE | `string` | Le type de pipeline peut être `job` **\[par défaut]**, `importer`, `exporter`, `reporter` (cf. [section consacrée ci-dessous](tuto_002.md#les-types-de-pipelines). |
 | CONTACTS | `dict` | Liste des personnes (identité + email) à contacter en cas de problème. |
 | INPUTS, OUTPUTS, LOGS et DATABASES | `string` | Vous pouvez librement choisir où et comment sont nommés ces répertoires dans votre conteneur. Ces répertoires seront alors partagés (Docker volume) et permettront au serveur Regovar et à votre pipeline de travailler correctement ensemble. |
-| DB_ACCESS | `bool` | `True` ou `False` (par défaut), ce booléen indique si oui ou non votre pipeline nécessite un accès à la base de données postgreSQL de Regovar. Si oui, alors votre conteneur sera relié à la base de données et les informations de connexion seront transmise à votre script. |
+| DB_ACCESS | `bool` | `true` ou `false` **\[par défaut]**, ce booléen indique si oui ou non votre pipeline nécessite un accès à la base de données postgreSQL de Regovar. Si oui, alors votre conteneur sera relié à la base de données et les informations de connexion seront transmise à votre script. |
 | ICON | `string` | Si vous le souhaitez, vous pouvez fournir une icône qui sera associée à votre pipeline dans Regovar. |
 
 ## Les types de pipelines
