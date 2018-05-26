@@ -5,50 +5,45 @@ Une fois les notions de base assimilés, voyons les différentes étapes pour en
 
 ## La base Docker
 
-- Pour ce qui ne connaissent pas Docker, ou savoir comment l'installer, merci de vous référer à [la doc officielle](https://docs.docker.com/get-started/)
-- Nous appellons HOST, le serveur sur lequel Docker est installé et sur lequel est déployé la machine virtuelle
+- Pour ce qui ne connaissent pas Docker ou pour savoir comment l'installer, merci de vous référer à [la doc officielle](https://docs.docker.com/get-started/)
+- Nous appellons HOST, le serveur sur lequel Docker est installé et sur lequel la machine virtuelle est déployée.
 - Nous appellons CONTAINER, la machine virtuelle (qui contient et execute votre pipeline).
-- Nous appellons PACKAGE le fichier zip à produire pour utiliser votre pipeline dans Regovar
+- Nous appellons PACKAGE le fichier zip à produire pour utiliser votre pipeline dans Regovar.
 
-Résumé des commandes Docker qui peuvent nous servir:
+Résumé des commandes Docker qui peuvent nous servir :
 
 ```
-docker run             # Télécharge et déployer une nouvelle machine virtuelle avec un OS de base prêt à l'emploi
+docker run             # Télécharger et déployer une nouvelle machine virtuelle avec un OS de base prêt à l'emploi
 docker exec            # Exécuter une commande dans la machine virtuelle depuis le serveur
-docker ls              # Donne la liste des CONTAINERS actuellement déployés sur votre HOST
-docker rm              # Désinstalle et supprime un CONTAINER
-docker stop            # Stop "brutalement" l'exécution d'un CONTAINER (équivalent à éteindre votre PC)
-docker pause           # Suspens l'exécution d'un CONTAINER (sauvegarde l'état de sa RAM etc)
-docker start           # Démarrer ou reprend l'éxécution d'un CONTAINER qui a été freeze
+docker ls              # Donner la liste des CONTAINERS actuellement déployés sur votre HOST
+docker rm              # Désinstaller et supprimer un CONTAINER
+docker stop            # Stopper brutalement l'exécution d'un CONTAINER (équivalent à éteindre votre PC)
+docker pause           # Suspendre l'exécution d'un CONTAINER (sauvegarde l'état de sa RAM, etc.)
+docker start           # Démarrer ou reprendre l'éxécution d'un CONTAINER qui a été freezé
 
-docker add             # Copie un fichier de votre HOST vers un CONTAINER
-lxc file pull          # Copie un fichier de votre CONTAINER vers l'HOST
+docker add             # Copier un fichier de votre HOST vers un CONTAINER
+lxc file pull          # Copier un fichier de votre CONTAINER vers l'HOST
 
-$ docker image ls      # Donne la liste des images installées sur votre HOST
-$ docker rmi           # Supprime une image
-$ docker image export  # Exporte une image au format tar.gz
-$ docker image import  # Installe une image au format tar.gz sur votre HOST
+$ docker image ls      # Donner la liste des images installées sur votre HOST
+$ docker rmi           # Supprimer une image
+$ docker image export  # Exporter une image au format tar.gz
+$ docker image import  # Installer une image au format tar.gz sur votre HOST
 
 ```
 
 
 ## Prérequis
-- Dans l'idéal, vous travaillez sur un ordinateur (LOCAL) où est installé et fonctionnent parfaitement Docker et votre pipeline;
-- Vous avez dockerisé votre pipeline grâce à un fichier `Dockerfile`;
-- Vous avez identifier dans le CONTAINER les répertoires INPUTS, OUTPUTS, LOGS et DATABASES pour votre pipeline.
+- Vous travaillez sur un ordinateur (LOCAL) où est installé Docker.
+- Vous avez dockerisé votre pipeline grâce à un fichier `Dockerfile`.
+- Vous avez identifié dans le CONTAINER les répertoires INPUTS, OUTPUTS, LOGS et DATABASES pour votre pipeline.
   - Votre pipeline est capable de récupérer si besoin ses paramètres depuis un fichier `config.json` qui se trouve dans le répertoire INPUTS
-  - Votre pipeline s'attends à trouver les fichiers à analyser dans le réperoire INPUTS (à noter que ce répertoire sera en read-only dans le container. Il ne faut donc pas que votre pipeline essaye d'écrire quoi que ce soit dedans)
-  - Votre pipeline produit ses résultats dans le répertoire OUTPUTS
-  - Les logs de votre pipeline sont placés dans le répertoire LOGS
+  - Votre pipeline s'attend à trouver les fichiers à analyser dans le réperoire INPUTS (à noter que ce répertoire sera en read-only dans le conteneur. Il ne faut donc pas que votre pipeline essaye d'écrire quoi que ce soit dedans).
+  - Votre pipeline produit ses résultats dans le répertoire OUTPUTS.
+  - Les logs de votre pipeline sont placés dans le répertoire LOGS.
 
-**Comment "dockeriser" mon pipeline ?**
+**Comment « dockeriser » mon pipeline ?**
 
-Malheuruesement nous ne pouvons pas traiter cette partie ici. C'est la tâche la plus compliqué et qui dépend largement de votre pipeline. Pour celà, nous vous conseillons d'abord de lire la  [la doc Docker](https://docs.docker.com/engine/reference/builder/) et de demander de l'aide sur leur forum ou sur le forum [biostars](https://www.biostars.org/). Nous vous recommandons aussi de partir d'une [image docker biocontainers de base](https://hub.docker.com/u/biocontainers/) qui correspond le mieux à votre pipeline afin de vous faciliter le travail. Enfin, vous pouvez vous inspirer de nos deux tutoriels qui présentent l'encapsultation de pipeline pas à pas:
-* [Ex1: Pipeline non paramétrable](tuto_004.md)
-* [Ex2: Pipeline paramétrable](tuto_005.md)
-
-
-
+Malheureusement, nous ne pouvons pas traiter cette partie ici. C'est la tâche la plus compliquée et qui dépend largement de votre pipeline. Pour cela, nous vous conseillons d'abord de lire la [documentation de Docker](https://docs.docker.com/engine/reference/builder/) et de demander de l'aide sur leur forum ou sur le forum [biostars](https://www.biostars.org/). Nous vous recommandons aussi de partir d'une [image docker biocontainers de base](https://hub.docker.com/u/biocontainers/) qui correspond le mieux à votre pipeline afin de vous faciliter le travail. Enfin, vous pouvez vous inspirer de notre tutoriel qui présente l'encapsultation de pipeline pas à pas : [Exemple de pipeline non paramétrable](tuto_004.md)
 
 ## Procédure
 
