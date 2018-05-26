@@ -1,22 +1,20 @@
-# Ex1: Créer un pipeline simple
+# Exemple : créer un pipeline simple
 
 Dans ce tutoriel, nous allons créer un pipeline simple, qui génère un rapport [multiqc](http://multiqc.info/).
 
 Difficultés abordées par ce tutoriel :
 - [x] Dockerisation d'un pipeline bioinformatique
-- [x] Fichiers INPUTS (type bam)
-- [x] Génèration OUTPUTS (rapport html)
-- [ ] Génèration de LOGS
+- [x] Fichiers INPUTS (type BAM)
+- [x] Génération OUTPUTS (rapport html)
+- [ ] Génération de LOGS
 - [ ] Paramètres personnalisables
-- [ ] Notifications temps réel de la progression
-- [ ] Connection base de donnée Regovar
+- [ ] Notifications en temps réel de la progression
+- [ ] Connexion à la base de données Regovar
 
 
 ## Les instructions
 
-Voici d'emblé tout ce qu'il faut faire. Les explications sont dans la section suivante
-
-Etape 1: init package folder
+Étape 1 : init package folder
 ```
 mkdir ~/mypipeline
 cd ~/mypipeline
@@ -27,11 +25,11 @@ wget https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/tutorials/pip
 wget https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/tutorials/pipeline/tuto_003/icon.png
 cd ..
 ```
-Etape 2: create docker file
+Étape 2 : create Docker file
 ```
 nano Dockerfile
 ```
-Ecrire le contenu suivant dans le fichier
+Écrire le contenu suivant dans le fichier
 ```
 FROM biocontainers/samtools:latest
 
@@ -56,11 +54,11 @@ RUN chmod +x /home/biodocker/run.sh
 WORKDIR /outputs/
 CMD ["/home/biodocker/run.sh"]
 ```
-Etape 3: create manifest
+Étape 3 : create manifest
 ```
 nano manifest.json
 ```
-Ecrire le contenu suivant dans le fichier
+Écrire le contenu suivant dans le fichier
 ```
 {
     "name" : "Multiqc",
@@ -75,7 +73,7 @@ Ecrire le contenu suivant dans le fichier
     "logs" : "/tmp/regovar_logs/"
 }
 ```
-Etape 4 (optionnel): test with docker
+Étape 4 (optionnelle) : test with Docker
 ```
 
 mkdir /tmp/test_inputs 
@@ -89,32 +87,10 @@ ls -l /tmp/test_ouputs
 docker rm --force regovar_test
 docker rmi regovar_pipe_test
 ```
-Etape 5: create package
+Étape 5 : create package
 ```
 cd ..
 zip -r multiqc_pipeline_1.0.zip mypipeline
 ```
 
-Voilà, il ne reste plus qu'à [tester dans Regovar](tuto_001.md)
-
-
-
-
-## Explications
-
-###Etape 1
-
-
-###Etape 2
-
-
-###Etape 3
-
-
-###Etape 4
-
-
-###Etape 5
-
-
- 
+Voilà, il ne reste plus qu'à [tester dans Regovar](tuto_001.md).

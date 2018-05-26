@@ -80,7 +80,7 @@ Ce fichier décrit tout ce qui permettra à Regovar de correctement installer et
 | TYPE | `string` | Le type de pipeline peut être `importer`, `exporter`, `reporter`, `job` (cf. section consacrée ci-dessous). |
 | CONTACTS | `dict` | Liste des personnes (prénom + nom + email) à contacter en cas de problème. |
 | INPUTS, OUTPUTS, LOGS et DATABASES | `string` | Vous pouvez librement choisir où et comment sont nommés ces répertoires dans votre conteneur. Ces répertoires seront alors partagés (Docker volume) et permettront au serveur Regovar et à votre pipeline de travailler correctement ensemble. |
-| DB_ACCESS | `bool` | `True` ou `False` (par défaut), ce booléen indique si oui ou non votre pipeline nécessite un accès à la base de donnée postgreSQL de Regovar. Si oui, alors votre conteneur sera relié à la base de donnée et les informations de connexion seront transmise à votre script. |
+| DB_ACCESS | `bool` | `True` ou `False` (par défaut), ce booléen indique si oui ou non votre pipeline nécessite un accès à la base de données postgreSQL de Regovar. Si oui, alors votre conteneur sera relié à la base de données et les informations de connexion seront transmise à votre script. |
 | ICON | `string` | Si vous le souhaitez, vous pouvez fournir une icône qui sera associée à votre pipeline dans Regovar. |
 
 ## Les types de pipeline
@@ -88,8 +88,8 @@ Dans Regovar il existe quatre types de pipelines qui ne seront pas utilisés de 
 
 | Type | Description |
 | ---- |  ---------- |
-| `job` | **\[Par défault]** Pipeline générique qui prend en entrée des fichiers dans INPUTS et génère des fichiers dans OUTPUTS (exemple : FASTQ en entrée et VCF en sortie).  |
-| `importer` | Pipeline utilisé pour importer un fichier dans la base de donnée Regovar (par exemple pour parser un fichier VCF et enregistrer les variants et les annotations en base de données). |
+| `job` | **\[Par défaut]** Pipeline générique qui prend en entrée des fichiers dans INPUTS et génère des fichiers dans OUTPUTS (exemple : FASTQ en entrée et VCF en sortie).  |
+| `importer` | Pipeline utilisé pour importer un fichier dans la base de données Regovar (par exemple pour parser un fichier VCF et enregistrer les variants et les annotations en base de données). |
 | `exporter` |  Pipeline utilisé pour exporter les variants sélectionnés lors du filtrage dynamique (par exemple au format Excel ou CSV). |
 | `reporter` | Pipeline utilisé pour générer un rapport d'analyse à partir des variants sélectionnés lors du filtrage dynamique. |
 
@@ -103,7 +103,7 @@ La configuration se déroule en trois étapes :
 
 Pour cette troisième et dernière étape, les développeurs doivent fournir avec leur pipeline un fichier `form.json` qui va décrire les paramètres de ce dernier. Regovar s'occupera ensuite de générer le formulaire correspondant afin de récupérer les réglages de l'utilisateur. Ces valeurs sont stockées dans un fichier qui se nommera `config.json` et qui se trouvera dans le répertoire INPUTS du conteneur du pipeline.
 
-L'exemple ci-dessous montre la structure attendu pour le fichier `form.json` ainsi que les différents types de paramètre supportés.
+L'exemple ci-dessous montre la structure attendue pour le fichier `form.json` ainsi que les différents types de paramètres supportés.
 ```
 {
     "$schema": "http://json-schema.org/draft-03/schema#",
@@ -140,7 +140,7 @@ L'exemple ci-dessous montre la structure attendu pour le fichier `form.json` ain
         "param4_key":
         {
             "title": "Mon paramètre 4",
-            "description": "Les type integer pour les entiers, et number pour les réels (float)",
+            "description": "Les types integer pour les entiers, et number pour les réels (float)",
             "type": "number",
             "required": false,
             "default": 1.75,
@@ -214,20 +214,20 @@ Pour proposer une liste à choix unique (liste de string)
 }
 ```
 
-Pour les enum, vous pouvez soit proposer une liste de valeur manuellement comme dans l'exemple soit opter pour les listes générés autamtiquement grâce aux mots clés suivant :
+Pour les enum, vous pouvez soit proposer une liste de valeurs manuellement comme dans l'exemple, soit opter pour les listes générées automatiquement grâce aux mots clés suivant :
 
-- `__INPUTS_FILES__` va générer la liste des fichiers qui ont été sélectionnés lors de l'étape précédente de la configuration du pipeline. Celà permet ainsi de pouvoir sélectionner un fichier en particulier parmis plusieurs et de l'indiquer au pipeline.
+- `__INPUTS_FILES__` va générer la liste des fichiers qui ont été sélectionnés lors de l'étape précédente de la configuration du pipeline. Cela permet ainsi de pouvoir sélectionner un fichier en particulier parmi plusieurs et de l'indiquer au pipeline.
 ```
     "enum": "__INPUTS_FILES__",
 ```
 
-- `__GENOMES_REFS__` va générer la liste des génomes de références (Hg19, Hg38, ...) qui ont été installés sur le serveur et dont les fichiers et bases de données associés seront accessible par le pipeline via le répertoire DATABASES.
+- `__GENOMES_REFS__` va générer la liste des génomes de références (hg19, hg38, ...) qui ont été installés sur le serveur et dont les fichiers et bases de données associés seront accessibles par le pipeline via le répertoire DATABASES.
 ```
     "enum": "__GENOMES_REFS__",
 ```
 
 ## INPUTS/config.json
-Le fichier `INPUTS/config.json` sera généré par Regovar. Il permet de transmettre au pipeline, les paramètres saisie par l'utilisateur, ainsi que des paramètres techniques spécifique au serveur comme les paramètres pour se connecter à la base de donnée postgreSQL, ou bien l'url à utiliser pour les notifications en temps réel de la progression du pipeline.
+Le fichier `INPUTS/config.json` sera généré par Regovar. Il permet de transmettre au pipeline, les paramètres saisis par l'utilisateur, ainsi que des paramètres techniques spécifiques au serveur comme les paramètres pour se connecter à la base de données postgreSQL, ou bien l'URL à utiliser pour les notifications en temps réel de la progression du pipeline.
 
 Voici à quoi ressemblera le fichier `config.json` (si on considère le fichier `form.json` vu précédemment)
 
@@ -252,4 +252,4 @@ Voici à quoi ressemblera le fichier `config.json` (si on considère le fichier 
 }
 ```
 
- Ensuite, un exemple concret d'encapsulation détaille pas à pas ce qu'il faut faire pour vous exercer : [Ex1: Pipeline non paramétrable](tuto_004.md)
+ Un exemple concret d'encapsulation détaille pas à pas ce qu'il faut faire pour vous exercer : [Exemple de pipeline non paramétrable](tuto_004.md).
