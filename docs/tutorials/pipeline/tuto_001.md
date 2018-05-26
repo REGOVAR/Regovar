@@ -11,6 +11,6 @@ Si vous voulez packager votre propre pipeline, veuillez vous référer au tutori
 
 ### Procédure
 ```
-$ regovar pipeline install path/to/my_pipeline_package.zip
+$ regovar pipeline install path/to/MyExamplePipeline_v1.0.0.zip
 ```
 
