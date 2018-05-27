@@ -276,13 +276,13 @@ docker build -t my_example_pipeline .
 **3.** Exécutez votre pipeline en remplaçant les variables ci-dessous par celles de votre pipeline.
 
 ```sh
-docker run -a stdin -a stdout -it -v INPUTS_SUR_LE_HOST:INPUTS_SUR_LE_CONTAINER:ro -v OUTPUTS_SUR_LE_HOST:OUTPUTS_SUR_LE_CONTAINER -v DATABASES_SUR_LE_HOST:DATABASES_SUR_LE_CONTAINER:ro -v /tmp/logs:/LOGS --network regovar_net --name NOM_CONTAINER --user $(id -u):$(id -g) NOM_IMAGE
+docker run -a stdin -a stdout -it -v INPUTS_SUR_LE_HOST:INPUTS_SUR_LE_CONTAINER:ro -v OUTPUTS_SUR_LE_HOST:OUTPUTS_SUR_LE_CONTAINER -v DATABASES_SUR_LE_HOST:DATABASES_SUR_LE_CONTAINER:ro -v /tmp/logs:/LOGS --name NOM_CONTAINER --user $(id -u):$(id -g) NOM_IMAGE
 ```
 
 Par exemple, pour tester MyExamplePipeline, nous vous proposons d'utiliser les répertoires `/tmp/inputs`, `/tmp/outputs`, `/tmp/databases` et `/tmp/logs` du HOST comme répertoires d'entrée, de sortie, de bases de données et de logs respectivement :
 
 ```sh
-docker run -a stdin -a stdout -it -v /tmp/inputs:/regovar/inputs:ro -v /tmp/outputs:/regovar/outputs -v /tmp/databases:/regovar/databases:ro -v /tmp/logs:/regovar/logs --network regovar_net --name regovar_test --user $(id -u):$(id -g) my_example_pipeline
+docker run -a stdin -a stdout -it -v /tmp/inputs:/regovar/inputs:ro -v /tmp/outputs:/regovar/outputs -v /tmp/databases:/regovar/databases:ro -v /tmp/logs:/regovar/logs --name regovar_test --user $(id -u):$(id -g) my_example_pipeline
 ```
 
 **4.** Vérifier que tout se déroule correctement et que le résultat est correctement généré dans le répertoire `OUTPUTS_SUR_LE_HOST` (`/tmp/outputs`) du HOST.
