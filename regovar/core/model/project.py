@@ -47,7 +47,7 @@ def project_init(self, loading_depth=0, force=False):
         self.parent = None
         if self.loading_depth > 0:
             self.parent = Project.from_id(self.parent_id, self.loading_depth-1)
-            self.jobs = self.get_jobs()
+            self.subjects = self.get_subjects()
     except Exception as ex:
         raise RegovarException("Project data corrupted (id={}).".format(self.id), "", ex)
 
@@ -112,20 +112,7 @@ def project_load(self, data):
         if "comment" in data.keys(): self.comment = check_string(data['comment'])
         if "parent_id" in data.keys(): self.parent_id = check_int(data['parent_id'])
         if "is_folder" in data.keys(): self.is_folder = check_bool(data['is_folder'], False)
-        if "users" in data.keys(): self.users = data["users"]
         self.save()
-        
-        # Update user sharing
-        # if "users" in data.keys():
-        #     # Delete all associations
-        #     Session().query(UserProjectSharing).filter_by(project_id=self.id).delete(synchronize_session=False)
-        #     # Create new associations
-        #     self.users = data["users"]
-        #     for u in data["users"]:
-        #         if isinstance(u, dict) and "id" in u.keys() and "write_authorisation" in u.keys():
-        #             UserProjectSharing.set(self.id, u["id"], u["write_authorisation"])
-        #         else:
-        #             err("")
     
 
         # Reload dynamics properties
@@ -235,8 +222,7 @@ def projects_get_subjects(self):
     """
     sql = "SELECT  id, identifier, firstname, lastname, sex, family_number, dateofbirth, comment, create_date, update_date FROM subject {} ORDER BY lastname, firstname"
     result = []
-    sbjs = self.get_subjects_ids()
-    query =  sql.format("" if len(sbjs) == 0 else "WHERE id IN ({})".format(",".join([str(i) for i in sbjs])))
+    query =  sql.format("" if len(self.subjects_ids) == 0 else "WHERE id IN ({})".format(",".join([str(i) for i in self.subjects_ids])))
     for sbj in execute(query):
         result.append({
             "id": sbj.id,

@@ -25,8 +25,8 @@ class ProjectManager:
                 "comment": res.comment,
                 "parent_id": res.parent_id,
                 "is_folder": res.is_folder,
-                "analyses": res.analyses if res.analyses[0] else [],
-                "jobs": res.jobs if res.jobs[0] else [],
+                "analyses_ids": res.analyses if res.analyses[0] else [],
+                "jobs_ids": res.jobs if res.jobs[0] else [],
                 "create_date": res.create_date.isoformat(),
                 "update_date": res.update_date.isoformat()
             })
