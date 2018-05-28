@@ -22,12 +22,12 @@ def project_init(self, loading_depth=0, force=False):
             - is_folder     : bool          : True if it's a folder, False if it's a project
             - update_date   : date          : The last time that the object have been updated
             - jobs_ids      : [int]         : The list of ids of jobs that contains the project
+            - jobs          : [json]        : The list of Job owns by the project
             - analyses_ids  : [int]         : The list of ids of analyses that contains the project
+            - analyses      : [json]        : The list of Analysis owns by the project
             - subjects_ids  : [int]         : The list of ids of subjets associated to the project
             - is_sandbox    : bool          : True if the project is the sandbox of an user; False otherwise
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
-            - jobs          : [Job]         : The list of Job owns by the project
-            - analyses      : [Analysis]    : The list of Analysis owns by the project
             - subjects      : [Subject]     : The list of Subjects linked to this project
             - parent        : Project       : The parent Project if defined
     """
@@ -38,18 +38,16 @@ def project_init(self, loading_depth=0, force=False):
         self.loading_depth = min(2, loading_depth)
     try:
         self.subjects_ids = self.get_subjects_ids()
-        self.jobs_ids = [j["id"] for j in self.get_jobs()]
-        self.analyses_ids = [a["id"] for a in self.get_analyses()]
-
-        self.jobs = []
-        self.analyses = []
+        self.jobs = self.get_jobs()
+        self.analyses = self.get_analyses()
+        self.jobs_ids = [j["id"] for j in self.jobs]
+        self.analyses_ids = [a["id"] for a in self.analyses]
+        
         self.subjects = []
         self.parent = None
         if self.loading_depth > 0:
             self.parent = Project.from_id(self.parent_id, self.loading_depth-1)
             self.jobs = self.get_jobs()
-            self.analyses = self.get_analyses()
-            self.subjects = self.get_subjects()
     except Exception as ex:
         raise RegovarException("Project data corrupted (id={}).".format(self.id), "", ex)
 
@@ -172,11 +170,28 @@ def project_count(count_folder=False, count_sandbox=False):
 
 
 
-def projects_get_jobs(self, loading_depth=0):
+def projects_get_jobs(self):
     """
         Return the list of jobs linked to the project
     """
-    return []
+    sql = "SELECT id, name, comment, create_date, update_date, progress_value, progress_label, status, priority, pipeline_id FROM job WHERE project_id={} ORDER BY update_date DESC"
+    result = []
+    for job in execute(sql.format(self.id)):
+        result.append({
+            "id": job.id,
+            "project_id": self.id,
+            "name": job.name,
+            "comment": job.comment,
+            "progress_value": job.progress_value,
+            "progress_label": job.progress_label,
+            "status": job.status,
+            "priority": job.priority,
+            "pipeline_id": job.pipeline_id,
+            "create_date": job.create_date.isoformat() if isinstance(job.create_date, datetime.datetime) else None, 
+            "update_date": job.update_date.isoformat() if isinstance(job.update_date, datetime.datetime) else None, 
+            "indicators": []
+            })
+    return result
 
 
 
@@ -185,7 +200,7 @@ def projects_get_analyses(self):
     """
         Return the list of analyses linked to the project
     """
-    sql = "SELECT id, name, comment, settings, create_date, update_date, reference_id, computing_progress, status FROM analysis WHERE project_id={} ORDER BY name"
+    sql = "SELECT id, name, comment, settings, create_date, update_date, reference_id, computing_progress, status FROM analysis WHERE project_id={} ORDER BY update_date DESC"
     result = []
     for anl in execute(sql.format(self.id)):
         result.append({

@@ -16,7 +16,7 @@ class ProjectManager:
         """
             List all projects with "minimal data"
         """
-        sql = "SELECT p.id, p.name, p.comment, p.parent_id, p.is_folder, p.create_date, p.update_date, array_agg(a.id) as analyses FROM project p LEFT JOIN analysis a ON a.project_id=p.id where not is_sandbox GROUP BY p.id, p.name, p.comment, p.parent_id, p.is_folder, p.create_date, p.update_date ORDER BY p.parent_id, p.name"
+        sql = "SELECT p.id, p.name, p.comment, p.parent_id, p.is_folder, p.create_date, p.update_date, array_agg(DISTINCT a.id) as analyses, array_agg(DISTINCT j.id) as jobs FROM project p LEFT JOIN analysis a ON a.project_id=p.id LEFT JOIN job j ON j.project_id=p.id where not is_sandbox GROUP BY p.id, p.name, p.comment, p.parent_id, p.is_folder, p.create_date, p.update_date ORDER BY p.parent_id, p.name"
         result = []
         for res in execute(sql): 
             result.append({
@@ -25,7 +25,8 @@ class ProjectManager:
                 "comment": res.comment,
                 "parent_id": res.parent_id,
                 "is_folder": res.is_folder,
-                "analyses": res.analyses,
+                "analyses": res.analyses if res.analyses[0] else [],
+                "jobs": res.jobs if res.jobs[0] else [],
                 "create_date": res.create_date.isoformat(),
                 "update_date": res.update_date.isoformat()
             })
