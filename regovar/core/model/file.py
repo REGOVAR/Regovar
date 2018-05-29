@@ -10,11 +10,25 @@ from core.framework.postgresql import *
 
 def file_init(self, loading_depth=0):
     """
-        If loading_depth is > 0, children objects will be loaded. Max depth level is 2.
-        Children objects of a file are :
-            - job_source : set with a Job object if the file have been created by a job. 
-            - jobs       : the list of jobs in which the file is used or created
-        If loading_depth == 0, children objects are not loaded
+        Init properties of a File :
+            - id               : int        : the unique id of the file in the database
+            - name             : str        : the name of the file
+            - type             : str        : the file type (file extension)
+            - comment          : str        : a comment on the file
+            - path             : str        : the path to the file on the server (must be convert to public url if needed)
+            - size             : int        : the total size (in bytes) of the file
+            - upload_offset    : int        : the size of uploaded bytes of the file
+            - status           : enum       : status values can be : 'uploading', 'uploaded', 'checked', 'error'
+            - update_date      : date       : The last time that the object have been updated
+            - create_date      : date       : The datetime when the object have been created
+            - reference_id     : int        : the reference id for this sample
+            - tags             : [str]      : list of custom tags set by users to help search and retrieve files
+            - md5sum           : str        : the md5sum of the file on the server
+            - job_source_id    : int        : id of the job that generate this file (if exists, None otherwise)
+            - jobs_ids         : [int]      : the list of id of jobs that are using this file as input
+        If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
+            - job_source       : Job        : the job that generate this file (if exists, None otherwise)
+            - jobs             : [Job]      : list of jobs that are using this file as input
     """
     from core.model.job import Job, JobFile
     # With depth loading, sqlalchemy may return several time the same object. Take care to not erase the good depth level)

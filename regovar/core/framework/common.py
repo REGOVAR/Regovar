@@ -181,7 +181,7 @@ def check_date(value, default=None):
     elif isinstance(value, str):
         try:
             return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f") if len(value) > 10 else datetime.datetime.strptime(value, "%Y-%m-%d")
-        except ValueError:
+        except Exception:
             return default
     return default
 
@@ -195,7 +195,7 @@ def check_int(value, default=None):
     else:
         try:
             return int(value)
-        except ValueError:
+        except Exception:
             return default
     return default
 
@@ -209,7 +209,7 @@ def check_float(value, default=None):
     else:
         try:
             return float(value)
-        except ValueError:
+        except Exception:
             return default
     return default
 
@@ -223,7 +223,7 @@ def check_bool(value, default=None):
     else:
         try:
             return bool(value)
-        except ValueError:
+        except Exception:
             return default
     return default
 
@@ -237,7 +237,7 @@ def check_string(value, default=None):
     else:
         try:
             return str(value)
-        except ValueError:
+        except Exception:
             return default
     return default
 

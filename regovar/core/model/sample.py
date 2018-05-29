@@ -27,6 +27,7 @@ def sample_init(self, loading_depth=0):
             - is_mosaic        : bool       : true if data (variant) for this sample are mosaic; false otherwise
             - subject_id       : int        : the id of the subject linked to this sample
             - file_id          : int        : the id of the file (vcf) from which the sample have been extracted
+            - file             : File       : File data of the source file 
             - loading_progress : float      : progress (from 0 to 1) of the import of the sample
             - update_date      : date       : The last time that the object have been updated
             - create_date      : date       : The datetime when the object have been created
@@ -38,7 +39,6 @@ def sample_init(self, loading_depth=0):
             - stats            : json       : stats regarding import and quality
         If loading_depth is > 0, Following properties fill be loaded : (Max depth level is 2)
             - subject          : Subject    : Subject data of the linked subject
-            - file             : File       : File data of the source file 
             - analyses         : [Analysis] : Analysis data of linked analyses
     """
     from core.model.analysis import Analysis, AnalysisSample
@@ -52,11 +52,10 @@ def sample_init(self, loading_depth=0):
     try:
         self.analyses_ids = AnalysisSample.get_analyses_ids(self.id)
         self.subject = None
-        self.file = None
+        self.file = File.from_id(self.file_id, 0)
         self.analyses = []
         if self.loading_depth > 0:
             self.subject = Subject.from_id(self.subject_id, self.loading_depth-1)
-            self.file = File.from_id(self.file_id, self.loading_depth-1)
             self.analyses = AnalysisSample.get_analyses(self.id, self.loading_depth-1)
     except Exception as ex:
         raise RegovarException("Sample data corrupted (id={}).".format(self.id), "", ex)
@@ -95,7 +94,7 @@ def sample_to_json(self, fields=None, loading_depth=-1):
             else :                           
                 result[f] = []
         elif f in ["subject", "file"]:
-            if hasattr(self, f) and eval("self." + f) and loading_depth>0:
+            if hasattr(self, f) and eval("self." + f):
                 result[f] = eval("self." + f + ".to_json(None, loading_depth-1)")
             else:
                 result[f] = None
