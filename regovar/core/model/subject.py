@@ -51,7 +51,7 @@ def subject_init(self, loading_depth=0, force=False):
     try:
         self.indicators= Indicator.from_subject_id(self.id)
         self.samples_ids = [r.id for r in execute("SELECT id FROM sample WHERE subject_id={}".format(self.id))]
-        self.files_ids = [r.id for r in execute("SELECT file_id FROM subject_file WHERE subject_id={}".format(self.id))]
+        self.files_ids = [r.file_id for r in execute("SELECT file_id FROM subject_file WHERE subject_id={}".format(self.id))]
         self.projects_ids = self.get_projects_ids()
         self.hpo_ids = self.get_phenotypes_ids()
         self.analyses_ids = []
@@ -173,9 +173,8 @@ def subject_load(self, data):
             self.files_ids = data["files_ids"]
             for fid in data["files_ids"]:
                 SubjectFile.set(self.id, fid)
-
-        # TODO : projects
-        # TODO : samples
+                
+        # samples_ids: to update associated samples, you have to update each samples. cannot be done via the subject object
 
         # check to reload dynamics properties
         self.init(self.loading_depth, True)
