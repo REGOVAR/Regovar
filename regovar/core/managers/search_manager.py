@@ -527,8 +527,18 @@ class SearchManager:
             query = "SELECT distinct hpo_id, label FROM hpo_phenotype WHERE genes @> '{{{}}}' ORDER BY label".format(genename)
             for row in execute(query):
                 hpo["phenotypes"].append({"id": row.hpo_id, "label": row.label})
-
             data.update({"hpo": hpo})
+            
+            # Get panels
+            panels = []
+            panels_done = []
+            # TODO: optimize query
+            query = "SELECT p.id AS pid, v.id AS vid FROM panel_entry AS v INNER JOIN panel AS p ON v.panel_id=p.id WHERE v.data::text ILIKE '%{}%' ORDER by v.create_date DESC".format(genename)
+            for row in execute(query):
+                if row.pid not in panels_done:
+                    panels.append(row.vid)
+                    panels_done.append(row.pid)
+            data.update({"panels": panels})
         return data
 
 
