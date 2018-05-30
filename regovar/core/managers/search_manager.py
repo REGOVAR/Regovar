@@ -350,8 +350,6 @@ class SearchManager:
         return phenos, diseases
     
     
-   
-    
     
     def search_user(self, search):
         """
