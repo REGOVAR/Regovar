@@ -764,16 +764,11 @@ class FilterEngine:
         progress = {"start": datetime.datetime.now().ctime(), "analysis_id": analysis.id, "progress": 0, "column": column}
         core.notify_all({'action':'wt_update', 'data': progress})
         
-        # Create schema
+        # Alter schema
         w_table = 'wt_{}'.format(analysis.id)
-        query = "ALTER TABLE {0} ADD COLUMN {1} boolean DEFAULT False; "
-        try:
-            execute(query.format(w_table, column))
-            log("Column: {0} init".format(column))
-        except RegovarException as ex:
-            query = "UPDATE {0} SET {1}=False; " # force reset to false
-            execute(query.format(w_table, column))
-            log("Column: {0} already exists -> reset to false".format(column))
+        query = "ALTER TABLE {0} DROP COLUMN IF EXISTS {1} CASCADE, ADD COLUMN {1} boolean; "
+        execute(query.format(w_table, column))
+        log("Column: {0} init".format(column))
         
         progress.update({"progress": 0.33})
         core.notify_all({'action':'wt_update', 'data': progress})
