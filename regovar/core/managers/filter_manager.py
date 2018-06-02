@@ -68,9 +68,6 @@ class FilterEngine:
             self.fields_map[row.fuid] = {"name": row.fname, "type": row.type, "meta": row.meta, "db_uid": row.duid, "db_name_ui": row.dname_ui, "db_name": row.dname, "db_type": row.dtype, "join": row.jointure}
 
 
-
-
-
     def create_working_table(self, analysis_id):
         """
             This method is called in another thread and will create the working table
@@ -698,6 +695,65 @@ class FilterEngine:
         # We just update progress without calling notify_all as a notify will be send by the next step
         progress["log"][10]["status"] = "done"
         progress["log"][10]["progress"] = 1
+
+
+
+
+
+
+
+    def create_panel_table(self, panel_id, ref):
+        panel_table = "panel_{}_{}".format(ref, panel_id.replace("-", "_"))
+
+        # Do nothing if panel table alread exits
+        sql = "SELECT * FROM information_schema.tables WHERE table_name='panel_{}'".format(panel_id)
+        panel_exists = execute(sql).rowcount > 0
+        if panel_exists: return
+
+        # Retrieve panel data
+        sql = "SELECT * FROM panel_entry WHERE id='{}'".format(panel_id)
+        result = execute(sql)
+        if result.rowcount == 0:
+            raise RegovarException("Unable to retrieve panel with id \"{}\"".format(panel_id))
+        panel_data = result.first().data
+
+        # Create sql query
+        query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE UNLOGGED TABLE {0} (\
+            chr bigint, \
+            loc int8range); \
+            INSERT INTO {0} (chr, loc) VALUES ".format(panel_table)
+
+        genes = []
+        for entry in panel_data:
+            if entry["type"] == "gene":
+                genes.append(entry["symbol"])
+            else:
+                query += "({}, int8range({}, {})), ".format(entry["chr"], entry["start"], entry["end"])
+        
+        if len(genes) > 0:
+            for ge in execute("SELECT chr, trxrange FROM refgene_{} WHERE name2 IN ({})".format(ref, ",".join(["'{}'".format(t) for t in genes]))):
+                query += "({}, int8range({}, {})), ".format(ge.chr, ge.trxrange.lower, ge.trxrange.upper)
+
+        ipdb.set_trace()
+        execute(query[:-2])
+
+
+    def create_wt_panel_table(self, analysis, panel_id):
+        ipdb.set_trace()
+        wt = "wt_{}".format(analysis.id)
+        col = "panel_{}".format(panel_id.replace("-", "_"))
+        ref = execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix
+
+        # Do nothing if panel table alread exits
+        sql = "SELECT column_name FROM information_schema.columns WHERE table_name='{}' AND column_name='{}'".format(wt, col)
+        col_exists = execute(sql).rowcount > 0
+        if col_exists: return
+
+        # Create sql query
+        panel = "panel_{}_{}".format(ref, panel_id.replace("-", "_"))
+        query = "ALTER TABLE {0} ADD COLUMN {1} boolean; update {0} w SET {1}=True FROM {2} p WHERE w.chr=p.chr AND w.pos <@ p.loc;".format(wt, col, panel)
+        execute(query)
+
 
 
 
