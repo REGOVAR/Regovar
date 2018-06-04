@@ -65,8 +65,8 @@ def execute_sql(query):
 
 
 # Prerequisites: Download HPO dumps (Done in makefile that call this script)
-hpopath = sys.argv[1]
-version = sys.argv[2]
+hpopath = sys.argv[2]
+version = sys.argv[3]
 #hpopath = "/var/regovar/databases/"
 #version = "2018-03-09 09:06"
 

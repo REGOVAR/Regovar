@@ -201,16 +201,15 @@ cp $git_path/requirements-dev.txt $root_folder/config/requirements-dev.txt
 
 
 
-
 # =======================================================================================
 # Generating: regovar_app Dockerfile
 # =======================================================================================
 # conver / into \/
 sed_root_folder=${root_folder//\//\\/}
 
-echo -e -n "${YELLOW}In progress${NC}: Generating Dockerfile for regovar_app docker image"
-cp config/Dockerfile $root_folder/config/Dockerfile
-echo -e "\r${GREEN}Done${NC}: Generating Dockerfile for regovar_app docker image"
+echo -e -n "${YELLOW}In progress${NC}: Generating Dockerfile for $docker_app docker image"
+cp docker/Dockerfile $root_folder/config/Dockerfile
+echo -e "\r${GREEN}Done${NC}: Generating Dockerfile for $docker_app docker image"
 
 
 
@@ -219,17 +218,17 @@ echo -e "\r${GREEN}Done${NC}: Generating Dockerfile for regovar_app docker image
 # Generating: docker-compose
 # =======================================================================================
 echo -e -n "${YELLOW}In progress${NC}: Generating docker-compose file"
-cp config/docker-compose.yml $root_folder/config/regovar.yml
-sed -i s/"regovar_user"/"$regovar_user"/ $root_folder/config/regovar.yml
-sed -i s/"regovar_docker_pg"/"$docker_pg"/g $root_folder/config/regovar.yml
-sed -i s/"regovar_docker_app"/"$docker_app"/g $root_folder/config/regovar.yml
-sed -i s/"8500"/"$docker_app_port"/g $root_folder/config/regovar.yml
-sed -i s/"\(\s+\)regovar_net"/"\1$docker_network"/g $root_folder/config/regovar.yml
-sed -i s/"\/var\/regovar"/"$sed_root_folder"/ $root_folder/config/regovar.yml
-sed -i s/"localgit"/"${git_path//\//\\/}"/ $root_folder/config/regovar.yml
-sed -i s/"^\(\s*POSTGRES_USER\s*=\s*\)\(.*\)"/"\1$db_user"/ $root_folder/config/regovar.yml
-sed -i s/"^\(\s*POSTGRES_PASSWORD\s*=\s*\)\(.*\)"/"\1$db_pwd"/ $root_folder/config/regovar.yml
-sed -i s/"^\(\s*POSTGRES_DB\s*=\s*\)\(.*\)"/"\1$db_name"/ $root_folder/config/regovar.yml
+cp docker/docker-compose.yml $root_folder/config/regovar.yml
+sed -i s/"{root_path}"/"$sed_root_folder"/g $root_folder/config/regovar.yml
+sed -i s/"{git_path}"/"${git_path//\//\\/}"/g $root_folder/config/regovar.yml
+sed -i s/"{regovar_user}"/"$regovar_user"/g $root_folder/config/regovar.yml
+sed -i s/"{docker_pg}"/"$docker_pg"/g $root_folder/config/regovar.yml
+sed -i s/"{docker_app}"/"$docker_app"/g $root_folder/config/regovar.yml
+sed -i s/"{regovar_port}"/"$docker_app_port"/g $root_folder/config/regovar.yml
+sed -i s/"{docker_net}"/"$docker_network"/g $root_folder/config/regovar.yml
+sed -i s/"{db_user}"/"$db_user"/g $root_folder/config/regovar.yml
+sed -i s/"{db_pwd}"/"$db_pwd"/g $root_folder/config/regovar.yml
+sed -i s/"{db_name}"/"$db_name"/g $root_folder/config/regovar.yml
 echo -e "\r${GREEN}Done${NC}: Generating docker-compose file"
 
 
@@ -239,10 +238,11 @@ echo -e "\r${GREEN}Done${NC}: Generating docker-compose file"
 # Generating: regovar config.py
 # =======================================================================================
 echo -e -n "${YELLOW}In progress${NC}: Generating regovar app python config file"
-cp config.default.py $root_folder/config/config.py
+cp config/config.default.py $root_folder/config/config.py
 # conver / into \/ and . into \.
 public_host=${public_host//\//\\/}
 public_host=${public_host//\./\\.}
+sed -i s/"regovar_pg"/"$docker_pg"/ $root_folder/config/config.py
 sed -i s/"regovar_docker_app"/"$docker_app"/ $root_folder/config/config.py
 sed -i s/"regovar_net"/"$docker_network"/ $root_folder/config/config.py
 sed -i s/"^\(\s*DEBUG\s*=\s*\)\(.*\)"/"\1$debug"/ $root_folder/config/config.py
@@ -258,8 +258,9 @@ if [ -e "$git_path/regovar/config.py" ]
 then
     sudo rm -f $git_path/regovar/config.py
 fi
-ln -s $root_folder/config/config.py $git_path/regovar/config.py
-sudo chown $regovar_user $git_path/regovar/config.py
+mv $root_folder/config/config.py $git_path/regovar/config.py
+ln -s $git_path/regovar/config.py $root_folder/config/config.py
+#sudo chown $regovar_user $git_path/regovar/config.py
 
 
 echo -e "\r${GREEN}Done${NC}: Generating regovar app python config file"
@@ -302,7 +303,7 @@ sudo /etc/init.d/nginx restart
 # Generating: Makefile
 # =======================================================================================
 echo -e -n "${YELLOW}In progress${NC}: Generating Makefile"
-cp config/Makefile.in $root_folder/config/Makefile
+cp docker/Makefile.in $root_folder/config/Makefile
 sed -i s/"regovar_docker_pg"/"$docker_pg"/g $root_folder/app/Makefile
 sed -i s/"regovar_docker_app"/"$docker_app"/g $root_folder/app/Makefile
 
@@ -336,19 +337,19 @@ if [ 1 == $install_choice ]
 then
     curl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > $root_folder/databases/hg19/refGene.txt
     curl http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $root_folder/databases/hg38/refGene.txt
-    docker exec regovar_pg mkdir /tmp/install
-    docker cp $git_path/install/create_all.sql regovar_pg:/tmp/install/create_all.sql
-    docker cp $git_path/install/install_hg19.sql regovar_pg:/tmp/install/install_hg19.sql
-    docker cp $git_path/install/install_hg38.sql regovar_pg:/tmp/install/install_hg38.sql
+    docker exec $docker_pg mkdir /tmp/install
+    docker cp $git_path/install/create_all.sql $docker_pg:/tmp/install/create_all.sql
+    docker cp $git_path/install/install_hg19.sql $docker_pg:/tmp/install/install_hg19.sql
+    docker cp $git_path/install/install_hg38.sql $docker_pg:/tmp/install/install_hg38.sql
     echo "Create Database ------------------"
-    docker exec $regovar_pg psql -U postgres -c "DROP DATABASE IF EXISTS $db_name"
-    docker exec $regovar_pg psql -U postgres -c "CREATE DATABASE $db_name OWNER $db_user"
-    docker exec $regovar_pg psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
-    docker exec $regovar_pg psql -U $db_user -d $db_name -f /tmp/install/create_all.sql
+    docker exec $docker_pg psql -U postgres -c "DROP DATABASE IF EXISTS $db_name"
+    docker exec $docker_pg psql -U postgres -c "CREATE DATABASE $db_name OWNER $db_user"
+    docker exec $docker_pg psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
+    docker exec $docker_pg psql -U $db_user -d $db_name -f /tmp/install/create_all.sql
     echo "Import Hg19 ----------------------"
-    docker exec $regovar_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg19.sql
+    docker exec $docker_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg19.sql
     echo "Import Hg38 ----------------------"
-    docker exec $regovar_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg38.sql
+    docker exec $docker_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg38.sql
     echo -e "${GREEN}Done${NC}: Database created"
 else
     echo -e "${GREEN}Done${NC}: Using existing database (Update install mode)"
