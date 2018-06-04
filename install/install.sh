@@ -221,8 +221,8 @@ echo -e "\r${GREEN}Done${NC}: Generating Dockerfile for regovar_app docker image
 echo -e -n "${YELLOW}In progress${NC}: Generating docker-compose file"
 cp config/docker-compose.yml $root_folder/config/regovar.yml
 sed -i s/"regovar_user"/"$regovar_user"/ $root_folder/config/regovar.yml
-# sed -i s/"\(\s+\)regovar_pg"/"\1$docker_pg"/g $root_folder/config/regovar.yml
-# sed -i s/"\(\s+\)regovar_app"/"\1$docker_app"/g $root_folder/config/regovar.yml
+sed -i s/"regovar_docker_pg"/"$docker_pg"/g $root_folder/config/regovar.yml
+sed -i s/"regovar_docker_app"/"$docker_app"/g $root_folder/config/regovar.yml
 sed -i s/"8500"/"$docker_app_port"/g $root_folder/config/regovar.yml
 sed -i s/"\(\s+\)regovar_net"/"\1$docker_network"/g $root_folder/config/regovar.yml
 sed -i s/"\/var\/regovar"/"$sed_root_folder"/ $root_folder/config/regovar.yml
@@ -239,12 +239,12 @@ echo -e "\r${GREEN}Done${NC}: Generating docker-compose file"
 # Generating: regovar config.py
 # =======================================================================================
 echo -e -n "${YELLOW}In progress${NC}: Generating regovar app python config file"
-cp config/config.py $root_folder/config/config.py
+cp config.default.py $root_folder/config/config.py
 # conver / into \/ and . into \.
 public_host=${public_host//\//\\/}
 public_host=${public_host//\./\\.}
-# sed -i s/"regovar_app"/"$docker_app"/ $root_folder/config/regovar.yml
-sed -i s/"regovar_net"/"$docker_network"/ $root_folder/config/regovar.yml
+sed -i s/"regovar_docker_app"/"$docker_app"/ $root_folder/config/config.py
+sed -i s/"regovar_net"/"$docker_network"/ $root_folder/config/config.py
 sed -i s/"^\(\s*DEBUG\s*=\s*\)\(.*\)"/"\1$debug"/ $root_folder/config/config.py
 sed -i s/"^\(\s*PORT\s*=\s*\)\(.*\)"/"\1$docker_app_port"/ $root_folder/config/config.py
 sed -i s/"^\(\s*HOST_P\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$public_host\3"/ $root_folder/config/config.py
@@ -302,9 +302,9 @@ sudo /etc/init.d/nginx restart
 # Generating: Makefile
 # =======================================================================================
 echo -e -n "${YELLOW}In progress${NC}: Generating Makefile"
-cp config/Makefile $root_folder/config/Makefile
-# sed -i s/"regovar_pg"/"$docker_pg"/g $root_folder/app/Makefile
-# sed -i s/"regovar_app"/"$docker_app"/g $root_folder/app/Makefile
+cp config/Makefile.in $root_folder/config/Makefile
+sed -i s/"regovar_docker_pg"/"$docker_pg"/g $root_folder/app/Makefile
+sed -i s/"regovar_docker_app"/"$docker_app"/g $root_folder/app/Makefile
 
 ln -s $root_folder/config/Makefile $git_path/regovar/Makefile
 sudo chown $regovar_user $git_path/regovar/Makefile
@@ -341,14 +341,14 @@ then
     docker cp $git_path/install/install_hg19.sql regovar_pg:/tmp/install/install_hg19.sql
     docker cp $git_path/install/install_hg38.sql regovar_pg:/tmp/install/install_hg38.sql
     echo "Create Database ------------------"
-    docker exec regovar_pg psql -U postgres -c "DROP DATABASE IF EXISTS $db_name"
-    docker exec regovar_pg psql -U postgres -c "CREATE DATABASE $db_name OWNER $db_user"
-    docker exec regovar_pg psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
-    docker exec regovar_pg psql -U $db_user -d $db_name -f /tmp/install/create_all.sql
+    docker exec $regovar_pg psql -U postgres -c "DROP DATABASE IF EXISTS $db_name"
+    docker exec $regovar_pg psql -U postgres -c "CREATE DATABASE $db_name OWNER $db_user"
+    docker exec $regovar_pg psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
+    docker exec $regovar_pg psql -U $db_user -d $db_name -f /tmp/install/create_all.sql
     echo "Import Hg19 ----------------------"
-    docker exec regovar_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg19.sql
+    docker exec $regovar_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg19.sql
     echo "Import Hg38 ----------------------"
-    docker exec regovar_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg38.sql
+    docker exec $regovar_pg psql -U $db_user -d $db_name -f /tmp/install/install_hg38.sql
     echo -e "${GREEN}Done${NC}: Database created"
 else
     echo -e "${GREEN}Done${NC}: Using existing database (Update install mode)"

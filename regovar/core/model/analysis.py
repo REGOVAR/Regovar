@@ -302,7 +302,7 @@ def analaysis_get_fullpath(self):
 
 
 Analysis = Base.classes.analysis
-Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "files_ids", "files", "computing_progress", "status", "panels_ids", "panels", "fullpath", "statistics"]
+Analysis.public_fields = ["id", "name", "project_id", "settings", "samples_ids", "samples", "filters_ids", "filters", "attributes", "comment", "create_date", "update_date", "fields", "filter", "selection", "order", "total_variants", "reference_id", "files_ids", "files", "computing_progress", "status", "fullpath", "statistics"]
 Analysis.init = analysis_init
 Analysis.from_id = analysis_from_id
 Analysis.to_json = analysis_to_json
