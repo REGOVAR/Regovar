@@ -4,8 +4,8 @@ database_name=$(shell test -f config.py && sed -n 's/^\s*DATABASE_NAME\s*=\s*"\(
 databases_path=$(shell test -f config.py && sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py || echo INVALID)
 
 init_config:
-	cp config.default.py config.py
-
+	cp /config/config.default.py /docker/config.py
+	
 download_refgene: \
 	$(databases_path)/hg19/refGene.txt \
 	$(databases_path)/hg38/refGene.txt
