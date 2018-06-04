@@ -21,7 +21,7 @@ pages:
     - 'Configuration': 'installation/configuration.md'
  - 'UTILISATEUR': 
     - 'Présentation': 'user/presentation.md'
-    - 'Conceptes de base': 'user/concepts.md'
+    - 'Concepts de base': 'user/concepts.md'
     - 'Analyse - Filtrage': 'user/filtering.md'
     - 'Analyse - Pipeline': 'user/pipeline.md'
     - 'FAQ': 'user/faq.md'
@@ -32,8 +32,7 @@ pages:
     - 'Filtrage': 'tutorials/filtering.md'
     - 'Pipeline': 'tutorials/pipeline.md'
     - '&nbsp;&nbsp;- Installation': 'tutorials/pipeline/tuto_001.md'
-    - '&nbsp;&nbsp;- Notions de base': 'tutorials/pipeline/tuto_002.md'
-    - '&nbsp;&nbsp;- Pipeline Docker': 'tutorials/pipeline/tuto_003.md'
+    - '&nbsp;&nbsp;- Packaging': 'tutorials/pipeline/tuto_002.md'
     - '&nbsp;&nbsp;- Ex1: simple': 'tutorials/pipeline/tuto_004.md'
     - 'Autres': 'tutorials/global.md'
  - 'DÉVELOPPEUR':

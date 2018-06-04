@@ -228,7 +228,7 @@ with open(diseapath, "r") as f:
             d_data[did]["phenotypes"].append(pid)
             d_data[did]["genes"].append(gene)
         else:
-            d_data[did] = {"phenotypes":[pid], "genes": [gene]}
+            d_data[did] = {"label": None, "search": None, "phenotypes":[pid], "phenotypes_neg": [], "genes": [gene], "meta": {"sources":[], "genes_freq": {"label":"", "value": 0}}}
 
 with open(phenopath, "r") as f:
     lines = f.readlines()
@@ -265,7 +265,7 @@ print('Done')
 
 
 # STEP 4: Compute for each term the list of all its sublevels childs/diseases/genes
-print('step 4: computing sub ontologies. ', end='', flush=True)
+print('Step 4: computing sub ontologies. ', end='', flush=True)
 
 
 categories = {
@@ -324,7 +324,7 @@ print('Done')
 
 
 # STEP 5: Process sql query
-print('step 5: Populating database. ', end='', flush=True)
+print('Step 5: Populating database. ', end='', flush=True)
 genes_total = len(all_genes)
 diseases_total = len(d_data)
 p_data["HP:0000001"].update({ "sub_total": 0, "sub_genes": [], "sub_diseases": []})

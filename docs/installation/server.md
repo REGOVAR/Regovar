@@ -1,11 +1,12 @@
 
 # Installation du serveur Regovar
 
-À terme, Regovar pourra être installé via un paquet .deb. D'ici là, il est possible de l'installer via SaltStack ou via Docker.
+À terme, Regovar pourra être installé via un paquet .deb. À l'heure actuelle, deux modes de déploiement pour le serveur sont proposés :
+ - directement sur le serveur (installation et configuration automatisées via SaltStack) ;
+ - via Docker où Regovar est lui-même encapsulé dans un conteneur.
+La première méthode est prévue pour un déploiement et une utilisation de Regovar sur une machine dédiée, tandis que la seconde permet une installation rapide et simple sans impact sur la configuration de la machine hôte.
 
 ### Via SaltStack
-
-10 mai 2018 : l'installation via SaltStack est en cours de maintenance.
 
 Référez-vous au [README](https://github.com/REGOVAR/ServerConfiguration/blob/master/README.md) de la configuration utilisée pour le déploiement au CHU d'Angers et de Nancy.
 

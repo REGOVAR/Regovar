@@ -90,3 +90,5 @@ ENV/
 
 *.test
 coverage.xml
+config.py
+.bak

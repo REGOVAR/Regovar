@@ -1,56 +1,40 @@
-#/Regovar/Regovar/install/Makefile
-RED=\033[0;31m7
-NC=\033[0m
-database_name=$(shell sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' docker/config.py)
-database_path=/var/regovar/databases
-#database_path=$(shell sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' docker/config.py)
+# PostgreSQL
+database_name=$(shell test -f config.py && sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py || echo INVALID)
+# RefGene
+databases_path=$(shell test -f config.py && sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py || echo INVALID)
 
+init_config:
+	cp config/config.default.py docker/config.py
+	
+download_refgene: \
+	$(databases_path)/hg19/refGene.txt \
+	$(databases_path)/hg38/refGene.txt
 
+$(databases_path)/hg19/refGene.txt:
+	curl -L http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > $@
 
+$(databases_path)/hg38/refGene.txt:
+	curl -L http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $@
 
-# Init
-init:
-	curl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > $(database_path)/hg19/refGene.txt:
-	curl http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $(database_path)/hg38/refGene.txt:
-	cp config.default docker/config.py
-	echo "\n${RED}INIT DONE: Please check the `pwd`/docker/config.py and `pwd`/docker/regovar.yml files before continue the installation with the command 'make install'${NC}"
+create_database:
+	#psql -U postgres -c "DROP DATABASE IF EXISTS $(database_name)"
+	psql -c "CREATE DATABASE $(database_name) OWNER regovar"
+	psql -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
 
+fill_database:	
+	psql -d $(database_name) -f create_all.sql
+	psql -d $(database_name) -f install_hg19.sql
+	psql -d $(database_name) -f install_hg38.sql
 
+download_hpo:
+	curl -L http://purl.obolibrary.org/obo/hp.obo -o $(databases_path)/hpo.obo
+	curl -L http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/data_version.txt -o $(databases_path)/hpo_version.txt
+	curl -L http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/phenotype_annotation.tab -o $(databases_path)/hpo_annotation.txt
+	curl -L http://compbio.charite.de/jenkins/job/hpo.annotations/lastSuccessfulBuild/artifact/misc/negative_phenotype_annotation.tab -o $(databases_path)/hpo_annotation_neg.txt
+	curl -L http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_diseases_to_genes_to_phenotypes.txt -o $(databases_path)/hpo_disease.txt
+	curl -L http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -o $(databases_path)/hpo_phenotype.txt
 
+install_hpo:
+	PYTHONPATH="$(CURDIR):$${PYTHONPATH}" python3 ../regovar/extratools/hpo.py $(databases_path)/ "`cat $(databases_path)/hpo_version.txt`"
 
-clear_db: terminate_queries
-	cp *.sql docker/
-	docker exec regovar_pg psql -U postgres -c "DROP DATABASE IF EXISTS $(database_name)"
-	docker exec regovar_pg psql -U postgres -c "CREATE DATABASE $(database_name) OWNER regovar"
-	docker exec regovar_pg psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
-	docker exec regovar_pg psql -U regovar -d $(database_name) -f /var/regovar/install/create_all.sql
-	docker exec regovar_pg psql -U regovar -d $(database_name) -f /var/regovar/install/install_hg19.sql
-	docker exec regovar_pg psql -U regovar -d $(database_name) -f /var/regovar/install/install_hg38.sql
-	rm docker/*.sql
-
-
-
-
-
-#Install
-install: clear_db install_hpo
-
-
-#Clean up
-clear_files:
-	rm -rf /var/regovar/files/*
-	rm -rf /var/regovar/downloads/*
-	rm -rf /var/regovar/pipelines/*
-	rm -rf /var/regovar/jobs/*
-
-
-
-
-install_travis:
-	sudo -u postgres psql -c "DROP DATABASE IF EXISTS $(database_name)"
-	sudo -u postgres psql -c "CREATE DATABASE $(database_name) OWNER regovar"
-	sudo -u postgres psql -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
-	psql -U regovar -d $(database_name) -f ../install/create_all.sql
-	psql -U regovar -d $(database_name) -f ../install/install_hg38.sql
-
-.PHONY: init terminate_queries clear_db install clear_files install_travis
+.PHONY: create_database download_refgene download_hpo fill_database install_hpo init_config
