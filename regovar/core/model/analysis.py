@@ -54,7 +54,6 @@ def analysis_init(self, loading_depth=0, force_refresh=False):
         self.samples_ids = AnalysisSample.get_samples_ids(self.id)
         self.attributes = self.get_attributes()
         self.files_ids = AnalysisFile.get_files_ids(self.id)
-        self.panels_ids = self.get_panels_ids()
         self.fullpath = self.get_fullpath()
         
         self.project = None
@@ -67,7 +66,6 @@ def analysis_init(self, loading_depth=0, force_refresh=False):
             self.samples = AnalysisSample.get_samples(self.id, self.loading_depth-1)
             self.filters = self.get_filters(self.loading_depth-1)
             self.files = AnalysisFile.get_files(self.id, self.loading_depth-1)
-            self.panels = self.get_panels()
     except Exception as ex:
         raise RegovarException("Analysis data corrupted (id={}).".format(self.id), "", ex)
             
@@ -288,38 +286,6 @@ def analysis_get_attributes(self):
 
 
 
-def analysis_get_panels_ids(self):
-    """
-        Return the list of panels versions ids used for this analyses (set in settings)
-    """
-    return self.settings["panels"]  if "panels" in self.settings else []
-
-
-
-def analysis_get_panels(self):
-    """
-        Return the list of panels versions used for this analyses (set in settings)
-    """
-    panels_ids = self.settings["panels"]  if "panels" in self.settings else []
-    result = []
-    refgene_table = "refgene_{}".format(execute("SELECT table_suffix FROM reference WHERE id={}".format(self.reference_id)).first().table_suffix)
-    if len(panels_ids)>0:
-        data = execute("SELECT p.name, p.id AS panel_id, pv.version, pv.id AS version_id, pv.data FROM panel_entry pv INNER JOIN panel p ON pv.panel_id=p.id WHERE pv.id IN ('{}')".format("','".join(panels_ids)))
-        for panel_data in data:
-            # Get panel data
-            panel_result = {"name": panel_data.name, "version": panel_data.version, "panel_id": panel_data.panel_id, "version_id":panel_data.version_id, "entries": []}
-            for data in panel_data.data:
-                if "chr" in data:
-                    panel_result["entries"].append({"chr" : data["chr"], "start": data["start"], "end": data["end"]})
-                elif "id" in data:
-                    gene_data = execute("SELECT chr, txrange FROM {} WHERE name2='{}'".format(refgene_table, data["label"])).first()
-                    if gene_data:
-                        panel_result["entries"].append({"chr" : gene_data.chr, "start": gene_data.txrange.lower, "end": gene_data.txrange.upper})
-                    else:
-                        war("Gene '{}' have not been retrieved in {} for the panel {}. TODO: MUST implement search from former symbols and synonyms".format(data["label"], refgene_table, panel_data.id))
-        result.append(panel_result)
-    return result
-
 
 def analaysis_get_fullpath(self):
     """
@@ -348,8 +314,6 @@ Analysis.count = analysis_count
 Analysis.get_filters_ids = analysis_get_filters_ids
 Analysis.get_filters = analysis_get_filters
 Analysis.get_attributes = analysis_get_attributes
-Analysis.get_panels_ids = analysis_get_panels_ids
-Analysis.get_panels = analysis_get_panels
 Analysis.get_fullpath = analaysis_get_fullpath
 
 

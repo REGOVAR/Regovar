@@ -395,7 +395,7 @@ def err(msg, exception=None):
         regovar_logger.error("-----------------------------")
         e_traceback = traceback.format_exception(exception.__class__, exception, exception.__traceback__)
         for line in e_traceback:
-            f.write(line)
+            regovar_logger.error(line)
         regovar_logger.error("=============================")
     return log_file
     

@@ -81,7 +81,8 @@ class FilterEngine:
             return
 
         try:
-            analysis.db_suffix = "_" + execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix 
+            analysis.reference = execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix 
+            analysis.db_suffix = "_" + analysis.reference
             progress = {"id": analysis.id, "status": analysis.status, "error_message": "", "log": [
                 {"label": "Checking prequisites", "status": "done", "progress": 1}, # done in the request method : checking that sample data are ready
                 {"label": "Creating Working Table", "status": "waiting", "progress": 0},
@@ -214,10 +215,6 @@ class FilterEngine:
         for attr in analysis.attributes:
             for value, col_id in attr["values_map"].items():
                 query += "attr_{} boolean DEFAULT False, ".format(col_id)
-
-        # Add panel's columns
-        for panel in analysis.panels:
-            query += "panel_{} boolean DEFAULT False, ".format(panel["version_id"].replace("-", "_"))
 
         query = query[:-2] + ");"
         log(" > create wt schema")
@@ -734,12 +731,11 @@ class FilterEngine:
             for ge in execute("SELECT chr, trxrange FROM refgene_{} WHERE name2 IN ({})".format(ref, ",".join(["'{}'".format(t) for t in genes]))):
                 query += "({}, int8range({}, {})), ".format(ge.chr, ge.trxrange.lower, ge.trxrange.upper)
 
-        ipdb.set_trace()
         execute(query[:-2])
 
 
+
     def create_wt_panel_table(self, analysis, panel_id):
-        ipdb.set_trace()
         wt = "wt_{}".format(analysis.id)
         col = "panel_{}".format(panel_id.replace("-", "_"))
         ref = execute("SELECT table_suffix FROM reference WHERE id={}".format(analysis.reference_id)).first().table_suffix
@@ -748,6 +744,9 @@ class FilterEngine:
         sql = "SELECT column_name FROM information_schema.columns WHERE table_name='{}' AND column_name='{}'".format(wt, col)
         col_exists = execute(sql).rowcount > 0
         if col_exists: return
+        
+        # Ensure that panels exists
+        self.create_panel_table(panel_id, ref)
 
         # Create sql query
         panel = "panel_{}_{}".format(ref, panel_id.replace("-", "_"))
@@ -772,6 +771,33 @@ class FilterEngine:
         await core.notify_all_co({'action':'filtering_prepare', 'data': progress})
         if order and len(order) == 0: order = None
         order = remove_duplicates(order)
+
+        # Check if need to create new columns to the table (custom filters, panels or phenotypes filters)
+        def get_panels_filters(data):
+            """ 
+                Recursive method to retrieve lists of panels and custom filters
+            """
+            panels = []
+            filters = []
+            operator = data[0]
+            
+            if operator in ['AND', 'OR']:
+                if len(data[1]) > 0:
+                    for d in data[1]:
+                        p, f = get_panels_filters(d)
+                        panels += p
+                        filters += f
+            elif operator in ['IN', 'NOTIN']:
+                field = data[1]
+                if field[0] == 'filter':
+                    filters.append(field[1])
+                elif field[0] == 'panel':
+                    panels.append(field[1])
+            return panels, filters
+                
+        panels, filters = get_panels_filters(filter_json)
+        for p in panels:
+            self.create_wt_panel_table(analysis, p)        
 
         # Create schema
         w_table = 'wt_{}'.format(analysis.id)
@@ -1105,8 +1131,6 @@ class FilterEngine:
 
                 
 
-
-
         def parse_value(ftype, data):
             if data[0] == 'field':
                 if self.fields_map[data[1]]["type"] == ftype:
@@ -1124,6 +1148,7 @@ class FilterEngine:
                 elif ftype == 'range' and len(data) == 3:
                     return 'int8range({0}, {1})'.format(data[1], data[2])
             raise RegovarException("FilterEngine.request.parse_value - Unknow type: {0} ({1})".format(ftype, data))
+
 
         query = build_filter(filters)
         if query is not None:
