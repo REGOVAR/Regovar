@@ -238,31 +238,23 @@ echo -e "\r${GREEN}Done${NC}: Generating docker-compose file"
 # Generating: regovar config.py
 # =======================================================================================
 echo -e -n "${YELLOW}In progress${NC}: Generating regovar app python config file"
-cp config/config.default.py $root_folder/config/config.py
+cp config/config.default.py $git_path/regovar/config.py
 # conver / into \/ and . into \.
 public_host=${public_host//\//\\/}
 public_host=${public_host//\./\\.}
-sed -i s/"regovar_pg"/"$docker_pg"/ $root_folder/config/config.py
-sed -i s/"regovar_docker_app"/"$docker_app"/ $root_folder/config/config.py
-sed -i s/"regovar_net"/"$docker_network"/ $root_folder/config/config.py
-sed -i s/"^\(\s*DEBUG\s*=\s*\)\(.*\)"/"\1$debug"/ $root_folder/config/config.py
-sed -i s/"^\(\s*PORT\s*=\s*\)\(.*\)"/"\1$docker_app_port"/ $root_folder/config/config.py
-sed -i s/"^\(\s*HOST_P\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$public_host\3"/ $root_folder/config/config.py
-sed -i s/"^\(\s*PRIVATE_KEY32\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$random_key32\3"/ $root_folder/config/config.py
-sed -i s/"^\(\s*OMIM_API_KEY\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$omim_key\3"/ $root_folder/config/config.py
-sed -i s/"^\(\s*DATABASE_USER\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_user\3"/ $root_folder/config/config.py
-sed -i s/"^\(\s*DATABASE_PWD\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_pwd\3"/ $root_folder/config/config.py
-sed -i s/"^\(\s*DATABASE_NAME\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_name\3"/ $root_folder/config/config.py
+sed -i s/"regovar_pg"/"$docker_pg"/ $git_path/regovar/config.py
+sed -i s/"regovar_docker_app"/"$docker_app"/ $git_path/regovar/config.py
+sed -i s/"regovar_net"/"$docker_network"/ $git_path/regovar/config.py
+sed -i s/"^\(\s*DEBUG\s*=\s*\)\(.*\)"/"\1$debug"/ $git_path/regovar/config.py
+sed -i s/"^\(\s*PORT\s*=\s*\)\(.*\)"/"\1$docker_app_port"/ $git_path/regovar/config.py
+sed -i s/"^\(\s*HOST_P\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$public_host\3"/ $git_path/regovar/config.py
+sed -i s/"^\(\s*PRIVATE_KEY32\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$random_key32\3"/ $git_path/regovar/config.py
+sed -i s/"^\(\s*OMIM_API_KEY\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$omim_key\3"/ $git_path/regovar/config.py
+sed -i s/"^\(\s*DATABASE_USER\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_user\3"/ $git_path/regovar/config.py
+sed -i s/"^\(\s*DATABASE_PWD\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_pwd\3"/ $git_path/regovar/config.py
+sed -i s/"^\(\s*DATABASE_NAME\s*=\s*\"\)\(.*\)\(\".*\)"/"\1$db_name\3"/ $git_path/regovar/config.py
 
-if [ -e "$git_path/regovar/config.py" ]
-then
-    sudo rm -f $git_path/regovar/config.py
-fi
-mv $root_folder/config/config.py $git_path/regovar/config.py
 ln -s $git_path/regovar/config.py $root_folder/config/config.py
-#sudo chown $regovar_user $git_path/regovar/config.py
-
-
 echo -e "\r${GREEN}Done${NC}: Generating regovar app python config file"
 
 
@@ -303,12 +295,19 @@ sudo /etc/init.d/nginx restart
 # Generating: Makefile
 # =======================================================================================
 echo -e -n "${YELLOW}In progress${NC}: Generating Makefile"
-cp docker/Makefile.in $root_folder/config/Makefile
-sed -i s/"regovar_docker_pg"/"$docker_pg"/g $root_folder/app/Makefile
-sed -i s/"regovar_docker_app"/"$docker_app"/g $root_folder/app/Makefile
+cp docker/Makefile.in $git_path/regovar/Makefile
 
-ln -s $root_folder/config/Makefile $git_path/regovar/Makefile
-sudo chown $regovar_user $git_path/regovar/Makefile
+sed -i s/"{root_path}"/"$sed_root_folder"/g $git_path/regovar/Makefile
+sed -i s/"{git_path}"/"${git_path//\//\\/}"/g $git_path/regovar/Makefile
+sed -i s/"{regovar_user}"/"$regovar_user"/g $git_path/regovar/Makefile
+sed -i s/"{docker_pg}"/"$docker_pg"/g $git_path/regovar/Makefile
+sed -i s/"{docker_app}"/"$docker_app"/g $git_path/regovar/Makefile
+sed -i s/"{regovar_port}"/"$docker_app_port"/g $git_path/regovar/Makefile
+sed -i s/"{docker_net}"/"$docker_network"/g $git_path/regovar/Makefile
+sed -i s/"{db_user}"/"$db_user"/g $git_path/regovar/Makefile
+sed -i s/"{db_name}"/"$db_name"/g $git_path/regovar/Makefile
+
+ln -s $git_path/regovar/Makefile $root_folder/config/Makefile
 echo -e "\r${GREEN}Done${NC}: Generating Makefile"
 
 
@@ -325,7 +324,6 @@ docker-compose -f regovar.yml up -d
 
 
 echo -e "${GREEN}Done${NC}: Docker containers ready"
-
 
 
 
