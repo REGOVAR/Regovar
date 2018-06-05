@@ -13,6 +13,7 @@ from api_rest.handlers.sample_handler import SampleHandler
 from api_rest.handlers.variant_handler import VariantHandler
 # Regovar
 from api_rest.handlers.api_handler import ApiHandler
+from api_rest.handlers.web_handler import WebHandler
 from api_rest.handlers.user_handler import UserHandler
 from api_rest.handlers.project_handler import ProjectHandler
 from api_rest.handlers.subject_handler import SubjectHandler
