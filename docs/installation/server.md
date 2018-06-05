@@ -43,6 +43,7 @@ Une fois l'installation terminée, vous devez mettre à jour les informations HP
 ```
 cd /var/regovar/app
 make update_hpo
+make update_panels
 ```
 
 ####Check final
@@ -73,22 +74,5 @@ drwx------ 19 olivier olivier 4.0K May  2 13:45 pgdata
 drwxr-xr-x  2 olivier olivier 4.0K May  2 13:14 pipelines
 ```
  
-Le répertoire `var/regovar/config` contient l'ensemble des fichiers générés automatiquement par le script. Ces fichiers sont ensuite utilisé via des liens symboliques
-```
- ➜  regovar git:(dev) ll /var/regovar/app/
-total 64K
-drwxrwxr-x 5 olivier olivier 4.0K Apr 30 15:16 api_rest
-lrwxrwxrwx 1 olivier olivier   29 May  2 13:45 config.py -> /var/regovar/config/config.py
-drwxrwxr-x 6 olivier olivier 4.0K Apr 27 15:06 core
-lrwxrwxrwx 1 olivier olivier   28 May  2 13:54 Makefile -> /var/regovar/config/Makefile
-drwxr-xr-x 2 olivier olivier 4.0K May  2 13:45 __pycache__
--rwxrwxr-x 1 olivier olivier  13K Apr 26 16:41 regovar_cli.py
--rw-r--r-- 1 olivier olivier  195 May  2 13:45 regovar.log
--rw-rw-r-- 1 olivier olivier  981 May  2 13:54 regovar.py
--rw-rw-r-- 1 olivier olivier  308 Apr 26 16:41 setup.cfg
-drwxrwxr-x 5 olivier olivier 4.0K Apr 26 16:41 tests
--rwxrwxr-x 1 olivier olivier 3.0K Apr 26 16:41 tests.py
--rw-rw-r-- 1 olivier olivier  14K May  2 13:54 update_hpo.py
-```
- 
- 
+ - `var/regovar/config` répertori l'ensemble des fichiers configurable de l'application. si vous avez besoin de paramétrer quelque chose aller voir ici.
+
