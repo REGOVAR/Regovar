@@ -23,6 +23,15 @@
     <!-- Without any of these, we're sunk, so baking it in is safer than relying on CDN. -->
     <link rel="stylesheet" type="text/css" href="assets/jquery-ui.min.css"/>
     <script type="text/javascript" src="assets/jquery-ui.min.js"></script>
+
+
+<!--     <link rel="stylesheet" href="http://igv.org/web/release/1.0.9/igv-1.0.9.css">
+    <script type="text/javascript" src="http://igv.org/web/release/1.0.9/igv-1.0.9.min.js"></script> -->
+
+
+    <link rel="stylesheet" href="http://igv.org/web/release/1.0.9/igv-1.0.9.css">
+    <script type="text/javascript" src="http://igv.org/web/release/2.0.0-beta3/dist/igv.js"></script>
+
     <style>
         h1 {
             margin-top: 100px;
@@ -111,16 +120,10 @@
     </nav>
 
     <div class="container" role="main">
-        <div style="margin-top:70px; text-align: center;">
-            <img src="https://raw.githubusercontent.com/REGOVAR/Regovar/master/logo/logotitle.color.png" height="150px" style="margin-top: 50px;"/>
 
-            <input type="text" id="searchbar" onkeypress="startsearch(event)" placeholder="Search for analyses, subjects, files, panels, phenotypes, diseases, genes or variants">
+        <div id="igv">
         </div>
         
-        <p style="margin-top:100px; text-align: center;">
-            <a href="http://regovar.org" target="_blanck">Regovar.org</a> - 
-            <a href="http://regovar.readthedocs.io/fr/latest/" target="_blanck">Documentation</a>
-        </p>
     </div>
 
 
@@ -142,6 +145,35 @@
         $(document).ready(function()
         {
             // TODO: check that user is logged in, otherwise display login form
+            var igv_example_api, options;
+
+            options =
+            {
+                showNavigation: true,
+                showRuler: true,
+                locus: "chr1:155,160,475-155,184,282",
+                reference:
+                    {
+                        id: "hg19"
+                    },
+                tracks:
+                    [
+                        {
+                            name: "Genes",
+                            type: "annotation",
+                            format: "bed",
+                            sourceType: "file",
+                            url: "https://s3.amazonaws.com/igv.broadinstitute.org/annotations/hg19/genes/refGene.hg19.bed.gz",
+                            indexURL: "https://s3.amazonaws.com/igv.broadinstitute.org/annotations/hg19/genes/refGene.hg19.bed.gz.tbi",
+                            order: Number.MAX_VALUE,
+                            visibilityWindow: 300000000,
+                            displayMode: "EXPANDED"
+                        }
+                    ]
+            };
+
+            igv_example_api = document.getElementById('igv');
+            igv.createBrowser(igv_example_api, options);
         });
 
     </script>
