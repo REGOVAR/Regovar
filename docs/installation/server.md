@@ -44,6 +44,7 @@ Une fois l'installation terminée, vous devez mettre à jour les informations HP
 cd /var/regovar/app
 make update_hpo
 make update_panels
+make start
 ```
 
 ####Check final
