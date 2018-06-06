@@ -19,6 +19,7 @@ from api_rest.handlers import *
 
 # Handlers instances
 apiHandler = ApiHandler()
+webHandler = WebHandler()
 userHandler = UserHandler()
 projHandler = ProjectHandler()
 subjectHandler = SubjectHandler()
@@ -62,10 +63,17 @@ app.on_shutdown.append(on_shutdown)
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 # ROUTES
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-app.router.add_route('GET',    "/",       apiHandler.welcome)                                                    # Get "welcome page of the rest API"
-app.router.add_route('GET',    "/config", apiHandler.config)                                                     # Get config of the server
-app.router.add_route('GET',    "/api",    apiHandler.api)                                                        # Get html test api page
-app.router.add_route('GET',    "/ws",     websocket.get)                                                         # Websocket url to use with ws or wss protocol
+app.router.add_route('GET',    "/welcome", apiHandler.welcome)                                                   # Get "welcome page of the rest API"
+app.router.add_route('GET',    "/config",  apiHandler.config)                                                    # Get config of the server
+app.router.add_route('GET',    "/api",     apiHandler.api)                                                       # Get html test api page
+app.router.add_route('GET',    "/ws",      websocket.get)                                                        # Websocket url to use with ws or wss protocol
+
+app.router.add_route('GET',    "/",                        webHandler.home)
+app.router.add_route('GET',    "/w",                       webHandler.home)
+app.router.add_route('GET',    "/w/search/{query}",        webHandler.search)
+app.router.add_route('GET',    "/w/viewer/{type}/{id}",    webHandler.viewer)
+app.router.add_route('GET',    "/w/mviewer/{type}/{id}",   webHandler.mviewer)
+
 
 
 app.router.add_route('GET',    "/users", userHandler.list)                                                       # Get list of all users (allow search parameters)
