@@ -44,10 +44,17 @@ class WebHandler:
     #@user_role('Authenticated')
     @aiohttp_jinja2.template('web_home.html')
     def home(self, request):
+        # Get message
+        sql = "SELECT value FROM parameter WHERE key = 'message'"
+        message = None
+        for res in execute(sql):
+            message = json.loads(res.value)
+
         return {
             "hostname" : HOST_P,
             "error": None,
-            "path": []
+            "path": [],
+            "message": message
         }
 
 

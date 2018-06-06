@@ -86,6 +86,42 @@
             margin-bottom: 12px;
             margin-top: 50px;
         }
+
+        .box-info
+        {
+            background-color: #d9edf7;
+            border: 1px solid #6887ff;
+            color: #6887ff;
+            width: 100%;
+            font-size: 16px;
+            padding: 12px 20px 12px 42px;
+            border: 1px solid #6887ff;
+            margin-bottom: 12px;
+            margin-top: 50px;
+        }
+        .box-warning
+        {
+            background-color: #fcf8e3;
+            border: 1px solid #ff9b28;
+            color: #ff9b28;
+            width: 100%;
+            font-size: 16px;
+            padding: 12px 20px 12px 42px;
+            margin-bottom: 12px;
+            margin-top: 50px;
+        }
+        .box-danger
+        {
+            background-color: #f2dede;
+            border: 1px solid #f44455;
+            color: #f44455;
+
+            width: 100%;
+            font-size: 16px;
+            padding: 12px 20px 12px 42px;
+            margin-bottom: 12px;
+            margin-top: 50px;
+        }
         
 
     </style>
@@ -112,11 +148,19 @@
 
     <div class="container" role="main">
         <div style="margin-top:70px; text-align: center;">
+            {% if message %}
+                <div class="box-{{ message["type"] }}">
+                    <span>{{ message["message"]}}</span>
+                </div>
+            {% endif %}
+
+
             <img src="https://raw.githubusercontent.com/REGOVAR/Regovar/master/logo/logotitle.color.png" height="150px" style="margin-top: 50px;"/>
 
-            <input type="text" id="searchbar" onkeypress="startsearch(event)" placeholder="Search for analyses, subjects, files, panels, phenotypes, diseases, genes or variants">
+            <!-- <input type="text" id="searchbar" onkeypress="startsearch(event)" placeholder="Search for analyses, subjects, files, panels, phenotypes, diseases, genes or variants"> -->
+
         </div>
-        
+
         <p style="margin-top:100px; text-align: center;">
             <a href="http://regovar.org" target="_blanck">Regovar.org</a> - 
             <a href="http://regovar.readthedocs.io/fr/latest/" target="_blanck">Documentation</a>
