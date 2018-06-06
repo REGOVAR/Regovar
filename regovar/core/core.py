@@ -15,8 +15,8 @@ from core.managers import *
 #
 # The version of the source code
 #
-REGOVAR_DB_VERSION = "9"         # Used only by the core to know if compatible with current Regovar DB schema
-REGOVAR_CORE_VERSION = "0.9.0"   # Official version of the Regovar Server (used client side to know if client compatible with this server)
+REGOVAR_DB_VERSION = "9"          # Used only by the core to know if compatible with current Regovar DB schema
+REGOVAR_CORE_VERSION = "0.12.0"   # Official version of the Regovar Server (used client side to know if client compatible with this server)
     # Version nomenclature: Regovar_Major.ServerApi_Major.ServerApi_Minor
     #   Regovar_Major:    incremented when project leader decision 
     #   ServerApi_Major : to be increment when the api signature change (route or json answer) => force regovar client to update to be complient
