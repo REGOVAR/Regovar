@@ -20,7 +20,7 @@ Regovar est un projet collaboratif, libre, gratuit et ouvert de logiciel d’ana
 * Les utilisateurs accèdent au serveur Regovar via le réseau local du CHU grâce au client prévu à cet effet.
 * Un système de batch et de dossiers partagés entre les séquenceurs et le serveur Regovar peut être mis en place pour automatiser la récupération des "RUN" dans l'application Regovar et des mails automatiquement envoyés pour prévenir les biologistes que leurs données sont prêtes à être analysées.
 * Selon le même principe, un batch peut être mis en place pour que tout les weekends par exemple les données n'étant plus utilisées depuis un certains temps soient archivées et supprimées du serveur Regovar afin de libérer de la place. Ces mêmes batchs peuvent surveiller l'état du serveur et envoyer des alertes par mails aux administrateurs si nécessaire.
-* Les batchs ne font qu'utiliser les services proposés par le serveur Regovar afin d'automatiser certaines tâches. L'ensemble de ses tâches (d'ajout et de suppression de données) peuvent être faites manuellement par les utilisateurs.
+* Les batchs ne font qu'utiliser les services proposés par le serveur Regovar afin d'automatiser certaines tâches. L'ensemble de ces tâches (d'ajout et de suppression de données) peuvent être faites manuellement par les utilisateurs.
 
 
 # 
