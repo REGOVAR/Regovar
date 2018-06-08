@@ -38,7 +38,7 @@ Regovar est un projet financé par le réseau HUGO qui regroupe les hôpitaux du
 ## Architecture applicatif
 ![Architecture de l'application Regovar](https://raw.githubusercontent.com/REGOVAR/Regovar/master/docs/assets/img/archi_appli.png)
 
- * Les données sont stockées dans la base de données. ([cf. la doc sur la DB](database/))
+ * Les données sont stockées dans la base de données. ([cf. la doc sur la DB](database.md/))
  * L'application Regovar est divisée en deux parties :
     * le `Core` qui est composé du `Model` et des `Managers`
     * l'`API` qui va définir un certain nombre de `Handlers` afin de pouvoir aider le `Client` à interagir avec `Server` Actuellement deux API sont prévues :
