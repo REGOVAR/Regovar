@@ -16,13 +16,13 @@ La procédure reste relativement simple grâce à un script `install.sh` qui va 
 
 ####Pré-requis
 
- * Ubuntu Xenial LTS (pipelines et analyse de variants) ou Debian Stretch ou supérieur (analyse de variants uniquement).
+ * Ubuntu Xenial LTS (pipelines et analyse de variants) ou Debian Stretch ou supérieur (analyse de variants uniquement)
  * Droits root sur le serveur
  * Accès internet depuis le serveur
  * Git
  * [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
  * [Docker-compose](https://docs.docker.com/compose/install/#install-compose)
- * Ne pas oublier de s'autoriser à utiliser Docker directement avec la commande ci-dessous.
+ * Ne pas oublier de s'autoriser à utiliser Docker directement avec la commande ci-dessous
 
 ```sh
 sudo usermod -a -G docker $USER
@@ -37,7 +37,7 @@ git clone https://github.com/REGOVAR/Regovar.git ~/Regovar
 cd ~/Regovar/install
 ./install.sh
 ```
-Laissez vous guider en répondant aux différentes questions. Il vous sera demandé une clé API OMIM, que vous pouvez obtenir à [cette adresse](https://www.omim.org/api).
+Laissez-vous guider en répondant aux différentes questions. Il vous sera demandé une clé API OMIM, que vous pouvez obtenir à [cette adresse](https://www.omim.org/api).
 
 Une fois l'installation terminée, vous devez mettre à jour les informations HPO.
 ```
@@ -60,7 +60,7 @@ be2506e3b293        regovar             "python regovar.py"      24 minutes ago 
  * `regovar_pg`: est la base de donnée (postgreSQL 9.6) dont les données sont ecrites dans /var/regovar/pgdata;
  * `regovar_app`: est l'application regovar mappé sur le port 8500 de votre serveur;
 
-Le code source de votre serveur est mappé sur le dépot github que vous avez cloné: `~/Regovar`.
+Le code source de votre serveur est mappé sur le dépot github que vous avez cloné : `~/Regovar`.
 ```
 ➜  regovar git:(dev) ll /var/regovar 
 total 32K
@@ -75,5 +75,5 @@ drwx------ 19 olivier olivier 4.0K May  2 13:45 pgdata
 drwxr-xr-x  2 olivier olivier 4.0K May  2 13:14 pipelines
 ```
  
- - `var/regovar/config` répertori l'ensemble des fichiers configurable de l'application. si vous avez besoin de paramétrer quelque chose aller voir ici.
+ - `var/regovar/config` répertorie l'ensemble des fichiers configurables de l'application. Si vous avez besoin de paramétrer quelque chose aller voir ici.
 
