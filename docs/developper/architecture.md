@@ -21,7 +21,7 @@ Regovar est un projet financé par le réseau HUGO qui regroupe les hôpitaux du
 
 ## Architecture Système
 
-### Configuration actuellement prévue pour les serveurs
+###Configuration actuellement prévue pour les serveurs
 
 |   |   |   |
 | ------- | ------ | ------- |
