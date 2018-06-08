@@ -37,7 +37,7 @@ MyExamplePipeline_v1.0.0.zip
   |  ... <custom dirs/files>
 ```
 
-Le dépôt MyExamplePipeline contient les fichiers de base pour préparer l'archive zip du pipeline. Si vous le souhaitez, vous pouvez le cloner et modifier les fichiers pour les adapater à vos propres pipelines :
+Le dépôt MyExamplePipeline contient les fichiers de base pour préparer l'archive zip du pipeline. Si vous le souhaitez, vous pouvez le cloner et modifier les fichiers pour les adapter à vos propres pipelines :
 
 ```sh
 git clone https://github.com/REGOVAR-Pipelines/MyExamplePipeline.git
@@ -82,7 +82,7 @@ Ce fichier décrit tout ce qui va permettre à Regovar de correctement installer
 | VERSION     | `string` | **\[obligatoire]** Ce renseignement permet de différencier et d'installer plusieurs versions de votre pipeline sur un même serveur. Sans cela, il est impossible d'installer deux pipelines qui ont le même nom sur le serveur. Il est conseillé d'utiliser les numéros de version en suivant les recommandations [SemVer](https://semver.org/), tels que `"1.0.0"`. |
 | TYPE | `string` | Le type de pipeline peut être `job` **\[par défaut]**, `importer`, `exporter` ou `reporter` (cf. [section consacrée ci-dessous](tuto_002.md#les-types-de-pipelines)). |
 | CONTACTS | `list` | Liste des personnes (identité + email) à contacter en cas de problème. |
-| INPUTS, OUTPUTS, LOGS et DATABASES | `string` | Vous pouvez librement choisir où et comment sont nommés ces répertoires dans votre conteneur. Ces répertoires seront alors partagés, c'est-à-dire accessibles depuis plusieurs conteneurs différents(*Docker volume*), et permettront au serveur Regovar et à votre pipeline de travailler correctement ensemble. |
+| INPUTS, OUTPUTS, LOGS et DATABASES | `string` | Vous pouvez librement choisir où et comment sont nommés ces répertoires dans votre conteneur. Ces répertoires seront alors partagés, c'est-à-dire accessibles depuis plusieurs conteneurs différents (*Docker volume*), et permettront au serveur Regovar et à votre pipeline de travailler correctement ensemble. |
 | DB_ACCESS | `bool` | `true` ou `false` **\[par défaut]**, ce booléen indique si oui ou non, votre pipeline nécessite un accès à la base de données PostgreSQL de Regovar. Si oui, alors votre conteneur sera relié à la base de données et les informations de connexion seront transmises à votre script. |
 
 ## Les types de pipelines
