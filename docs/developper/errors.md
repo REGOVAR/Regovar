@@ -46,7 +46,7 @@ Le code erreur est un identifiant à 7 caractères qui suit la nomenclature suiv
 
 Log
 ===
-Comme tout serveur qui se respecte, Regovar log tout se qu'il fait. L'endroit où sont écrits les logs est configurable dans le fichier de conf. mais à terme, les logs seront stockés dans systemd ou autre.
+Comme tout serveur qui se respecte, Regovar log tout se qu'il fait. L'endroit où sont écrits les logs est configurable dans le fichier de conf.
 
 **3 niveau de log prévu :**
 
