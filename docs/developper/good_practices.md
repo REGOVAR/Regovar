@@ -34,9 +34,9 @@ Tout le code et les messages du serveur doivent être rédigés en anglais. La t
 
 ## Tests
 ###Tests Unitaires
- * Pour lancer les TU, il suffit de lancer la commande `make test`
- * Le code source des tests se trouve dans le répertoire `regovar/tests`
- * Les fichiers d'inputs utilisés pour les tests se trouvent dans `regovar/tests/inputs`
+ * Pour lancer les TU, il suffit de lancer la commande `make test`.
+ * Le code source des tests se trouve dans le répertoire `regovar/tests`.
+ * Les fichiers d'inputs utilisés pour les tests se trouvent dans `regovar/tests/inputs`.
  * Les tests doivent couvrir à minima :
      * L'ensemble des opérations de base (CRUD) du model
      * Les fonctionnalités des managers du core
@@ -64,25 +64,25 @@ Nous utilisons travis qui s'occupe de tester que tout fonctionne correctement ap
 
 ## Gestion des erreurs
 ###Outils du Core
- * Vous trouverez dans `regovar/core/framework/common.py` les outils de base:
-     * Les logs avec les 3 méthodes pour chaque niveau d'alerte : `log`, `war` et `err` (accepte les exceptions en argument)
-     * Les logs volumineux avec la méthode `log_snippet`
-     * La classe RegovarException qui se chargera automatiquement d'écrire les log
+ * Vous trouverez dans `regovar/core/framework/common.py` les outils de base :
+     * Les logs avec les 3 méthodes pour chaque niveau d'alerte : `log`, `war` et `err` (accepte les exceptions en argument).
+     * Les logs volumineux avec la méthode `log_snippet`.
+     * La classe RegovarException qui se chargera automatiquement d'écrire les logs.
  * Erreurs gérées :
-     * Liste des erreurs associées à leur code dans le fichier : `regovar/core/framework/errors_list.py`
-     * Associer une erreur à un code permet ensuite de remonter et fournir ce code à l'utilisateur non technique qui pourra demander du support ou trouver la doc en ligne concernant cette erreur
-     * Il faut pour cela lever une exception de type `RegovarException` en indiquant en paramètre le code d'erreur
-     * Penser à tenir à jour le fichier `regovar/core/framework/errors_list.py` ainsi que les fiches d'aide correspondant à chaque erreur dans le répertoire `regovar/api_rest/templates/errors/`
+     * Liste des erreurs associées à leur code dans le fichier : `regovar/core/framework/errors_list.py`.
+     * Associer une erreur à un code permet ensuite de remonter et fournir ce code à l'utilisateur non technique qui pourra demander du support ou trouver la doc en ligne concernant cette erreur.
+     * Il faut pour cela lever une exception de type `RegovarException` en indiquant en paramètre le code d'erreur.
+     * Penser à tenir à jour le fichier `regovar/core/framework/errors_list.py` ainsi que les fiches d'aide correspondant à chaque erreur dans le répertoire `regovar/api_rest/templates/errors/`.
 
 ###Outils de l'API Rest
- * Dans le fichier `regovar/api_rest/rest.py`
- * Les méthodes `rest_error` ou `rest_exception` doivent être systématiquement utilisées pour remonter une erreur aux clients
- * Ces deux méthodes se chargent de formater correctement la réponse json en cas d'échec
+ * Dans le fichier `regovar/api_rest/rest.py`.
+ * Les méthodes `rest_error` ou `rest_exception` doivent être systématiquement utilisées pour remonter une erreur aux clients.
+ * Ces deux méthodes se chargent de formater correctement la réponse json en cas d'échec.
 
 
 ## Convention de codage
 ###Nomenclature et règles de codage
-Pour ceux qui connaissent, nous respectons la convention Python [PEP8](https://www.python.org/dev/peps/pep-0008/). Pour ceux qui ont la flemme de tout lire, au moins lire [le résumé par Sam&Max](http://sametmax.com/le-pep8-en-resume/)
+Pour ceux qui connaissent, nous respectons la convention Python [PEP8](https://www.python.org/dev/peps/pep-0008/). Pour ceux qui ont la flemme de tout lire, au moins lire [le résumé par Sam&Max](http://sametmax.com/le-pep8-en-resume/).
 Cependant, nous tolérons les entorses suivantes :
 
  * sauter plusieurs ligne entre définition de class ou de fonction car ça permet d'avoir un code plus aéré ;
