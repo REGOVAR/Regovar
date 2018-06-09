@@ -49,7 +49,7 @@ make start
 
 ####Check final
 
-Si vous laissez tous les choix par défaut, à la fin de l'installation vous pourrez voir 2 containers dans docker
+Si vous laissez tous les choix par défaut, à la fin de l'installation vous pourrez voir 2 containers dans docker.
 ```
 ➜  regovar git:(dev) docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
@@ -57,8 +57,8 @@ be2506e3b293        regovar             "python regovar.py"      24 minutes ago 
 0fb1c4b61d4d        postgres            "docker-entrypoint.s…"   24 minutes ago      Up 24 minutes       5432/tcp                 regovar_pg
 ```
 
- * `regovar_pg`: est la base de donnée (postgreSQL 9.6) dont les données sont ecrites dans /var/regovar/pgdata;
- * `regovar_app`: est l'application regovar mappé sur le port 8500 de votre serveur;
+ * `regovar_pg`: est la base de donnée (postgreSQL 9.6) dont le contenu est écrit dans /var/regovar/pgdata;
+ * `regovar_app`: est l'application regovar mappée sur le port 8500 de votre serveur;
 
 Le code source de votre serveur est mappé sur le dépot github que vous avez cloné : `~/Regovar`.
 ```
