@@ -19,7 +19,7 @@ Ci-dessous la liste des paramètres du fichier de configuration Python du serveu
 | `HOST_P` | `string` | `test.regovar.org` | Il s'agit de l'adresse publique/externe par laquelle on accédera au serveur Regovar. En général, aioHTTP utilise une adresse locale privée (127.0.0.1 par exemple) et c'est le serveur Apache ou NginX qui va faire office de proxy entre l'adresse publique utilisée par les utilisateurs et l'adresse interne de Regovar.|
 | | | | |
 | `PRIVATE_KEY32` | `bool` | `False` | Il s'agit de la clé codée sur 32 caractères qui sera utilisée par le serveur pour crypter les mots de passe et les sessions des utilisateurs. Vous pouvez en générer une aléatoirement sous Linux avec la commande suivante : `$ date | md5sum`. |
-| `SESSION_MAX_DURATION` | `bool` | `86400` | La durée maximum avant que le serveur force une session utilisateur à expirer (et donc le forcer à se reconnecter). 86400 = 60*60*24 = 24 heures.  |
+| `SESSION_MAX_DURATION` | `bool` | `86400` | La durée maximum avant que le serveur force une session utilisateur à expirer (et donc le forcer à se reconnecter). 86400 = 60x60x24 = 24 heures.  |
 | `OMIM_API_KEY` | `bool` | `False` | Votre clé pour accéder à l'API en ligne d'OMIM. Vous pouvez en obtenir une gratuitement à l'adresse suivante : https://omim.org/api. |
 | | | | |
 | `DATABASE_HOST` | `string` | `"localhost"` | L'adresse du serveur de la base de données postgresql. |
@@ -37,7 +37,7 @@ Ci-dessous la liste des paramètres du fichier de configuration Python du serveu
 | `PIPELINES_DIR` | `string` | `"/var/regovar/pipelines"` | Le répertoire où seront stockées les machines virtuelles (container docker ou LXD) créées pour les pipelines. |
 | `JOBS_DIR` | `string` | `"/var/regovar/jobs"` | Le répertoire où seront stockés les fichiers nécessaires à l'exécution d'une pipeline (fichier de config) ainsi que les résultats générés (outputs). |
 | | | | |
-| `CACHE_EXPIRATION_SECONDS` | `int` | `2592000` | La durée maximale de mise en cache d'un résultat. 30 jours (60*60*24*30) |
+| `CACHE_EXPIRATION_SECONDS` | `int` | `2592000` | La durée maximale de mise en cache d'un résultat. 30 jours (60x60x24x30) |
 | `RANGE_DEFAULT` | `int` | `100` | Le nombre de résultats max retournés par défaut en cas de pagination. L'utilisateur peut forcer le serveur à en retourner plus par requête en spécifiant le paramètre `range` des requêtes. |
 | `RANGE_MAX` | `int` | `1000` | Le nombre maximum que l'utilisateur peut espérer récupérer en modifiant le paramètre `range`. |
 | | | | |
