@@ -33,8 +33,8 @@ Ci-dessous la liste des paramètres du fichier de configuration Python du serveu
 | `FILES_DIR` | `string` | `"/var/regovar/files"` | Le répertoire sur le serveur où seront stockés les fichiers. |
 | `TEMP_DIR` | `string` | `"/var/regovar/downloads"` | Le répertoire sur le serveur où seront stockés les fichiers temporaires ou en cours de téléchargement. |
 | `CACHE_DIR` | `string` | `"/var/regovar/cache"` | Le répertoire sur le serveur où seront stockés en cache certains résultats (comme les appels aux API publics tiers: OMIM, Pubmed,...). La durée de ce cache peut être modifiée avec le paramètre `CACHE_EXPIRATION_SECONDS`. |
-| `DATABASES_DIR` | `string` | `"/var/regovar/databases"` | Attention. Il ne s'agit de l'endroit où sont stockées les bases de données postgresql. Il s'agit du répertoire où sont stockés les référentiels et les bases de données d'annotations (Hg19, Hg38, HPO,...). Ces bases de données seront accessibles par les pipelines exécutés dans les containers Docker/LXD afin de leur permettre un accès efficace à ces ressources.  |
-| `PIPELINES_DIR` | `string` | `"/var/regovar/pipelines"` | Le répertoire où seront stockées les machines virtuelles (container docker ou LXD) créées pour les pipelines. |
+| `DATABASES_DIR` | `string` | `"/var/regovar/databases"` | Attention. Il ne s'agit de l'endroit où sont stockées les bases de données postgresql. Il s'agit du répertoire où sont stockés les référentiels et les bases de données d'annotations (Hg19, Hg38, HPO,...). Ces bases de données seront accessibles par les pipelines exécutés dans les conteneurs Docker/LXD afin de leur permettre un accès efficace à ces ressources.  |
+| `PIPELINES_DIR` | `string` | `"/var/regovar/pipelines"` | Le répertoire où seront stockées les machines virtuelles (conteneur docker ou LXD) créées pour les pipelines. |
 | `JOBS_DIR` | `string` | `"/var/regovar/jobs"` | Le répertoire où seront stockés les fichiers nécessaires à l'exécution d'une pipeline (fichier de config) ainsi que les résultats générés (outputs). |
 | | | | |
 | `CACHE_EXPIRATION_SECONDS` | `int` | `2592000` | La durée maximale de mise en cache d'un résultat. 30 jours (60x60x24x30) |
@@ -45,7 +45,7 @@ Ci-dessous la liste des paramètres du fichier de configuration Python du serveu
 | `LOG_DIR` | `string` | `<REGOVAR_DIR>` | Le répertoire où seront stockés les logs.  |
 | `TEMPLATE_DIR` | `string` | `...` | Le répertoire où sont stockés les templates HTML.  |
 | `ERROR_ROOT_URL` | `string` | `<HOST_P>/errorcode/` | L'adresse qui sera utilisée par le serveur pour guider l'utilisateur à trouver l'aide automatique correspondant aux codes d'erreurs. |
-| `NOTIFY_URL` | `string` | `...` | L'adresse utilisée en interne par les containers Docker/LXD pour notifier le serveur de leur progression. |
+| `NOTIFY_URL` | `string` | `...` | L'adresse utilisée en interne par les conteneurs Docker/LXD pour notifier le serveur de leur progression. |
 | | | | |
 | `MAX_JOB_RUNNING` | `string` | `5` | Le nombre maximum de pipeline qui pourront être exécutés en parallèle. |
 | `CONTAINERS_CONFIG` | `json` |  | Configuration du manager LXD. Voir la section dédiée.   |
