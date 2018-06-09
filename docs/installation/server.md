@@ -49,7 +49,7 @@ make start
 
 ####Check final
 
-Si vous laissez tous les choix par défaut, à la fin de l'installation vous pourrez voir 2 containers dans docker.
+Si vous laissez tous les choix par défaut, à la fin de l'installation vous pourrez voir deux containers dans docker.
 ```
 ➜  regovar git:(dev) docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
