@@ -12,17 +12,17 @@ Référez-vous au [README](https://github.com/REGOVAR/ServerConfiguration/blob/m
 
 ### Via Docker
 
-La procédure reste relativement simple grâce à un script `install.sh` qui va vous poser quelques questions afin de configurer et créer pour vous les containers docker, le proxy nginx et l'application regovar.  
+La procédure reste relativement simple grâce à un script `install.sh` qui va vous poser quelques questions afin de configurer et créer pour vous les conteneurs docker, le proxy nginx et l'application regovar.  
 
 ####Pré-requis
 
- * Ubuntu Xenial LTS (pipelines et analyse de variants) ou Debian Stretch ou supérieur (analyse de variants uniquement).
+ * Ubuntu Xenial LTS (pipelines et analyse de variants) ou Debian Stretch ou supérieur (analyse de variants uniquement)
  * Droits root sur le serveur
  * Accès internet depuis le serveur
  * Git
  * [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
  * [Docker-compose](https://docs.docker.com/compose/install/#install-compose)
- * Ne pas oublier de s'autoriser à utiliser Docker directement avec la commande ci-dessous.
+ * Ne pas oublier de s'autoriser à utiliser Docker directement avec la commande ci-dessous
 
 ```sh
 sudo usermod -a -G docker $USER
@@ -37,7 +37,7 @@ git clone https://github.com/REGOVAR/Regovar.git ~/Regovar
 cd ~/Regovar/install
 ./install.sh
 ```
-Laissez vous guider en répondant aux différentes questions. Il vous sera demandé une clé API OMIM, que vous pouvez obtenir à [cette adresse](https://www.omim.org/api).
+Laissez-vous guider en répondant aux différentes questions. Il vous sera demandé une clé API OMIM, que vous pouvez obtenir à [cette adresse](https://www.omim.org/api).
 
 Une fois l'installation terminée, vous devez mettre à jour les informations HPO.
 ```
@@ -49,7 +49,7 @@ make start
 
 ####Check final
 
-Si vous laissez tous les choix par défaut, à la fin de l'installation vous pourrez voir 2 containers dans docker
+Si vous laissez tous les choix par défaut, à la fin de l'installation vous pourrez voir deux containers dans docker.
 ```
 ➜  regovar git:(dev) docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
@@ -57,10 +57,10 @@ be2506e3b293        regovar             "python regovar.py"      24 minutes ago 
 0fb1c4b61d4d        postgres            "docker-entrypoint.s…"   24 minutes ago      Up 24 minutes       5432/tcp                 regovar_pg
 ```
 
- * `regovar_pg`: est la base de donnée (postgreSQL 9.6) dont les données sont ecrites dans /var/regovar/pgdata;
- * `regovar_app`: est l'application regovar mappé sur le port 8500 de votre serveur;
+ * `regovar_pg`: est la base de donnée (postgreSQL 9.6) dont le contenu est écrit dans /var/regovar/pgdata;
+ * `regovar_app`: est l'application regovar mappée sur le port 8500 de votre serveur;
 
-Le code source de votre serveur est mappé sur le dépot github que vous avez cloné: `~/Regovar`.
+Le code source de votre serveur est mappé sur le dépot github que vous avez cloné : `~/Regovar`.
 ```
 ➜  regovar git:(dev) ll /var/regovar 
 total 32K
@@ -75,5 +75,5 @@ drwx------ 19 olivier olivier 4.0K May  2 13:45 pgdata
 drwxr-xr-x  2 olivier olivier 4.0K May  2 13:14 pipelines
 ```
  
- - `var/regovar/config` répertori l'ensemble des fichiers configurable de l'application. si vous avez besoin de paramétrer quelque chose aller voir ici.
+ - `var/regovar/config` répertorie l'ensemble des fichiers configurables de l'application. Si vous avez besoin de paramétrer quelque chose aller voir ici.
 
