@@ -50,7 +50,7 @@ def debug_clear_header(filename):
         is still used to rezip the vcf in a supported format.
     """
     bashCommand = "grep -v '^##GVCFBlock' {0} > {0}.regovar_import".format(filename)
-    if filename.endswith("gz"):
+    if filename.endswith("gz") or filename.endswith("zip"):
         bashCommand = "z" + bashCommand
     process = subprocess.Popen(bashCommand, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     #bashCommand = "mv /var/regovar/downloads/tmp_workaround  {} ".format(filename)
@@ -73,85 +73,89 @@ def prepare_vcf_parsing(reference_id, filename):
     _op = open
     #if filename.endswith('gz') or filename.endswith('zip'):
         #_op = gzip.open
-    with _op(filename) as f:
-        for line in f:
-            hcount += 1
-            if _op != open:
-                line = line.decode()
-            if line.startswith('##'):
-                l = line[2:].strip()
-                l = [l[0:l.index('=')], l[l.index('=')+1:]]
-                if l[0] not in headers.keys():
+    try:
+        with _op(filename) as f:
+            for line in f:
+                hcount += 1
+                if _op != open:
+                    line = line.decode()
+                if line.startswith('##'):
+                    l = line[2:].strip()
+                    l = [l[0:l.index('=')], l[l.index('=')+1:]]
+                    if l[0] not in headers.keys():
+                        if l[0] == 'INFO' :
+                            headers[l[0]] = {}
+                        else:
+                            headers[l[0]] = []
                     if l[0] == 'INFO' :
-                        headers[l[0]] = {}
+                        data = l[1][1:-1].split(',')
+                        info_id   = data[0][3:]
+                        info_type = data[2][5:]
+                        info_desc = data[3][13:-1]
+                        headers['INFO'].update({info_id : {'type' : info_type, 'description' : info_desc}})
                     else:
-                        headers[l[0]] = []
-                if l[0] == 'INFO' :
-                    data = l[1][1:-1].split(',')
-                    info_id   = data[0][3:]
-                    info_type = data[2][5:]
-                    info_desc = data[3][13:-1]
-                    headers['INFO'].update({info_id : {'type' : info_type, 'description' : info_desc}})
-                else:
-                    headers[l[0]].append(l[1])
-            elif line.startswith('#'):
-                samples = line[1:].strip().split('\t')[9:]
-            else :
-                hcount -= 1
-                break;
+                        headers[l[0]].append(l[1])
+                elif line.startswith('#'):
+                    samples = line[1:].strip().split('\t')[9:]
+                else :
+                    hcount -= 1
+                    break;
 
-    # Check for VEP
-    vep_imp = VepImporter()
-    if vep_imp.init(headers, reference_id):
-        vep = {'vep' : vep_imp}
-    else:
-        vep = {'vep' : False}
-    
-    # Check for SnpEff
-    snpeff_imp = SnpEffImporter()
-    if snpeff_imp.init(headers, reference_id):
-        snpeff = {'snpeff' : snpeff_imp}
-    else:
-        snpeff = {'snpeff' : False }
+        # Check for VEP
+        vep_imp = VepImporter()
+        if vep_imp.init(headers, reference_id):
+            vep = {'vep' : vep_imp}
+        else:
+            vep = {'vep' : False}
+        
+        # Check for SnpEff
+        snpeff_imp = SnpEffImporter()
+        if snpeff_imp.init(headers, reference_id):
+            snpeff = {'snpeff' : snpeff_imp}
+        else:
+            snpeff = {'snpeff' : False }
 
-    ## Check for dbNSFP
-    dbnsfp = {'dbnsfp' : False }
-    #dbnsfp_fields = [f.replace("dbNSFP_", "", 1) for f in headers['INFO'].keys() if f.startswith("dbNSFP_")]
-    #dbnsfp_fields = sorted(dbnsfp_fields)
-    #if len(dbnsfp_fields) > 0:
-        #dbnsfp = {
-            #'dbnsfp' : {
-                #'type' : 'column_annotation', # use this key for standard annotations (one by column in INFO field)
-                #'version' : "", # how to get version dbNSFP used by SnpSift ?
-                #'flag' : '',
-                #'name' : 'dbNSFP',
-                #'prefix' : 'dbNSFP_',
-                #'db_type' : 'variant',
-                #'columns' : dbnsfp_fields,
-                #'description' : "A database for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome.",
+        ## Check for dbNSFP
+        dbnsfp = {'dbnsfp' : False }
+        #dbnsfp_fields = [f.replace("dbNSFP_", "", 1) for f in headers['INFO'].keys() if f.startswith("dbNSFP_")]
+        #dbnsfp_fields = sorted(dbnsfp_fields)
+        #if len(dbnsfp_fields) > 0:
+            #dbnsfp = {
+                #'dbnsfp' : {
+                    #'type' : 'column_annotation', # use this key for standard annotations (one by column in INFO field)
+                    #'version' : "", # how to get version dbNSFP used by SnpSift ?
+                    #'flag' : '',
+                    #'name' : 'dbNSFP',
+                    #'prefix' : 'dbNSFP_',
+                    #'db_type' : 'variant',
+                    #'columns' : dbnsfp_fields,
+                    #'description' : "A database for functional prediction and annotation of all potential non-synonymous single-nucleotide variants (nsSNVs) in the human genome.",
+                #}
             #}
-        #}
 
 
-    # Retrieve extension
-    file_type = os.path.split(filename)[1].split('.')[-1]
-    if not ('vcf' in file_type or 'gvcf' in file_type) :
-        file_type = "{}.{}".format(os.path.split(filename)[1].split('.')[-2], file_type)
+        # Retrieve extension
+        file_type = os.path.split(filename)[1].split('.')[-1]
+        if not ('vcf' in file_type or 'gvcf' in file_type) :
+            file_type = "{}.{}".format(os.path.split(filename)[1].split('.')[-2], file_type)
 
-    # Return result
-    result = {
-        'vcf_version' : headers['fileformat'][0],
-        'name'  : os.path.split(filename)[1],
-        'header_count': hcount,
-        'count' : count_vcf_row(filename),
-        'size'  : os.path.getsize(filename),
-        'type'  : file_type,
-        'samples' : samples,
-        'annotations' : {}
-    }
-    result['annotations'].update(vep)
-    result['annotations'].update(snpeff)
-    result['annotations'].update(dbnsfp)
+        # Return result
+        result = {
+            'vcf_version' : headers['fileformat'][0],
+            'name'  : os.path.split(filename)[1],
+            'header_count': hcount,
+            'count' : count_vcf_row(filename),
+            'size'  : os.path.getsize(filename),
+            'type'  : file_type,
+            'samples' : samples,
+            'annotations' : {}
+        }
+        result['annotations'].update(vep)
+        result['annotations'].update(snpeff)
+        result['annotations'].update(dbnsfp)
+    except Exception as ex:
+        err("Error when parsing vcf headers", exception=ex)
+        result=None
     return result
 
 
@@ -711,7 +715,7 @@ class VcfManager(AbstractImportManager):
         vcf_metadata = prepare_vcf_parsing(reference_id, filepath)
         db_ref_suffix= "_" + Model.execute("SELECT table_suffix FROM reference WHERE id={}".format(reference_id)).first().table_suffix
 
-        if filepath.endswith(".vcf") or filepath.endswith(".vcf.gz"):
+        if vcf_metadata:
             filepath += ".regovar_import" # a tmp file have been created by prepare_vcf_parsing() method to avoid pysam unsupported file format.
             start = datetime.datetime.now()
             
