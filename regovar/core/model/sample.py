@@ -94,7 +94,7 @@ def sample_to_json(self, fields=None, loading_depth=-1):
             else :                           
                 result[f] = []
         elif f in ["subject", "file"]:
-            if hasattr(self, f) and eval("self." + f):
+            if  loading_depth > 0 and hasattr(self, f) and eval("self." + f):
                 result[f] = eval("self." + f + ".to_json(None, loading_depth-1)")
             else:
                 result[f] = None
