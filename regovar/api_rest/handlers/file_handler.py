@@ -166,24 +166,19 @@ class FileHandler:
 
 
     # Resumable download implement the TUS.IO protocol.
-    @user_role('Authenticated')
     def tus_config(self, request):
         return tus_manager.options(request)
 
-    @user_role('Authenticated')
     def tus_upload_init(self, request):
         return tus_manager.creation(request)
 
-    @user_role('Authenticated')
     def tus_upload_resume(self, request):
         return tus_manager.resume(request)
 
-    @user_role('Authenticated')
     async def tus_upload_chunk(self, request):
         result = await tus_manager.patch(request)
         return result
 
-    @user_role('Authenticated')
     def tus_upload_delete(self, request):
         return tus_manager.delete_file(request)
 

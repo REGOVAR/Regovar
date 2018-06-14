@@ -33,7 +33,6 @@ class SearchHandler:
             result = core.search.search(searchQuery)
         except RegovarException as ex:
             return rest_error("Error occured while trying to search", e)
-        
         return rest_success(result)
 
 
