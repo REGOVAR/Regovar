@@ -400,6 +400,11 @@ def get_info(infos, key):
         return infos[key]
     return "NULL"
 
+def sqlc(data, default="NULL"):
+    if data:
+        return data
+    return default
+
 
 
 def is_transition(ref, alt):
@@ -609,10 +614,10 @@ class VcfManager(AbstractImportManager):
                         else :
                             depth_alt = "NULL"
                         
-                        sql_query2 += sql_pattern2.format(samples[sn]["id"], vcf_line, bin, chrm, pos, ref, alt, gt, get_info(sp, "DP"), depth_alt, row.qual, filters)
+                        sql_query2 += sql_pattern2.format(samples[sn]["id"], vcf_line, bin, chrm, pos, ref, alt, gt, get_info(sp, "DP"), sqlc(depth_alt), sqlc(row.qual), filters)
                     else:
                         # save that the sample HAVE NOT this variant
-                        sql_query2 += sql_pattern2.format(samples[sn]["id"], vcf_line, bin, chrm, pos, ref, alt, "NULL", get_info(sp, "DP"), "NULL", row.qual, filters)
+                        sql_query2 += sql_pattern2.format(samples[sn]["id"], vcf_line, bin, chrm, pos, ref, alt, "NULL", get_info(sp, "DP"), "NULL", sqlc(row.qual), filters)
                 
                 # Register variant annotations
                 for ann_name, importer in vcf_metadata["annotations"].items():
