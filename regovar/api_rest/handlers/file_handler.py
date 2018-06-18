@@ -56,7 +56,7 @@ class FileWrapper (TusFileWrapper):
             f = File.from_id(self.id)
             f.upload_offset=self.upload_offset
             f.save()
-            await core.notify_all_co(data={"action": "file_upload", "data" : f.to_json(["id", "size", "upload_offset", "status"])})
+            await core.notify_all_co(data={"action": "file_upload", "data" : f.to_json(["id", "size", "upload_offset", "status", "name"])})
         except Exception as ex:
             return TusManager.build_response(code=500, body="Unexpected error occured: {}".format(ex))
 

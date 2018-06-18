@@ -75,8 +75,8 @@ class WebHandler:
         }
 
 
-    @aiohttp_jinja2.template('web_viewer.html')
-    def viewer(self, request):
+    @aiohttp_jinja2.template('web_info.html')
+    def info(self, request):
         asset_type = request.match_info.get('type', "unknow")
         asset_id = request.match_info.get('id', None)
 
@@ -88,6 +88,24 @@ class WebHandler:
         pass
 
 
-    @aiohttp_jinja2.template('web_mviewer.html')
-    def mviewer(self, request):
-        pass
+    @aiohttp_jinja2.template('web_viewer.html')
+    def viewer(self, request):
+        asset_id = request.match_info.get('id', None)
+        file = File.from_id(asset_id)
+        ftype = "txt"
+        result = []
+        try:
+            if file and file.status in ['uploaded', 'checked']:
+                with open(file.path) as f:
+                    result = [next(f) for x in range(1000)]
+        except Exception as ex:
+            # file is not a txt file, parse binary
+            ftype = "bin"
+
+        return {
+            "hostname" : HOST_P,
+            "error": None,
+            "path": ["view"],
+            "type": ftype,
+            "data": result
+        }

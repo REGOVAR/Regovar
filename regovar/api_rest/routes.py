@@ -71,8 +71,8 @@ app.router.add_route('GET',    "/ws",      websocket.get)                       
 app.router.add_route('GET',    "/",                        webHandler.home)
 app.router.add_route('GET',    "/w",                       webHandler.home)
 app.router.add_route('GET',    "/w/search/{query}",        webHandler.search)
-app.router.add_route('GET',    "/w/viewer/{type}/{id}",    webHandler.viewer)
-app.router.add_route('GET',    "/w/mviewer/{type}/{id}",   webHandler.mviewer)
+app.router.add_route('GET',    "/w/info/{type}/{id}",      webHandler.info)
+app.router.add_route('GET',    "/w/viewer/{id}",           webHandler.viewer)
 
 
 
