@@ -514,22 +514,22 @@ def getMaxUcscBin(start, end):
 # Import manager
 # =======================================================================================================
 
-from queue import Queue
-from threading import Thread
+# from queue import Queue
+# from threading import Thread
 
 
 
 
 
-# define bw worker
-def vcf_import_worker(queue, file_id, samples):
-    while True:
-        query = queue.get()
-        if query is None:
-            break
+# # define bw worker
+# def vcf_import_worker(queue, file_id, samples):
+#     while True:
+#         query = queue.get()
+#         if query is None:
+#             break
         
-        Model.execute(query)
-        queue.task_done()
+#         Model.execute(query)
+#         queue.task_done()
         
         
 
@@ -630,7 +630,7 @@ class VcfManager(AbstractImportManager):
 
 
             # split big request to avoid sql out of memory transaction or too long freeze of the server
-            if count >= 5000:
+            if count >= 1000:
                 progress = records_current / records_count
                 count = 0
                 transaction = sql_query1 + sql_query2 + sql_query3
@@ -646,40 +646,42 @@ class VcfManager(AbstractImportManager):
                 Model.execute(sql)
                 core.notify_all({"action": "import_vcf_processing", "data" : {"reference_id": reference_id, "file_id" : file_id, "status" : "loading", "progress": progress, "samples": [ {"id" : samples[sname]["id"], "name" : sname} for sname in samples]}})
                 
-                log("VCF import : enqueue query")
-                self.queue.put(transaction)
+                #log("VCF import : enqueue query")
+                #self.queue.put(transaction)
+                log("VCF import : execute query")
+                Model.execute(transaction)
                 # Reset query buffers
                 sql_query1 = ""
                 sql_query2 = ""
                 sql_query3 = ""
 
-        # Loop done, execute last pending query 
-        log("VCF import : Execute last async query")
-        transaction = sql_query1 + sql_query2 + sql_query3
-        if transaction:
-            self.queue.put(transaction)
+        # # Loop done, execute last pending query 
+        # log("VCF import : Execute last async query")
+        # transaction = sql_query1 + sql_query2 + sql_query3
+        # if transaction:
+        #     self.queue.put(transaction)
 
 
-        # Waiting that all query in the queue was executed
-        log("VCF parsing done. Waiting for async execution of sql queries")
+        # # Waiting that all query in the queue was executed
+        # log("VCF parsing done. Waiting for async execution of sql queries")
         
-        # block until all tasks are done
-        self.queue.join()
-        log("No more sql query to proceed")
+        # # block until all tasks are done
+        # self.queue.join()
+        # log("No more sql query to proceed")
         
-        # stop vcf_import_thread_workers
-        for i in range(VCF_IMPORT_MAX_THREAD):
-            self.queue.put(None)
-        for t in self.workers:
-            t.join()
+        # # stop vcf_import_thread_workers
+        # for i in range(VCF_IMPORT_MAX_THREAD):
+        #     self.queue.put(None)
+        # for t in self.workers:
+        #     t.join()
 
         # Compute composite variant by sample
         sql_pattern = "UPDATE sample_variant" + db_ref_suffix + " u SET is_composite=TRUE WHERE u.sample_id = {0} AND u.variant_id IN (SELECT DISTINCT UNNEST(sub.vids) as variant_id FROM (SELECT array_agg(v.variant_id) as vids, g.name2 FROM sample_variant" + db_ref_suffix + " v INNER JOIN refgene" + db_ref_suffix + " g ON g.chr=v.chr AND g.trxrange @> v.pos WHERE v.sample_id={0} AND v.genotype=2 or v.genotype=3 GROUP BY name2 HAVING count(*) > 1) AS sub)"
         log("Computing is_composite fields by samples :")
-        for sid in samples:
-            query = sql_pattern.format(samples[sid]["id"])
-            log(" - sample {}".format(samples[sid]["id"]))
-            Model.execute(query)
+        # for sid in samples:
+        #     query = sql_pattern.format(samples[sid]["id"])
+        #     log(" - sample {}".format(samples[sid]["id"]))
+        #     Model.execute(query)
         log("Sample import from VCF Done")
         end = datetime.datetime.now()
         
@@ -753,16 +755,16 @@ class VcfManager(AbstractImportManager):
                 return;
 
 
-            # tasks queue shared by all thread
-            self.queue = Queue(maxsize=0)
-            # list of worker created to execute multithread tasks
-            self.workers = []
+            # # tasks queue shared by all thread
+            # self.queue = Queue(maxsize=0)
+            # # list of worker created to execute multithread tasks
+            # self.workers = []
             
-            # init threading workers
-            for i in range(VCF_IMPORT_MAX_THREAD):
-                t = Thread(target=vcf_import_worker, args=(self.queue, file_id, samples), daemon=True)
-                t.start()
-                self.workers.append(t)
+            # # init threading workers
+            # for i in range(VCF_IMPORT_MAX_THREAD):
+            #     t = Thread(target=vcf_import_worker, args=(self.queue, file_id, samples), daemon=True)
+            #     t.start()
+            #     self.workers.append(t)
 
 
             await core.notify_all_co({"action":"import_vcf_start", "data" : {"reference_id": reference_id, "file_id" : file_id, "samples" : [ {"id" : samples[sid]["id"], "name" : samples[sid]["name"]} for sid in samples.keys()]}})

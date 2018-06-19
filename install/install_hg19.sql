@@ -197,9 +197,9 @@ ALTER TABLE refgene_exon_hg19 DROP COLUMN i_exonstarts;
 --
 -- Create indexes
 --
-CREATE INDEX refgene_hg19_chrom_trxrange_idx
+CREATE INDEX refgene_hg19_chr_trxrange_idx
   ON refgene_hg19
-  USING btree (bin, chr, trxrange);
+  USING btree (chr, trxrange);
 
 
 CREATE INDEX refgene_hg19_trxrange_idx
@@ -207,9 +207,9 @@ CREATE INDEX refgene_hg19_trxrange_idx
   USING gist (trxrange);
 
 
-CREATE INDEX refgene_trx_hg19_chrom_trxrange_idx
+CREATE INDEX refgene_trx_hg19_chr_trxrange_idx
   ON refgene_trx_hg19
-  USING btree (bin, chr, trxrange);
+  USING btree (chr, trxrange);
 
 
 CREATE INDEX refgene_trx_hg19_trxrange_idx
@@ -217,9 +217,9 @@ CREATE INDEX refgene_trx_hg19_trxrange_idx
   USING gist (trxrange);
 
   
-CREATE INDEX refgene_exon_hg19_chrom_exonange_idx
+CREATE INDEX refgene_exon_hg19_chr_exonange_idx
   ON refgene_exon_hg19
-  USING btree (bin, chr, exonrange);
+  USING btree (chr, exonrange);
 
   
 CREATE INDEX refgene_exon_hg19_exonange_idx
