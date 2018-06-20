@@ -1,6 +1,10 @@
 #!env/python3
 # coding: utf-8
-import ipdb
+try:
+    import ipdb
+except ImportError:
+    pass
+
 
 from core.framework.common import log, war, err
 

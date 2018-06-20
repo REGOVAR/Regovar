@@ -1,6 +1,10 @@
 #! /usr/bin/env python3
 # coding: utf-8
-import ipdb
+try:
+    import ipdb
+except ImportError:
+    pass
+
 
 import os
 import sys
