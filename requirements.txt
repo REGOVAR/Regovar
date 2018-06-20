@@ -1,4 +1,4 @@
-aiohttp>=2.3.7
+aiohttp>=3.0.1
 aiohttp-jinja2>=0.14.0
 aiohttp-security>=0.2.0
 aiohttp-session>=2.1.0
