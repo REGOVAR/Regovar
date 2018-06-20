@@ -113,7 +113,7 @@ class SampleHandler:
         try:
             samples = await core.samples.import_from_file(file_id, ref_id)
         except Exception as ex:
-            return rest_error("Import error : Unable to import samples.", ex=ex)
+            return rest_error("Import error : Unable to import samples.", exception=ex)
         if samples:
             for s in samples:
                 if "subject_id" in params and params["subject_id"]: 
