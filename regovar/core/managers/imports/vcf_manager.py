@@ -630,7 +630,7 @@ class VcfManager(AbstractImportManager):
 
 
             # split big request to avoid sql out of memory transaction or too long freeze of the server
-            if count >= 5000:
+            if count >= 1000:
                 progress = records_current / records_count
                 count = 0
                 transaction = sql_query1 + sql_query2 + sql_query3

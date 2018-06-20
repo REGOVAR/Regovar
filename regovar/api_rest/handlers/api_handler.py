@@ -81,7 +81,7 @@ class ApiHandler:
             sdata = json.loads(response.content.decode())
 
         # Get message
-        sql = "SELECT value FROM parameter WHERE key = 'message'"
+        sql = "SELECT * FROM parameter WHERE key = 'message'"
         message = {"type": "info", "message": ""}
         for res in execute(sql):
             message = json.loads(res.value)

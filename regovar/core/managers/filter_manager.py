@@ -169,7 +169,7 @@ class FilterEngine:
         self.working_table_creation_update_status(analysis, progress, 1, "computing", 0.1)
 
         wt = "wt_{}".format(analysis.id)
-        query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE UNLOGGED TABLE {0} (\
+        query = "DROP TABLE IF EXISTS {0} CASCADE; CREATE TABLE {0} (\
             is_variant boolean DEFAULT False, \
             variant_id bigint, \
             vcf_line bigint, \
