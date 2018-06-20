@@ -1,11 +1,14 @@
 # Maintenance du serveur
 
+## Mise à jour du serveur
+Pour mettre à jour le serveur dans le cas où vous utilisez une installation via SaltStack, nous vous invitons à suivre les instructions sur le [README.md](https://github.com/REGOVAR/ServerConfiguration/blob/master/README.md#update-the-computer-and-the-configuration-as-root-on-debian-or-ubuntu)
 
-Vous trouverez la liste des updates dans `Regovar/install/updates`.
-Pour mettre à jour le serveur :
+## Mise à jour de la base de données
+Il faut également mettre à jour la base de données. Vous trouverez la liste des mises à jour dans `Regovar/install/updates`.
 
 ```sh
 psql -U $DATABASE_USERNAME -d $DATABASE_NAME -f "Regovar/install/updates/6.5 to 6.6.sql"
 ``` 
-
-Par défaut, `$DATABASE_NAME` est `regovar` et `$DATABASE_USERNAME` est `regovar`.
+Par défaut :
+- `$DATABASE_NAME` est `regovar`
+- `$DATABASE_USERNAME` est `regovar`
