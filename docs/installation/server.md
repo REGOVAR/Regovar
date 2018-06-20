@@ -75,5 +75,5 @@ drwx------ 19 olivier olivier 4.0K May  2 13:45 pgdata
 drwxr-xr-x  2 olivier olivier 4.0K May  2 13:14 pipelines
 ```
  
- - `var/regovar/config` répertorie l'ensemble des fichiers configurables de l'application. Si vous avez besoin de paramétrer quelque chose aller voir ici.
+ - `/var/regovar/config` répertorie l'ensemble des fichiers configurables de l'application.
 
