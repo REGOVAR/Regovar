@@ -359,15 +359,16 @@ class FilterEngine:
         query += "".join(["CREATE INDEX {0}_idx_s{1}_vaf ON {0} USING btree (s{1}_vaf);".format(wt, i) for i in analysis.samples_ids])
         query += "".join(["CREATE INDEX {0}_idx_s{1}_qual ON {0} USING btree (s{1}_qual);".format(wt, i) for i in analysis.samples_ids])
         #query += "".join(["CREATE INDEX {0}_idx_s{1}_filter ON {0} USING btree (s{1}_filter);".format(wt, i) for i in analysis.samples_ids])
-        query += "".join(["CREATE INDEX {0}_idx_s{1}_is_composite ON {0} USING btree (s{1}_is_composite);".format(wt, i) for i in analysis.samples_ids])
-        query += "CREATE INDEX {0}_idx_is_dom ON {0} USING btree (is_dom);".format(wt)
-        query += "CREATE INDEX {0}_idx_is_rec_hom ON {0} USING btree (is_rec_hom);".format(wt)
-        query += "CREATE INDEX {0}_idx_is_rec_htzcomp ON {0} USING btree (is_rec_htzcomp);".format(wt)
-        query += "CREATE INDEX {0}_idx_is_denovo ON {0} USING btree (is_denovo);".format(wt)
-        query += "CREATE INDEX {0}_idx_is_exonic ON {0} USING btree (is_exonic);".format(wt)
-        query += "CREATE INDEX {0}_idx_is_aut ON {0} USING btree (is_aut);".format(wt)
-        query += "CREATE INDEX {0}_idx_is_xlk ON {0} USING btree (is_xlk);".format(wt)
-        query += "CREATE INDEX {0}_idx_is_mit ON {0} USING btree (is_mit);".format(wt)
+        # Index useless on bool column
+        # query += "".join(["CREATE INDEX {0}_idx_s{1}_is_composite ON {0} USING btree (s{1}_is_composite);".format(wt, i) for i in analysis.samples_ids])
+        # query += "CREATE INDEX {0}_idx_is_dom ON {0} USING btree (is_dom);".format(wt)
+        # query += "CREATE INDEX {0}_idx_is_rec_hom ON {0} USING btree (is_rec_hom);".format(wt)
+        # query += "CREATE INDEX {0}_idx_is_rec_htzcomp ON {0} USING btree (is_rec_htzcomp);".format(wt)
+        # query += "CREATE INDEX {0}_idx_is_denovo ON {0} USING btree (is_denovo);".format(wt)
+        # query += "CREATE INDEX {0}_idx_is_exonic ON {0} USING btree (is_exonic);".format(wt)
+        # query += "CREATE INDEX {0}_idx_is_aut ON {0} USING btree (is_aut);".format(wt)
+        # query += "CREATE INDEX {0}_idx_is_xlk ON {0} USING btree (is_xlk);".format(wt)
+        # query += "CREATE INDEX {0}_idx_is_mit ON {0} USING btree (is_mit);".format(wt)
 
         # Add indexes on attributes columns
         for attr in analysis.attributes:
@@ -375,8 +376,8 @@ class FilterEngine:
                 query += "CREATE INDEX {0}_idx_attr_{1} ON {0} USING btree (attr_{1});".format(wt, col_id)
 
         # Add indexes on panel columns
-        for panel_id in analysis.panels_ids:
-            query += "CREATE INDEX {0}_idx_panel_{1} ON {0} USING btree (panel_{1});".format(wt, panel_id.replace("-", "_"))
+        # for panel in analysis.panels:
+        #     query += "CREATE INDEX {0}_idx_panel_{1} ON {0} USING btree (panel_{1});".format(wt, panel["version_id"].replace("-", "_"))
         
         log(" > create index for variants random access")
         execute(query)
@@ -405,8 +406,8 @@ class FilterEngine:
                 q_fields += ", attr_{}".format(col_id)
 
         # Add panel's columns
-        for panel_id in analysis.panels_ids:
-            q_fields += ", panel_{}".format(panel_id.replace("-", "_"))
+        for panel in analysis.panels:
+            q_fields += ", panel_{}".format(panel["version_id"].replace("-", "_"))
         
         q_select  = "False, _wt.variant_id, '{0}', {1}.regovar_trx_id, _wt.vcf_line, _wt.regovar_score, _wt.bin, _wt.chr, _wt.pos, "
         q_select += "_wt.ref, _wt.alt, _wt.is_transition, _wt.sample_tlist, _wt.sample_tcount, _wt.sample_alist, _wt.sample_acount, _wt.is_dom, _wt.is_rec_hom, "
@@ -424,8 +425,8 @@ class FilterEngine:
                 q_select += ", _wt.attr_{}".format(col_id)
 
         # Add panel's columns
-        for panel_id in analysis.panels_ids:
-            q_select += ", _wt.panel_{}".format(panel_id.replace("-", "_"))
+        for panel in analysis.panels:
+            q_select += ", _wt.panel_{}".format(panel["version_id"].replace("-", "_"))
         
         q_from   = "{0} _wt".format(wt)
 
@@ -542,9 +543,9 @@ class FilterEngine:
                         q2.append(self.sql_agg_map[self.fields_map[fuid]['type']].format("_" + fuid))
                     else:
                         list_field.append(fuid)
-        
-        res = execute(query.format(analysis.id, ','.join(q1), ','.join(q2)))
-        log(" > {} trx annotation merged into their respective variant".format(res.rowcount))
+        if len(q1) > 0 and len(q2) > 0        :
+            res = execute(query.format(analysis.id, ','.join(q1), ','.join(q2)))
+            log(" > {} trx annotation merged into their respective variant".format(res.rowcount))
         self.working_table_creation_update_status(analysis, progress, 7, "computing", 0.25)
         
         # Manage special sql query for list fields

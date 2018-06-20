@@ -62,7 +62,7 @@ def rest_success(response_data=None, pagination_data=None):
 
 
 
-def rest_error(message:str="Unknow error", code:str="", error_id:str="", ex=None):
+def rest_error(message:str="Unknow error", code:str="", error_id:str="", exception=None):
     """ 
         Build the REST error response
         :param message:         The short "friendly user" error message
@@ -70,7 +70,7 @@ def rest_error(message:str="Unknow error", code:str="", error_id:str="", ex=None
         :param error_id:        The id of the error, to return to the end-user. 
                                 This code will allow admins to find in logs where exactly this error occure
     """
-    err(message, exception=ex)
+    err(message, exception=exception)
     results = {
         "success":      False, 
         "msg":          message, 
