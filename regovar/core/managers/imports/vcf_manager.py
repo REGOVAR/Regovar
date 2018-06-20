@@ -633,7 +633,7 @@ class VcfManager(AbstractImportManager):
             if count >= 1000:
                 progress = records_current / records_count
                 count = 0
-                transaction = sql_query1 + sql_query2 + sql_query3
+                transaction = "BEGIN; " + sql_query1 + sql_query2 + sql_query3 + "COMMIT; "
                 log("VCF import : line {} (chrm {})".format(records_current, chrm))
                 log("VCF import : Execute sync query {}/{} ({}%)".format(records_current, records_count, round(progress * 100, 2)))
                 

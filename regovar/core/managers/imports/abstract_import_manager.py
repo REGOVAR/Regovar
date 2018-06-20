@@ -80,11 +80,8 @@ class AbstractTranscriptDataImporter():
 
     def escape_value_for_sql(self, value):
         if type(value) is str:
-            value = value.replace('%', '\%')
-            value = value.replace("'", "''")
-
-            # Workaround for some annotations that can crash the script
-            value = value.replace('-:0', '-: 0')   # VEP aa_maf = "-:0.1254..." for weird raison: -:0 is interpreted as {0} by format method
+            value = value.replace(':', ': ') # As :X is a interpreted as a variable by sqlalchemy
+            value = value.replace("'", "''") 
         return value
     
     
