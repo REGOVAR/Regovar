@@ -78,7 +78,7 @@ def rest_error(message:str="Unknow error", code:str="", error_id:str="", excepti
         "error_url":    ERROR_ROOT_URL + code,
         "error_id":     error_id
     }
-    if ex: results["exception"] = str(ex)
+    if exception: results["exception"] = str(exception)
     return web.json_response(results)
 
 
