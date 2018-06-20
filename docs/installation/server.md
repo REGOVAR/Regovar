@@ -10,6 +10,12 @@ La première méthode est prévue pour un déploiement et une utilisation de Reg
 
 Référez-vous au [README](https://github.com/REGOVAR/ServerConfiguration/blob/master/README.md) de la configuration utilisée pour le déploiement au CHU d'Angers et de Nancy.
 
+Une fois le serveur installé, vous pouvez le démarrer.
+```sh
+cd ~/Regovar/regovar
+sudo -u regovar python3 regovar.py
+```
+
 ### Via Docker
 
 La procédure reste relativement simple grâce à un script `install.sh` qui va vous poser quelques questions afin de configurer et créer pour vous les conteneurs docker, le proxy nginx et l'application regovar.  
@@ -49,7 +55,7 @@ make start
 
 ####Check final
 
-Si vous laissez tous les choix par défaut, à la fin de l'installation vous pourrez voir deux containers dans docker.
+Si vous laissez tous les choix par défaut, à la fin de l'installation vous pourrez voir deux conteneurs dans docker.
 ```
 ➜  regovar git:(dev) docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
@@ -60,7 +66,7 @@ be2506e3b293        regovar             "python regovar.py"      24 minutes ago 
  * `regovar_pg`: est la base de donnée (postgreSQL 9.6) dont le contenu est écrit dans /var/regovar/pgdata;
  * `regovar_app`: est l'application regovar mappée sur le port 8500 de votre serveur;
 
-Le code source de votre serveur est mappé sur le dépot github que vous avez cloné : `~/Regovar`.
+Le code source de votre serveur est mappé sur le dépot GitHub que vous avez cloné : `~/Regovar`.
 ```
 ➜  regovar git:(dev) ll /var/regovar 
 total 32K
