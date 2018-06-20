@@ -80,7 +80,7 @@ class AbstractTranscriptDataImporter():
 
     def escape_value_for_sql(self, value):
         if type(value) is str:
-            value = value.replace('%', '%%')
+            value = value.replace('%', '\%')
             value = value.replace("'", "''")
 
             # Workaround for some annotations that can crash the script
