@@ -362,7 +362,7 @@ def normalize_gt(infos):
          3: alt1/alt2
     """
     gt = get_info(infos, "GT")
-    if gt != "NULL":
+    if gt != "NULL" and len(infos["GT"]) == 2:
         if infos["GT"][0] == infos["GT"][1]:
             # Homozyot ref
             if infos["GT"][0] in [None, 0] : 
@@ -375,7 +375,7 @@ def normalize_gt(infos):
                 return "2"
             else :
                 return "3"
-        log ("unknow : " + str(infos["GT"]) )
+    log ("WARNING GT error: " + str(infos["GT"]) )
     return -50
 
 
@@ -418,12 +418,8 @@ def is_transition(ref, alt):
 
 def escape_value_for_sql(value):
     if type(value) is str:
-        value = value.replace("%", "%%")
-        value = value.replace("'", "''")
-
-        # Workaround for some wrong annotations found
-        value = value.replace("-:0", "-: 0")   # VEP aa_maf = "-:0.1254..."
-
+        value = value.replace(':', ': ') # As :X is a interpreted as a variable by sqlalchemy
+        value = value.replace("'", "''") 
     return value
 
 
