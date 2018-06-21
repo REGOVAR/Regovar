@@ -49,10 +49,8 @@ class FileWrapper (TusFileWrapper):
             self.size = self.file.size
             self.upload_url = "file/upload/" + str(id)
         else:
-            raise RegovarException("TUS File wrapper init error : Unknow id: {}".format(id))
-
-
-    
+            log("Warning: unable to upload file: not found: {}".format(id))
+            return TusManager.build_response(code=404, body="File upload not found: {}".format(id))
 
     async def save(self):
         from core.core import core
@@ -67,7 +65,7 @@ class FileWrapper (TusFileWrapper):
 
     async def complete(self, checksum=None, checksum_type="md5"):
         try:
-            log ('Upload of the file (id={0}) is complete.'.format(self.id))
+            log('Upload of the file (id={0}) is complete.'.format(self.id))
             core.files.upload_finish(self.id, checksum, checksum_type)
             f = File.from_id(self.id)
             await core.notify_all_co(data={"action": "file_upload", "data" : f.to_json()})
