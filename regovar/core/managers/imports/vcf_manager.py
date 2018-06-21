@@ -595,8 +595,7 @@ class VcfManager(AbstractImportManager):
                 
                 # get list of sample that have this variant (chr-pos-ref-alt)
                 samples_array = []
-                for sn in row.samples:
-                    sp = row.samples.get(sn)
+                for sn, sp in row.samples.items():
                     if allele in sp.alleles:
                         samples_array.append(samples[sp.name]["id"])
                 if len(samples_array) == 0: continue
@@ -605,8 +604,7 @@ class VcfManager(AbstractImportManager):
                 sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
                         
                 # Register variant/sample associations
-                for sn in row.samples:
-                    sp = row.samples.get(sn)
+                for sn, sp in row.samples.items():
                     gt = normalize_gt(sp)
                     filters = escape_value_for_sql(json.dumps(row.filter.keys()))
                     count += 1
@@ -740,7 +738,7 @@ class VcfManager(AbstractImportManager):
             # get samples in the VCF 
             # samples = {i : Model.get_or_create(Model.Session(), Model.Sample, name=i)[0] for i in list((vcf_reader.header.samples))}
             samples = {}
-            for i in list((vcf_reader.header.samples)):
+            for i in vcf_reader.header.samples:
                 sample = Model.Sample.new()
                 sample.name = i
                 sample.file_id = file_id
@@ -783,12 +781,3 @@ class VcfManager(AbstractImportManager):
         
             return {"success": True, "samples": samples, "records_count": records_count }
         return {"success": False, "error": "File not supported"}
-
-
-
-
-
-
-
-
-
