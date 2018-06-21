@@ -373,18 +373,19 @@ def normalize_gt(infos):
             log ("WARNING GT empty: " + str(infos["GT"]) )
             return -50
         elif len(infos["GT"]) == 1:
-            # May append on chrX (hemizygot): TODO: manage this type of gt in regovar
-            # FIXME: consider it as homozygot 
+            # Happens on chrX in males (hemizygous) and in females when they are homozygous
+            # TODO: manage hemizygous in Regovar
+            # FIXME: considered for now as homozygous
             return "1"
         elif infos["GT"][0] == infos["GT"][1]:
-            # Homozyot ref
+            # Homozyous ref
             if infos["GT"][0] in [None, 0] : 
                 return 0
-            # Homozyot alt
+            # Homozygous alt
             return "1"
         else :
             if 0 in infos["GT"] :
-                # Hetero ref
+                # Heterozygous ref
                 return "2"
             else :
                 return "3"
