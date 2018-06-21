@@ -1,7 +1,11 @@
 #!env/python3
 # coding: utf-8
 
-import ipdb
+try:
+    import ipdb
+except ImportError:
+    pass
+
 import sqlalchemy
 
 from core.managers.exports.abstract_export_manager import AbstractVariantExportManager

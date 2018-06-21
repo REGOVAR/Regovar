@@ -1,6 +1,12 @@
 #!env/python3
 # coding: utf-8
 
+try:
+    import ipdb
+except ImportError:
+    pass
+
+
 import os
 import datetime
 import sqlalchemy

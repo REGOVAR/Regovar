@@ -3,7 +3,11 @@
 
 
 
-import ipdb
+try:
+    import ipdb
+except ImportError:
+    pass
+
 
 import os
 import datetime
