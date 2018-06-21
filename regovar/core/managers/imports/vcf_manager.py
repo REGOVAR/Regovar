@@ -368,8 +368,15 @@ def normalize_gt(infos):
          3: alt1/alt2
     """
     gt = get_info(infos, "GT")
-    if gt != "NULL" and len(infos["GT"]) == 2:
-        if infos["GT"][0] == infos["GT"][1]:
+    if gt != "NULL":
+        if len(infos["GT"]) == 0:
+            log ("WARNING GT empty: " + str(infos["GT"]) )
+            return -50
+        elif len(infos["GT"]) == 1:
+            # May append on chrX (hemizygot): TODO: manage this type of gt in regovar
+            # FIXME: consider it as homozygot 
+            return "1"
+        elif infos["GT"][0] == infos["GT"][1]:
             # Homozyot ref
             if infos["GT"][0] in [None, 0] : 
                 return 0
