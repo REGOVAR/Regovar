@@ -736,7 +736,7 @@ class VcfManager(AbstractImportManager):
             # get samples in the VCF 
             # samples = {i : Model.get_or_create(Model.Session(), Model.Sample, name=i)[0] for i in list((vcf_reader.header.samples))}
             samples = {}
-            for i in list((vcf_reader.header.samples)):
+            for i in vcf_reader.header.samples:
                 sample = Model.Sample.new()
                 sample.name = i
                 sample.file_id = file_id
