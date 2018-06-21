@@ -591,8 +591,7 @@ class VcfManager(AbstractImportManager):
 
                 # get list of sample that have this variant (chr-pos-ref-alt)
                 samples_array = []
-                for sn in row.samples:
-                    sp = row.samples.get(sn)
+                for sn, sp in row.samples.items():
                     if allele in sp.alleles:
                         samples_array.append(samples[sp.name]["id"])
                 if len(samples_array) == 0: continue
@@ -601,8 +600,7 @@ class VcfManager(AbstractImportManager):
                 sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
 
                 # Register variant/sample associations
-                for sn in row.samples:
-                    sp = row.samples.get(sn)
+                for sn, sp in row.samples.items():
                     gt = normalize_gt(sp)
                     filters = escape_value_for_sql(json.dumps(row.filter.keys()))
                     count += 1
