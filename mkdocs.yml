@@ -40,7 +40,7 @@ pages:
     - 'Bonnes pratiques': 'developper/good_practices.md'
     - 'Architecture': 'developper/architecture.md'
     - 'Database': 'developper/database.md'
-    - 'Compilation du client': 'developper/compilation.md'
+    - 'Compilation du client': 'developper/client_compilation.md'
     - 'Modules personalisables': 'developper/modules.md'
     - 'Pirus': 'developper/pirus.md'
     - 'API rest': 'developper/rest.md'
