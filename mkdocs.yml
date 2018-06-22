@@ -19,7 +19,7 @@ pages:
     - 'Serveur': 'installation/server.md'
     - 'Client': 'installation/client.md'
     - 'Configuration': 'installation/configuration.md'
- - 'UTILISATEUR': 
+ - 'UTILISATION': 
     - 'Présentation': 'user/presentation.md'
     - 'Concepts de base': 'user/concepts.md'
     - 'Analyse - Filtrage': 'user/filtering.md'
@@ -40,7 +40,7 @@ pages:
     - 'Bonnes pratiques': 'developper/good_practices.md'
     - 'Architecture': 'developper/architecture.md'
     - 'Database': 'developper/database.md'
-    - 'Core': 'developper/core.md'
+    - 'Compilation du client': 'developper/compilation.md'
     - 'Modules personalisables': 'developper/modules.md'
     - 'Pirus': 'developper/pirus.md'
     - 'API rest': 'developper/rest.md'
