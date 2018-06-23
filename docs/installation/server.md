@@ -12,7 +12,7 @@ Référez-vous au [README](https://github.com/REGOVAR/ServerConfiguration/blob/m
 
 Une fois le serveur installé, vous pouvez le démarrer.
 ```sh
-cd ~/Regovar/regovar
+cd /home/regovar/Regovar/regovar
 sudo -u regovar python3 regovar.py
 ```
 
