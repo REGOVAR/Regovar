@@ -21,16 +21,22 @@ sudo apt install git
 git clone https://github.com/REGOVAR/QRegovar.git
 ```
 
-Vous avez besoin de quelques packages Qt 5.10 (ou version supérieure), qui ne sont pas encore distribués avec le dépôt officiel d'Ubuntu (notez qu'en procédant ainsi, vous faites confiance à [Stephan Binner](https://launchpad.net/~beineri) qui fournit gentiment les packages compilés):
+Installez les outils pour compiler :
+
+```sh
+sudo apt install build-essential g++
+```
+
+Vous avez également besoin de quelques packages Qt 5.10 (ou version supérieure), qui ne sont pas encore distribués avec le dépôt officiel d'Ubuntu (notez qu'en procédant ainsi, vous faites confiance à [Stephan Binner](https://launchpad.net/~beineri) qui fournit gentiment les packages compilés):
 
 ```sh
 sudo apt install software-properties-common
 sudo add-apt-repository ppa:beineri/opt-qt-5.11.0-$(lsb_release -cs)
 sudo apt update
-sudo apt install build-essential g++ qt511charts-no-lgpl qt511graphicaleffects qt511quickcontrols qt511quickcontrols2 qt511websockets
+sudo apt install libgl1-mesa-dev mesa-common-dev qt511charts-no-lgpl qt511graphicaleffects qt511quickcontrols qt511quickcontrols2 qt511websockets
 ```
 
-Ensuite, créez l'environnement Qt pour compiler QRegovar:
+Ensuite, créez l'environnement Qt pour compiler QRegovar :
 
 ```sh
 source /opt/qt511/bin/qt511-env.sh
@@ -38,7 +44,7 @@ source /opt/qt511/bin/qt511-env.sh
 
 ### Sans QtCreator
 
-Compilation:
+Compilation :
 
 ```sh
 cd QRegovar/app
@@ -46,7 +52,7 @@ qmake
 make
 ```
 
-Lancement de QRegovar:
+Lancement de QRegovar :
 
 ```sh
 ./QRegovar
@@ -60,7 +66,7 @@ Si vous n'avez pas encore QtCreator, vous devez l'installer :
 sudo apt install qt511creator
 ```
 
-Lancement de QtCreator:
+Lancement de QtCreator :
 
 ```sh
 qtcreator
@@ -82,7 +88,7 @@ git clone https://github.com/REGOVAR/QRegovar.git
 Téléchargez les dépendances :
 
 ```sh
-sudo pacman -S gcc make qt5-quickcontrols2 qt5-charts qt5-graphicaleffects qt5-websockets
+sudo pacman -S gcc make mesa qt5-quickcontrols2 qt5-charts qt5-graphicaleffects qt5-websockets
 ```
 
 Compilation :
@@ -93,7 +99,7 @@ qmake
 make
 ```
 
-Lancement de QRegovar:
+Lancement de QRegovar :
 
 ```sh
 ./QRegovar
