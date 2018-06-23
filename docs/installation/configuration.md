@@ -18,7 +18,7 @@ Ci-dessous la liste des paramètres du fichier de configuration Python du serveu
 | `HOSTNAME` | `string` | `<HOST>:<PORT>` | Il s'agit des deux informations précédentes concaténée. C'est l'adresse qu'utilisera en interne aioHTTP pour le service Regovar. |
 | `HOST_P` | `string` | `test.regovar.org` | Il s'agit de l'adresse publique/externe par laquelle on accédera au serveur Regovar. En général, aioHTTP utilise une adresse locale privée (127.0.0.1 par exemple) et c'est le serveur Apache ou NginX qui va faire office de proxy entre l'adresse publique utilisée par les utilisateurs et l'adresse interne de Regovar.|
 | | | | |
-| `PRIVATE_KEY32` | `bool` | `False` | Il s'agit de la clé codée sur 32 caractères qui sera utilisée par le serveur pour crypter les mots de passe et les sessions des utilisateurs. Vous pouvez en générer une aléatoirement sous Linux avec la commande suivante : `$ date | md5sum`. |
+| `PRIVATE_KEY32` | `bool` | `False` | Il s'agit de la clé codée sur 32 caractères qui sera utilisée par le serveur pour chiffrer les mots de passe et les sessions des utilisateurs. Vous pouvez en générer une aléatoirement sous Linux avec la commande suivante : `$ openssl rand -base64 40 | tr -d "=+/" | cut -c1-32`. |
 | `SESSION_MAX_DURATION` | `bool` | `86400` | La durée maximum avant que le serveur force une session utilisateur à expirer (et donc le forcer à se reconnecter). 86400 = 60x60x24 = 24 heures.  |
 | `OMIM_API_KEY` | `bool` | `False` | Votre clé pour accéder à l'API en ligne d'OMIM. Vous pouvez en obtenir une gratuitement à l'adresse suivante : https://omim.org/api. |
 | | | | |
