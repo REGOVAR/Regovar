@@ -17,7 +17,7 @@ HOST_P = "test.regovar.org"  # This url shall be set with the public namespace u
 
 
 # SECURITY
-PRIVATE_KEY32 = "" # 32bits server secret key, default generated with $ date | md5sum
+PRIVATE_KEY32 = "" # 32bits server secret key
 SESSION_MAX_DURATION = 86400
 OMIM_API_KEY = "" # To be set with your key. (get it for free here : https://omim.org/api )
 
