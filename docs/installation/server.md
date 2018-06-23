@@ -26,10 +26,6 @@ La procédure reste relativement simple grâce à un script `install.sh` qui va 
  * Droits root sur le serveur
  * Accès internet depuis le serveur
  * Git
- 
- ```sh
- apt install git
- ```
  * [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
  * [Docker-compose](https://docs.docker.com/compose/install/#install-compose)
  * Ne pas oublier de s'autoriser à utiliser Docker directement avec la commande ci-dessous
