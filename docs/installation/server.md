@@ -22,10 +22,14 @@ La procédure reste relativement simple grâce à un script `install.sh` qui va 
 
 ####Pré-requis
 
- * Ubuntu Xenial LTS (pipelines et analyse de variants) ou Debian Stretch ou supérieur (analyse de variants uniquement)
+ * Ubuntu Xenial LTS (pipelines et analyse de variants) ou Ubuntu Bionic LTS (pipelines et analyses de variants) ou Debian Stretch ou supérieur (analyse de variants uniquement)
  * Droits root sur le serveur
  * Accès internet depuis le serveur
  * Git
+ 
+ ```sh
+ apt install git
+ ```
  * [Docker](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
  * [Docker-compose](https://docs.docker.com/compose/install/#install-compose)
  * Ne pas oublier de s'autoriser à utiliser Docker directement avec la commande ci-dessous
@@ -39,8 +43,8 @@ N'oubliez pas de vous déconnecter de la session en cours et de vous reconnecter
 ####Procédure
 
 ```sh
-git clone https://github.com/REGOVAR/Regovar.git ~/Regovar
-cd ~/Regovar/install
+git clone https://github.com/REGOVAR/Regovar.git
+cd Regovar/install
 ./install.sh
 ```
 Laissez-vous guider en répondant aux différentes questions. Il vous sera demandé une clé API OMIM, que vous pouvez obtenir à [cette adresse](https://www.omim.org/api).
