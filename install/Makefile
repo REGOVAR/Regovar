@@ -1,10 +1,10 @@
 # PostgreSQL
-database_name=$(shell test -f config.py && sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' config.py || echo INVALID)
+database_name=$(shell test -f ../regovar/config.py && sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' ../regovar/config.py || echo INVALID)
 # RefGene
-databases_path=$(shell test -f config.py && sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' config.py || echo INVALID)
+databases_path=$(shell test -f ../regovar/config.py && sed -n 's/^\s*DATABASES_DIR\s*=\s*"\([^"]\+\)".*/\1/p' ../regovar/config.py || echo INVALID)
 
 init_config:
-	cp config/config.default.py config.py
+	cp config/config.default.py ../regovar/config.py
 
 download_refgene: \
 	$(databases_path)/hg19/refGene.txt \
