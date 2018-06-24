@@ -113,7 +113,6 @@ def project_load(self, data):
         if "parent_id" in data.keys(): self.parent_id = check_int(data['parent_id'])
         if "is_folder" in data.keys(): self.is_folder = check_bool(data['is_folder'], False)
         self.save()
-    
 
         # Reload dynamics properties
         self.init(self.loading_depth, True)
