@@ -373,18 +373,19 @@ def normalize_gt(infos):
             log ("WARNING GT empty: " + str(infos["GT"]) )
             return -50
         elif len(infos["GT"]) == 1:
-            # May append on chrX (hemizygot): TODO: manage this type of gt in regovar
-            # FIXME: consider it as homozygot 
+            # Happens on chrX in males (hemizygous) and in females when they are homozygous
+            # TODO: manage hemizygous in Regovar
+            # FIXME: considered for now as homozygous
             return "1"
         elif infos["GT"][0] == infos["GT"][1]:
-            # Homozyot ref
+            # Homozyous ref
             if infos["GT"][0] in [None, 0] : 
                 return 0
-            # Homozyot alt
+            # Homozygous alt
             return "1"
         else :
             if 0 in infos["GT"] :
-                # Hetero ref
+                # Heterozygous ref
                 return "2"
             else :
                 return "3"
@@ -594,8 +595,7 @@ class VcfManager(AbstractImportManager):
                 
                 # get list of sample that have this variant (chr-pos-ref-alt)
                 samples_array = []
-                for sn in row.samples:
-                    sp = row.samples.get(sn)
+                for sn, sp in row.samples.items():
                     if allele in sp.alleles:
                         samples_array.append(samples[sp.name]["id"])
                 if len(samples_array) == 0: continue
@@ -604,8 +604,7 @@ class VcfManager(AbstractImportManager):
                 sql_query1 += sql_pattern1.format(table, chrm, pos, ref, alt, is_transition(ref, alt), bin, samples_array)
                         
                 # Register variant/sample associations
-                for sn in row.samples:
-                    sp = row.samples.get(sn)
+                for sn, sp in row.samples.items():
                     gt = normalize_gt(sp)
                     filters = escape_value_for_sql(json.dumps(row.filter.keys()))
                     count += 1
@@ -739,7 +738,7 @@ class VcfManager(AbstractImportManager):
             # get samples in the VCF 
             # samples = {i : Model.get_or_create(Model.Session(), Model.Sample, name=i)[0] for i in list((vcf_reader.header.samples))}
             samples = {}
-            for i in list((vcf_reader.header.samples)):
+            for i in vcf_reader.header.samples:
                 sample = Model.Sample.new()
                 sample.name = i
                 sample.file_id = file_id
@@ -782,12 +781,3 @@ class VcfManager(AbstractImportManager):
         
             return {"success": True, "samples": samples, "records_count": records_count }
         return {"success": False, "error": "File not supported"}
-
-
-
-
-
-
-
-
-

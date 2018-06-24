@@ -5,7 +5,7 @@ databases_path=$(shell test -f config.py && sed -n 's/^\s*DATABASES_DIR\s*=\s*"\
 
 init_config:
 	cp config/config.default.py config.py
-	
+
 download_refgene: \
 	$(databases_path)/hg19/refGene.txt \
 	$(databases_path)/hg38/refGene.txt
@@ -35,6 +35,6 @@ download_hpo:
 	curl -L http://compbio.charite.de/jenkins/job/hpo.annotations.monthly/lastStableBuild/artifact/annotation/ALL_SOURCES_ALL_FREQUENCIES_phenotype_to_genes.txt -o $(databases_path)/hpo_phenotype.txt
 
 install_hpo:
-	PYTHONPATH="$(CURDIR):$${PYTHONPATH}" python3 ../regovar/extratools/hpo.py $(databases_path)/ "`cat $(databases_path)/hpo_version.txt`"
+	PYTHONPATH="$(CURDIR):$${PYTHONPATH}" python3 ../regovar/extradata.py hpo $(databases_path)/ "`cat $(databases_path)/hpo_version.txt`"
 
 .PHONY: create_database download_refgene download_hpo fill_database install_hpo init_config
