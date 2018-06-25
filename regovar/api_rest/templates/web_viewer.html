@@ -21,19 +21,24 @@
 
 <body style="background: #efeff1">
 
-<pre style="margin-bottom: 10px">
 {% if type == "txt" %}
+<pre style="margin-bottom: 10px">
 Preview: display first {{ data|length }} lines
-{% else %}
-No preview available for binary file
-{% endif %}
 </pre>
+{% elif type == "bin" %}
+<pre style="margin-bottom: 10px">
+No preview available for binary file
+</pre>
+{% endif %}
+
 
 
 {% if type == "txt" %}
 <pre>
 {% for line in data %}{{ line }}{% endfor %} 
 </pre>
+{% elif type == "img" %}
+<img src="{{ data }}" />
 {% endif %}
 
 </body>

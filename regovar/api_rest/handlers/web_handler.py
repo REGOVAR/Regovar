@@ -98,17 +98,24 @@ class WebHandler:
     def viewer(self, request):
         asset_id = request.match_info.get('id', None)
         file = File.from_id(asset_id)
-        ftype = "txt"
-        result = []
-        try:
-            if file and file.status in ['uploaded', 'checked']:
-                with open(file.path, "r") as f:
-                    for l in range(1000):
-                        result.append(next(f))
-        except Exception as ex:
-            if not isinstance(ex, StopIteration):
-                # file is not a txt file, parse binary
-                ftype = "bin"
+        
+        # if image
+        if file.type in ["jpg", "jpeg", "png", "bmp", "tiff", "gif"]:
+            ftype = "img"
+            result = check_local_path(file.path)
+        else:
+            # else try to parse txt file        
+            ftype = "txt"
+            result = []
+            try:
+                if file and file.status in ['uploaded', 'checked']:
+                    with open(file.path, "r") as f:
+                        for l in range(1000):
+                            result.append(next(f))
+            except Exception as ex:
+                if not isinstance(ex, StopIteration):
+                    # cannot parse binary file => no preview available
+                    ftype = "bin"
 
         return {
             "hostname" : HOST_P,
