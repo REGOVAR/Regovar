@@ -957,13 +957,13 @@ class FilterEngine:
             if len(in_samples["error"]) > 0:
                 analysis.status = "error"
                 analysis.computing_progress = {
-                    "error_message": "Import of the sample () for the analysis {} failled.".format(", ".join(in_samples["error"]), analysis.id),
+                    "error_message": "Import of the sample ({}) for the analysis {} failled.".format(", ".join(in_samples["error"]), analysis.id),
                     "status" : "error"}
                 analysis.save()
             elif len(in_samples["loading"]) > 0:
                 analysis.status = "waiting"
                 analysis.computing_progress = {
-                    "error_message": "Import of the sample () for the analysis {} are in progress.".format(", ".join(in_samples["loading"]), analysis.id),
+                    "error_message": "Import of the sample ({}) for the analysis {} are in progress.".format(", ".join(in_samples["loading"]), analysis.id),
                     "status" : "waiting"}
                 analysis.save()
 

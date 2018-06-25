@@ -463,8 +463,7 @@
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#pipe_api_01" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> list</a></li>
                             <li><a href="#pipe_api_02" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> show</a></li>
-                            <li><a href="#pipe_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> install (quick)</a></li>
-                            <li><a href="#pipe_api_04" data-toggle="tab"><i class="glyphicon glyphicon-exclamation-sign"></i> install</a></li>
+                            <li><a href="#pipe_api_03" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> install</a></li>
                             <li><a href="#pipe_api_05" data-toggle="tab"><i class="glyphicon glyphicon-ok"></i> delete</a></li>
                         </ul>
                     </div>
@@ -566,44 +565,6 @@
                                     <div class="col-sm-10">
                                         <input id="pipe_api_03_query" type="text" placeholder="/pipeline/install/{file_id}" value="/pipeline/install/1"/>
                                         <button onclick="generic_exec_from_input('pipe_api_03_query', 'pipe_result');" class="btn btn-primary">Test it</button>
-                                    </div>  
-                                </div>
-                            </div>
-                            <!-- POST install -->
-                            <div class="tab-pane fade" id="pipe_api_04">
-                                <div class="row form-group">
-                                    <div class="col-sm-2"><b>Access</b></div>  
-                                    <div class="col-sm-10">
-                                        <i class="glyphicon glyphicon-lock" style="color:red"></i> Authentication as Administrator required.
-                                    </div>  
-                                </div>
-                                <div class="alert alert-danger">
-                                    <strong>Warning : </strong> <a href="https://github.com/REGOVAR/Regovar/issues/93" target="_blank">To be implemented</a>.
-                                </div>
-                                <div class="row form-group">
-                                    <div class="col-sm-2"><b>Description</b></div>  
-                                    <div class="col-sm-10">
-                                        <code>POST /pipeline</code><br/>
-                                        <i>The generic endpoint to install a pipeline. A json form shall be provide in the body of the post to describe how to proceed to install the pipeline. There is 3 differents way to do the installation :<ul>
-                                            <li>from an image file already uploaded. You shall set "container_type" and "file_id" params in the body;</li>
-                                            <li>from an image that is currently uploading. The installation will start automatically when the upload finish. You shall set "container_type" and "file_id" params in the body;</li>
-                                            <li>from an url. According to the type of the container. You shall set "container_type" and "pipe_url" params in the body.</i>
-                                    </div>  
-                                </div>
-                                <div class="row form-group">
-                                    <div class="col-sm-2"><b>Body</b></div>
-                                    <div class="col-sm-10">
-                                        <code>{ "container_type" : value, "pipe_url" : value, "file_id" : value}</code><br/>
-                                        <i>Information to update in the file. Note that only following fields are allowed to be edited via the Rest api : "name", "type", "tags".</i>
-                                    </div>
-                                </div>
-                                <div class="row form-group">
-                                    <div class="col-sm-2"><b>Test</b></div>  
-                                    <div class="col-sm-10">
-                                        <input id="pipe_api_04_query" type="text" placeholder="/pipeline/install" value="/pipeline/install" readonly="readonly"/>
-                                        Body : <br/>
-                                        <textarea id="pipe_api_04_body" cols="40" rows="6">{"pipe_url": "http://...", "container_type": "lxd"}</textarea><br/>
-                                        <button onclick="generic_exec_body('pipe_api_04_query', 'pipe_api_04_body', 'pipe_result');" class="btn btn-primary">Test it</button>
                                     </div>  
                                 </div>
                             </div>

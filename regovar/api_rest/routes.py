@@ -124,9 +124,9 @@ app.router.add_route('DELETE', "/file/upload/{file_id}", fileHdl.tus_upload_dele
 
 app.router.add_route('GET',    "/pipelines",                  pipeHdl.list)
 app.router.add_route('GET',    "/pipeline/{pipe_id}",         pipeHdl.get)
+app.router.add_route('PUT',    "/pipeline/{pipe_id}",         pipeHdl.update)
 app.router.add_route('DELETE', "/pipeline/{pipe_id}",         pipeHdl.delete)
 app.router.add_route('GET',    "/pipeline/install/{file_id}", pipeHdl.install)
-app.router.add_route('POST',   "/pipeline/install",           pipeHdl.install_json)
 
 app.router.add_route('GET',    "/jobs",                    jobHdl.list)
 app.router.add_route('POST',   "/job",                     jobHdl.new)

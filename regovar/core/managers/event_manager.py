@@ -144,7 +144,7 @@ class EventManager:
         event_id = execute(sql).first()[0]
 
         # Notify client of new event
-        core.notify_all_co(data={"action": "new_event", "data" : {
+        core.notify_all(data={"action": "new_event", "data" : {
             "author_id": author_id, 
             "date": datetime.datetime.now().isoformat(), 
             "message": message,
