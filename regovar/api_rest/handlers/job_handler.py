@@ -98,7 +98,6 @@ class JobHandler:
 
     @user_role('Authenticated')
     async def new(self, request):
-        ipdb.set_trace()
         # 1- Retrieve data from request
         try:
             data = await request.json()
