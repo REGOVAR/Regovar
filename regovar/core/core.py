@@ -89,8 +89,6 @@ class Core:
         self.load_export_managers()
         self.load_report_managers()
         
-        # All seams good ? let's go
-        self.events.log(None, "technical", None, "Regovar core {} initialised. Server ready !".format(REGOVAR_CORE_VERSION))
 
     
 
@@ -167,5 +165,7 @@ class Core:
 # =====================================================================================================================
 
 core = Core()
+# All seams good ? let's go
+core.events.log(None, "technical", None, "Regovar core {} initialised. Server ready !".format(REGOVAR_CORE_VERSION))
 
 

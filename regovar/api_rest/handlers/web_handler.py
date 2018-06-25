@@ -1,5 +1,7 @@
 #!env/python3
 # coding: utf-8
+
+# Developers additional dependencies
 try:
     import ipdb
 except ImportError:
@@ -100,11 +102,13 @@ class WebHandler:
         result = []
         try:
             if file and file.status in ['uploaded', 'checked']:
-                with open(file.path) as f:
-                    result = [next(f) for x in range(1000)]
+                with open(file.path, "r") as f:
+                    for l in range(1000):
+                        result.append(next(f))
         except Exception as ex:
-            # file is not a txt file, parse binary
-            ftype = "bin"
+            if not isinstance(ex, StopIteration):
+                # file is not a txt file, parse binary
+                ftype = "bin"
 
         return {
             "hostname" : HOST_P,

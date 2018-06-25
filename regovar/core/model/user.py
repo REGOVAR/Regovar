@@ -192,7 +192,7 @@ def user_new(login=None):
         
     # create sandbox project
     sandbox = Project.new()
-    sandbox.load({"comment": "My sandbox"})
+    sandbox.load({"comment": "My sandbox", "is_sandbox": True})
         
     u = User(login=login, sandbox_id=sandbox.id)
     

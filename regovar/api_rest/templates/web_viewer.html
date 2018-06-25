@@ -10,7 +10,7 @@
 
     <style>
         /* JSON highlighting */
-        pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+        pre {outline: 1px solid #ccc; padding: 5px; margin: 0; }
         .string { color: green; }
         .number { color: darkorange; }
         .boolean { color: blue; }
@@ -21,9 +21,9 @@
 
 <body style="background: #efeff1">
 
-<pre id="json"/>
+<pre style="margin-bottom: 10px">
 {% if type == "txt" %}
-Preview: display first 1000 lines
+Preview: display first {{ data|length }} lines
 {% else %}
 No preview available for binary file
 {% endif %}
@@ -31,7 +31,7 @@ No preview available for binary file
 
 
 {% if type == "txt" %}
-<pre id="json"/>
+<pre>
 {% for line in data %}{{ line }}{% endfor %} 
 </pre>
 {% endif %}
