@@ -75,11 +75,14 @@ class JobManager:
 
 
 
-    def new(self, pipeline_id:int, name:str, config:dict, inputs_ids=[], asynch=False, auto_notify=True):
+    def new(self, project_id:int, pipeline_id:int, name:str, config:dict, inputs_ids=[], asynch=False, auto_notify=True):
         """
             Create a new job for the specified pipepline (pipeline_id), with provided config and input's files ids
         """
+        project = Project.from_id(project_id)
         pipeline = Pipeline.from_id(pipeline_id)
+        if not project : 
+            raise RegovarException("Project not found (id={}).".format(project_id))
         if not pipeline : 
             raise RegovarException("Pipeline not found (id={}).".format(pipeline_id))
         if pipeline.status != "ready":
@@ -92,6 +95,7 @@ class JobManager:
         job.name = name
         job.config = config
         job.progress_value = 0
+        job.project_id = project_id
         job.pipeline_id = pipeline_id
         job.progress_label = "0%"
         for fid in inputs_ids: JobFile.new(job.id, int(fid), True)

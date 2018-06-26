@@ -114,9 +114,10 @@ class JobHandler:
         name = data["name"]
         config = data["config"]
         inputs_ids = data["inputs_ids"]
+        project_id = data["project_id"]
         # Create the job 
         try:
-            job = core.jobs.new(pipe_id, name, config, inputs_ids)
+            job = core.jobs.new(project_id, pipe_id, name, config, inputs_ids)
         except Exception as ex:
             return rest_error("Error occured when initializing the new job. {}".format(ex))
         if job is None:
