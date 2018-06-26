@@ -34,7 +34,7 @@ from api_rest.rest import *
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# Customization of the TUS protocol for the download of pirus files
+# Customization of the TUS protocol for the download of files
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 # File TUS wrapper
@@ -107,19 +107,7 @@ tus_manager.route_maping["/file/upload"] = FileWrapper
 
 
 class FileHandler:
-
-    #@staticmethod
-    #def format_file_json(file_json):
-        #if not isinstance(file_json, dict): return file_json
-        #if "path" in file_json.keys():
-            #path = file_json["path"]
-            #if path and path.startswith(FILES_DIR):
-                #file_json["path"] = "http://{}/dl/file{}".format(HOST_P, path[len(JOBS_DIR):])
-            #elif path and path.startswith(JOBS_DIR):
-                #file_json["path"] = "http://{}/dl/job{}".format(HOST_P, path[len(JOBS_DIR):])
-        #return file_json
-    
-    
+   
     
     @user_role('Authenticated')
     def list(self, request):
@@ -142,10 +130,16 @@ class FileHandler:
 
     @user_role('Authenticated')
     async def edit(self, request):
-        # TODO : implement PUT to edit file metadata (and remove the obsolete  "simple post" replaced by TUS upload )
         file_id = request.match_info.get('file_id', "")
-        params = await request.json()
-        return rest_error("Not yet implemented")
+        data = await request.json()
+        file = File.from_id(file_id, 2)
+        if not file:
+            return rest_error("Unable to find the file (id={})".format(file_id))
+        try:
+            file.load(data)
+        except Exception as ex:
+            return rest_error("Unable to update file with provided information.", exception=ex)
+        return  rest_success(check_local_path(file.to_json(File.public_fields)))
         
 
 
@@ -155,7 +149,7 @@ class FileHandler:
         try:
             return rest_success(check_local_path(core.files.delete(file_id).to_json()))
         except Exception as ex:
-            return rest_error("Error occured : " + str(ex))
+            return rest_error("Unable to delete file {}".format(file_id), exception=ex)
 
 
 
