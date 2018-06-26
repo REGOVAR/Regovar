@@ -147,6 +147,24 @@ class PipelineManager:
         return pipe
 
 
+    def install_init_image(self, file_id, pipe_metadata={}):
+        """ 
+            Initialise a pipeline installation. 
+            To use if the image have already been uploaded the local server via the regovar file api.
+            Create an entry for the pipeline in the database.
+            Return the Pipeline object ready to be used
+        """
+        from core.core import core
+
+        pfile = File.from_id(file_id)
+        if pfile:
+            pipe = self.install_init(os.path.basename(pfile.path), pipe_metadata)
+            pipe.image_file_id = file_id
+            pipe.save()
+            return pipe
+        return None
+    
+
 
     def check_manifest(self, manifest):
         """

@@ -105,7 +105,7 @@ class PipelineHandler:
         if file.status not in ["uploaded", "checked"]:
             return rest_error("File status is {}, this file cannot be used as pipeline image (file must be \"uploaded\" or \"checked\")".format(file_id))
         
-        p = core.pipelines.install_init_image_local(file.path, False)
+        p = core.pipelines.install_init_image(file_id)
         try:
             pipe = core.pipelines.install(p.id, asynch=False)
             if pipe:
