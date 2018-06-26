@@ -44,7 +44,8 @@ class SubjectHandler:
         """
             Get list of all subjects
         """
-        return rest_success(core.subjects.list())
+        subjects = core.subjects.list()
+        return rest_success([check_local_path(s) for s in subjects])
 
 
         
@@ -69,7 +70,7 @@ class SubjectHandler:
             return rest_exception(ex)
         if subject is None:
             return rest_error("Unable to create a new subject.")
-        return rest_success(subject.to_json())
+        return rest_success(check_local_path(subject.to_json()))
         
        
     @user_role('Authenticated') 
@@ -81,7 +82,7 @@ class SubjectHandler:
         subject = Subject.from_id(subject_id, 1)
         if not subject:
             return rest_error("Unable to find the subject (id={})".format(subject_id))
-        return rest_success(subject.to_json())
+        return rest_success(check_local_path(subject.to_json()))
         
     
     
@@ -96,7 +97,7 @@ class SubjectHandler:
         subject = core.Subject.delete(subject_id, 1)
         if not subject:
             return rest_error("Unable to delete the subject (id={})".format(subject_id))
-        return rest_success(subject.to_json())
+        return rest_success(check_local_path(subject.to_json()))
     
     
     
@@ -118,7 +119,7 @@ class SubjectHandler:
             "range_max"    : RANGE_MAX,
         }
         events = core.events.list(user_id, fields, query, order, offset, limit, depth)
-        return rest_success([e.to_json() for e in events], range_data)
+        return rest_success([check_local_path(e.to_json()) for e in events], range_data)
 
 
     @user_role('Authenticated')
@@ -138,7 +139,7 @@ class SubjectHandler:
             "range_max"    : RANGE_MAX,
         }
         subjects = core.subjects.get(fields, query, order, offset, limit, depth)
-        return rest_success([s.to_json() for s in subjects], range_data)
+        return rest_success([check_local_path(s.to_json()) for s in subjects], range_data)
     
     
     @user_role('Authenticated')
@@ -159,7 +160,7 @@ class SubjectHandler:
         jobs = core.jobs.get(fields, query, order, offset, limit, depth)
         analyses = core.analyses.get(fields, query, order, offset, limit, depth)
         tasks = array_merge(jobs, analyses)
-        return rest_success([t.to_json() for t in tasks], range_data)
+        return rest_success([check_local_path(t.to_json()) for t in tasks], range_data)
 
 
     @user_role('Authenticated')
@@ -179,7 +180,7 @@ class SubjectHandler:
             "range_max"    : RANGE_MAX,
         }
         files = core.files.get(fields, query, order, offset, limit, depth)
-        return rest_success([f.to_json() for f in files], range_data)
+        return rest_success([check_local_path(f.to_json()) for f in files], range_data)
     
     
 
