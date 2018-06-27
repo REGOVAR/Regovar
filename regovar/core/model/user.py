@@ -200,6 +200,7 @@ def user_new(login=None):
         u.save()
     except Exception as ex:
         raise RegovarException("Unable to create new user with provided informations.", "", ex)
+    u.init()
     return u
     
 
