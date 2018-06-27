@@ -268,6 +268,7 @@ class AnalysisManager:
         if not isinstance(variant_ids, list) or not analysis or not analysis.status == 'ready':
             return False
         query = ""
+        # Update variant selection in working table
         for vid in variant_ids:
             ids = vid.split("_")
             if len(ids) == 1:
@@ -275,6 +276,13 @@ class AnalysisManager:
             else:
                 query += "UPDATE wt_{} SET is_selected={} WHERE variant_id={} AND trx_pk_value='{}'; ".format(analysis.id, is_selected, ids[0], ids[1])
         execute(query)
+        
+        # Upate global selection information in analysis table
+        result = []
+        for row in execute("SELECT variant_id, trx_pk_value FROM wt_{} WHERE is_selected".format(analysis_id)):
+            result.append("{}_{}".format(row.variant_id, row.trx_pk_value))
+        execute("UPDATE analysis SET selection='{}' WHERE id={}".format(json.dumps(result), analysis_id))
+        
         return True
     
     
