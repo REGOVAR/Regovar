@@ -39,7 +39,7 @@ class AnalysisManager:
         """
             Return all analyses with "minimal data"
         """
-        sql = "SELECT id, project_id, name, comment, create_date, update_date, reference_id, status FROM analysis"
+        sql = "SELECT id, project_id, name, comment, create_date, update_date, reference_id, status FROM analysis ORDER BY id"
         result = []
         for res in execute(sql): 
             result.append({

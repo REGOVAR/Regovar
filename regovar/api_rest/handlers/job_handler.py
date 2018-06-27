@@ -183,4 +183,15 @@ class JobHandler:
         return rest_success(check_local_path(job.to_json()))
 
 
+    @user_role('Authenticated')
+    def delete(self, request):
+        job_id  = request.match_info.get('job_id', -1)
+        
+        try:
+            result = core.jobs.delete(job_id)
+        except Exception as ex:
+            return rest_error("Error occured when trying to delete the analysis with id=" + str(analysis_id), exception=ex)
+        return rest_success(check_local_path(result.to_json())) 
+
+
 

@@ -288,20 +288,34 @@ class JobManager:
 
 
 
-    def delete(self, job_id, asynch=False):
+    def delete(self, job_id, author_id=None, definitely=False):
         """
-            Delete a Job. Outputs that have not yet been saved in Pirus, will be deleted.
+            Delete a Job. 
+            When normal user delete a job, this one is put in the trash project
+            Then an admin can definitely delete the job (with the flag finally set to True)
         """
+        from core.core import core
         job = Job.from_id(job_id, 1)
         if not job:
             raise RegovarException("Job not found (id={}).".format(job_id))
-        # Security, force call stop/delete the container
-        if asynch: 
-            run_async(self.__finalize_job, job.id)
-        else:
+        
+        if definitely: 
+            # Kill job and remove DB entries
             self.__finalize_job(job.id)
-        # Deleting file in the filesystem
-        shutil.rmtree(job.path, True)
+            # TODO
+            #sql = "DELETE FROM job WHERE id={0}; DELETE FROM job_file WHERE analysis_id={0};".format(analysis_id)
+            #sql+= "DELETE FROM analysis_sample WHERE analysis_id={0}; DELETE FROM attribute WHERE analysis_id={0}".format(analysis_id)
+            #sql+= "DELETE FROM analysis_indicator_value WHERE analysis_id={0};".format(analysis_id)
+            #core.events.log(author_id, "warning", {"analysis_id": analysis.id}, "Irreversible deletion of the analysis: {}".format(analysis.name))
+            
+            ## Deleting file in the filesystem
+            #shutil.rmtree(job.path, True)
+        else:
+            # move job to trash
+            sql = "UPDATE job SET project_id=0 WHERE id={0}; ".format(job_id)
+            core.events.log(author_id, "info", {"job_id": job_id}, "Pipeline analysis moved to trash: {}".format(job.name))
+        
+        execute(sql)
         return job
 
 

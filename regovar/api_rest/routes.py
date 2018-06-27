@@ -136,6 +136,7 @@ app.router.add_route('GET',    "/job/{job_id}/start",      jobHdl.start)
 app.router.add_route('GET',    "/job/{job_id}/cancel",     jobHdl.cancel)
 app.router.add_route('GET',    "/job/{job_id}/monitoring", jobHdl.monitoring)
 app.router.add_route('GET',    "/job/{job_id}/finalize",   jobHdl.finalize)
+app.router.add_route('DELETE', "/job/{job_id}",            jobHdl.delete)
 
 app.router.add_route('GET',    "/db",       dbHdl.get)
 app.router.add_route('GET',    "/db/{ref}", dbHdl.get)
