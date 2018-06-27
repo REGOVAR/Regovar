@@ -174,8 +174,8 @@ app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/{variant_id}",
 app.router.add_route('GET',    "/analysis/{analysis_id}/select/{variant_id}",    analysisHandler.select)               # Select the variant/trx with the provided id
 app.router.add_route('GET',    "/analysis/{analysis_id}/unselect/{variant_id}",  analysisHandler.unselect)             # Unselect the variant/trx with the provided id
 app.router.add_route('GET',    "/analysis/{analysis_id}/selection",              analysisHandler.get_selection)        # Return list of selected variant (with same columns as set for the current filter)
-app.router.add_route('POST',   "/analysis/{analysis_id}/export/{exporter_name}", analysisHandler.get_export)           # Export selection of the provided analysis into the requested format
-app.router.add_route('POST',   "/analysis/{analysis_id}/report/{report_name}",   analysisHandler.get_report)           # Generate report html for the provided analysis+report id
+#app.router.add_route('POST',   "/analysis/{analysis_id}/export/{exporter_name}", analysisHandler.get_export)           # Export selection of the provided analysis into the requested format
+#app.router.add_route('POST',   "/analysis/{analysis_id}/report/{report_name}",   analysisHandler.get_report)           # Generate report html for the provided analysis+report id
 app.router.add_route('GET',    "/analysis/{analysis_id}/clear_temps_data",       analysisHandler.clear_temps_data)     # Clear temporary data (to save disk space by example)
 
 app.router.add_route('GET',    "/search/{query}",                                     searchHandler.search)          # generic research

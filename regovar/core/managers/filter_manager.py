@@ -1059,7 +1059,6 @@ class FilterEngine:
         return ', '.join(fields_names)
 
        
-       
 
     def parse_order_field(self, analysis, uid):
         """
@@ -1161,6 +1160,47 @@ class FilterEngine:
 
 
         return query
+
+
+
+
+
+
+    async def get_selection(self, analysis_id):
+        """
+            Return list of selected variant (with same columns as set for the current filter)
+        """
+        from core.core import core
+        analysis = Analysis.from_id(analysis_id)
+        if not analysis:
+            raise RegovarException("Unable to find analysis with the provided id: {}".format(analysis_id))
+        
+        fields = self.parse_fields(analysis, analysis.fields, "")
+        query = "SELECT variant_id, trx_pk_value, {} FROM wt_{} WHERE is_selected".format(fields, analysis_id)
+        
+        result = []
+        sql_result = await execute_aio(query)
+        for row in sql_result:
+            entry = {"id" : "{}_{}".format(row.variant_id, row.trx_pk_value), "is_selected": True}
+            for f_uid in analysis.fields:
+                # Manage special case for fields splitted by sample
+                if self.fields_map[f_uid]["name"].startswith("s{}_"):
+                    pattern = "row." + self.fields_map[f_uid]["name"]
+                    r = {}
+                    for sid in analysis.samples_ids:
+                        r[sid] = FilterEngine.parse_result(eval(pattern.format(sid)))
+                    entry[f_uid] = r
+                else:
+                    if f_uid == "7166ec6d1ce65529ca2800897c47a0a2": # field = pos
+                        entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]["name"])) + 1)
+                    elif self.fields_map[f_uid]["db_name_ui"] in ["Variant", "Regovar"]:
+                        entry[f_uid] = FilterEngine.parse_result(eval("row.{}".format(self.fields_map[f_uid]["name"])))
+                    else:
+                        entry[f_uid] = FilterEngine.parse_result(eval("row._{}".format(f_uid)))
+            
+            result.append(entry)
+        
+        return {"wt_total_variants": len(result), "results": result}
 
 
 

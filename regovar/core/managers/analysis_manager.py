@@ -287,25 +287,6 @@ class AnalysisManager:
     
     
 
-    def get_selection(self, analysis_id):
-        """
-            Return list of selected variant (with same columns as set for the current filter)
-        """
-        from core.core import core
-        
-        analysis = Analysis.from_id(analysis_id)
-        if not analysis:
-            raise RegovarException("Unable to find analysis with the provided id: {}".format(analysis_id))
-        
-        fields = core.filters.parse_fields(analysis, analysis.fields, "")
-        query = "SELECT {} FROM wt_{} WHERE is_selected".format(fields, analysis_id)
-        result = []
-        for row in execute(query):
-            result.append({fid:row[fid] for fid in fields.split(", ")})
-        
-        return result
-    
-    
     
     
 
