@@ -96,31 +96,59 @@ class WebHandler:
 
     @aiohttp_jinja2.template('web_viewer.html')
     def viewer(self, request):
-        asset_id = request.match_info.get('id', None)
+        asset_id = request.match_info.get('id', -1)
         file = File.from_id(asset_id)
+        reference = None
+        viewer = "bin"
+        result = None
+        ftype = None
         
-        # if image
-        if file.type in ["jpg", "jpeg", "png", "bmp", "tiff", "gif"]:
-            ftype = "img"
-            result = check_local_path(file.path)
-        else:
-            # else try to parse txt file        
-            ftype = "txt"
-            result = []
-            try:
-                if file and file.status in ['uploaded', 'checked']:
-                    with open(file.path, "r") as f:
-                        for l in range(1000):
-                            result.append(next(f))
-            except Exception as ex:
-                if not isinstance(ex, StopIteration):
-                    # cannot parse binary file => no preview available
-                    ftype = "bin"
+        if file:
+            # if image
+            if file.type in ["jpg", "jpeg", "png", "bmp", "tiff", "gif"]:
+                viewer = "img"
+                ftype = file.type
+                result = check_local_path(file.path)
+            # if bam
+            elif file.type == "bam":
+                viewer = "igv"
+                ftype = "bam"
+                result = [check_local_path(file.path)]
+                reference = "hg19"
+                # need to find the bai
+                ifile = File.from_name(file.name + ".bai")
+                if ifile:
+                    result.append(check_local_path(ifile.path))
+                else:
+                    result.append(None)
+            # if vcf
+            elif file.type == "vcf":
+                viewer = "igv"
+                ftype = "vcf"
+                result = check_local_path(file.path)
+                reference = "hg19"
+            else:
+                # else try to parse txt file        
+                viewer = "txt"
+                ftype = file.type
+                result = []
+                try:
+                    if file and file.status in ['uploaded', 'checked']:
+                        with open(file.path, "r") as f:
+                            for l in range(1000):
+                                result.append(next(f))
+                except Exception as ex:
+                    if not isinstance(ex, StopIteration):
+                        # cannot parse binary file => no preview available
+                        viewer = "bin"
 
         return {
             "hostname" : HOST_P,
             "error": None,
             "path": ["view"],
-            "type": ftype,
+            "viewer": viewer,
+            "file_type": ftype,
+            "reference": reference,
+            "filename" : file.name if file else "-",
             "data": result
         }

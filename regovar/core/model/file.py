@@ -56,7 +56,7 @@ def file_from_id(file_id, loading_depth=0):
     """
         Retrieve file with the provided id in the database
     """
-    file = Session().query(File).filter_by(id=file_id).first()
+    file = Session().query(File).filter_by(id=check_int(file_id, -1)).first()
     if file:
         Session().refresh(file)
         file.init(loading_depth)
@@ -74,6 +74,16 @@ def file_from_ids(file_ids, loading_depth=0):
             Session().refresh(f)
             f.init(loading_depth)
     return files
+
+def file_from_name(filename, loading_depth=0):
+    """
+        Retrieve file with the provided name in the database
+    """
+    file = Session().query(File).filter_by(name=check_string(filename)).first()
+    if file:
+        Session().refresh(file)
+        file.init(loading_depth)
+    return file
 
 
 def file_to_json(self, fields=None, loading_depth=-1):
@@ -167,6 +177,7 @@ File.init = file_init
 File.load_depth = file_load_depth
 File.from_id = file_from_id
 File.from_ids = file_from_ids
+File.from_name = file_from_name
 File.to_json = file_to_json
 File.load = file_load
 File.save = generic_save

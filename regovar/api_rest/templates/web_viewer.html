@@ -6,6 +6,13 @@
     <title>Regovar </title>
 
 
+{% if viewer == "igv" %}
+    <!-- Base -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+
+    <link rel="stylesheet" href="http://igv.org/web/release/1.0.9/igv-1.0.9.css">
+    <script type="text/javascript" src="http://igv.org/web/release/2.0.0-beta3/dist/igv.js"></script>
+{% endif %}
 
 
     <style>
@@ -21,25 +28,92 @@
 
 <body style="background: #efeff1">
 
-{% if type == "txt" %}
-<pre style="margin-bottom: 10px">
-Preview: display first {{ data|length }} lines
-</pre>
-{% elif type == "bin" %}
-<pre style="margin-bottom: 10px">
-No preview available for binary file
-</pre>
+{% if viewer == "txt" %}
+    <pre style="margin-bottom: 10px">
+        Preview: display first {{ data|length }} lines
+    </pre>
+
+
+{% elif viewer == "bin" %}
+    <pre style="margin-bottom: 10px">
+        No preview available for binary file
+    </pre>
 {% endif %}
 
 
 
-{% if type == "txt" %}
-<pre>
-{% for line in data %}{{ line }}{% endfor %} 
-</pre>
-{% elif type == "img" %}
-<img src="{{ data }}" />
+{% if viewer == "txt" %}
+    <pre>
+    {% for line in data %}{{ line }}{% endfor %} 
+    </pre>
+{% elif viewer == "img" %}
+    <img src="{{ data }}" />
+{% elif viewer == "igv" %}
+    <div id="igv"></div>
 {% endif %}
 
+{% if viewer == "igv" %}
+<script>
+        // On document ready
+        $(document).ready(function()
+        {
+            // TODO: check that user is logged in, otherwise display login form
+            var igv_api, options;
+
+            options =
+            {
+                showNavigation: true,
+                showRuler: true,
+                //locus: "chr1:155,160,475-155,184,282",
+                reference:
+                    {
+                        id: "{{ reference }}"
+                    },
+                tracks:
+                    [
+                        {
+                            name: "Genes",
+                            type: "annotation",
+                            format: "bed",
+                            sourceType: "file",
+                            url: "https://s3.amazonaws.com/igv.broadinstitute.org/annotations/{{ reference }}/genes/refGene.{{ reference }}.bed.gz",
+                            indexURL: "https://s3.amazonaws.com/igv.broadinstitute.org/annotations/{{ reference }}/genes/refGene.{{ reference }}.bed.gz.tbi",
+                            order: 0,
+                            visibilityWindow: 300000000,
+                            displayMode: "EXPANDED"
+                        },
+                        {% if file_type == "bam" %}
+                        {
+                            name: "{{ filename }}",
+                            type: "alignment",
+                            format: "bam",
+                            sourceType: "file",
+                            url: "{{ data[0] }}",
+                            indexURL: "{{ data[1] }}",
+                            order: Number.MAX_VALUE,
+                            visibilityWindow: 300000000,
+                            displayMode: "EXPANDED"
+                        }
+                        {% elif file_type == "vcf" %}
+                        {
+                            name: "{{ filename }}",
+                            type: "variant",
+                            format: "vcf",
+                            sourceType: "file",
+                            url: "{{ data }}",
+                            order: Number.MAX_VALUE,
+                            visibilityWindow: 300000000,
+                            displayMode: "EXPANDED"
+                        }
+                        {% endif %}
+                    ]
+            };
+
+            igv_api = document.getElementById('igv');
+            igv.createBrowser(igv_api, options);
+        });
+
+    </script>
+{% endif %}
 </body>
 </html>
