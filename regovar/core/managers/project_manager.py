@@ -62,6 +62,7 @@ class ProjectManager:
             Delete the project
             All its analyses are put into the trash project (id = 0)
         """
+        from core.core import core
         project = Model.Project.from_id(project_id)
         if not project: raise RegovarException(code="E102001", arg=[project_id])
         sql = "UPDATE analysis SET project_id=0 WHERE project_id={0}; DELETE FROM project WHERE id={0}".format(project.id)
