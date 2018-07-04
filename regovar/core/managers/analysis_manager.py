@@ -39,7 +39,7 @@ class AnalysisManager:
         """
             Return all analyses with "minimal data"
         """
-        sql = "SELECT id, project_id, name, comment, create_date, update_date, reference_id, status FROM analysis"
+        sql = "SELECT id, project_id, name, comment, create_date, update_date, reference_id, status FROM analysis ORDER BY id"
         result = []
         for res in execute(sql): 
             result.append({
@@ -268,6 +268,7 @@ class AnalysisManager:
         if not isinstance(variant_ids, list) or not analysis or not analysis.status == 'ready':
             return False
         query = ""
+        # Update variant selection in working table
         for vid in variant_ids:
             ids = vid.split("_")
             if len(ids) == 1:
@@ -275,29 +276,17 @@ class AnalysisManager:
             else:
                 query += "UPDATE wt_{} SET is_selected={} WHERE variant_id={} AND trx_pk_value='{}'; ".format(analysis.id, is_selected, ids[0], ids[1])
         execute(query)
+        
+        # Upate global selection information in analysis table
+        result = []
+        for row in execute("SELECT variant_id, trx_pk_value FROM wt_{} WHERE is_selected".format(analysis_id)):
+            result.append("{}_{}".format(row.variant_id, row.trx_pk_value))
+        execute("UPDATE analysis SET selection='{}' WHERE id={}".format(json.dumps(result), analysis_id))
+        
         return True
     
     
 
-    def get_selection(self, analysis_id):
-        """
-            Return list of selected variant (with same columns as set for the current filter)
-        """
-        from core.core import core
-        
-        analysis = Analysis.from_id(analysis_id)
-        if not analysis:
-            raise RegovarException("Unable to find analysis with the provided id: {}".format(analysis_id))
-        
-        fields = core.filters.parse_fields(analysis, analysis.fields, "")
-        query = "SELECT {} FROM wt_{} WHERE is_selected".format(fields, analysis_id)
-        result = []
-        for row in execute(query):
-            result.append({fid:row[fid] for fid in fields.split(", ")})
-        
-        return result
-    
-    
     
     
 

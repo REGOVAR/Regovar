@@ -193,7 +193,6 @@ class DockerManager(AbstractContainerManager):
                 environment = env,
                 name = docker_container,
                 network = DOCKER_CONFIG["network"],
-                user = DOCKER_CONFIG["user_mapping"],
                 volumes = {
                     inputs_path: {'bind': docker_inputs_path, 'mode': 'ro'},
                     DATABASES_DIR: {'bind': docker_db_path, 'mode': 'ro'},

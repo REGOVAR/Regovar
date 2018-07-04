@@ -65,6 +65,9 @@ class PipelineHandler:
 
     @user_role('Authenticated')
     def get(self, request):
+        """
+            return information about the requested pipeline
+        """
         pipe_id = request.match_info.get('pipe_id', -1)
         pipe = Pipeline.from_id(pipe_id, -1)
         if not pipe:
@@ -74,30 +77,43 @@ class PipelineHandler:
         return rest_success(check_local_path(pipe))
 
 
+    @user_role('Authenticated')
+    async def update(self, request):
+        """
+            Update basics information of the pipeline
+        """
+        pipe_id = request.match_info.get('pipe_id', -1)
+        pipe = Pipeline.from_id(pipe_id, -1)
+        data = await request.json()
+        if isinstance(data, str) : data = json.loads(data)
+        
+        if not pipe:
+            return rest_error("No pipeline with id {}".format(pipe_id))
+        try:
+            pipe.load(Pipeline.public_fields)
+        except RegovarException as ex:
+            return rest_error("Unable to update pipeline {} with provided data.".format(pipe_id), exception=ex)
+        return rest_success(check_local_path(pipe))
+
+
     @user_role('Administrator')
     def install(self, request):
         file_id = request.match_info.get('file_id', -1)
         file = File.from_id(file_id)
         if not file:
             return rest_error("Unable to find file with id {}.".format(file_id))
-        if file.status not in ["uploading", "uploaded", "checked"]:
-            return rest_error("File status is {}, this file cannot be used as pipeline image (status shall be \"uploading\", \"uploaded\" or \"checked\"".format(file_id))
+        if file.status not in ["uploaded", "checked"]:
+            return rest_error("File status is {}, this file cannot be used as pipeline image (file must be \"uploaded\" or \"checked\")".format(file_id))
         
-        p = core.pipelines.install_init_image_local(file.path, False)
+        p = core.pipelines.install_init_image(file_id)
         try:
             pipe = core.pipelines.install(p.id, asynch=False)
             if pipe:
                 return rest_success(check_local_path(pipe.to_json()))
         except RegovarException as ex:
-            return rest_error(str(ex))
-        return rest_error("Error occured during installation of the pipeline.")
+            return rest_error("Error occured during installation of the pipeline.", exception=ex)
+        return rest_error("Unable to install the pipeline (empty package?).")
 
-
-    @user_role('Administrator')
-    async def install_json(self, request):
-        params = await request.json()
-        # TO DO 
-        return rest_error("Not implemented")
 
 
     @user_role('Administrator')

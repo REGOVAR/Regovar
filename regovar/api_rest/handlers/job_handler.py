@@ -114,9 +114,10 @@ class JobHandler:
         name = data["name"]
         config = data["config"]
         inputs_ids = data["inputs_ids"]
+        project_id = data["project_id"]
         # Create the job 
         try:
-            job = core.jobs.new(pipe_id, name, config, inputs_ids)
+            job = core.jobs.new(project_id, pipe_id, name, config, inputs_ids)
         except Exception as ex:
             return rest_error("Error occured when initializing the new job. {}".format(ex))
         if job is None:
@@ -180,6 +181,17 @@ class JobHandler:
             return rest_error("Unable to finalize the job {}. {}".format(job_id, ex))
         job = Job.from_id(job_id)
         return rest_success(check_local_path(job.to_json()))
+
+
+    @user_role('Authenticated')
+    def delete(self, request):
+        job_id  = request.match_info.get('job_id', -1)
+        
+        try:
+            result = core.jobs.delete(job_id)
+        except Exception as ex:
+            return rest_error("Error occured when trying to delete the analysis with id=" + str(analysis_id), exception=ex)
+        return rest_success(check_local_path(result.to_json())) 
 
 
 

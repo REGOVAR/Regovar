@@ -29,7 +29,6 @@ def pipeline_init(self, loading_depth=0, force_refresh=False):
             - developpers       : [str]         : List of developpers of the pipeline
             - installation_date : date          : When the pipe have been installed on the server
             - version           : str           : The version of the pipeline
-            - version_api       : str           : The version of the api of regovar used by the pipeline
             - image_file_id     : int           : Id of the file that was used to import/install the pipeline
             - jobs_ids          : [int]         : List of the job created with this pipeline
             - path              : str           : Path to the pipeline on the server (internal usage only)
@@ -92,7 +91,7 @@ def pipeline_to_json(self, fields=None, loading_depth=-1):
     if loading_depth < 0:
         loading_depth = self.loading_depth
     if fields is None:
-        fields = ["id", "name", "type", "status", "description", "developpers", "installation_date", "version", "version_api", "image_file_id", "manifest", "documents"]
+        fields = ["id", "name", "type", "status", "description", "developpers", "installation_date", "version", "image_file_id", "manifest", "documents"]
     for f in fields:
         if f == "installation_date":
             result.update({f: eval("self." + f + ".isoformat()")})
@@ -117,7 +116,6 @@ def pipeline_load(self, data):
         if "developpers" in data.keys(): self.developpers = data["developpers"]
         if "installation_date" in data.keys(): self.installation_date = check_date(data["installation_date"])
         if "version" in data.keys(): self.version = check_string(data['version'])
-        if "version_api" in data.keys(): self.version_api = check_string(data["version_api"])
         if "image_file_id" in data.keys(): self.image_file_id = check_int(data["image_file_id"])
         if "manifest" in data.keys(): self.manifest = data['manifest']
         if "documents" in data.keys(): self.documents = data['documents']
@@ -183,7 +181,7 @@ def pipeline_get_jobs_ids(self, loading_depth=0):
 
 
 Pipeline = Base.classes.pipeline
-Pipeline.public_fields = ["id", "name", "type", "status", "description", "developpers", "installation_date", "version", "version_api", "image_file_id", "image_file", "manifest", "documents", "path", "jobs_ids", "jobs"]
+Pipeline.public_fields = ["id", "name", "type", "status", "description", "developpers", "installation_date", "version", "image_file_id", "image_file", "manifest", "documents", "path", "jobs_ids", "jobs"]
 Pipeline.init = pipeline_init
 Pipeline.from_id = pipeline_from_id
 Pipeline.from_ids = pipeline_from_ids

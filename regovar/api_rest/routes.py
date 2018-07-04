@@ -124,9 +124,9 @@ app.router.add_route('DELETE', "/file/upload/{file_id}", fileHdl.tus_upload_dele
 
 app.router.add_route('GET',    "/pipelines",                  pipeHdl.list)
 app.router.add_route('GET',    "/pipeline/{pipe_id}",         pipeHdl.get)
+app.router.add_route('PUT',    "/pipeline/{pipe_id}",         pipeHdl.update)
 app.router.add_route('DELETE', "/pipeline/{pipe_id}",         pipeHdl.delete)
 app.router.add_route('GET',    "/pipeline/install/{file_id}", pipeHdl.install)
-app.router.add_route('POST',   "/pipeline/install",           pipeHdl.install_json)
 
 app.router.add_route('GET',    "/jobs",                    jobHdl.list)
 app.router.add_route('POST',   "/job",                     jobHdl.new)
@@ -136,6 +136,7 @@ app.router.add_route('GET',    "/job/{job_id}/start",      jobHdl.start)
 app.router.add_route('GET',    "/job/{job_id}/cancel",     jobHdl.cancel)
 app.router.add_route('GET',    "/job/{job_id}/monitoring", jobHdl.monitoring)
 app.router.add_route('GET',    "/job/{job_id}/finalize",   jobHdl.finalize)
+app.router.add_route('DELETE', "/job/{job_id}",            jobHdl.delete)
 
 app.router.add_route('GET',    "/db",       dbHdl.get)
 app.router.add_route('GET',    "/db/{ref}", dbHdl.get)
@@ -174,8 +175,8 @@ app.router.add_route('POST',   "/analysis/{analysis_id}/filtering/{variant_id}",
 app.router.add_route('GET',    "/analysis/{analysis_id}/select/{variant_id}",    analysisHandler.select)               # Select the variant/trx with the provided id
 app.router.add_route('GET',    "/analysis/{analysis_id}/unselect/{variant_id}",  analysisHandler.unselect)             # Unselect the variant/trx with the provided id
 app.router.add_route('GET',    "/analysis/{analysis_id}/selection",              analysisHandler.get_selection)        # Return list of selected variant (with same columns as set for the current filter)
-app.router.add_route('POST',   "/analysis/{analysis_id}/export/{exporter_name}", analysisHandler.get_export)           # Export selection of the provided analysis into the requested format
-app.router.add_route('POST',   "/analysis/{analysis_id}/report/{report_name}",   analysisHandler.get_report)           # Generate report html for the provided analysis+report id
+#app.router.add_route('POST',   "/analysis/{analysis_id}/export/{exporter_name}", analysisHandler.get_export)           # Export selection of the provided analysis into the requested format
+#app.router.add_route('POST',   "/analysis/{analysis_id}/report/{report_name}",   analysisHandler.get_report)           # Generate report html for the provided analysis+report id
 app.router.add_route('GET',    "/analysis/{analysis_id}/clear_temps_data",       analysisHandler.clear_temps_data)     # Clear temporary data (to save disk space by example)
 
 app.router.add_route('GET',    "/search/{query}",                                     searchHandler.search)          # generic research

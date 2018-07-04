@@ -146,9 +146,10 @@ class ApiHandler:
         """
             Return last analyses
         """
-        sql = "(SELECT 'analysis' AS type, id, update_date FROM analysis WHERE project_id > 0 ORDER BY update_date DESC LIMIT 10)  UNION (SELECT 'pipeline' AS type, id, update_date FROM job ORDER BY update_date DESC LIMIT 10) ORDER BY update_date DESC"
+        sql = "(SELECT 'analysis' AS type, id, update_date FROM analysis WHERE project_id > 0 ORDER BY update_date DESC LIMIT 10)  UNION (SELECT 'pipeline' AS type, id, update_date FROM job WHERE project_id > 0 ORDER BY update_date DESC LIMIT 10) ORDER BY update_date DESC"
         result = [{"id": res.id, "type": res.type} for res in execute(sql)]
         return result
+    
     
     def get_last_subjects(self):
         """
@@ -157,3 +158,6 @@ class ApiHandler:
         sql = "SELECT id FROM subject ORDER BY update_date DESC LIMIT 10"
         result = [res.id for res in execute(sql)]
         return result
+    
+    
+    

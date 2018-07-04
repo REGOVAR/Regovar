@@ -26,7 +26,7 @@ def init_pg(user, password, host, port, db):
     except Exception as ex:
         raise RegovarException(code="E000001", exception=ex)
     return con
-    
+
 
 # Connect and map the engine to the database
 Base = automap_base()
@@ -38,7 +38,7 @@ try:
 except Exception as ex:
     print("ERROR when trying to connect to Postgresql database")
     exit(1)
-    
+
 
 
 
@@ -78,6 +78,7 @@ print('Load panels from ''lst'' file: ', end='', flush=True)
 sql_p = "INSERT INTO panel (id, name) VALUES "
 sql_v = "INSERT INTO panel_entry (id, panel_id, version, data) VALUES "
 for panel_path in lst_files:
+    if "omim" in panel_path: continue
     with open(panel_path, "r") as f:
         # create panel
         filename = panel_path.split("/")[-1]

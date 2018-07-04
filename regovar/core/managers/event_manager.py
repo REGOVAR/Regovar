@@ -128,6 +128,7 @@ class EventManager:
         """
             Create an event
         """
+        from core.core import core
         # Check data
         author_id = author_id if author_id else "NULL"
         if type not in ["custom", "info", "warning", "error", "technical"]:
@@ -141,6 +142,15 @@ class EventManager:
         # Execute query
         sql = "INSERT INTO event (author_id, type, meta, message, details) VALUES ({0}, '{1}', {2}, '{3}', {4}) RETURNING id;".format(author_id, type, meta, message, details)
         event_id = execute(sql).first()[0]
+
+        # Notify client of new event
+        core.notify_all(data={"action": "new_event", "data" : {
+            "author_id": author_id, 
+            "date": datetime.datetime.now().isoformat(), 
+            "message": message,
+            "type": type,
+            "meta": meta
+            }})
         return event_id
     
     def check_meta_json(self, meta):

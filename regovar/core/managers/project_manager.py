@@ -57,35 +57,49 @@ class ProjectManager:
 
 
 
-    def delete(self, project_id):
+    def delete(self, project_id, author_id=None):
         """ 
             Delete the project
             All its analyses are put into the trash project (id = 0)
         """
+        from core.core import core
         project = Model.Project.from_id(project_id)
         if not project: raise RegovarException(code="E102001", arg=[project_id])
         sql = "UPDATE analysis SET project_id=0 WHERE project_id={0}; DELETE FROM project WHERE id={0}".format(project.id)
         result = project.to_json()
         Model.execute(sql)
+
+        core.events.log(author_id, "info", {"project_id" : project.id}, "Project moved to trash: {}.".format(project.name))
         return result
 
 
 
 
 
-    def create_or_update(self, project_data, loading_depth=1):
+    def create_or_update(self, project_data, author_id=None):
         """
             Create or update a project with provided data.
         """
+        from core.core import core
         if not isinstance(project_data, dict): raise RegovarException(code="E202002")
-
         pid = None
         if "id" in project_data.keys():
             pid = project_data["id"]
 
         # Get or create the project
-        project = Model.Project.from_id(pid, loading_depth) or Model.Project.new()
-        project.load(project_data)
+        project = Model.Project.from_id(pid, 1) 
+
+        if project:
+            # Update
+            former_project = project.to_json()
+            project.load(project_data)
+            core.events.log(author_id, "info", {"project_id" : project.id}, "Project updated: {}.".format(former_project["name"]))
+        else:
+            # Creation
+            project = Model.Project.new()
+            project.load(project_data)
+            core.events.log(author_id, "info", {"project_id" : project.id}, "New project created: {}.".format(project.name))
+
         return project
     
     

@@ -138,6 +138,7 @@ class AnalysisHandler:
         return rest_success(result)
     
     
+    
     @user_role('Authenticated')
     async def select(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
@@ -158,11 +159,12 @@ class AnalysisHandler:
 
 
 
-
+    @user_role('Authenticated')
     def get_filters(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
         filters = core.analyses.get_filters(analysis_id)
         return rest_success([f.to_json() for f in filters])
+
 
 
     @user_role('Authenticated')
@@ -211,55 +213,15 @@ class AnalysisHandler:
 
 
     @user_role('Authenticated')
-    def get_selection(self, request):
+    async def get_selection(self, request):
         analysis_id = request.match_info.get('analysis_id', -1)
 
         try:
-            result = core.analyses.get_selection(analysis_id)
+            result = await core.filters.get_selection(int(analysis_id))
         except Exception as ex:
-            return rest_error("AnalysisHandler.get_selection error", exception=ex)
+            return rest_error("Error occurend when trying to retrieve selection of the analysis {}".format(analysis_id), exception=ex)
         return rest_success(result)
 
-
-
-    @user_role('Authenticated')
-    async def get_export(self, request):
-        """
-            Export selection of the requested analysis in the requested format
-        """
-        # Check query parameter
-        data = await request.json()
-        analysis_id = request.match_info.get('analysis_id', -1)
-        exporter_name = request.match_info.get('exporter_name', None)
-        if exporter_name not in core.exporters.keys():
-            return rest_error("Exporter {} doesn't exists.".format(exporter_name))
-        # export data
-        try:
-            export_file = await core.exporters[exporter_name]["mod"].export_data(analysis_id, **data)
-        except Exception as ex:
-            return rest_error("AnalysisHandler.get_export error: ", exception=ex)
-        return rest_success(export_file.to_json())
-
-
-
-    @user_role('Authenticated')
-    async def get_report(self, request):
-        """
-            Generate report for the selection of the requested analysis with the requested report generator
-        """
-        data = await request.json()
-        analysis_id = request.match_info.get('analysis_id', -1)
-        report_name = request.match_info.get('report_name', None)
-        if report_name not in core.reporters.keys():
-            return rest_error("Report generator {} doesn't exists.".format(report_name))
-        # export data
-        try:
-            report_file = await core.reporters[report_name]["mod"].generate(analysis_id, **data)
-        except Exception as ex:
-            return rest_error("AnalysisHandler.get_report error: ", exception=ex)
-        return rest_success(report_file.to_json())
-    
-        
         
         
         

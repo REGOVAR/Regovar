@@ -128,7 +128,7 @@ class PipelineManager:
             Initialise a pipeline installation. 
             To use if the image have to be retrieved on the local server.
             Create an entry for the pipeline and the file (image) in the database.
-            Copy the local file into dedicated Pirus directory and start the installation of the Pipeline
+            Copy the local file into dedicated directory and start the installation of the Pipeline
 
             Return the Pipeline object ready to be used
         """
@@ -146,6 +146,24 @@ class PipelineManager:
         pipe.save()
         return pipe
 
+
+    def install_init_image(self, file_id, pipe_metadata={}):
+        """ 
+            Initialise a pipeline installation. 
+            To use if the image have already been uploaded the local server via the regovar file api.
+            Create an entry for the pipeline in the database.
+            Return the Pipeline object ready to be used
+        """
+        from core.core import core
+
+        pfile = File.from_id(file_id)
+        if pfile:
+            pipe = self.install_init(os.path.basename(pfile.path), pipe_metadata)
+            pipe.image_file_id = file_id
+            pipe.save()
+            return pipe
+        return None
+    
 
 
     def check_manifest(self, manifest):
@@ -198,7 +216,7 @@ class PipelineManager:
             raise RegovarException("Pipeline not found (id={}).".format(pipeline_id))
         if pipeline.status != "initializing":
             raise RegovarException("Pipeline status ({}) is not \"initializing\". Cannot perform another installation.".format(pipeline.status))
-        if pipeline.image_file and pipeline.image_file.status not in ["uploading", "uploaded", "checked"]:
+        if pipeline.image_file and pipeline.image_file.status not in ["uploaded", "checked"]:
             raise RegovarException("Wrong pipeline image (status={}).".format(pipeline.image_file.status))
 
         if not pipeline.image_file or pipeline.image_file.status in ["uploaded", "checked"]:
@@ -242,6 +260,9 @@ class PipelineManager:
             with open(os.path.join(root_path, "manifest.json"), "r") as f:
                 data = f.read()
                 log(data)
+                # Fix common parsing problem regarding json syntaxe
+                data = data.replace("False", "false")
+                data = data.replace("True", "true")
                 manifest = json.loads(data)
                 manifest = self.check_manifest(manifest)
                 pipeline.developpers = manifest.pop("contacts")
@@ -263,7 +284,7 @@ class PipelineManager:
                 p = pipeline.documents.pop("icon2")
                 if not pipeline.documents["icon"]:
                     pipeline.documents["icon"] = p
-
+                pipeline.load(manifest)
                 pipeline.save()
         except Exception as ex:
             pipeline.status = "error"

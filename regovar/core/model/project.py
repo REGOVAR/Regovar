@@ -112,8 +112,8 @@ def project_load(self, data):
         if "comment" in data.keys(): self.comment = check_string(data['comment'])
         if "parent_id" in data.keys(): self.parent_id = check_int(data['parent_id'])
         if "is_folder" in data.keys(): self.is_folder = check_bool(data['is_folder'], False)
+        if "is_sandbox" in data.keys(): self.is_sandbox = check_bool(data['is_sandbox'], False)
         self.save()
-    
 
         # Reload dynamics properties
         self.init(self.loading_depth, True)

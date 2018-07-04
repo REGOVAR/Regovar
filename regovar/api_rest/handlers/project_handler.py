@@ -87,10 +87,10 @@ class ProjectHandler:
         if isinstance(data, str) : data = json.loads(data)
         # If provided by the query parameter, ensure that we use the query project_id
         if project_id != -1:
-        	data["id"] = project_id
+            data["id"] = project_id
         # Create or update the project
         try:
-            project = core.projects.create_or_update(data)
+            project = core.projects.create_or_update(data, 1) # TODO: retrieve user id from session cookie
         except RegovarException as ex:
             return rest_exception(ex)
         if project is None:
@@ -120,7 +120,7 @@ class ProjectHandler:
         from core.core import core
         project_id = request.match_info.get('project_id', -1)
         try:
-            project = core.projects.delete(project_id)
+            project = core.projects.delete(project_id, 1) # TODO: retrieve user id from session cookie
         except Exception as ex:
             return rest_error("Unable to delete the project (id={})".format(project_id), exception=ex)
         return rest_success(project)
