@@ -3,9 +3,9 @@
 REGOVAR est un projet collaboratif, libre et ouvert de logiciel d’analyse de données de séquençage haut débit pour les panels de gènes, l’exome et le génome (DPNI, recherche de SNV, CNV, SV...). Il vise à impliquer et fédérer les différentes communautés concernées (généticiens cliniciens, biologistes et bioinformaticiens), sans limites institutionnelles ou géographiques.
 
 # Sommaire
- * [Guide utilisateur](user/presentation) : documentation sur l'installation et l'utilisation du logiciel (aussi bien la partie serveur que client)
-   * [Installation du serveur](installation/server)
-   * [Installation du client](installation/client)
+ * [Guide utilisateur](usage/presentation) : documentation sur l'installation et l'utilisation du logiciel (aussi bien la partie serveur que client)
+   - [Installation du serveur](installation/server)
+   - [Installation du client](installation/client)
  * [Guide du développeur](developper/community) : pour ceux qui souhaitent participer au développement de Regovar.
 
 # Autres liens
