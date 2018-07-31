@@ -18,7 +18,7 @@ sudo apt install qregovar
 ```
 Pour le lancer
 ```sh
-qregovar
+/opt/qregovar/qregovar
 ```
 
 ## Première utilisation
