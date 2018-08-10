@@ -12,7 +12,8 @@ Pour l'installer, rien de plus simple, il vous suffit de vous rendre sur [GitHub
 ### Pour Debian (Stretch/9) et Ubuntu (Xenial/16.04 et Bionic/18.04)
 ```sh
 curl -s https://arkanosis.net/jroquet.pub.asc | sudo apt-key add -
-echo "deb https://apt.regovar.org/ software stable" | sudo tee /etc/apt/sources.list.d/regovar.list
+curl -s https://dl.denomme.fr/asdeno.pub.asc | sudo apt-key add -
+echo "deb https://apt.regovar.org/ stable software" | sudo tee /etc/apt/sources.list.d/regovar.list
 sudo apt update
 sudo apt install qregovar
 ```
