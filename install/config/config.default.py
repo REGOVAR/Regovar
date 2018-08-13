@@ -11,7 +11,7 @@ HOST = "0.0.0.0"
 PORT = 8500
 HOSTNAME = "{}:{}".format(HOST, PORT)  # This is the internal host on which aioHTTP will run the service.
 # HOST (public)
-HOST_P = "test.regovar.org"  # This url shall be set with the public namespace used
+HOST_P = "127.0.0.1:8500"  # This url shall be set with the public namespace used
 
 
 
