@@ -181,7 +181,7 @@ fi
 if [ "1" == "$install_choice" ]
 then
     sudo rm -Rf $root_folder
-    sudo mkdir -p ${root_folder}/{config,cache,downloads,files,pipelines,jobs,pgdata,databases/hg19,databases/hg38}
+    sudo mkdir -p ${root_folder}/{config,cache,downloads,files,pipelines,jobs,pgdata,databases/GRCh37,databases/hg19,databases/hg38}
     install_choice=1
 elif [ "2" == "$install_choice" ]
 then
