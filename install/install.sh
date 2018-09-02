@@ -333,8 +333,9 @@ echo -e "${GREEN}Done${NC}: Docker containers ready"
 echo -e "\nDatabase creation:\n======================================================================================="
 if [ 1 == $install_choice ]
 then
-    curl http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > $root_folder/databases/hg19/refGene.txt
-    curl http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $root_folder/databases/hg38/refGene.txt
+    curl -L ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | gunzip > $root_folder/databases/GRCh37/human_g1k_v37.fasta
+    curl -L http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $root_folder/databases/hg38/refGene.txt
+    curl -L http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $root_folder/databases/hg38/refGene.txt
     docker exec $docker_pg mkdir /tmp/install
     docker cp $git_path/install/create_all.sql $docker_pg:/tmp/install/create_all.sql
     docker cp $git_path/install/install_hg19.sql $docker_pg:/tmp/install/install_hg19.sql
