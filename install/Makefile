@@ -6,9 +6,13 @@ databases_path=$(shell test -f ../regovar/config.py && sed -n 's/^\s*DATABASES_D
 init_config:
 	cp config/config.default.py ../regovar/config.py
 
-download_refgene: \
+download_databases: \
+	$(databases_path)/GRCh37/human_g1k_v37.fasta \
 	$(databases_path)/hg19/refGene.txt \
 	$(databases_path)/hg38/refGene.txt
+
+$(databases_path)/GRCh37/human_g1k_v37.fasta:
+	curl -L ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | gunzip > $@
 
 $(databases_path)/hg19/refGene.txt:
 	curl -L http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refGene.txt.gz | gunzip > $@
@@ -37,4 +41,4 @@ download_hpo:
 install_hpo:
 	PYTHONPATH="$(CURDIR):$${PYTHONPATH}" python3 ../regovar/extradata.py hpo $(databases_path)/ "`cat $(databases_path)/hpo_version.txt`"
 
-.PHONY: create_database download_refgene download_hpo fill_database install_hpo init_config
+.PHONY: create_database download_databases download_hpo fill_database install_hpo init_config
