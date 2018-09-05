@@ -43,7 +43,7 @@ La procédure reste relativement simple grâce à un script `install.sh` qui va 
 
 ####Pré-requis
 
- * Ubuntu Xenial LTS (pipelines et analyse de variants) ou Ubuntu Bionic LTS (pipelines et analyses de variants) ou Debian Stretch ou supérieur (analyse de variants uniquement)
+ * Ubuntu 16.04 LTS (Xenial), Ubuntu 18.04 LTS (Bionic) ou Debian 9 (Stretch) ou supérieur
  * Droits root sur le serveur
  * Accès internet depuis le serveur
  * Git
