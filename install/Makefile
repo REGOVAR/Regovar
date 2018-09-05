@@ -1,3 +1,5 @@
+install_dir=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+
 # PostgreSQL
 database_name=$(shell test -f ../regovar/config.py && sed -n 's/^\s*DATABASE_NAME\s*=\s*"\([^"]\+\)".*/\1/p' ../regovar/config.py || echo INVALID)
 # RefGene
@@ -44,4 +46,9 @@ download_hpo:
 install_hpo:
 	PYTHONPATH="$(CURDIR):$${PYTHONPATH}" python3 ../regovar/extradata.py hpo $(databases_path)/ "`cat $(databases_path)/hpo_version.txt`"
 
-.PHONY: create_database download_databases download_hpo fill_database install_hpo init_config
+/etc/systemd/system/regovar.service:
+	sed "s;{root};$(shell dirname $(install_dir));" $(install_dir)/systemd/regovar.service > $@
+
+install_service: /etc/systemd/system/regovar.service
+
+.PHONY: create_database download_databases download_hpo fill_database init_config install_hpo install_service

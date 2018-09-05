@@ -1,0 +1,12 @@
+[Unit]
+Description=Regovar service
+
+[Service]
+Type=simple
+User=regovar
+WorkingDirectory={root}/regovar
+ExecStart=/usr/bin/python3 regovar.py
+Restart=always
+
+[Install]
+WantedBy=default.target
