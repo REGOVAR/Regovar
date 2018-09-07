@@ -11,5 +11,5 @@ ped-parser~=1.6.6
 psutil~=5.4.6
 psycopg2~=2.7.4
 pysam~=0.14.1
-requests~=2.18.4
+requests~=2.19.1
 SQLAlchemy~=1.2.7
