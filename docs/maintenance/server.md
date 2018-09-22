@@ -14,10 +14,10 @@ Par défaut :
 - `$DATABASE_USERNAME` est `regovar`
 
 ## Changement du message du serveur
-Vous pouvez changer le message du serveur.
+Vous pouvez changer le message de bienvenue du serveur. Ce message peut être affiché par le client lorsque celui-ci se connecte.
 
 ```sh
-MESSAGE='{"type":"info", "message": "'Bienvenue sur le serveur!'"}'
+MESSAGE='{"type":"info", "message": "Bienvenue sur le serveur!"}'
 psql -U $DATABASE_USERNAME -d $DATABASE_NAME -c "UPDATE parameter SET value='$MESSAGE' WHERE key='message';"
 ```
 Par défaut :
