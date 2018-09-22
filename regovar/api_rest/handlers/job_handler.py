@@ -105,7 +105,7 @@ class JobHandler:
         except Exception as ex:
             return rest_error("Error occured when retriving json data to start new job. {}".format(ex))
         missing = []
-        for k in ["pipeline_id", "name", "config", "inputs_ids"]:
+        for k in ["pipeline_id", "name", "config", "inputs_ids", "project_id"]:
             if k not in data.keys(): missing.append(k)
         if len(missing) > 0:
             return rest_error("Following informations are missing to create a new job : {}".format(", ".join(missing)))
@@ -144,7 +144,7 @@ class JobHandler:
             core.jobs.start(job_id)
             job = Job.from_id(job_id)
         except Exception as ex:
-            return rest_error("Unable to start the job {}. {}".format(job.id, ex))
+            return rest_error("Unable to start the job {}. {}".format(job_id, ex))
         return rest_success(check_local_path(job.to_json()))
 
 
