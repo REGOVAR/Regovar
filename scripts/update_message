@@ -1,0 +1,9 @@
+#! /bin/sh
+
+if [ $# -ne 1 ]; then
+  echo 'Usage: update_message <message>' >&2
+  exit 1
+fi
+
+MESSAGE='{"type":"info", "message": "'$1'"}'
+psql -c "UPDATE parameter SET value='$MESSAGE' WHERE key='message';"
