@@ -10,12 +10,17 @@ init_config:
 
 download_databases: \
 	$(databases_path)/GRCh37/human_g1k_v37.fasta \
+	$(databases_path)/GRCh37/human_g1k_v37.fasta.fai \
 	$(databases_path)/hg19/refGene.txt \
 	$(databases_path)/hg38/refGene.txt
 
 $(databases_path)/GRCh37/human_g1k_v37.fasta:
 	mkdir -p "$(dir $@)"
 	curl -L ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | gunzip > $@
+
+$(databases_path)/GRCh37/human_g1k_v37.fasta.fai:
+	mkdir -p "$(dir $@)"
+	curl -L ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai > $@
 
 $(databases_path)/hg19/refGene.txt:
 	mkdir -p "$(dir $@)"

@@ -334,6 +334,7 @@ echo -e "\nDatabase creation:\n=================================================
 if [ 1 == $install_choice ]
 then
     curl -L ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | gunzip > $root_folder/databases/GRCh37/human_g1k_v37.fasta
+    curl -L ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai > $root_folder/databases/GRCh37/human_g1k_v37.fasta.fai
     curl -L http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $root_folder/databases/hg38/refGene.txt
     curl -L http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz | gunzip > $root_folder/databases/hg38/refGene.txt
     docker exec $docker_pg mkdir /tmp/install
