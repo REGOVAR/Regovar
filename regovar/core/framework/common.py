@@ -318,8 +318,7 @@ def set_cache(uri, data):
     cache_file = CACHE_DIR + "/" + uri
     with open(cache_file, 'w') as f:
         f.write(json.dumps(data))
-        f.close()
-    
+
 
 
 

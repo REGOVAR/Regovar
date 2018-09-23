@@ -95,8 +95,7 @@ class Exporter(AbstractVariantExportManager):
             # write values
             for row in data:
                 f.write(separator.join([str(row[f]) for f in fields]) + "\n")
-            f.close()
-            
+
         # Create file entry and link it to the analysis
         f = core.files.from_local(path, True)
         AnalysisFile.new(analysis_id, f.id)

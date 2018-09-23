@@ -203,10 +203,8 @@ class DockerManager(AbstractContainerManager):
             # Init logs files out & err
             with open(os.path.join(logs_path, "out.log"), "w") as f:
                 f.write("Pipeline job {} init into docker container...".format(job.id))
-                f.close()
             with open(os.path.join(logs_path, "err.log"), "w") as f:
                 f.write("")
-                f.close()
             # update monitoring information
             self.update_logs(job)
         except Exception as ex:
@@ -365,10 +363,8 @@ class DockerManager(AbstractContainerManager):
         # Refresh logs files out & err
         with open(os.path.join(logs_path, "out.log"), "w") as f:
             f.write(container.logs(stdout=False, stderr=True).decode())
-            f.close()
         with open(os.path.join(logs_path, "err.log"), "w") as f:
             f.write(container.logs(stdout=True, stderr=False).decode())
-            f.close()
         # Get docker stats
         data = container.stats(stream=False)
         stats = {

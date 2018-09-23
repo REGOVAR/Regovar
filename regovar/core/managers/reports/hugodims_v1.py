@@ -57,8 +57,7 @@ class Report(AbstractReportManager):
         fields = [f for f in data[0].keys()]
         with open(path, "w") as f:
             f.write("<html><h1>Hello world!</h1></html>\n")
-            f.close()
-            
+
         # Create file entry and link it to the analysis
         f = core.files.from_local(path, True)
         AnalysisFile.new(analysis_id, f.id)
