@@ -197,7 +197,7 @@ class DockerManager(AbstractContainerManager):
                     inputs_path: {'bind': docker_inputs_path, 'mode': 'ro'},
                     DATABASES_DIR: {'bind': docker_db_path, 'mode': 'ro'},
                     outputs_path: {'bind': docker_outputs_path, 'mode': 'rw'},
-                    logs_path: {'bind': logs_path, 'mode': 'rw'},
+                    logs_path: {'bind': docker_logs_path, 'mode': 'rw'},
                     },
                 detach = True)
             # Init logs files out & err
