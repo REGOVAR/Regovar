@@ -51,7 +51,38 @@ def waiting_container(job_id):
     # else:
     # The container have been stop by someone else (pause, stop, admin...)
     # do nothing
-        
+   
+
+
+def installing_pipeline(pipeline_id):
+    """
+        This method wait for the end of the installation of the container image 
+        in another thread (to not block the main application) and update pipeline 
+        status accordingly)
+    """
+    from core.core import core
+    from core.model import Pipeline
+    pipeline = Pipeline.from_id(pipeline_id)
+
+    client = docker.APIClient(base_url='unix://var/run/docker.sock')
+    
+    # 3- Install docker container
+    try:
+        with open(os.path.join(pipeline.path, 'install.log'), 'w') as file:
+            for line in client.build(path=pipeline.path, rm=True, tag=pipeline.manifest["image_alias"]):
+                file.write(line.decode())
+
+    except Exception as ex:
+        pipeline = Pipeline.from_id(pipeline_id)
+        pipeline.status = "error"
+        pipeline.save()
+        raise RegovarException("Pipeline {} installation failled.", exception=ex)
+
+    log("Docker image {} created. Pipeline {} is ready to use".format(pipeline.manifest["image_alias"], pipeline_id))
+    # Force refresh of pipeline object as the installation may took a long time
+    pipeline = Pipeline.from_id(pipeline_id)
+    pipeline.status = "ready"
+    pipeline.save()
         
         
 
@@ -102,19 +133,21 @@ class DockerManager(AbstractContainerManager):
         pipeline.load(manifest)
         pipeline.manifest = manifest
         pipeline.path = root_path
+        pipeline.status = "installing"
+
+        # 3- Check pipeline type
+        pipeline.type = check_string(manifest["type"], "job")
+        if pipeline.type not in ["job", "importer", "exporter", "reporter"]: 
+            pipeline.type = "job"
         
+        # 4- Run the installation in another thread (may be very long when downloading packages)
         try:
             pipeline.save()
         except Exception as ex:
             raise RegovarException("FAILLED to save the new pipeline in database (already exists or wrong name ?).", "", ex)
         log("Pipeline saved in database with id={}".format(pipeline.id))
 
-        # 3- Install docker container
-        image = self.docker.images.build(path=pipeline.path, tag=image_alias)
-
-        log("Docker image {} created. Pipeline is ready".format(image_alias))
-        pipeline.status = "ready"
-        pipeline.save()
+        run_async(installing_pipeline, pipeline.id)
         return pipeline
 
 
