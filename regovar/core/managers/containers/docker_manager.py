@@ -83,6 +83,8 @@ def installing_pipeline(pipeline_id):
     pipeline = Pipeline.from_id(pipeline_id)
     pipeline.status = "ready"
     pipeline.save()
+    # Notify clients that the pipeline is now ready to use
+    core.notify_all({"action": "pipeline_updated", "data" : pipeline.to_json()})
         
         
 
