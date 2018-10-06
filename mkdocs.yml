@@ -31,9 +31,6 @@ pages:
  - 'TUTORIELS':
     - 'Filtrage': 'tutorials/filtering.md'
     - 'Pipeline': 'tutorials/pipeline.md'
-    - '&nbsp;&nbsp;- Installation': 'tutorials/pipeline/tuto_001.md'
-    - '&nbsp;&nbsp;- Packaging': 'tutorials/pipeline/tuto_002.md'
-    - '&nbsp;&nbsp;- Ex1: simple': 'tutorials/pipeline/tuto_004.md'
     - 'Autres': 'tutorials/global.md'
  - 'DÉVELOPPEUR':
     - 'Communauté': 'developper/community.md'
