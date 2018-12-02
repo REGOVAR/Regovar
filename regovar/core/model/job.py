@@ -183,7 +183,7 @@ def job_to_json(self, fields=None, loading_depth=-1):
                 result.update({f: eval("self." + f + ".isoformat()")})
             elif f in ["inputs", "outputs"]:
                 result.update({f : [i.to_json(None, loading_depth-1) for i in eval("self." + f)]})
-            elif f == "pipeline" and self.loading_depth > 0:
+            elif f == "pipeline" and self.loading_depth > 0 and self.pipeline:
                 result.update({"pipeline" : self.pipeline.to_json(None, loading_depth-1)})
             elif f == "logs":
                 logs = []

@@ -19,6 +19,7 @@ RUN apt-get update && \
 COPY requirements.txt /tmp/requirements.txt
 COPY requirements-dev.txt /tmp/requirements-dev.txt
 # RUN ls -l
+RUN pip install --upgrade pip
 RUN pip install -r /tmp/requirements.txt
 RUN pip install -r /tmp/requirements-dev.txt
 

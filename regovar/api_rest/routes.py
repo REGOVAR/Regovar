@@ -1,11 +1,16 @@
 #!env/python3
 # coding: utf-8
+try:
+    import ipdb
+except ImportError:
+    pass
 
 import aiohttp_jinja2
 import jinja2
 import base64
 
 from aiohttp import web
+import aiohttp_cors
 from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp_security import setup as setup_security
@@ -54,8 +59,6 @@ aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(TEMPLATE_DIR))
 
 # On shutdown, close all websockets
 app.on_shutdown.append(on_shutdown)
-
-
 
 
 
@@ -225,4 +228,32 @@ app.router.add_static('/dl/pipe/', PIPELINES_DIR)
 app.router.add_static('/dl/file/', FILES_DIR)
 app.router.add_static('/dl/job/', JOBS_DIR)
 
+
+
+
+
+
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# In debug mode: allow CORS
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+if DEBUG:
+    print("ALLOWING CORS")
+    # Configure default CORS settings: allow all for everyone
+    cors = aiohttp_cors.setup(app, defaults={
+        "*": aiohttp_cors.ResourceOptions(
+                allow_credentials=True,
+                expose_headers="*",
+                allow_headers="*",
+            )
+    })
+
+    # Configure CORS on all routes.
+    for route in list(app.router.routes()):
+        if route.resource.canonical == '/file/upload':
+            print("  ! SKIP ", route)
+            continue
+        print("  - ", route)
+        cors.add(route)
 
