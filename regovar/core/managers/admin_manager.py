@@ -183,7 +183,10 @@ class AdminManager:
             Stats about CPU usage
         """
         cpus = psutil.cpu_percent(interval=0.1, percpu=True)
-        return {"cpu": {"count": psutil.cpu_count(logical=False), "virtual": psutil.cpu_count(), "freq" : psutil.cpu_freq().max, "usages" : cpus, "usage": sum(cpus) / len(cpus)}}
+        cpu_freq = psutil.cpu_freq()
+        if cpu_freq is not None:
+            cpu_freq = cpu_freq.max
+        return {"cpu": {"count": psutil.cpu_count(logical=False), "virtual": psutil.cpu_count(), "freq" : cpu_freq, "usages" : cpus, "usage": sum(cpus) / len(cpus)}}
             
        
        
