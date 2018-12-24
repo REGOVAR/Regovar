@@ -52,7 +52,7 @@ git clone https://github.com/REGOVAR-Pipelines/MyExamplePipeline.git
 | `Dockerfile` | [Dockerfile](https://docs.docker.com/engine/reference/builder/) | Fichier docker nécessaire pour la création de votre pipeline dockerisé. |
 | `form.json` | json | Si votre pipeline a des paramètres configurables, vous pouvez décrire ces paramètres dans un fichier json afin que Regovar puisse permettre à l'utilisateur de les régler via un formulaire qui sera automatiquement généré depuis ce fichier json. |
 | `LICENSE` | txt | Licence de votre pipeline, par exemple [AGPLv3](https://www.gnu.org/licenses/agpl-3.0.fr.html). |
-| `manifest.json` | json | Page d'aide du pipeline. |
+| `manifest.json` | json | Fichier qui permet d'installer et d'utiliser votre pipeline dans Regovar. |
 | `README` | txt | Si l'installation de votre pipeline nécessite des actions particulières de la part des administrateurs. Par exemple, si votre pipeline nécessite d'accéder en local à des base de données volumineuses, il vous faudra indiquer dans le README où et comment se procurer/générer ces bases. Ces bases doivent impérativement être sous forme de fichiers qui seront installés par les administrateurs et seront par la suite automatiquement accessibles par votre pipeline dans son conteneur via le répertoire DATABASES. |
 
 Seuls les fichiers `Dockerfile`, `manifest.json` et `LICENSE` sont obligatoires, mais tous sont vivement recommandés afin de garantir une meilleure intégration de votre pipeline dans Regovar et une meilleure expérience pour l'utilisateur.
