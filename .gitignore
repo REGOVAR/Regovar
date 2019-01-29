@@ -92,3 +92,4 @@ ENV/
 coverage.xml
 config.py
 .bak
+regovar/Makefile
